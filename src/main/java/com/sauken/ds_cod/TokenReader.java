@@ -1,4 +1,4 @@
-package com.sauken.ds_cod;
+package com.sauken.ds_cod.tokenreader;
 
 import java.io.IOException;
 import java.security.KeyStore;
