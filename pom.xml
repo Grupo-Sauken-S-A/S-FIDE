@@ -3,9 +3,9 @@
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sauken</groupId>
-	<artifactId>ds-cod</artifactId>
+	<artifactId>s_fide</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>ds-cod</name>
+	<name>s-fide</name>
 	<description>PKCS#11 Token Reader</description>
 
 	<properties>
@@ -41,7 +41,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>com.sauken.ds_cod.TokenReader</mainClass>
+							<mainClass>com.sauken.s-fide.TokenReader</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

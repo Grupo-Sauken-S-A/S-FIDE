@@ -1,7 +1,7 @@
 # Read Me First
 The following was discovered as part of building this project:
 
-* The original package name 'com.sauken.ds-cod' is invalid and this project uses 'com.sauken.ds_cod' instead.
+* The original package name 'com.sauken.s-fide' is invalid and this project uses 'com.sauken.s-fide' instead.
 
 # Getting Started
 

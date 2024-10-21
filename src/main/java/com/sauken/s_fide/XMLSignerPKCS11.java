@@ -1,4 +1,4 @@
-package com.sauken.ds_cod.xmlsignerpkcs11;
+package com.sauken.s_fide;
 
 import java.io.*;
 import java.security.*;
@@ -9,8 +9,7 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.*;
 import javax.xml.transform.stream.*;
 import org.w3c.dom.*;
-import javax.xml.crypto.*;
-import javax.xml.crypto.dom.*;
+
 import javax.xml.crypto.dsig.*;
 import javax.xml.crypto.dsig.dom.*;
 import javax.xml.crypto.dsig.keyinfo.*;

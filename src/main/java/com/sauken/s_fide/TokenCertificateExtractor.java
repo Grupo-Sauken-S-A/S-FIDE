@@ -1,4 +1,4 @@
-package com.sauken.ds_cod.tokencertextractor;
+package com.sauken.s_fide;
 
 import java.io.IOException;
 import java.security.KeyStore;
