@@ -46,7 +46,7 @@
 
  */
 
-package com.sauken.s_fide;
+package com.sauken.s_fide.XMLSignerPKCS11;
 
 import java.io.*;
 import java.security.*;

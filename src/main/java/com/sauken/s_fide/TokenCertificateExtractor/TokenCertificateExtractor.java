@@ -46,10 +46,12 @@
 
  */
 
-package com.sauken.s_fide;
+package com.sauken.s_fide.TokenCertificateExtractor;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -58,18 +60,28 @@ import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Collections;
+import java.util.Base64;
+import java.util.Enumeration;
 
-public class TokenSlotsView {
+import javax.security.auth.x500.X500Principal;
+
+public class TokenCertificateExtractor {
 
     public static void main(String[] args) {
         try {
-            if (args.length != 2) {
-                throw new IllegalArgumentException("Uso: java -jar TokenSlotsView.jar <Ruta de la biblioteca PKCS#11> <Contraseña del token>");
+            if (args.length != 3) {
+                throw new IllegalArgumentException("Uso: java -jar TokenCertificateExtractor.jar <Ruta de la biblioteca PKCS#11> <Contraseña del token> <Número de slot>");
             }
 
             String pkcs11LibraryPath = args[0];
             String password = args[1];
+            int slotNumber;
+
+            try {
+                slotNumber = Integer.parseInt(args[2]);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Error: El número de slot debe ser un número entero.");
+            }
 
             // Verificar la existencia del archivo
             File pkcs11Library = new File(pkcs11LibraryPath);
@@ -77,7 +89,7 @@ public class TokenSlotsView {
                 throw new IOException("El archivo de la biblioteca PKCS#11 no existe: " + pkcs11LibraryPath);
             }
 
-            readToken(pkcs11LibraryPath, password);
+            extractCertificate(pkcs11LibraryPath, password, slotNumber);
 
             // Si llegamos aquí, todo ha ido bien
             System.exit(0);
@@ -90,13 +102,17 @@ public class TokenSlotsView {
         }
     }
 
-    private static void readToken(String pkcs11LibraryPath, String password)
+    private static void extractCertificate(String pkcs11LibraryPath, String password, int slotNumber)
             throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
         // Configurar el proveedor PKCS#11
-        String config = "--name=CustomProvider\nlibrary=" + pkcs11LibraryPath;
+        String config = String.format(
+                "--name=CustomProvider\nlibrary=%s\nslot=%d",
+                pkcs11LibraryPath,
+                slotNumber
+        );
         Provider provider = Security.getProvider("SunPKCS11");
         if (provider == null) {
-            throw new RuntimeException("El proveedor SunPKCS11 no está disponible");
+            throw new RuntimeException("Proveedor SunPKCS11 no disponible");
         }
         provider = provider.configure(config);
         Security.addProvider(provider);
@@ -112,26 +128,55 @@ public class TokenSlotsView {
             throw new IOException("Error al cargar el KeyStore: " + e.getMessage(), e);
         }
 
-        // Enumerar y mostrar el contenido de los slots
-        int aliasNumber = 0;
-        for (String alias : Collections.list(keyStore.aliases())) {
-            System.out.println("  Slot: " + aliasNumber);
-            System.out.println(" Alias: " + alias);
-
-            if (keyStore.isKeyEntry(alias)) {
-                System.out.println("  Tipo: Clave Privada");
-            } else if (keyStore.isCertificateEntry(alias)) {
-                System.out.println("  Tipo: Certificado");
-                Certificate cert = keyStore.getCertificate(alias);
-                if (cert instanceof X509Certificate) {
-                    X509Certificate x509Cert = (X509Certificate) cert;
-                    System.out.println(" Sujeto: " + x509Cert.getSubjectDN());
-                } else {
-                    System.out.println(" Tipo de certificado: " + cert.getType());
-                }
+        // Buscar el certificado en el slot
+        Enumeration<String> aliases = keyStore.aliases();
+        if (aliases.hasMoreElements()) {
+            String alias = aliases.nextElement();
+            Certificate cert = keyStore.getCertificate(alias);
+            if (cert instanceof X509Certificate) {
+                X509Certificate x509Cert = (X509Certificate) cert;
+                printCertificateInfo(x509Cert, slotNumber);
+                exportToPEM(x509Cert);
+            } else {
+                System.out.println("El certificado en el slot " + slotNumber + " no es de tipo X.509");
             }
-            System.out.println();
-            aliasNumber++;
+        } else {
+            System.out.println("No se encontró ningún certificado en el slot " + slotNumber);
         }
+    }
+
+    private static void printCertificateInfo(X509Certificate cert, int slotNumber) {
+        System.out.println("Información del Certificado en el slot " + slotNumber + ":");
+        System.out.println("Sujeto: " + cert.getSubjectX500Principal());
+        System.out.println("Emisor: " + cert.getIssuerX500Principal());
+        System.out.println("Número de Serie: " + cert.getSerialNumber());
+        System.out.println("Válido desde: " + cert.getNotBefore());
+        System.out.println("Válido hasta: " + cert.getNotAfter());
+        System.out.println("Algoritmo de Firma: " + cert.getSigAlgName());
+    }
+
+    private static void exportToPEM(X509Certificate cert) throws CertificateException, IOException {
+        Base64.Encoder encoder = Base64.getMimeEncoder(64, System.lineSeparator().getBytes());
+        String certEncoded = encoder.encodeToString(cert.getEncoded());
+        String certPEM = "-----BEGIN CERTIFICATE-----" + System.lineSeparator() +
+                certEncoded + System.lineSeparator() +
+                "-----END CERTIFICATE-----";
+
+        String fileName = getFileNameFromSubject(cert.getSubjectX500Principal()) + ".pem";
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(fileName))) {
+            writer.write(certPEM);
+        }
+        System.out.println("Certificado exportado como: " + fileName);
+    }
+
+    private static String getFileNameFromSubject(X500Principal subject) {
+        String subjectString = subject.getName();
+        String[] parts = subjectString.split(",");
+        for (String part : parts) {
+            if (part.trim().startsWith("CN=")) {
+                return part.trim().substring(3).replaceAll("[^a-zA-Z0-9.-]", "_");
+            }
+        }
+        return "certificate";
     }
 }
