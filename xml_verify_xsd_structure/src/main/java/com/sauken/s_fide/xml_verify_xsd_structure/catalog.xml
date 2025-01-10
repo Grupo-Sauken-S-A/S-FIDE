@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE catalog PUBLIC "-//OASIS//DTD XML Catalogs V1.0//EN"
+    "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd">
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+    <!-- Mapeo para xmldsig-core-schema.xsd -->
+    <system systemId="http://www.w3.org/TR/xmldsig-core/xmldsig-core-schema.xsd"
+            uri="xmldsig-core-schema.xsd"/>
+    <uri name="http://www.w3.org/TR/xmldsig-core/xmldsig-core-schema.xsd"
+         uri="xmldsig-core-schema.xsd"/>
+</catalog>

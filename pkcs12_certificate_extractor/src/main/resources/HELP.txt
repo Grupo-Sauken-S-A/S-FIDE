@@ -1,0 +1,18 @@
+PKCS12CertificateExtractor - Programa que extrae la clave pública en formato .PEM de Certificado X.509 de un archivo PKCS12
+
+Uso: java -jar PKCS12CertificateExtractor.jar <Archivo PKCS#12> <Contraseña>
+
+Opciones:
+  -version     Muestra la versión del programa
+  -licencia    Muestra la información de licencia
+  -ayuda       Muestra este mensaje de ayuda
+
+Para usar el programa con un certificado PKCS12 (archivos .pfx o .p12):
+  java -jar PKCS12CertificateExtractor.jar <Archivo PKCS#12> <Contraseña>
+
+Ejemplo:
+   java -jar PKCS12CertificateExtractor.jar c:/carpeta/certificado.p12 "12345678"
+
+Notas:
+- La ruta de al certificado digital PKCS12 debe ser la ruta completa al archivo .pfx o .p12
+- La contraseña del certificado digital PKCS12 es la PIN de usuario de la firma digital

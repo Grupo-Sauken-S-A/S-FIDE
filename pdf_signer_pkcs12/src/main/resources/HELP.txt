@@ -1,0 +1,39 @@
+PDFSignerPKCS12 - Programa de Firma Digital de documentos PDF con certificados PKCS12
+
+Uso: java -jar pdf_signer_pkcs12.jar [opciones]
+
+Opciones:
+  -i, --input <archivo>        Archivo PDF a firmar (obligatorio)
+  -c, --certificate <archivo>  Archivo del certificado PKCS12 (obligatorio)
+  -p, --password <contraseña>  Contraseña del certificado PKCS12 (obligatorio)
+  -l, --lock <true|false>      Bloquear el documento después de firmar (opcional, default: false)
+  -x, --xpos <número>          Coordenada X para el campo de firma (opcional, default: 0)
+  -y, --ypos <número>          Coordenada Y para el campo de firma (opcional, default: 0)
+  -t, --text <texto>           Texto adicional para el campo de firma (opcional)
+
+Opciones Adicionales
+  -v, --version                Muestra la versión del programa
+  -h, --help                   Muestra esta ayuda
+  --license                    Muestra la licencia del programa
+
+ERRORES POSIBLES:
+    - Archivo PDF no existe o no es accesible
+    - Certificado PKCS12 no existe o no es accesible
+    - Contraseña del certificado incorrecta
+    - PDF está cifrado o bloqueado
+    - Coordenadas de firma fuera de los márgenes del documento
+    - Error en validación de firmas existentes
+    - Errores en el proceso de firma
+    - Parámetros de entrada inválidos o faltantes
+
+EJEMPLOS:
+    java -jar PDFSignerPKCS12.jar -i documento.pdf -c certificado.p12 -p miclave123 -l true -x 100 -y 100
+    java -jar PDFSignerPKCS12.jar --help
+
+    java -jar PDFSignerPKCS12.jar -i C:/S-FiDE/Ejemplo.pdf -c C:/S-FiDE/test/test-sauken.pfx -p W1far0CBA68 -l false -x 310 -y 55 -t "Certificado de Origen"
+    java -jar PDFSignerPKCS12.jar -i C:/S-FiDE/Ejemplo-ds.pdf -c C:/S-FiDE/test/test-sauken.pfx -p W1far0CBA68 -l true -x 40 -y 55
+
+NOTAS:
+    - El programa verificará y validará todas las firmas existentes antes de agregar una nueva
+    - Se firmará siempre el documento PDF de manera completa y la firma se aplicará en la primer página
+    - El documento resultante incluirá metadatos sobre la firma aplicada

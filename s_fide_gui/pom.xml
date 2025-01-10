@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.sauken.s_fide</groupId>
+        <artifactId>s_fide_parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>s_fide_gui</artifactId>
+    <name>S-FIDE GUI</name>
+    <description>Interfaz gráfica para S-FIDE (Sistema de Firma Digital Extendida)</description>
+
+    <properties>
+        <main.class>com.sauken.s_fide.s_fide_gui.SFideGUI</main.class>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <javafx.version>23.0.1</javafx.version>
+        <java.version>23</java.version>
+        <maven.compiler.source>23</maven.compiler.source>
+        <maven.compiler.target>23</maven.compiler.target>
+        <exec.maven.plugin.version>3.1.1</exec.maven.plugin.version>
+        <shade.plugin.version>3.6.0</shade.plugin.version>
+        <antrun.plugin.version>3.1.0</antrun.plugin.version>
+        <javafx.modules>javafx.controls,javafx.fxml,javafx.graphics</javafx.modules>
+    </properties>
+
+    <dependencies>
+        <!-- JavaFX Dependencies -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-base</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!-- Platform specific JavaFX dependencies -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>win</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>linux</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>mac</classifier>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>images/**</include>
+                    <include>**/*.jpg</include>
+                    <include>**/*.png</include>
+                    <include>**/*.gif</include>
+                    <include>**/*.ico</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>text/**</include>
+                    <include>**/*.txt</include>
+                    <include>**/*.properties</include>
+                    <include>**/*.xml</include>
+                    <include>**/*.css</include>
+                </includes>
+                <excludes>
+                    <exclude>images/**</exclude>
+                </excludes>
+            </resource>
+        </resources>
+
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.12.1</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <release>23</release>
+                    <encoding>UTF-8</encoding>
+                    <showWarnings>true</showWarnings>
+                    <showDeprecation>true</showDeprecation>
+                    <fork>true</fork>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <nonFilteredFileExtensions>
+                        <nonFilteredFileExtension>jpg</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>png</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>gif</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>ico</nonFilteredFileExtension>
+                    </nonFilteredFileExtensions>
+                    <detail>true</detail>
+                    <includeEmptyDirs>true</includeEmptyDirs>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>${shade.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>${main.class}</mainClass>
+                                    <manifestEntries>
+                                        <Multi-Release>true</Multi-Release>
+                                        <Add-Exports>
+                                            javafx.graphics/com.sun.javafx.tk=ALL-UNNAMED
+                                            javafx.controls/com.sun.javafx.scene.control=ALL-UNNAMED
+                                            javafx.graphics/com.sun.glass.ui=ALL-UNNAMED
+                                        </Add-Exports>
+                                        <Add-Opens>
+                                            java.base/java.lang=ALL-UNNAMED
+                                            javafx.graphics/com.sun.glass.ui=ALL-UNNAMED
+                                            javafx.controls/com.sun.javafx.scene.control=ALL-UNNAMED
+                                        </Add-Opens>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

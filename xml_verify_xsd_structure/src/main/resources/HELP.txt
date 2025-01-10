@@ -1,0 +1,13 @@
+XMLVerifyXSDStructure - Programa que verifica si un archivo XML cumple con las espeficiaciones contenidas en un archivo XSD
+
+Uso: java -jar XMLVerifyXSDStructure.jar [OPCIÓN] | <Archivo XML> [<Archivo XSD>]
+
+Opciones:
+  -version     Muestra la versión del programa
+  -licencia    Muestra la información de licencia
+  -ayuda       Muestra este mensaje de ayuda
+
+Para verificar la estructura XSD y firmas en un archivo XML:
+  java -jar XMLVerifyXSDStructure.jar <Archivo XML> [<Archivo XSD>]
+
+Si no se especifica un archivo XSD, se intentará usar el esquema referenciado en el documento XML.

@@ -1,38 +1,121 @@
-<!-- Root POM.xml -->
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.sauken.s_fide</groupId>
-    <artifactId>my-project</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
 
-    <modules>
-        <module>src/main/java/com/sauken/s_fide/TokenCertificateExtractor</module>
-        <module>src/main/java/com/sauken/s_fide/TokenSlotsView</module>
-        <module>src/main/java/com/sauken/s_fide/XMLSignerPKCS11</module>
-        <module>src/main/java/com/sauken/s_fide/XMLVerifySignatures</module>
-    </modules>
+    <groupId>com.sauken.s_fide</groupId>
+    <artifactId>s_fide_parent</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
 
     <properties>
         <maven.compiler.source>23</maven.compiler.source>
         <maven.compiler.target>23</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <javafx.version>23.0.1</javafx.version>
+        <java.version>23</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <file.encoding>UTF-8</file.encoding>
     </properties>
+
+    <modules>
+        <module>token_certificate_extractor</module>
+        <module>pkcs12_certificate_extractor</module>
+        <module>token_slots_view</module>
+        <module>xml_signer_pkcs11</module>
+        <module>xml_signer_pkcs12</module>
+        <module>xml_verify_signatures</module>
+        <module>xml_verify_xsd_structure</module>
+        <module>pdf_signer_pkcs11</module>
+        <module>pdf_signer_pkcs12</module>
+        <module>pdf_verify_signatures</module>
+        <module>s_fide_gui</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- JavaFX dependencies -->
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-controls</artifactId>
+                <version>${javafx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-fxml</artifactId>
+                <version>${javafx.version}</version>
+            </dependency>
+
+            <!-- Módulos internos -->
+            <dependency>
+                <groupId>com.sauken.s_fide</groupId>
+                <artifactId>token_certificate_extractor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sauken.s_fide</groupId>
+                <artifactId>pkcs12_certificate_extractor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sauken.s_fide</groupId>
+                <artifactId>token_slots_view</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sauken.s_fide</groupId>
+                <artifactId>xml_signer_pkcs11</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sauken.s_fide</groupId>
+                <artifactId>xml_signer_pkcs12</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sauken.s_fide</groupId>
+                <artifactId>pdf_signer_pkcs11</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sauken.s_fide</groupId>
+                <artifactId>pdf_signer_pkcs12</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sauken.s_fide</groupId>
+                <artifactId>xml_verify_signatures</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sauken.s_fide</groupId>
+                <artifactId>xml_verify_xsd_structure</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sauken.s_fide</groupId>
+                <artifactId>s_fide_gui</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <pluginManagement>
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.3.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.11.0</version>
+                    <configuration>
+                        <source>${maven.compiler.source}</source>
+                        <target>${maven.compiler.target}</target>
+                        <encoding>UTF-8</encoding>
+                        <showWarnings>true</showWarnings>
+                        <showDeprecation>true</showDeprecation>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

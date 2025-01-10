@@ -1,0 +1,33 @@
+XMLSignerPKCS11 - Programa de Firma Digital de archivos XML con Token
+
+Uso: java -jar XMLSignerPKCS11.jar [OPCIÓN] | <Ruta de la biblioteca PKCS#11> <Contraseña del token> <Número de slot> <Archivo XML> <Elemento XML a firmar>
+
+Opciones:
+  -version     Muestra la versión del programa
+  -licencia    Muestra la información de licencia
+  -ayuda       Muestra este mensaje de ayuda
+
+Para firmar un documento XML:
+  java -jar XMLSignerPKCS11.jar <Ruta de la biblioteca PKCS#11> <Contraseña del token> <Número de slot> <Archivo XML> <Elemento XML a firmar>
+donde:
+    <Biblioteca PKCS#11>        Ruta a la librería PKCS#11 de acceso al token que contiene el certificado digital X.509
+    <Contraseña>                Contraseña de acceso al token usando PKCS#11
+    <Número de slot>            Slot en donde se encuentra el certificado X.509 que se usará para firmar digitalmente
+    <Archivo XML>               Archivo XML a firmar
+    <Elemento XML a firmar>     Párrafo o elemento a firmar (vacío "" para firmar todo el documento)
+
+Ejemplos:
+  java -jar XMLSignerPKCS11.jar /usr/lib/opensc-pkcs11.so "token_password" 0 documento.xml ""
+  java -jar XMLSignerPKCS11.jar c:/WINDOWS/system32/eTPKCS11.dll "token_password" 0 certificadoorigen.xml "COD"
+
+Notas:
+- Verifique previamente en que slot se encuentra el certificado X.509 que usará para firmar digitalmente el documento XML usando la aplicación "TokenSlotsView"
+- El párrafo o elemento XML a firmar es opcional. Si se deja vacío (""), se firmará todo el documento, de lo contrario se firmará el párrafo con el elemento XML especificado
+  Si el elemento XML es "COD", se está firmando un Certificado de Origen como Exportador
+  Si el elemento XML es "CODEH", se está firmando un Certificado de Origen como Funcionario
+  Si el elemento XML es "DJO", se está firmando una Declaración Jurada de Origen como Exportador
+  Si el elemento XML es "DJOEH", se está firmando una Declaración Jurada de Origen como Funcionario
+- El nombre del elemento XML a firmar es sensitivo a mayúsculas y minúsculas, en caso de Certificados de Origen Digitales, siempre use mayúsculas. Este nombre de elemento podrá ir entre comillas o no.
+- El archivo firmado se guardará con el sufijo "-signed" antes de la extensión.
+- Asegúrese de tener los permisos necesarios para acceder al driver del token PKCS#11 (permisos de lectura y ejecución)
+- No se equivoque al poner la contraseña reiteradamente (nunca más de 10 veces) porque el certificado X.509 del token puede quedar inhabilitado para firmar documentos

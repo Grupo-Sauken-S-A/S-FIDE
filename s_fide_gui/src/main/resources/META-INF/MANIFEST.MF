@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Main-Class: com.sauken.s_fide.s_fide_gui.SFideGUI
+Class-Path: lib/javafx-controls-23.0.1.jar 
+ lib/javafx-fxml-23.0.1.jar 
+ lib/javafx-base-23.0.1.jar 
+ lib/javafx-graphics-23.0.1.jar
+Implementation-Title: S-FIDE GUI
+Implementation-Version: 1.0.0-BETA
+Implementation-Vendor: Grupo Sauken S.A.
+Built-By: Grupo Sauken S.A.
+Build-Jdk: 23.0.1
+Created-By: Apache Maven
+Built-By: ${user.name}
+Built-Date: ${maven.build.timestamp}
