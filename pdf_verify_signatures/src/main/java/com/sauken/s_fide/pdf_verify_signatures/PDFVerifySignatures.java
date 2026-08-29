@@ -65,7 +65,7 @@ import java.nio.charset.StandardCharsets;
 
 public class PDFVerifySignatures {
     private static final Logger LOGGER = Logger.getLogger(PDFVerifySignatures.class.getName());
-    private static final String VERSION = "S-FIDE PDFVerifySignatures v1.0.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE PDFVerifySignatures v1.1.0-beta.1 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT;
     private static final String HELP_TEXT;
     private static final String SEPARATOR = "\n----------------------------------------\n";
@@ -252,11 +252,13 @@ public class PDFVerifySignatures {
         System.out.println("Algoritmo de firma: " + getSignatureAlgorithmName(signingCert));
 
         try {
-            X509Certificate[] certChain = (X509Certificate[]) pkcs7.getSignCertificateChain();
+            java.security.cert.Certificate[] certChain = pkcs7.getSignCertificateChain();
             if (certChain != null && certChain.length > 1) {
                 System.out.println("\nCadena de certificación:");
-                for (X509Certificate cert : certChain) {
-                    System.out.println(" - " + extractCN(cert.getSubjectX500Principal().getName()));
+                for (java.security.cert.Certificate cert : certChain) {
+                    if (cert instanceof X509Certificate x509Cert) {
+                        System.out.println(" - " + extractCN(x509Cert.getSubjectX500Principal().getName()));
+                    }
                 }
             }
         } catch (Exception e) {

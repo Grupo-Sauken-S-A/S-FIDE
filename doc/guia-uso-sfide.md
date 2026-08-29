@@ -1,7 +1,8 @@
-# Guía Completa de Usuario - S-FiDE: Sistema de Firma Digital Extendida - v1.0.0
+# Guía Completa de Usuario - S-FiDE: Sistema de Firma Digital Extendida - v1.1.0
 
 ## Índice
 
+0. [Integración desde otras aplicaciones (uso por línea de comandos)](#integración-desde-otras-aplicaciones-uso-por-línea-de-comandos)
 1. [PDFSignerPKCS11](#pdfsignerpkcs11)
 2. [PDFSignerPKCS12](#pdfsignerpkcs12)
 3. [PDFVerifySignatures](#pdfverifysignatures)
@@ -12,6 +13,63 @@
 8. [XMLSignerPKCS12](#xmlsignerpkcs12)
 9. [XMLVerifySignatures](#xmlverifysignatures)
 10. [XMLVerifyXSDStructure](#xmlverifyxsdstructure)
+
+---
+
+## Integración desde otras aplicaciones (uso por línea de comandos)
+
+Todos los módulos de S-FiDE son procesos externos independientes: se invocan como `java -jar <Módulo>.jar <argumentos>` desde cualquier lenguaje o plataforma capaz de ejecutar un proceso y leer su salida. No hace falta integrar ninguna librería Java ni enlazar código — solo tener un runtime de Java instalado y los archivos `.jar` de los módulos que se necesiten.
+
+### Contrato común a todos los módulos
+
+- **Código de salida (exit code):** `0` si la operación fue exitosa, `1` si hubo un error. Es el único valor imprescindible para saber si la operación resultó bien; no hace falta parsear la salida para eso.
+- **Salida estándar (stdout):** resultado normal de la operación (por ejemplo, la ruta del archivo firmado, o los datos de un certificado extraído).
+- **Salida de error (stderr):** mensajes de error en texto simple y controlado — nunca un stack trace de Java.
+- **Codificación:** toda la entrada y salida está en **UTF-8**. Si la aplicación integradora no fuerza UTF-8 al leer stdout/stderr, los acentos y caracteres especiales de nombres, rutas o mensajes pueden verse incorrectamente.
+
+### Ejemplo recomendado en Windows (.bat)
+
+Patrón recomendado para invocar un módulo desde otra aplicación en Windows: redirigir stdout y stderr a archivos separados y capturar el código de salida en uno tercero, para que la aplicación integradora los lea después de que el proceso termina.
+
+```bat
+@echo off
+set SFIDE=C:\ruta\a\S-FiDE
+C:
+cd %SFIDE%
+set JAVA_HOME=%SFIDE%\openjdk-23.0.1\windows-x64
+set PATH=%JAVA_HOME%\bin;%PATH%
+
+%JAVA_HOME%\bin\java -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -jar PKCS12CertificateExtractor.jar "C:\ruta\al\certificado.pfx" "<Contraseña>" 1>"C:\ruta\temporal\salida.txt" 2>"C:\ruta\temporal\error.txt"
+
+set RESULT=%ERRORLEVEL%
+echo %RESULT% > "C:\ruta\temporal\result.txt"
+exit /b %RESULT%
+```
+
+Notas:
+- `1>archivo` redirige stdout y `2>archivo` redirige stderr a archivos separados.
+- `%ERRORLEVEL%` queda en `0` si la operación fue exitosa y en `1` si fue errónea — es el código de salida del proceso de Java, sin transformación alguna.
+- Los archivos de salida quedan en UTF-8; léalos como tales desde la aplicación integradora.
+- Se recomienda incluir siempre `-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8`: fuerzan la codificación UTF-8 tanto de la salida como de argumentos y rutas con acentos o caracteres especiales.
+- Este mismo patrón sirve para **cualquier** módulo de S-FiDE — solo cambia el nombre del `.jar` y sus argumentos.
+
+### Ejemplo equivalente en Linux/macOS (shell)
+
+```bash
+#!/bin/sh
+SFIDE=/opt/S-FiDE
+cd "$SFIDE"
+JAVA_HOME="$SFIDE/openjdk-23.0.1/linux-x64"   # en macOS: "$SFIDE/openjdk-23.0.1/macos"
+PATH="$JAVA_HOME/bin:$PATH"
+
+"$JAVA_HOME/bin/java" -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 \
+    -jar PKCS12CertificateExtractor.jar "/ruta/al/certificado.pfx" "<Contraseña>" \
+    >"/tmp/salida.txt" 2>"/tmp/error.txt"
+
+RESULT=$?
+echo $RESULT > "/tmp/result.txt"
+exit $RESULT
+```
 
 ---
 

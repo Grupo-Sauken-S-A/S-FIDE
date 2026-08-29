@@ -1,0 +1,30 @@
+# Catálogo de perfiles de tokens PKCS#11 del ecosistema de firma digital
+# argentino (AC-ONTI). Fuente: documentación oficial SIU, AIF y fabricantes
+# (ver doc/ para el detalle completo con certificaciones NIST/FIPS).
+#
+# Este archivo es la ÚNICA fuente de verdad para la tabla de drivers: se
+# copia como recurso a cada módulo que la necesita (token_slots_view,
+# token_certificate_extractor, xml_signer_pkcs11, pdf_signer_pkcs11,
+# s_fide_gui). Si se actualiza, alcanza con editar este archivo y recompilar.
+#
+# Formato (una línea por perfil, separado por "|", sin escapar nada):
+#   marca|modelo|estrategia_hash|estado|ruta_windows|ruta_linux|ruta_macos|nombres_de_archivo_reconocidos(coma)
+#
+# estrategia_hash: "interno" (token expone CKM_SHA256_RSA_PKCS) |
+#                  "externo" (token solo expone CKM_RSA_PKCS, requiere DigestInfo armado por software) |
+#                  "externo-sin-confirmar" (se asume externo pero no está confirmado contra hardware real) |
+#                  "desconocido"
+# estado: recomendación de uso según AIF/SCBA (informativo, no bloquea nada)
+#
+# IMPORTANTE: esto es solo un hint de UX para autodetección y ayuda de
+# selección de driver. El código de firma siempre reintenta en tiempo de
+# ejecución (mecanismo combinado primero, hash externo como fallback) sin
+# confiar ciegamente en esta tabla, porque el nombre de archivo puede cambiar
+# entre versiones de middleware sin previo aviso.
+
+SafeNet/Thales|eToken 5110 / 5110+|interno|vigente - recomendado por AIF (cert. NIST #4480 activo, Nivel 3)|C:\Windows\System32\eTPKCS11.dll|/usr/lib/libeToken.so|/usr/local/lib/libeTPkcs11.dylib|eTPKCS11.dll,libeToken.so,libIDPrimePKCS11.so,libeTPkcs11.so,libeTPkcs11.dylib
+Feitian|ePass2003 / ePass2003Auto|externo|vigente - reemplazo estándar SCBA|C:\Windows\System32\eps2003csp11.dll|/usr/lib/libcastle.so.1.0.0|/usr/local/lib/libcastle.1.0.0.dylib|eps2003csp11.dll,eps2003csp1164.dll,libcastle.so.1.0.0,libeps2003_pkcs11.so,libePass2003.so,libcastle.1.0.0.dylib
+mToken CryptoID (Century Longmai / Macroseguridad)|nueva - FIPS 140-3 (modelo gris, cert. #4845 activo)|externo-sin-confirmar|válido si se exige el modelo FIPS 140-3 (no recomendado el 140-2)|C:\Program Files (x86)\LMCryptoIDE\lm_cryptoide_pkcs11.dll|/opt/CryptoIDFipsUser/x64/lib/liblm_cryptoide_pkcs11.so|/opt/CryptoIDE/lib/libcryptoide_pkcs11.dylib|lm_cryptoide_pkcs11.dll,liblm_cryptoide_pkcs11.so
+mToken CryptoID (Century Longmai / Macroseguridad)|vieja - FIPS 140-2 (cert. #2626, histórico)|externo-sin-confirmar|discontinuado - no recomendado para compra (AIF: no usar después de 2024-12-30)|C:\Windows\System32\CryptoIDA_pkcs11.dll|/usr/lib/libcryptoide_pkcs11.so|/Applications/CryptoIDEUserTools.app/Contents/lib/mac/libcryptoide_pkcs11.dylib|CryptoIDA_pkcs11.dll,cryptoide_pkcs11.dll,libcryptoide_pkcs11.so,libcryptoide_pkcs11.dylib
+Athena|IDProtect / ASECard|desconocido|discontinuado - en retiro por Resolución SC Nº 1682/24|C:\Windows\System32\asepkcs.dll|/usr/lib/x64-athena/libASEP11.so|/Library/Application Support/Athena/libASEP11.dylib|asepkcs.dll,libASEP11.so,libASEP11.dylib
+OpenSC|genérico (respaldo, útil sobre todo para ePass2003)|depende del token subyacente|driver de respaldo, no es una marca de token en sí misma|C:\Windows\System32\opensc-pkcs11.dll|/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so|/Library/OpenSC/lib/opensc-pkcs11.so|opensc-pkcs11.so,opensc-pkcs11.dll,onepin-opensc-pkcs11.so

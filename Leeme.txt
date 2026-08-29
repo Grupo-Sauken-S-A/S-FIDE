@@ -1,24 +1,38 @@
-S-FiDE v1.0.0 - Leeme primero:
+S-FiDE v1.1.0-beta.1 - Leeme primero:
 
-- Si está instalando S-FiDE en una carpeta o unidad distinta a C:\S-FiDE\ debe editar con bloc de notas
-  el archivo "SFide-GUI.bat" y cambiar los valores de SFIDE=C:\S-FiDE y la unidad C: si fuera necesario
-
-- Si está ejecutando S-FiDE en GNU/Linux o Apple/OS debe editar "SFide-GUI.sh" para colocar los valores
-  adecuados o bien realizar en un enlace simbólico de la carpeta de instalación a /opt/
+- "SFide-GUI.bat" y "SFide-GUI.sh" detectan solos la carpeta y la unidad/punto de montaje donde están
+  instalados (no hace falta editarlos) - puede copiar la carpeta completa de S-FiDE a cualquier ubicación,
+  incluyendo un pendrive u otro medio removible, y ejecutarla desde ahí en cualquier PC sin instalar nada
 
 - Puede configurar valores por defecto editando con bloc de notas el archivo "sfide-defaults.properties"
-  tomando como base el ejemplo "sfide-defaults.demo.properties". Estos valores por defecto se sobre-
-  escribirán con los actuales al salir del sistema
+  tomando como base el ejemplo "sfide-defaults.demo.properties". Estos valores por defecto se actualizan
+  automáticamente a medida que los usa desde la GUI, no solo al cerrar el programa
 
-- OpenJAVA 23 sólo está disponible en sistemas operativos de 64 bits. En caso de usar Windows verfique 
-  que sea de 64 bits (Atención: Windows 7 suele ser de 32 bits, al igual que algunas versiones de Windows 10)
+- Se requiere un sistema operativo de 64 bits. OpenJDK 23 no es compatible con sistemas de 32 bits ni con
+  versiones de Windows anteriores a Windows 10
 
-- Las entradas y salidas de los procesos están codificadas en UTF-8 (si ejecuta la aplicaciones sobre una
+- Las entradas y salidas de los procesos están codificadas en UTF-8 (si ejecuta las aplicaciones sobre una
   línea de comandos de Windows, las salidas se verán con caracteres extraños, ya que es UTF-8). Si está
-  integrando S-FiDE en su propia aplicación, no se olvide de realizar las conversiones a UTF-8
+  integrando S-FiDE en su propia aplicación, no se olvide de realizar las conversiones a UTF-8. En
+  "doc/guia-uso-sfide.md" hay una sección específica ("Integración desde otras aplicaciones") con ejemplos
+  de invocación por línea de comandos, redirección de salida y captura de código de resultado
+
+- Novedades de la versión 1.1.0:
+  - Los módulos que trabajan con tokens PKCS#11 ahora reconocen la marca/modelo según el driver
+    seleccionado y sugieren la ruta típica por marca/modelo y sistema operativo. En la GUI use el botón
+    "Detectar automáticamente"; por línea de comandos use el parámetro "-listar-drivers" (en
+    PDFSignerPKCS11 es "--listar-drivers")
+  - Compatibilidad ampliada con tokens que no exponen el mecanismo de firma combinado habitual (por
+    ejemplo ePass2003): XMLSignerPKCS11 y PDFSignerPKCS11 ahora prueban automáticamente un mecanismo
+    alternativo si el primero falla. Esta compatibilidad todavía está en validación con hardware real en
+    esta versión beta
+  - En Windows están disponibles además los módulos XMLSignerWindowsCSP y PDFSignerWindowsCSP, que firman
+    usando el almacén de certificados de Windows (CSP/KSP) en vez de PKCS#11 - útil si su certificado ya
+    aparece en el Administrador de certificados de Windows. Son opcionales y exclusivos de Windows; en la
+    GUI aparecen como pestañas adicionales solo cuando corre en ese sistema operativo
 
 - En "test" tiene documentos de ejemplo para firmar y validar. En "xsd" tiene ejemplos de archivos XSD para
-  validar. En "doc" encontrará una guía de uso de cada una de las aplicaciones
+  validar. En "doc" encontrará una guía de uso de cada una de las aplicaciones ("guia-uso-sfide.md")
 
 - Para la validación de firmas digitales como para validación de esquema contra un archivo XSD, es conveniente
   disponer de una conexión a Internet para lograr una validación completa

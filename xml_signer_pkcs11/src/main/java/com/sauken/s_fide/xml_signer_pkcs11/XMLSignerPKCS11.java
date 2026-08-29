@@ -73,7 +73,7 @@ import javax.xml.crypto.dsig.spec.*;
 import javax.xml.xpath.*;
 
 public class XMLSignerPKCS11 {
-    private static final String VERSION = "S-FIDE XMLSignerPKCS11 v1.0.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE XMLSignerPKCS11 v1.1.0-beta.1 - Grupo Sauken S.A.";
     private static PrintStream errorStream;
     private static PrintStream outputStream;
 
@@ -119,6 +119,9 @@ public class XMLSignerPKCS11 {
                     return;
                 case "-ayuda":
                     showHelp();
+                    return;
+                case "-listar-drivers":
+                    outputStream.println(TokenProfileCatalog.formatTableForCurrentOs());
                     return;
                 default:
                     throw new IllegalArgumentException("Argumento no reconocido: " + args[0]);
@@ -255,7 +258,7 @@ public class XMLSignerPKCS11 {
             PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
             X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
 
-            processAndSignDocument(xmlFile, uri, privateKey, cert);
+            processAndSignDocument(xmlFile, uri, privateKey, cert, provider);
 
         } catch (Exception e) {
             String errorMessage = "Error en el proceso de firma";
@@ -275,7 +278,8 @@ public class XMLSignerPKCS11 {
         }
     }
 
-    private static void processAndSignDocument(String xmlFile, String uri, PrivateKey privateKey, X509Certificate cert) {
+    private static void processAndSignDocument(String xmlFile, String uri, PrivateKey privateKey, X509Certificate cert,
+                                                Provider pkcs11Provider) {
         try {
             DocumentBuilderFactory dbf = createSecureDocumentBuilderFactory();
             String xmlDeclaration = null;
@@ -295,7 +299,7 @@ public class XMLSignerPKCS11 {
                 throw new IllegalArgumentException("El elemento o párrafo XML especificado no existe en el documento XML.");
             }
 
-            applySignature(doc, uri, privateKey, cert);
+            applySignature(doc, uri, privateKey, cert, pkcs11Provider);
             saveSignedDocument(doc, xmlFile, xmlDeclaration);
 
         } catch (Exception e) {
@@ -312,9 +316,11 @@ public class XMLSignerPKCS11 {
         }
     }
 
-    private static void applySignature(Document doc, String uri, PrivateKey privateKey, X509Certificate cert)
+    private static void applySignature(Document doc, String uri, PrivateKey privateKey, X509Certificate cert,
+                                        Provider pkcs11Provider)
             throws Exception {
-        XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM");
+        Pkcs11FallbackProvider fallbackProvider = new Pkcs11FallbackProvider(pkcs11Provider);
+        XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM", fallbackProvider);
 
         List<Transform> transforms = new ArrayList<>();
         transforms.add(fac.newTransform(Transform.ENVELOPED, (TransformParameterSpec) null));

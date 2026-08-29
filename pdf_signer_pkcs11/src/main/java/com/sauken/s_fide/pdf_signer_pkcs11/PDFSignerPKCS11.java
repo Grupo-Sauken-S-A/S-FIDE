@@ -72,7 +72,7 @@ import java.util.logging.Logger;
 public class PDFSignerPKCS11 {
     private static final Logger logger = Logger.getLogger(PDFSignerPKCS11.class.getName());
     private static final String OUTPUT_SUFFIX = "-signed";
-    private static final String VERSION = "S-FIDE PDFSignerPKCS11 v1.0.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE PDFSignerPKCS11 v1.1.0-beta.1 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT = readResourceFile("/LICENSE.txt");
     private static final String HELP_TEXT = readResourceFile("/HELP.txt");
     private static PrintStream errorStream;
@@ -136,6 +136,7 @@ public class PDFSignerPKCS11 {
             case "-v", "--version" -> System.out.println(VERSION);
             case "-h", "--help" -> showHelp();
             case "--license" -> System.out.println(LICENSE_TEXT);
+            case "--listar-drivers" -> System.out.println(TokenProfileCatalog.formatTableForCurrentOs());
             default -> {
                 errorStream.println("Error: Argumento no reconocido: " + arg);
                 showHelp();
@@ -410,11 +411,7 @@ public class PDFSignerPKCS11 {
                     signer.setCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
                 }
 
-                IExternalSignature signature = new PrivateKeySignature(
-                        privateKey,
-                        DigestAlgorithms.SHA256,
-                        provider.getName()
-                );
+                Pkcs11ExternalSignature signature = new Pkcs11ExternalSignature(privateKey, provider);
 
                 signer.signDetached(
                         new BouncyCastleDigest(),
@@ -426,6 +423,10 @@ public class PDFSignerPKCS11 {
                         0,
                         PdfSigner.CryptoStandard.CMS
                 );
+
+                if (signature.lastSignUsedExternalHash()) {
+                    System.out.println("Mecanismo de firma: hash SHA-256 externo (token sin CKM_SHA256_RSA_PKCS)");
+                }
             } catch (Exception e) {
                 Files.deleteIfExists(tempPath);
                 throw new IOException("Error: Error al firmar el documento");

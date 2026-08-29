@@ -1,6 +1,7 @@
 package com.sauken.s_fide.s_fide_gui.utils;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.Properties;
 
@@ -24,7 +25,7 @@ public class ConfigurationManager {
     private void loadConfiguration() {
         Path configPath = Paths.get(CONFIG_FILE);
         if (Files.exists(configPath)) {
-            try (InputStream input = Files.newInputStream(configPath)) {
+            try (Reader input = new InputStreamReader(Files.newInputStream(configPath), StandardCharsets.UTF_8)) {
                 properties.load(input);
                 System.out.println("Configuración cargada exitosamente desde: " + CONFIG_FILE);
             } catch (IOException e) {
@@ -38,7 +39,7 @@ public class ConfigurationManager {
     }
 
     private void createDefaultConfiguration() {
-        try (OutputStream output = Files.newOutputStream(Paths.get(CONFIG_FILE))) {
+        try (Writer output = new OutputStreamWriter(Files.newOutputStream(Paths.get(CONFIG_FILE)), StandardCharsets.UTF_8)) {
             properties.setProperty("pkcs11.library.path", "");
             properties.setProperty("pkcs11.slot.number", "");
             properties.setProperty("pkcs12.file.path", "");
@@ -51,7 +52,7 @@ public class ConfigurationManager {
     }
 
     public void saveConfiguration() {
-        try (OutputStream output = Files.newOutputStream(Paths.get(CONFIG_FILE))) {
+        try (Writer output = new OutputStreamWriter(Files.newOutputStream(Paths.get(CONFIG_FILE)), StandardCharsets.UTF_8)) {
             properties.store(output, "Configuración de S-FIDE GUI");
             System.out.println("Configuración guardada exitosamente en: " + CONFIG_FILE);
         } catch (IOException e) {

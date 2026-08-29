@@ -65,7 +65,7 @@ import java.util.Optional;
 import javax.security.auth.x500.X500Principal;
 
 public class PKCS12CertificateExtractor {
-    private static final String VERSION = "S-FIDE PKCS12CertificateExtractor v1.0.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE PKCS12CertificateExtractor v1.1.0-beta.1 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT = readResourceFile("/LICENSE.txt");
     private static final String HELP_TEXT = readResourceFile("/HELP.txt");
     private static PrintStream errorStream;

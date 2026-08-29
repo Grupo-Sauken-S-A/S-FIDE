@@ -1,0 +1,31 @@
+PDFSignerWindowsCSP - Programa de Firma Digital de documentos PDF usando el almacén de certificados de Windows (CSP/KSP)
+
+Este módulo es EXCLUSIVO de Windows. Es una alternativa a PDFSignerPKCS11 para
+certificados que ya están disponibles en el almacén "Personal" (Windows-MY) del
+usuario actual, sin necesidad de configurar una librería PKCS#11.
+
+Uso: java -jar pdf_signer_windows_csp.jar [opciones]
+
+Opciones:
+  -i, --input <archivo>        Archivo PDF a firmar (obligatorio)
+  -a, --alias <texto>          Alias exacto o fragmento del Subject CN del certificado (obligatorio)
+  -k, --lock <true|false>      Bloquear el documento después de firmar (opcional, default: false)
+  -x, --xpos <número>          Coordenada X para el campo de firma (opcional, default: 0)
+  -y, --ypos <número>          Coordenada Y para el campo de firma (opcional, default: 0)
+  -t, --text <texto>           Texto adicional para el campo de firma (opcional)
+
+Opciones Adicionales:
+  -v, --version                 Muestra la versión del programa
+  -h, --help                    Muestra esta ayuda
+  --license                     Muestra la licencia del programa
+  --listar-certificados         Lista los certificados disponibles en el almacén de Windows (alias y Subject)
+
+Ejemplo:
+  java -jar pdf_signer_windows_csp.jar -i documento.pdf -a "Juan Carlos Rios" -x 50 -y 50
+
+Notas:
+- Si el alias/fragmento indicado coincide con más de un certificado, el programa no firma y pide ser más específico
+- El acceso a la clave privada lo administra Windows; según el driver del token, puede aparecer un diálogo del
+  sistema operativo pidiendo el PIN al momento de firmar
+- El archivo PDF firmado se guardará con el sufijo "-signed" antes de la extensión
+- Este módulo no reemplaza a PDFSignerPKCS11: es una alternativa a elección del usuario

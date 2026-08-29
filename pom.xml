@@ -6,7 +6,7 @@
 
     <groupId>com.sauken.s_fide</groupId>
     <artifactId>s_fide_parent</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0-beta.1</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -15,6 +15,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>23.0.1</javafx.version>
         <java.version>23</java.version>
+        <bouncycastle.version>1.85</bouncycastle.version>
+        <itext.version>8.0.5</itext.version>
+        <xmlsec.version>4.0.4</xmlsec.version>
+        <slf4j.version>2.0.17</slf4j.version>
+        <logback.version>1.5.18</logback.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <file.encoding>UTF-8</file.encoding>
@@ -31,6 +36,8 @@
         <module>pdf_signer_pkcs11</module>
         <module>pdf_signer_pkcs12</module>
         <module>pdf_verify_signatures</module>
+        <module>xml_signer_windows_csp</module>
+        <module>pdf_signer_windows_csp</module>
         <module>s_fide_gui</module>
     </modules>
 
@@ -92,6 +99,16 @@
             <dependency>
                 <groupId>com.sauken.s_fide</groupId>
                 <artifactId>xml_verify_xsd_structure</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sauken.s_fide</groupId>
+                <artifactId>xml_signer_windows_csp</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sauken.s_fide</groupId>
+                <artifactId>pdf_signer_windows_csp</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -53,6 +53,7 @@ package com.sauken.s_fide.s_fide_gui;
 import com.sauken.s_fide.s_fide_gui.utils.GUIUtils;
 import com.sauken.s_fide.s_fide_gui.validators.ModuleValidator;
 import com.sauken.s_fide.s_fide_gui.utils.ConfigurationManager;
+import com.sauken.s_fide.s_fide_gui.utils.TokenProfileCatalog;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.animation.PauseTransition;
@@ -89,7 +90,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class SFideGUI extends Application {
-    private static final String VERSION = "S-FIDE GUI v1.0.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE GUI v1.1.0-beta.1 - Grupo Sauken S.A.";
     private static final String CSS_FILE = "css/styles.css";
     private static final String HELP_FILE = "text/HELP.txt";
     private static final String LICENSE_FILE = "text/LICENSE.txt";
@@ -550,6 +551,82 @@ public class SFideGUI extends Application {
         return button;
     }
 
+    private HBox createDriverSelectorBox(TextField pkcs11LibPathField) {
+        ComboBox<TokenProfileCatalog.TokenProfile> combo = new ComboBox<>();
+        combo.setPromptText("Marca/modelo de token...");
+        combo.setPrefWidth(280);
+        combo.getItems().addAll(TokenProfileCatalog.getProfiles());
+        combo.setCellFactory(list -> new ListCell<>() {
+            @Override
+            protected void updateItem(TokenProfileCatalog.TokenProfile item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.descripcion());
+            }
+        });
+        combo.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(TokenProfileCatalog.TokenProfile item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.descripcion());
+            }
+        });
+        combo.setOnAction(e -> {
+            TokenProfileCatalog.TokenProfile selected = combo.getValue();
+            if (selected != null) {
+                String path = selected.rutaParaSistemaActual();
+                if (path != null && !path.isBlank()) {
+                    Platform.runLater(() -> pkcs11LibPathField.setText(path));
+                    configManager.setDefaultPKCS11LibPath(path);
+                }
+            }
+        });
+
+        Button detectButton = new Button("Detectar automáticamente");
+        detectButton.setTooltip(new Tooltip(
+                "Busca en las rutas típicas cuál driver PKCS#11 está instalado en este equipo"));
+        detectButton.setOnAction(e -> Platform.runLater(() -> detectDriver(pkcs11LibPathField, combo)));
+
+        HBox box = new HBox(10, combo, detectButton);
+        box.setAlignment(Pos.CENTER_LEFT);
+        return box;
+    }
+
+    private void detectDriver(TextField pkcs11LibPathField, ComboBox<TokenProfileCatalog.TokenProfile> combo) {
+        List<TokenProfileCatalog.TokenProfile> found = new java.util.ArrayList<>();
+        for (TokenProfileCatalog.TokenProfile profile : TokenProfileCatalog.getProfiles()) {
+            String path = profile.rutaParaSistemaActual();
+            if (path != null && !path.isBlank() && new File(path).exists()) {
+                found.add(profile);
+            }
+        }
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Detección automática de driver");
+
+        if (found.isEmpty()) {
+            alert.setHeaderText("No se encontró ningún driver conocido en su ruta típica");
+            alert.setContentText("Puede seleccionar la marca/modelo manualmente en la lista, "
+                    + "o usar \"Examinar...\" para indicar la ruta.");
+        } else if (found.size() == 1) {
+            TokenProfileCatalog.TokenProfile profile = found.get(0);
+            combo.setValue(profile);
+            pkcs11LibPathField.setText(profile.rutaParaSistemaActual());
+            configManager.setDefaultPKCS11LibPath(profile.rutaParaSistemaActual());
+            alert.setHeaderText("Detectado: " + profile.descripcion());
+            alert.setContentText("Estado: " + profile.estado()
+                    + "\nEstrategia de hash: " + profile.estrategiaHash());
+        } else {
+            StringBuilder sb = new StringBuilder("Se encontraron varios drivers instalados en este equipo:\n\n");
+            for (TokenProfileCatalog.TokenProfile p : found) {
+                sb.append("- ").append(p.descripcion()).append("\n");
+            }
+            sb.append("\nSeleccione manualmente cuál usar en la lista desplegable.");
+            alert.setHeaderText("Se encontró más de un driver instalado");
+            alert.setContentText(sb.toString());
+        }
+        alert.showAndWait();
+    }
+
     private Button createExecuteButton() {
         Button button = new Button("Ejecutar");
         button.setDefaultButton(true);
@@ -993,6 +1070,13 @@ public class SFideGUI extends Application {
                 createPDFVerifySignaturesTab()
         );
 
+        if (isWindowsOS()) {
+            tabPane.getTabs().addAll(
+                    createXMLSignerWindowsCSPTab(),
+                    createPDFSignerWindowsCSPTab()
+            );
+        }
+
         tabPane.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldTab, newTab) -> {
                     if (newTab != null) {
@@ -1025,8 +1109,9 @@ public class SFideGUI extends Application {
         }));
 
         addToGrid(grid, 0, "Biblioteca PKCS#11:", pkcs11LibPath, browseLib);
-        addToGrid(grid, 1, "Contraseña:", password, null);
-        addExecuteButton(grid, execute, 2);
+        grid.add(createDriverSelectorBox(pkcs11LibPath), 1, 1);
+        addToGrid(grid, 2, "Contraseña:", password, null);
+        addExecuteButton(grid, execute, 3);
 
         VBox content = createTabContent(
                 "Este módulo permite visualizar los slots disponibles en un token criptográfico.",
@@ -1063,9 +1148,10 @@ public class SFideGUI extends Application {
         }));
 
         addToGrid(grid, 0, "Biblioteca PKCS#11:", pkcs11LibPath, browseLib);
-        addToGrid(grid, 1, "Contraseña:", password, null);
-        addToGrid(grid, 2, "Número de Slot:", slotNumber, null);
-        addExecuteButton(grid, execute, 3);
+        grid.add(createDriverSelectorBox(pkcs11LibPath), 1, 1);
+        addToGrid(grid, 2, "Contraseña:", password, null);
+        addToGrid(grid, 3, "Número de Slot:", slotNumber, null);
+        addExecuteButton(grid, execute, 4);
 
         VBox content = createTabContent(
                 "Este módulo permite extraer certificados digitales almacenados en un token criptográfico y generar un archivo .PEM con los mismos.",
@@ -1141,11 +1227,12 @@ public class SFideGUI extends Application {
         }));
 
         addToGrid(grid, 0, "Biblioteca PKCS#11:", pkcs11LibPath, browseLib);
-        addToGrid(grid, 1, "Contraseña:", password, null);
-        addToGrid(grid, 2, "Número de Slot:", slotNumber, null);
-        addToGrid(grid, 3, "Archivo XML:", xmlPath, browseXML);
-        addToGrid(grid, 4, "Elemento XML (ID) a Firmar:", uri, null);
-        addExecuteButton(grid, execute, 5);
+        grid.add(createDriverSelectorBox(pkcs11LibPath), 1, 1);
+        addToGrid(grid, 2, "Contraseña:", password, null);
+        addToGrid(grid, 3, "Número de Slot:", slotNumber, null);
+        addToGrid(grid, 4, "Archivo XML:", xmlPath, browseXML);
+        addToGrid(grid, 5, "Elemento XML (ID) a Firmar:", uri, null);
+        addExecuteButton(grid, execute, 6);
 
         VBox content = createTabContent(
                 "Este módulo permite firmar documentos XML usando un token criptográfico. Permite firmar un párrafo o elemento XML con un ID específico o bien todo el XML.",
@@ -1306,13 +1393,14 @@ public class SFideGUI extends Application {
         }));
 
         addToGrid(grid, 0, "Biblioteca PKCS#11:", pkcs11LibPath, browseLib);
-        addToGrid(grid, 1, "Contraseña:", password, null);
-        addToGrid(grid, 2, "Número de Slot:", slotNumber, null);
-        addToGrid(grid, 3, "Archivo PDF:", pdfPath, browsePDF);
-        addToGrid(grid, 4, "Posición (X,Y):", positionBox, null);
-        addToGrid(grid, 5, "Texto personalizado:", customText, null);
-        grid.add(lockDocument, 1, 6);
-        addExecuteButton(grid, execute, 7);
+        grid.add(createDriverSelectorBox(pkcs11LibPath), 1, 1);
+        addToGrid(grid, 2, "Contraseña:", password, null);
+        addToGrid(grid, 3, "Número de Slot:", slotNumber, null);
+        addToGrid(grid, 4, "Archivo PDF:", pdfPath, browsePDF);
+        addToGrid(grid, 5, "Posición (X,Y):", positionBox, null);
+        addToGrid(grid, 6, "Texto personalizado:", customText, null);
+        grid.add(lockDocument, 1, 7);
+        addExecuteButton(grid, execute, 8);
 
         VBox content = createTabContent(
                 "Este módulo permite firmar documentos PDF usando un token criptográfico. Permite establecer una firma visible en coordenadas específicas.",
@@ -1669,6 +1757,183 @@ public class SFideGUI extends Application {
             handleError(e.getMessage(), e);
         } catch (Exception e) {
             handleError("Error al verificar firmas PDF", e);
+            Platform.runLater(() -> sharedOutputArea.appendText("\nError: " + e.getMessage()));
+        }
+    }
+
+    private boolean isWindowsOS() {
+        return System.getProperty("os.name", "").toLowerCase().contains("win");
+    }
+
+    private Tab createXMLSignerWindowsCSPTab() {
+        Tab tab = new Tab("Firmar XML con Windows CSP/KSP");
+        GridPane grid = createStandardGridPane();
+
+        TextField aliasField = createTextField("Alias exacto o fragmento del nombre (CN) del certificado");
+        TextField xmlPath = createTextField("Ruta del archivo XML");
+        TextField uri = createTextField("Párrafo o elemento XML con ID (opcional)");
+
+        Button listCerts = new Button("Ver certificados");
+        listCerts.setTooltip(new Tooltip("Lista los certificados disponibles en el almacén de Windows"));
+        listCerts.setOnAction(e -> Platform.runLater(() -> executeListCertificadosWindows("XMLSignerWindowsCSP")));
+
+        Button browseXML = createBrowseButton();
+        browseXML.setOnAction(e -> Platform.runLater(() -> selectXMLFile(xmlPath)));
+
+        Button execute = createExecuteButton();
+        execute.setOnAction(e -> Platform.runLater(() -> {
+            String uriValue = uri.getText() != null ? uri.getText().trim() : "";
+            executeXMLSignerWindowsCSP(aliasField.getText(), xmlPath.getText(), uriValue);
+            clearInputFields(xmlPath, uri);
+        }));
+
+        addToGrid(grid, 0, "Alias / Nombre (CN):", aliasField, listCerts);
+        addToGrid(grid, 1, "Archivo XML:", xmlPath, browseXML);
+        addToGrid(grid, 2, "Elemento XML (ID) a Firmar:", uri, null);
+        addExecuteButton(grid, execute, 3);
+
+        VBox content = createTabContent(
+                "Firma usando un certificado ya presente en el almacén de certificados de Windows (CSP/KSP), sin "
+                        + "necesitar configurar una librería PKCS#11. Es más simple si el certificado ya aparece en "
+                        + "el Administrador de certificados de Windows, pero queda atado a Windows (no es portable "
+                        + "a Linux/macOS). Para la mayoría de los casos, PKCS#11 (pestaña \"Firmar XML con Token\") "
+                        + "sigue siendo la opción recomendada por ser estándar y multiplataforma; use esta "
+                        + "alternativa si prefiere la integración nativa de Windows.",
+                grid
+        );
+
+        tab.setContent(content);
+        return tab;
+    }
+
+    private Tab createPDFSignerWindowsCSPTab() {
+        Tab tab = new Tab("Firmar PDF con Windows CSP/KSP");
+        GridPane grid = createStandardGridPane();
+
+        TextField aliasField = createTextField("Alias exacto o fragmento del nombre (CN) del certificado");
+        TextField pdfPath = createTextField("Ruta del archivo PDF");
+        TextField xPos = createNumericTextField("X");
+        TextField yPos = createNumericTextField("Y");
+        xPos.setPrefWidth(190);
+        yPos.setPrefWidth(190);
+        HBox positionBox = new HBox(20);
+        positionBox.getChildren().addAll(xPos, yPos);
+        TextField customText = createTextField("Texto personalizado (opcional)");
+        CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
+
+        Button listCerts = new Button("Ver certificados");
+        listCerts.setTooltip(new Tooltip("Lista los certificados disponibles en el almacén de Windows"));
+        listCerts.setOnAction(e -> Platform.runLater(() -> executeListCertificadosWindows("PDFSignerWindowsCSP")));
+
+        Button browsePDF = createBrowseButton();
+        browsePDF.setOnAction(e -> Platform.runLater(() -> selectPDFFile(pdfPath)));
+
+        Button execute = createExecuteButton();
+        execute.setOnAction(e -> Platform.runLater(() -> {
+            executePDFSignerWindowsCSP(
+                    aliasField.getText(),
+                    pdfPath.getText(),
+                    xPos.getText(),
+                    yPos.getText(),
+                    customText.getText(),
+                    lockDocument.isSelected()
+            );
+            clearInputFields(aliasField, pdfPath, xPos, yPos, customText);
+        }));
+
+        addToGrid(grid, 0, "Alias / Nombre (CN):", aliasField, listCerts);
+        addToGrid(grid, 1, "Archivo PDF:", pdfPath, browsePDF);
+        addToGrid(grid, 2, "Posición (X,Y):", positionBox, null);
+        addToGrid(grid, 3, "Texto personalizado:", customText, null);
+        grid.add(lockDocument, 1, 4);
+        addExecuteButton(grid, execute, 5);
+
+        VBox content = createTabContent(
+                "Firma usando un certificado ya presente en el almacén de certificados de Windows (CSP/KSP), sin "
+                        + "necesitar configurar una librería PKCS#11. Es más simple si el certificado ya aparece en "
+                        + "el Administrador de certificados de Windows, pero queda atado a Windows (no es portable "
+                        + "a Linux/macOS). Para la mayoría de los casos, PKCS#11 (pestaña \"Firmar PDF con Token\") "
+                        + "sigue siendo la opción recomendada por ser estándar y multiplataforma; use esta "
+                        + "alternativa si prefiere la integración nativa de Windows.",
+                grid
+        );
+
+        tab.setContent(content);
+        return tab;
+    }
+
+    private void executeListCertificadosWindows(String jarName) {
+        try {
+            ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile(jarName);
+            if (result.valid()) {
+                Platform.runLater(() -> sharedOutputArea.clear());
+                String flag = "PDFSignerWindowsCSP".equals(jarName) ? "--listar-certificados" : "-listar-certificados";
+                GUIUtils.executeCommand(jarName, new String[]{flag}, sharedOutputArea);
+            } else {
+                Platform.runLater(() -> ModuleValidator.showValidationError(result));
+            }
+        } catch (Exception e) {
+            handleError("Error al listar certificados del almacén de Windows", e);
+        }
+    }
+
+    private void executeXMLSignerWindowsCSP(String alias, String xmlPath, String uri) {
+        try {
+            validateRequiredField("alias o nombre del certificado", alias);
+            validateRequiredField("archivo XML", xmlPath);
+
+            ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("XMLSignerWindowsCSP");
+            if (result.valid()) {
+                Platform.runLater(() -> sharedOutputArea.clear());
+                String[] args = {alias, xmlPath, uri};
+                GUIUtils.executeCommand("XMLSignerWindowsCSP", args, sharedOutputArea);
+            } else {
+                Platform.runLater(() -> ModuleValidator.showValidationError(result));
+            }
+        } catch (IllegalArgumentException e) {
+            handleError(e.getMessage(), e);
+        } catch (Exception e) {
+            handleError("Error al firmar XML con el almacén de Windows", e);
+            Platform.runLater(() -> sharedOutputArea.appendText("\nError: " + e.getMessage()));
+        }
+    }
+
+    private void executePDFSignerWindowsCSP(
+            String alias,
+            String pdfPath,
+            String xPos,
+            String yPos,
+            String customText,
+            boolean lock) {
+        try {
+            validateRequiredField("alias o nombre del certificado", alias);
+            validateRequiredField("archivo PDF", pdfPath);
+
+            ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("PDFSignerWindowsCSP");
+            if (result.valid()) {
+                Platform.runLater(() -> sharedOutputArea.clear());
+                String[] args = {
+                        "-i", pdfPath,
+                        "-a", alias,
+                        "-x", xPos,
+                        "-y", yPos,
+                        "-k", String.valueOf(lock)
+                };
+
+                if (customText != null && !customText.trim().isEmpty()) {
+                    args = Arrays.copyOf(args, args.length + 2);
+                    args[args.length - 2] = "-t";
+                    args[args.length - 1] = customText;
+                }
+
+                GUIUtils.executeCommand("PDFSignerWindowsCSP", args, sharedOutputArea);
+            } else {
+                Platform.runLater(() -> ModuleValidator.showValidationError(result));
+            }
+        } catch (IllegalArgumentException e) {
+            handleError(e.getMessage(), e);
+        } catch (Exception e) {
+            handleError("Error al firmar PDF con el almacén de Windows", e);
             Platform.runLater(() -> sharedOutputArea.appendText("\nError: " + e.getMessage()));
         }
     }

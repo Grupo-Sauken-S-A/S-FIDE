@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.sauken.s_fide</groupId>
         <artifactId>s_fide_parent</artifactId>
-        <version>1.0.0</version>
+        <version>1.1.0-beta.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -20,10 +20,6 @@
         <maven.compiler.target>23</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <itext.version>8.0.2</itext.version>
-        <bouncy.castle.version>1.77</bouncy.castle.version>
-        <slf4j.version>2.0.11</slf4j.version>
-        <logback.version>1.4.14</logback.version>
         <main.class>com.sauken.s_fide.pdf_signer_pkcs12.PDFSignerPKCS12</main.class>
     </properties>
 
@@ -61,12 +57,12 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>${bouncy.castle.version}</version>
+            <version>${bouncycastle.version}</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
-            <version>${bouncy.castle.version}</version>
+            <version>${bouncycastle.version}</version>
         </dependency>
 
         <!-- Logging -->

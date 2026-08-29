@@ -1,0 +1,35 @@
+XMLSignerWindowsCSP - Programa de Firma Digital de archivos XML usando el almacén de certificados de Windows (CSP/KSP)
+
+Este módulo es EXCLUSIVO de Windows. Es una alternativa a XMLSignerPKCS11 para
+certificados que ya están disponibles en el almacén "Personal" (Windows-MY) del
+usuario actual, sin necesidad de configurar una librería PKCS#11. Útil cuando
+el driver del token instala su certificado en el almacén de Windows (CSP
+legado o KSP/CNG moderno) además de exponer PKCS#11.
+
+Uso: java -jar XMLSignerWindowsCSP.jar [OPCIÓN] | <Alias o fragmento del Subject CN> <Archivo XML> <Elemento XML a firmar>
+
+Opciones:
+  -version          Muestra la versión del programa
+  -licencia         Muestra la información de licencia
+  -ayuda            Muestra este mensaje de ayuda
+  -listar-certificados   Lista los certificados disponibles en el almacén de Windows (alias y Subject)
+
+Para firmar un documento XML:
+  java -jar XMLSignerWindowsCSP.jar <Alias o fragmento del Subject CN> <Archivo XML> <Elemento XML a firmar>
+donde:
+    <Alias o fragmento del Subject CN>   Alias exacto del certificado, o un fragmento del nombre (CN) del
+                                          titular que identifique un único certificado. Use
+                                          "-listar-certificados" para ver los disponibles.
+    <Archivo XML>                        Archivo XML a firmar
+    <Elemento XML a firmar>              Párrafo o elemento a firmar (vacío "" para firmar todo el documento)
+
+Ejemplo:
+  java -jar XMLSignerWindowsCSP.jar "Juan Carlos Rios" documento.xml ""
+
+Notas:
+- Si el fragmento indicado coincide con más de un certificado, el programa no firma y pide que sea más específico
+- El acceso a la clave privada lo administra Windows; según el driver del token, puede aparecer un diálogo del
+  sistema operativo pidiendo el PIN al momento de firmar (ese diálogo no lo controla S-FIDE)
+- El archivo firmado se guardará con el sufijo "-signed" antes de la extensión
+- Este módulo no reemplaza a XMLSignerPKCS11: es una alternativa a elección del usuario cuando el certificado
+  ya aparece en el almacén de Windows

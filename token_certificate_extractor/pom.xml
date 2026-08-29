@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.sauken.s_fide</groupId>
         <artifactId>s_fide_parent</artifactId>
-        <version>1.0.0</version>
+        <version>1.1.0-beta.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -45,6 +45,13 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/../shared-resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>token-profiles.txt</include>
+                </includes>
             </resource>
         </resources>
         <plugins>

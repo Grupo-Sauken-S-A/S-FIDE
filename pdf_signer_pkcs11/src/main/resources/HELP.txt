@@ -16,6 +16,7 @@ Opciones Adicionales
   -v, --version                Muestra la versión del programa
   -h, --help                   Muestra esta ayuda
   --license                    Muestra la licencia del programa
+  --listar-drivers             Muestra las rutas típicas de librerías PKCS#11 conocidas para este sistema operativo
 
 NOTAS:
     - El archivo PDF firmado se guardará con el sufijo "-signed" antes de la extensión

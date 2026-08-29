@@ -68,7 +68,7 @@ import java.util.Enumeration;
 import javax.security.auth.x500.X500Principal;
 
 public class TokenCertificateExtractor {
-    private static final String VERSION = "S-FIDE TokenCertificateExtractor v1.0.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE TokenCertificateExtractor v1.1.0-beta.1 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT;
     private static final String HELP_TEXT;
 
@@ -126,6 +126,9 @@ public class TokenCertificateExtractor {
                     return;
                 case "-ayuda":
                     showHelp();
+                    return;
+                case "-listar-drivers":
+                    System.out.println(TokenProfileCatalog.formatTableForCurrentOs());
                     return;
                 default:
                     throw new IllegalArgumentException("Argumento no reconocido: " + args[0]);

@@ -1,4 +1,4 @@
-S-FiDE (Sistema de Firma Digital Extendida) - Versión 1.0.0 - Grupo Sauken S.A.
+S-FiDE (Sistema de Firma Digital Extendida) - Versión 1.1.0-beta.1 - Grupo Sauken S.A.
 
 SFide-GUI proporciona una interface gráfica de usuario para asignar los parámetros adecuados
 a cada una de las aplicaciones de la plataforma S-FiDE. Las aplicaciones se muestran de manera
@@ -56,6 +56,32 @@ APLICACIONES DISPONIBLES:
    - Verifica la validez de firmas en documentos PDF
    - Requiere archivo PDF firmado
 
+11. Firmar XML con Windows CSP/KSP (XMLSignerWindowsCSP) - solo Windows
+   - Firma documentos XML usando un certificado ya presente en el almacén de certificados de
+     Windows (CSP/KSP), sin necesitar configurar una biblioteca PKCS#11
+   - Requiere el alias exacto o un fragmento del nombre (CN) del certificado, archivo XML y
+     Elemento a firmar (opcional). No pide contraseña: el acceso a la clave lo administra Windows
+   - Útil cuando el certificado de su token ya aparece en el Administrador de certificados de
+     Windows. Para la mayoría de los casos, PKCS#11 sigue siendo la opción recomendada por ser
+     estándar y multiplataforma; esta es una alternativa a elección del usuario
+
+12. Firmar PDF con Windows CSP/KSP (PDFSignerWindowsCSP) - solo Windows
+   - Igual que el anterior, pero para documentos PDF. Admite las mismas opciones de posición,
+     texto adicional y bloqueo del documento que "Firmar PDF con Token"
+
+
+NUEVO EN LA VERSIÓN 1.1.0:
+- Detección de driver PKCS#11: en las pestañas que usan una biblioteca PKCS#11, un botón
+  "Detectar automáticamente" revisa las rutas típicas conocidas (SafeNet, ePass2003, mToken
+  CryptoID, Athena) e indica cuál está instalada en su equipo. También puede elegir la
+  marca/modelo manualmente en la lista desplegable, que completa la ruta por usted
+- Compatibilidad ampliada de tokens PKCS#11: los módulos de firma ahora prueban
+  automáticamente un mecanismo de firma alternativo si el token no admite el mecanismo
+  combinado habitual (por ejemplo, tokens tipo ePass2003), sin necesidad de configuración
+  adicional de su parte
+- Alternativa de firma con el almacén de certificados de Windows (CSP/KSP), ver aplicaciones
+  11 y 12 arriba
+
 
 REQUERIMIENTOS:
 - openJava 23 o superior
@@ -72,7 +98,11 @@ NOTAS:
 - Asegúrese de tener copias de respaldo de los archivos antes de procesarlos
 - Cuando use un token criptográfico tenga en cuenta que un número elevado de intentos de
   acceso fallido (contraseña inválida) puede dejar inutilizada su firma digital por lo que
-  deberá concurrir a solicitar una nueva a una autoridad certificante (AC)
+  deberá concurrir a solicitar una nueva a una autoridad certificante (AC). Esto no aplica a
+  las aplicaciones que usan el almacén de Windows (CSP/KSP), donde el PIN lo administra Windows
+- Por línea de comandos, las aplicaciones que trabajan con tokens PKCS#11 aceptan el parámetro
+  "-listar-drivers" (o "--listar-drivers" en PDFSignerPKCS11) para ver las rutas típicas de
+  driver conocidas para su sistema operativo
 
 SOPORTE:
 Para soporte técnico, contacte a Grupo Sauken S.A.

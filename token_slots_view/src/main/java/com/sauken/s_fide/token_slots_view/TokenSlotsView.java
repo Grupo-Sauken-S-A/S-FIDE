@@ -63,7 +63,7 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class TokenSlotsView {
-    private static final String VERSION = "S-FIDE TokenSlotsView v1.0.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE TokenSlotsView v1.1.0-beta.1 - Grupo Sauken S.A.";
     private static String LICENSE_TEXT;
     private static String HELP_TEXT;
     private static PrintStream errorOutput;
@@ -122,6 +122,10 @@ public class TokenSlotsView {
                 }
                 case "-ayuda" -> {
                     showHelp();
+                    System.exit(0);
+                }
+                case "-listar-drivers" -> {
+                    standardOutput.println(TokenProfileCatalog.formatTableForCurrentOs());
                     System.exit(0);
                 }
                 default -> throw new IllegalArgumentException("Opción no válida: " + args[0]);
