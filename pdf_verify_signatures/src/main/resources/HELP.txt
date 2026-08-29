@@ -1,0 +1,14 @@
+PDFVerifySignatures - Programa de Verificación/Validación de Firmas Digitales en documentos PDF
+
+Uso: java -jar PDFVerifySignatures.jar [OPCIÓN] | <Documento PDF> [-simple]
+
+Opciones:
+  -version     Muestra la versión del programa
+  -licencia    Muestra la información de licencia
+  -ayuda       Muestra este mensaje de ayuda
+
+Para verificar firmas en un documento PDF:
+  java -jar PDFVerifySignatures.jar <Documento PDF> [-simple]
+
+Opcional:
+  -simple      Muestra solo la información básica de la validación

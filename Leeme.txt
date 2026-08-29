@@ -1,0 +1,24 @@
+S-FiDE v1.0.0 - Leeme primero:
+
+- Si está instalando S-FiDE en una carpeta o unidad distinta a C:\S-FiDE\ debe editar con bloc de notas
+  el archivo "SFide-GUI.bat" y cambiar los valores de SFIDE=C:\S-FiDE y la unidad C: si fuera necesario
+
+- Si está ejecutando S-FiDE en GNU/Linux o Apple/OS debe editar "SFide-GUI.sh" para colocar los valores
+  adecuados o bien realizar en un enlace simbólico de la carpeta de instalación a /opt/
+
+- Puede configurar valores por defecto editando con bloc de notas el archivo "sfide-defaults.properties"
+  tomando como base el ejemplo "sfide-defaults.demo.properties". Estos valores por defecto se sobre-
+  escribirán con los actuales al salir del sistema
+
+- OpenJAVA 23 sólo está disponible en sistemas operativos de 64 bits. En caso de usar Windows verfique 
+  que sea de 64 bits (Atención: Windows 7 suele ser de 32 bits, al igual que algunas versiones de Windows 10)
+
+- Las entradas y salidas de los procesos están codificadas en UTF-8 (si ejecuta la aplicaciones sobre una
+  línea de comandos de Windows, las salidas se verán con caracteres extraños, ya que es UTF-8). Si está
+  integrando S-FiDE en su propia aplicación, no se olvide de realizar las conversiones a UTF-8
+
+- En "test" tiene documentos de ejemplo para firmar y validar. En "xsd" tiene ejemplos de archivos XSD para
+  validar. En "doc" encontrará una guía de uso de cada una de las aplicaciones
+
+- Para la validación de firmas digitales como para validación de esquema contra un archivo XSD, es conveniente
+  disponer de una conexión a Internet para lograr una validación completa

@@ -1,0 +1,26 @@
+XMLSignerPKCS12 - Programa de Firma Digital de archivos XML usando certificados X.509 PKCS12
+
+Uso: java -jar XMLSignerPKCS12.jar [OPCIÓN] | <Archivo PKCS#12> <Contraseña> <Archivo XML> <Elemento XML a firmar>
+
+Opciones:
+  -version     Muestra la versión del programa
+  -licencia    Muestra la información de licencia
+  -ayuda       Muestra este mensaje de ayuda
+
+Para firmar un documento XML:
+  java -jar XMLSignerPKCS12.jar [OPCIÓN] | <Archivo PKCS#12> <Contraseña> <Archivo XML> <Elemento XML a firmar>
+donde:
+    <Archivo PKCS#12>           Ruta al archivo PKCS#12 con el certificado digital X.509
+    <Contraseña>                Contraseña del archivo PKCS#12 que contiene el certificado
+    <Archivo XML>               Archivo XML a firmar
+    <Elemento XML a firmar>     Párrafo o elemento a firmar (vacío "" para firmar todo el documento)
+
+Notas:
+- El párrafo o elemento XML a firmar es opcional. Si se deja vacío (""), se firmará todo el documento, de lo contrario se firmará el párrafo con el elemento XML especificado
+  Si el elemento XML es "COD", se está firmando un Certificado de Origen como Exportador
+  Si el elemento XML es "CODEH", se está firmando un Certificado de Origen como Funcionario
+  Si el elemento XML es "DJO", se está firmando una Declaración Jurada de Origen como Exportador
+  Si el elemento XML es "DJOEH", se está firmando una Declaración Jurada de Origen como Funcionario
+- El nombre del elemento XML a firmar es sensitivo a mayúsculas y minúsculas, en caso de Certificados de Origen Digitales, siempre use mayúsculas
+- El archivo firmado se guardará con el sufijo "-signed" antes de la extensión.
+- Asegúrese de tener los permisos necesarios para acceder al archivo PKCS#12.

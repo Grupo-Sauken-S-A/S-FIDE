@@ -1,0 +1,19 @@
+TokenCertificateExtractor - Programa que extrae la clave pública en formato .PEM de un Token de Firma Digital
+
+Uso: java -jar TokenCertificateExtractor.jar [OPCIÓN] | <Ruta de la biblioteca PKCS#11> <Contraseña del token> <Número de slot>
+
+Opciones:
+  -version     Muestra la versión del programa
+  -licencia    Muestra la información de licencia
+  -ayuda       Muestra este mensaje de ayuda
+
+Para usar el programa con un token:
+  java -jar TokenCertificateExtractor.jar <Ruta de la biblioteca PKCS#11> <Contraseña del token> <Número de slot>
+
+Ejemplo:
+  java -jar TokenCertificateExtractor.jar c:/WINDOWS/system32/eTPKCS11.dll "password123" 0
+
+Notas:
+- La ruta de la biblioteca PKCS#11 debe ser la ruta completa al archivo .so o .dll del driver
+- La contraseña del token es la PIN de usuario del dispositivo
+- El número de slot es típicamente 0 para el primer token conectado

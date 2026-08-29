@@ -1,0 +1,14 @@
+XMLVerifySignatures - Programa que valida firmas digitales de un archivo XML
+
+Uso: java -jar XMLVerifySignatures.jar [OPCIÓN] | <Archivo XML> [-simple]
+
+Opciones:
+  -version     Muestra la versión del programa
+  -licencia    Muestra la información de licencia
+  -ayuda       Muestra este mensaje de ayuda
+
+Para verificar firmas en un archivo XML:
+  java -jar XMLVerifySignatures.jar <Archivo XML> [-simple]
+
+Opcional:
+  -simple      Muestra solo la información básica de la validación

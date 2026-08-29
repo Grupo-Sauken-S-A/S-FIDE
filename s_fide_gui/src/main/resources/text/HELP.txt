@@ -1,0 +1,82 @@
+S-FiDE (Sistema de Firma Digital Extendida) - Versión 1.0.0 - Grupo Sauken S.A.
+
+SFide-GUI proporciona una interface gráfica de usuario para asignar los parámetros adecuados
+a cada una de las aplicaciones de la plataforma S-FiDE. Las aplicaciones se muestran de manera
+independiente sobre pestañas o solapas. Estas aplicaciones también se pueden ejecutar desde
+una línea de comando, lo que permite una sencilla integración con otras aplicaciones
+pre-existentes. La salida de cada uno de estos procesos se despliega en un cuadro de diálogo.
+Sobre este cuadro de diálogo se unifican la salida estándar y la de errores. Todas las entradas
+y salidas de los procesos usan codificación UTF-8. Los procesos devuelven el control indicando
+el resultado del mismo al programa que los ejecuta o bien al sistema operativo (0 es éxito,
+1 es error)
+
+APLICACIONES DISPONIBLES:
+
+1. Ver Slots de Token (TokenSlotsView)
+   - Permite visualizar los slots disponibles en un token criptográfico
+   - Requiere biblioteca PKCS#11 y contraseña
+
+2. Ver Certificados de Token (TokenCertificateExtractor)
+   - Extrae certificados digitales almacenados en un token criptográfico
+   - Requiere biblioteca PKCS#11, contraseña y número de slot
+
+3. Ver Certificados PKCS#12 (PKCS12CertificateExtractor)
+   - Extrae certificados desde archivos PKCS#12 (.p12 o .pfx)
+   - Requiere archivo PKCS#12 y contraseña
+
+4. Firmar XML con Token (XMLSignerPKCS11)
+   - Firma documentos XML usando un token criptográfico
+   - Requiere biblioteca PKCS#11, contraseña, número de slot, archivo XML y Elemento a firmar (opcional)
+
+5. Firmar XML con PKCS#12 (XMLSignerPKCS12)
+   - Firma documentos XML usando un archivo PKCS#12
+   - Requiere archivo PKCS#12, contraseña, archivo XML y Elemento a firmar (opcional)
+
+6. Verificar Firmas en XML (XMLVerifySignatures)
+   - Verifica la validez de firmas en documentos XML
+   - Requiere archivo XML firmado
+
+7. Verificar XML con XSD (XMLVerifyXSDStructure)
+   - Valida documentos XML contra un esquema XSD
+   - Requiere archivo XML y archivo XSD (si no se referencia a uno dentro del XML)
+
+8. Firmar PDF con Token (PDFSignerPKCS11)
+   - Firma documentos PDF usando un token criptográfico
+   - Requiere biblioteca PKCS#11, contraseña, número de slot, documento PDF, posición en ejes X e Y
+     para colocar cuadro con la firma digital, texto adicional para adjuntar a la firma digital y
+     una opción que permite bloquear o no el documento PDF firmado
+
+9. Firmar PDF con PKCS#12 (PDFSignerPKCS12)
+   - Firma documentos PDF usando un archivo PKCS#12
+   - Requiere archivo PKCS#12, contraseña, documento PDF, posición en ejes X e Y para
+     colocar cuadro con la firma digital, texto adicional para adjuntar a la firma digital y
+     una opción que permite bloquear o no el documento PDF firmado
+
+10. Verificar Firmas en PDF (PDFVerifySignatures)
+   - Verifica la validez de firmas en documentos PDF
+   - Requiere archivo PDF firmado
+
+
+REQUERIMIENTOS:
+- openJava 23 o superior
+- JavaFX 23 o superior (sólo para la aplicación con UI gráfica)
+- Biblioteca PKCS#11 del token (para funciones relacionadas con tokens)
+- Biblioteca iText 8 o superior (para funciones relacionadas con documentos PDF)
+- Permisos de lectura en los archivos a procesar
+- Permisos de escritura en las carpetas de salida
+- Permiso de lectura y ejecución de la biblioteca PKCS#11 del token
+
+NOTAS:
+- Los archivos de salida se generan en el mismo directorio que los archivos de entrada
+- Mantenga sus certificados y contraseñas en lugar seguro. No los comparta
+- Asegúrese de tener copias de respaldo de los archivos antes de procesarlos
+- Cuando use un token criptográfico tenga en cuenta que un número elevado de intentos de
+  acceso fallido (contraseña inválida) puede dejar inutilizada su firma digital por lo que
+  deberá concurrir a solicitar una nueva a una autoridad certificante (AC)
+
+SOPORTE:
+Para soporte técnico, contacte a Grupo Sauken S.A.
+Email: soporte@sauken.com.ar
+Website: https://www.sauken.com.ar/
+
+Este software se licencia bajo la GNU GPLv2. El servicio de soporte es con cargo.

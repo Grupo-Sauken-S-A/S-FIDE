@@ -1,0 +1,33 @@
+PDFSignerPKCS11 - Programa de Firma Digital de documentos PDF con Token
+
+Uso: java -jar pdf_signer_pkcs11.jar [opciones]
+
+Opciones:
+  -i, --input <archivo>        Archivo PDF a firmar (obligatorio)
+  -l, --library <archivo>      Ruta de la biblioteca PKCS#11 del token (obligatorio)
+  -p, --password <contraseña>  Contraseña del certificado PKCS12 (obligatorio)
+  -s, --slot <número>          Número entero de slot del token (obligatorio)
+  -k, --lock <true|false>      Bloquear el documento después de firmar (opcional, default: false)
+  -x, --xpos <número>          Coordenada X para el campo de firma (opcional, default: 0)
+  -y, --ypos <número>          Coordenada Y para el campo de firma (opcional, default: 0)
+  -t, --text <texto>           Texto adicional para el campo de firma (opcional)
+
+Opciones Adicionales
+  -v, --version                Muestra la versión del programa
+  -h, --help                   Muestra esta ayuda
+  --license                    Muestra la licencia del programa
+
+NOTAS:
+    - El archivo PDF firmado se guardará con el sufijo "-signed" antes de la extensión
+    - La firma visible aparecerá en la primera página si se especifican las coordenadas
+    - Las coordenadas X,Y son opcionales; si no se especifican, la firma será invisible
+    - El programa verificará y validará todas las firmas existentes antes de agregar una nueva
+    - Se firmará siempre el documento PDF de manera completa
+    - El texto personalizado es opcional
+    - El bloqueo del documento es opcional (por defecto: false)
+    - El documento resultante incluirá metadatos sobre la firma aplicada
+
+CERTIFICADOS DE ORIGEN:
+    - Para aplicar firmas digitales a Certificado de Origen No-Preferenciales en documentos PDF debe usar:
+         -x 40 -y 55     Para aplicar la firma digital del Exportador
+         -x 310 -y 55    Para aplicar la firma digital del Funcionario Habilitado de la Entidad

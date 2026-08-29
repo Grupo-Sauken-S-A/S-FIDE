@@ -1,0 +1,31 @@
+Preguntas Frecuentes:
+
+1. ¿Qué tipos de tokens son compatibles?
+- Cualquier token que permita firmar documentos electrónicamente usando certificados X.509, que cumpla
+  con los requisitos de seguridad FIPS 140–2 Level 3 del NIST (National Institute of Standards and
+  Technology) de Estados Unidos y que cumpla con el estándar PKCS#11
+
+2. ¿Qué formatos de certificados se soportan (sin usar tokens)?
+- Certificados X.509 en formato PKCS#12 (.p12 o .pfx)
+
+3. ¿Cómo verifico si mi firma es válida?
+- Use la función "Verificar Firmas en XML/PDF" después de firmar
+
+4. ¿Qué hago si mi token no es reconocido?
+- Verifique que los drivers estén instalados correctamente
+- Asegúrese de que la biblioteca PKCS#11 sea la correcta
+
+5. ¿Puedo firmar múltiples documentos a la vez?
+- Por el momento, solo se permite firmar un documento a la vez
+
+6. ¿Qué hacer si olvido mi contraseña?
+- Las contraseñas no pueden ser recuperadas
+- Deberá contactar a su autoridad certificante (AC) para revocar y solicitar una nueva firma digital
+
+7. ¿Puedo embeber las funciones que provee este software dentro de mi aplicación?
+- Si, los desarrolladores de sistemas puede embeber cualquiera de los módulos de este software dentro de su
+  aplicación
+
+8. ¿Hay una guía de como se usa individualmente cada una de esta funciones?
+- Si, cada una de las aplicaciones se puede usar individualmente en una línea de comando (java -jar <Programa.jar>)
+- Puede ejecutar "java -jar <Programa.jar> -h" para obtener ayuda sobre los parámetros de entrada de cada aplicación
