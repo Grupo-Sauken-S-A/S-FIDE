@@ -516,6 +516,8 @@ NOTA: Diferencia en nombres de archivo XSD
 
 **Requiere Internet** solo si no se indicó un XSD local **y** el XML referencia uno por URL — en ese caso descarga el esquema. Sin conexión en ese escenario, falla con un error claro en vez de continuar sin validar.
 
+**Dominio espejo para esquemas ALADI (COD/DJO) caídos.** El dominio oficial de ALADI (`https://www.codaladi.org/directorio/...`, usado en los `xsi:schemaLocation` de los Certificados de Origen y Declaraciones Juradas de Origen) suele estar inoperativo. Cuando el esquema se resuelve **automáticamente** desde el XML (nunca si se indicó un archivo XSD local como segundo argumento) y la descarga desde `codaladi.org` falla — ya sea por un error de red/TLS, o porque lo que devuelve no es un esquema XSD válido (por ejemplo, una redirección HTTP→HTTPS que Java no sigue automáticamente entre protocolos, y que termina descargando una página HTML de error en vez del esquema) — el módulo reintenta automáticamente contra un espejo secundario, **manteniendo el nombre de archivo del XSD intacto**: reemplaza `https://www.codaladi.org/directorio/` por `https://cod.certificadoorigen.com.ar/`. Antes de reintentar, informa por consola: *"El dominio ALADI https://www.codaladi.org/ no está operativo. Se usará el dominio secundario https://cod.certificadoorigen.com.ar/ para completar la operación."* Si el espejo tampoco responde, ahí sí se informa el error final. El resto del proceso de validación sigue el curso normal.
+
 **Nota técnica sobre seguridad XML:** para poder descargar y resolver esquemas XSD remotos, este módulo habilita explícitamente el acceso externo a DTD y esquemas (`javax.xml.accessExternalSchema`/`accessExternalDTD = "all"`) tanto a nivel de fábrica XML como de propiedad de sistema del proceso Java. Esto es necesario para su función (validar contra esquemas publicados en Internet) pero implica que, a diferencia de un parser XML endurecido por defecto, este módulo no aplica el bloqueo estricto de entidades externas — se recomienda no usarlo para validar XML de origen no confiable sin las debidas precauciones de red.
 
 **Sintaxis:**
@@ -524,7 +526,7 @@ java -jar XMLVerifyXSDStructure.jar <archivo.xml> [esquema.xsd]
 java -jar XMLVerifyXSDStructure.jar [-version | -ayuda | -licencia]
 ```
 
-**Mensajes de error posibles:** "El archivo XML no existe", "El archivo XSD no existe", "No se encontró referencia a esquema XSD en el XML y no se proporcionó archivo XSD", "Error al descargar el XSD", "Error al procesar el archivo XSD", "Error de validación XML", "El documento XML no contiene firmas digitales" (informativo, no detiene el proceso), "Se encontraron errores en la validación del documento XML", "Error: No hay conexión a Internet disponible" (al intentar descargar un XSD referenciado).
+**Mensajes de error posibles:** "El archivo XML no existe", "El archivo XSD no existe", "No se encontró referencia a esquema XSD en el XML y no se proporcionó archivo XSD", "Error al descargar el XSD", "El contenido descargado no es un esquema XSD válido (¿redirección, página de error, o dominio inoperativo?)" (por cada URL que falla, incluida la advertencia intermedia al detectar `codaladi.org` caído), "Error al procesar el archivo XSD", "Error de validación XML", "El documento XML no contiene firmas digitales" (informativo, no detiene el proceso), "Se encontraron errores en la validación del documento XML", "Error: No hay conexión a Internet disponible" (al intentar descargar un XSD referenciado).
 
 **Ejemplo:**
 ```
@@ -929,6 +931,7 @@ El script `install.bat` (incluido en el repositorio) automatiza la generación d
   - Verificado end-to-end contra archivos DJO reales (etapas: sin firmar → firmado por Exportador → con datos de Entidad Habilitada → firmado por Funcionario Habilitado).
   - Se agregaron dos reglas de firma obligatorias a los tres firmadores XML: nunca firmar un elemento que ya tiene una firma digital aplicada (regla genérica, cualquier XML), y nunca firmar `CODEH`/`DJOEH` sin una firma previa sobre `COD`/`DJO` respectivamente — ver [sección 10.5](#105-reglas-de-firma-obligatorias).
   - Se revisaron y aclararon los mensajes de `XMLVerifySignatures` en torno a la revocación: el estado de integridad criptográfica ahora se etiqueta explícitamente como previo a la revocación, se agregó un "Estado final de la firma" por firma que sí combina ambos criterios, y un certificado revocado ahora explica en texto plano por qué invalida la firma.
+  - `XMLVerifyXSDStructure` ahora reintenta automáticamente contra un dominio espejo (`cod.certificadoorigen.com.ar`) cuando el esquema referenciado es del dominio oficial de ALADI (`codaladi.org`, habitualmente inoperativo) y la descarga falla — incluyendo el caso de una redirección HTTP→HTTPS entre protocolos que Java no sigue automáticamente y que antes se descargaba como si fuera el XSD (produciendo un error de parseo confuso en vez de reintentar). Ver [sección 9.7](#97-xmlverifyxsdstructure).
 - **Validado de punta a punta** con token SafeNet real y con PKCS#12 — pendiente de validación con ePass2003 y mToken CryptoID.
 
 ### v1.0.0 (2024-12) — primer release estable

@@ -53,6 +53,9 @@ package com.sauken.s_fide.xml_verify_xsd_structure.utils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.helpers.DefaultHandler;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -61,6 +64,12 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 
 public class XSDDownloader {
+    // Dominio ALADI para esquemas de comercio exterior (COD/DJO). Suele estar
+    // inoperativo; si falla, se reintenta con el espejo secundario manteniendo
+    // el nombre de archivo del XSD intacto — ver downloadXSD().
+    private static final String ALADI_DOMAIN_DISPLAY = "https://www.codaladi.org/";
+    private static final String ALADI_FALLBACK_BASE = "https://cod.certificadoorigen.com.ar/";
+
     private static final PrintStream errorStream;
 
     static {
@@ -168,8 +177,46 @@ public class XSDDownloader {
             }
         }
 
+        // El dominio ALADI (codaladi.org) suele estar inoperativo. Si el XSD se
+        // resolvió automáticamente desde ahí (nunca llega acá si el usuario indicó
+        // un archivo local propio) y ninguna variante anterior funcionó, se reintenta
+        // una vez más contra un espejo secundario, manteniendo el nombre de archivo
+        // del XSD intacto.
+        if (isCodAladiUrl(normalizedUrl)) {
+            String fileName = extractFileName(normalizedUrl);
+            if (fileName != null) {
+                String fallbackUrl = ALADI_FALLBACK_BASE + fileName;
+                System.out.println("El dominio ALADI " + ALADI_DOMAIN_DISPLAY + " no está operativo. Se usará el "
+                        + "dominio secundario " + ALADI_FALLBACK_BASE + " para completar la operación.");
+                try {
+                    return downloadFromUrl(fallbackUrl);
+                } catch (IOException e) {
+                    lastException = e;
+                    errorStream.println("Advertencia: No se pudo descargar de " + fallbackUrl + ": " + e.getMessage());
+                }
+            }
+        }
+
         // Si llegamos aquí, ninguna URL funcionó
         throw new IOException("No se pudo descargar el archivo XSD de ninguna URL", lastException);
+    }
+
+    private static boolean isCodAladiUrl(String urlStr) {
+        try {
+            String host = new URL(urlStr).getHost();
+            return host != null && host.toLowerCase().contains("codaladi.org");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static String extractFileName(String urlStr) {
+        try {
+            String name = new File(new URL(urlStr).getPath()).getName();
+            return name.isEmpty() ? null : name;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private static File downloadFromUrl(String xsdUrl) throws IOException {
@@ -187,7 +234,42 @@ public class XSDDownloader {
             throw e;
         }
 
+        // Algunos servidores responden con una redirección HTTP entre protocolos
+        // (http→https) que Java no sigue automáticamente: el "contenido descargado"
+        // termina siendo la página HTML de la redirección, no el XSD. Se detecta acá
+        // en vez de dejar que falle recién al validar la estructura del XML contra
+        // este archivo, para que el mecanismo de reintento de URLs pueda actuar.
+        if (!looksLikeXsd(tempFile)) {
+            tempFile.delete();
+            throw new IOException("El contenido descargado no es un esquema XSD válido "
+                    + "(¿redirección, página de error, o dominio inoperativo?)");
+        }
+
         return tempFile;
+    }
+
+    private static boolean looksLikeXsd(File file) {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setNamespaceAware(true);
+            try {
+                dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            } catch (Exception ignored) {
+                // Feature específica de Xerces; si no está disponible, se sigue igual.
+            }
+            DocumentBuilder builder = dbf.newDocumentBuilder();
+            // Silencia el ErrorHandler por defecto: esto es solo una verificación
+            // interna de "¿esto parece un XSD?", no debe volcar mensajes técnicos
+            // crudos por stderr si el contenido descargado no es XML válido.
+            builder.setErrorHandler(new DefaultHandler());
+            Document doc = builder.parse(file);
+            Element root = doc.getDocumentElement();
+            return root != null
+                    && "schema".equals(root.getLocalName())
+                    && "http://www.w3.org/2001/XMLSchema".equals(root.getNamespaceURI());
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private static void checkInternetConnection() throws IOException {
