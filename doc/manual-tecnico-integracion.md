@@ -316,6 +316,11 @@ java -jar TokenCertificateExtractor.jar [-version | -ayuda | -licencia | -listar
 
 **Mensajes de error posibles:** "El archivo de la biblioteca PKCS#11 no existe", "Proveedor SunPKCS11 no disponible", "Error al cargar el almacén de claves", "El número de slot debe ser un número entero", "No se encontró ningún certificado en el slot [número]", "Error al exportar el certificado".
 
+**Ejemplo:**
+```
+java -jar TokenCertificateExtractor.jar C:\Windows\System32\eTPKCS11.dll "MiPIN123" 0
+```
+
 ---
 
 ### 9.3 PKCS12CertificateExtractor
@@ -328,7 +333,14 @@ java -jar PKCS12CertificateExtractor.jar <archivo.p12> <password>
 java -jar PKCS12CertificateExtractor.jar [-version | -ayuda | -licencia]
 ```
 
-**Parámetros:** ruta al archivo PKCS#12 (`.p12`/`.pfx`) y su contraseña, ambos obligatorios y posicionales. No aplica `-listar-drivers` (no hay drivers involucrados con archivos PKCS#12).
+**Parámetros:**
+
+| Parámetro | Obligatorio | Descripción |
+|---|---|---|
+| Archivo PKCS#12 | Sí | Ruta al archivo `.p12`/`.pfx` |
+| Contraseña | Sí | Contraseña del archivo PKCS#12 |
+
+No aplica `-listar-drivers` (no hay drivers involucrados con archivos PKCS#12).
 
 **Validaciones y estándares:**
 - Compatible con archivos PKCS#12 estándar; procesa certificados X.509.
@@ -337,6 +349,11 @@ java -jar PKCS12CertificateExtractor.jar [-version | -ayuda | -licencia]
 **Salida:** información del certificado por consola (mismos campos que `TokenCertificateExtractor`, sin número de slot) y un archivo `.pem` exportado.
 
 **Mensajes de error posibles:** "El archivo PKCS#12 no existe", "El archivo no es un PKCS#12 válido o la contraseña es incorrecta", "El archivo PKCS#12 no contiene ningún certificado", "No se encontró ningún certificado X.509 en el archivo PKCS#12", "Error al exportar certificado".
+
+**Ejemplo:**
+```
+java -jar PKCS12CertificateExtractor.jar C:\certificados\empresa.pfx "MiContraseña123"
+```
 
 ---
 
@@ -373,6 +390,11 @@ java -jar XMLSignerPKCS11.jar [-version | -ayuda | -licencia | -listar-drivers]
 
 **Advertencia de seguridad:** un número elevado de intentos fallidos de contraseña puede dejar inutilizado el certificado del token, exigiendo tramitar uno nuevo ante la autoridad certificante.
 
+**Ejemplo:**
+```
+java -jar XMLSignerPKCS11.jar C:\Windows\System32\eTPKCS11.dll "MiPIN123" 0 C:\docs\certificado-origen.xml COD
+```
+
 ---
 
 ### 9.5 XMLSignerPKCS12
@@ -385,11 +407,25 @@ java -jar XMLSignerPKCS12.jar <certificado.p12> <password> <archivo.xml> <elemen
 java -jar XMLSignerPKCS12.jar [-version | -ayuda | -licencia]
 ```
 
-**Parámetros:** archivo PKCS#12, contraseña, archivo XML, elemento a firmar (mismas reglas de `""`/`COD`/etc. que `XMLSignerPKCS11`; no aplica `-listar-drivers`, no hay driver involucrado).
+**Parámetros:**
+
+| Parámetro | Obligatorio | Descripción |
+|---|---|---|
+| Archivo PKCS#12 | Sí | Ruta al certificado `.p12`/`.pfx` |
+| Contraseña | Sí | Contraseña del certificado |
+| Archivo XML | Sí | Ruta al XML a firmar |
+| Elemento a firmar | Sí (puede ser cadena vacía `""`) | Mismas reglas que `XMLSignerPKCS11` (documento completo si está vacío, elemento embebido por `Id`/`id`/`ID` si no; incluye la especialización ALADI/MERCOSUR de la [sección 10](#10-especialización-de-comercio-exterior-aladimercosur-cod-codeh-djo-y-djoeh)) |
+
+No aplica `-listar-drivers` (no hay driver involucrado con archivos PKCS#12).
 
 **Salida:** igual que `XMLSignerPKCS11` — archivo `-signed.xml`.
 
 **Mensajes de error posibles:** "El archivo PKCS#12 no existe", "El archivo XML no existe", "El archivo no es un PKCS#12 válido o la contraseña es incorrecta", "El archivo PKCS#12 no contiene ningún certificado", "El elemento o párrafo XML especificado no existe en el documento XML", "No se encontró el elemento XML con identificador [...]".
+
+**Ejemplo:**
+```
+java -jar XMLSignerPKCS12.jar C:\certificados\empresa.pfx "MiContraseña123" C:\docs\declaracion.xml DJO
+```
 
 ---
 
@@ -403,7 +439,12 @@ java -jar XMLVerifySignatures.jar <archivo.xml> [-simple]
 java -jar XMLVerifySignatures.jar [-version | -ayuda | -licencia]
 ```
 
-**Parámetros:** ruta al XML firmado (obligatorio); `-simple` (opcional) reduce el detalle de la salida.
+**Parámetros:**
+
+| Parámetro | Obligatorio | Descripción |
+|---|---|---|
+| Archivo XML | Sí | Ruta al XML firmado a verificar |
+| `-simple` | No | Reduce el detalle de la salida |
 
 **Validaciones y estándares:**
 - Valida firmas XML-DSig sin restricción de algoritmo de hash (SHA-1 y SHA-256 ambos aceptados — validación segura de JSR-105 deliberadamente deshabilitada para permitir esto).
@@ -418,11 +459,24 @@ java -jar XMLVerifySignatures.jar [-version | -ayuda | -licencia]
 
 **Mensajes de error posibles:** "El archivo XML no existe", "El documento XML no contiene firmas digitales", "Error al procesar el archivo XML", "Argumento no válido: [...]" (segundo argumento distinto de `-simple`).
 
+**Ejemplo:**
+```
+java -jar XMLVerifySignatures.jar C:\docs\certificado-origen-signed.xml
+java -jar XMLVerifySignatures.jar C:\docs\certificado-origen-signed.xml -simple
+```
+
 ---
 
 ### 9.7 XMLVerifyXSDStructure
 
 **Qué hace:** valida que un documento XML cumpla la estructura definida por un esquema XSD (tipos de dato, elementos obligatorios u opcionales, orden, restricciones de contenido) y además verifica sus firmas digitales (también aceptando SHA-1 y SHA-256, igual que `XMLVerifySignatures`).
+
+**Parámetros:**
+
+| Parámetro | Obligatorio | Descripción |
+|---|---|---|
+| Archivo XML | Sí | Ruta al XML a validar |
+| Archivo XSD | No | Esquema local; si se omite, se busca y descarga automáticamente el referenciado dentro del propio XML |
 
 **¿Es obligatorio indicar un XSD externo? No.** El módulo busca automáticamente una referencia al esquema **dentro del propio XML**, revisando en este orden: el atributo `xsi:schemaLocation` (par namespace + URL, se toma el último token) y, si no está, `xsi:noNamespaceSchemaLocation`. Si encuentra una URL ahí, **la descarga automáticamente** (requiere Internet, con reintento automático alternando `http`↔`https` si el protocolo declarado falla) y valida contra ese esquema.
 
@@ -452,6 +506,12 @@ java -jar XMLVerifyXSDStructure.jar [-version | -ayuda | -licencia]
 ```
 
 **Mensajes de error posibles:** "El archivo XML no existe", "El archivo XSD no existe", "No se encontró referencia a esquema XSD en el XML y no se proporcionó archivo XSD", "Error al descargar el XSD", "Error al procesar el archivo XSD", "Error de validación XML", "El documento XML no contiene firmas digitales" (informativo, no detiene el proceso), "Se encontraron errores en la validación del documento XML", "Error: No hay conexión a Internet disponible" (al intentar descargar un XSD referenciado).
+
+**Ejemplo:**
+```
+java -jar XMLVerifyXSDStructure.jar C:\docs\certificado-origen.xml
+java -jar XMLVerifyXSDStructure.jar C:\docs\certificado-origen.xml C:\xsd\esquema-v2.xsd
+```
 
 ---
 
@@ -502,6 +562,11 @@ java -jar PDFSignerPKCS11.jar [-v | -h | --license | --listar-drivers]
 
 **Posiciones útiles para Certificados de Origen no preferenciales** (convención Grupo Sauken): `-x 40 -y 55` para la firma del Exportador, `-x 310 -y 55` para la firma del Funcionario Habilitado.
 
+**Ejemplo:**
+```
+java -jar PDFSignerPKCS11.jar -i C:\docs\certificado.pdf -l C:\Windows\System32\eTPKCS11.dll -p "MiPIN123" -s 0 -k true -x 40 -y 55 -t "Exportador"
+```
+
 ---
 
 ### 9.9 PDFSignerPKCS12
@@ -514,9 +579,25 @@ java -jar PDFSignerPKCS12.jar -i <archivo.pdf> -c <certificado.p12> -p <password
 java -jar PDFSignerPKCS12.jar [-v | -h | --license]
 ```
 
-**Parámetros:** iguales a `PDFSignerPKCS11` reemplazando `-l`/`-s` (biblioteca/slot) por `-c` (archivo PKCS#12). **Atención:** en este módulo el flag de bloqueo es `-l`/`--lock` (no `-k`) — es una diferencia histórica de nomenclatura entre este módulo y los otros dos firmadores de PDF.
+**Parámetros:**
+
+| Flag | Obligatorio | Descripción |
+|---|---|---|
+| `-i`, `--input` | Sí | Archivo PDF a firmar |
+| `-c`, `--certificate` | Sí | Ruta al archivo del certificado PKCS#12 |
+| `-p`, `--password` | Sí | Contraseña del certificado |
+| `-l`, `--lock` | No (default `false`) | Bloquea el documento contra modificaciones posteriores a la firma (certificación DocMDP + cifrado) |
+| `-x`, `--xpos` / `-y`, `--ypos` | No (default `0`) | Posición de una firma visible; si ambas quedan en `0`, la firma es invisible |
+| `-t`, `--text` | No | Texto adicional a mostrar en la firma visible |
+
+**Atención:** en este módulo el flag de bloqueo es `-l`/`--lock` (no `-k`) — es una diferencia histórica de nomenclatura entre este módulo y los otros dos firmadores de PDF.
 
 **Mensajes de error posibles:** "El archivo PDF no existe o no es accesible", "El archivo de certificado no existe o no es accesible", "El PDF está encriptado y no puede ser firmado", "La firma existente '[nombre]' no es válida", "El archivo de certificado no contiene certificados", "El certificado no contiene una clave privada", "No se encontró una cadena de certificados válida", "Error al acceder a la clave privada".
+
+**Ejemplo:**
+```
+java -jar PDFSignerPKCS12.jar -i C:\docs\certificado.pdf -c C:\certificados\empresa.pfx -p "MiContraseña123" -l true -x 40 -y 55
+```
 
 ---
 
@@ -530,11 +611,24 @@ java -jar PDFVerifySignatures.jar <archivo.pdf> [-simple]
 java -jar PDFVerifySignatures.jar [-version | -ayuda | -licencia]
 ```
 
+**Parámetros:**
+
+| Parámetro | Obligatorio | Descripción |
+|---|---|---|
+| Archivo PDF | Sí | Ruta al PDF firmado a verificar |
+| `-simple` | No | Reduce el detalle de la salida |
+
 **Salida:** por cada firma, cobertura del documento, integridad, fecha de firma, estado de revocación, firmante, organización, número de serie, período de validez, emisor, tipo y algoritmo de firma, y (si hay más de un certificado en la cadena) el listado completo de la cadena de certificación. Al final, estado consolidado del documento (bloqueado/encriptado).
 
 **Código de salida:** `0` si todas las firmas son válidas, `1` si alguna no lo es (mismo criterio que `XMLVerifySignatures`).
 
 **Mensajes de error posibles:** "El documento no contiene firmas digitales", "Error en firma [nombre]: [detalle]", "DOCUMENTO INVÁLIDO: Una o más firmas no son válidas", "Certificado revocado al momento de la firma", "Certificado no confiable o autofirmado", "No se pudo obtener el certificado firmante".
+
+**Ejemplo:**
+```
+java -jar PDFVerifySignatures.jar C:\docs\certificado-signed.pdf
+java -jar PDFVerifySignatures.jar C:\docs\certificado-signed.pdf -simple
+```
 
 ---
 
@@ -560,6 +654,11 @@ java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certi
 
 **Mensajes de error posibles:** "Este módulo solo funciona en Windows [...]" (al ejecutarlo en otro SO), "No se encontró ningún certificado con clave privada que coincida con '[texto]'", "'[texto]' coincide con N certificados distintos. Sea más específico [...]", "El proveedor SunMSCAPI no está disponible en este JDK".
 
+**Ejemplo:**
+```
+java -jar XMLSignerWindowsCSP.jar "Juan Carlos Ríos" C:\docs\certificado-origen.xml COD
+```
+
 ---
 
 ### 9.12 PDFSignerWindowsCSP
@@ -572,9 +671,24 @@ java -jar PDFSignerWindowsCSP.jar -i <archivo.pdf> -a <alias o fragmento CN> [-k
 java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]
 ```
 
-**Parámetros:** `-i`/`--input` (PDF, obligatorio), `-a`/`--alias` (alias o fragmento del CN, obligatorio), más `-k`/`-x`/`-y`/`-t` iguales a `PDFSignerPKCS11`. Tampoco pide contraseña.
+**Parámetros:**
+
+| Flag | Obligatorio | Descripción |
+|---|---|---|
+| `-i`, `--input` | Sí | Archivo PDF a firmar |
+| `-a`, `--alias` | Sí | Alias exacto del certificado en el almacén de Windows, o un fragmento del CN que identifique uno solo. Usar `-listar-certificados` para ver los disponibles |
+| `-k`, `--lock` | No (default `false`) | Bloquea el documento contra modificaciones posteriores a la firma (certificación DocMDP + cifrado) |
+| `-x`, `--xpos` / `-y`, `--ypos` | No (default `0`) | Posición de una firma visible; si ambas quedan en `0`, la firma es invisible |
+| `-t`, `--text` | No | Texto adicional a mostrar en la firma visible |
+
+Tampoco pide contraseña — el acceso a la clave lo administra Windows.
 
 **Mensajes de error posibles:** los mismos de acceso al almacén que `XMLSignerWindowsCSP`, más "El PDF está encriptado y no puede ser firmado" y "La firma existente '[nombre]' no es válida" (agregados en la 1.1.0-beta.1), más los propios de firma PDF ya listados en `PDFSignerPKCS11`.
+
+**Ejemplo:**
+```
+java -jar PDFSignerWindowsCSP.jar -i C:\docs\certificado.pdf -a "Juan Carlos Ríos" -k true -x 40 -y 55
+```
 
 ---
 
