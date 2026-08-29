@@ -50,9 +50,9 @@
 
 package com.sauken.s_fide.xml_signer_pkcs11;
 
+import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.MessageDigestSpi;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Delega el cálculo del digest SHA-256 (usado por JSR-105 para el hash de las
@@ -68,10 +68,14 @@ public final class Pkcs11FallbackDigest extends MessageDigestSpi {
     private final MessageDigest delegate;
 
     public Pkcs11FallbackDigest() {
+        // Pide el SHA-256 explícitamente al provider "SUN" del JDK, nunca sin indicar
+        // provider: como este provider se registra con prioridad 1, MessageDigest.getInstance
+        // ("SHA-256") sin provider se resolvería contra sí mismo y entraría en recursión
+        // infinita (StackOverflowError) al construir cada nueva instancia.
         try {
-            delegate = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 no disponible en el JDK", e);
+            delegate = MessageDigest.getInstance("SHA-256", "SUN");
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("SHA-256 no disponible en el provider SUN del JDK", e);
         }
     }
 

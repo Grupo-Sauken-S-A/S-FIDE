@@ -332,11 +332,17 @@ public class XMLSignerWindowsCSP {
 
     private static void applySignature(Document doc, String uri, PrivateKey privateKey, X509Certificate cert)
             throws Exception {
-        Provider capiProvider = Security.getProvider("SunMSCAPI");
-        if (capiProvider == null) {
+        // XMLSignatureFactory.getInstance(mechanismType, provider) exige que el provider
+        // indicado implemente el mecanismo "DOM" en sí mismo — SunMSCAPI no lo hace, solo
+        // provee primitivos criptográficos (Signature, KeyStore). Por eso se usa la fábrica
+        // DOM estándar sin indicar provider: la clave de SunMSCAPI hace que
+        // Signature.getInstance("SHA256withRSA") (sin provider) descarte los providers de
+        // software por InvalidKeyException y la JCA reintente hasta llegar a SunMSCAPI, que
+        // sí la acepta - el mismo mecanismo que ya usa XMLSignerPKCS11 con SunPKCS11.
+        if (Security.getProvider("SunMSCAPI") == null) {
             throw new IllegalStateException("El proveedor SunMSCAPI no está disponible en este JDK");
         }
-        XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM", capiProvider);
+        XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM");
 
         List<Transform> transforms = new ArrayList<>();
         transforms.add(fac.newTransform(Transform.ENVELOPED, (TransformParameterSpec) null));

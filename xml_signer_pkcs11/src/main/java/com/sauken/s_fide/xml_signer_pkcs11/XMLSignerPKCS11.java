@@ -319,29 +319,42 @@ public class XMLSignerPKCS11 {
     private static void applySignature(Document doc, String uri, PrivateKey privateKey, X509Certificate cert,
                                         Provider pkcs11Provider)
             throws Exception {
+        // XMLSignatureFactory.getInstance(mechanismType, provider) exige que el PROVIDER
+        // indicado implemente el mecanismo "DOM" en sí mismo (es para reemplazar la
+        // implementación de JSR-105, no para enrutar los primitivos criptográficos que usa
+        // internamente). Por eso el fallback se registra como provider GLOBAL de mayor
+        // prioridad: la implementación DOM estándar hace Signature.getInstance("SHA256withRSA")
+        // sin indicar provider, y la JCA reintenta automáticamente con el siguiente provider
+        // de la lista cuando initSign() rechaza la clave — así es como ya funcionaba, sin
+        // fallback, contra el SunPKCS11 real antes de esta versión.
         Pkcs11FallbackProvider fallbackProvider = new Pkcs11FallbackProvider(pkcs11Provider);
-        XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM", fallbackProvider);
+        Security.insertProviderAt(fallbackProvider, 1);
+        try {
+            XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM");
 
-        List<Transform> transforms = new ArrayList<>();
-        transforms.add(fac.newTransform(Transform.ENVELOPED, (TransformParameterSpec) null));
-        transforms.add(fac.newTransform(CanonicalizationMethod.INCLUSIVE, (C14NMethodParameterSpec) null));
+            List<Transform> transforms = new ArrayList<>();
+            transforms.add(fac.newTransform(Transform.ENVELOPED, (TransformParameterSpec) null));
+            transforms.add(fac.newTransform(CanonicalizationMethod.INCLUSIVE, (C14NMethodParameterSpec) null));
 
-        Reference ref = fac.newReference(
-                uri.isEmpty() ? "" : "#" + uri,
-                fac.newDigestMethod(DigestMethod.SHA256, null),
-                transforms,
-                null,
-                null);
+            Reference ref = fac.newReference(
+                    uri.isEmpty() ? "" : "#" + uri,
+                    fac.newDigestMethod(DigestMethod.SHA256, null),
+                    transforms,
+                    null,
+                    null);
 
-        SignedInfo si = fac.newSignedInfo(
-                fac.newCanonicalizationMethod(CanonicalizationMethod.INCLUSIVE, (C14NMethodParameterSpec) null),
-                fac.newSignatureMethod("http://www.w3.org/2001/04/xmldsig-more#rsa-sha256", null),
-                Collections.singletonList(ref));
+            SignedInfo si = fac.newSignedInfo(
+                    fac.newCanonicalizationMethod(CanonicalizationMethod.INCLUSIVE, (C14NMethodParameterSpec) null),
+                    fac.newSignatureMethod("http://www.w3.org/2001/04/xmldsig-more#rsa-sha256", null),
+                    Collections.singletonList(ref));
 
-        KeyInfo ki = createKeyInfo(fac, cert);
-        XMLSignature signature = fac.newXMLSignature(si, ki);
-        DOMSignContext dsc = createSignatureContext(doc, uri, privateKey);
-        signature.sign(dsc);
+            KeyInfo ki = createKeyInfo(fac, cert);
+            XMLSignature signature = fac.newXMLSignature(si, ki);
+            DOMSignContext dsc = createSignatureContext(doc, uri, privateKey);
+            signature.sign(dsc);
+        } finally {
+            Security.removeProvider(fallbackProvider.getName());
+        }
     }
 
     private static KeyInfo createKeyInfo(XMLSignatureFactory fac, X509Certificate cert) throws Exception {
