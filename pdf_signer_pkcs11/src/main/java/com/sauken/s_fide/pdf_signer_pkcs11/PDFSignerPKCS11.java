@@ -133,10 +133,10 @@ public class PDFSignerPKCS11 {
     private static void processSpecialArgument(String arg) {
         String argLower = arg.toLowerCase();
         switch (argLower) {
-            case "-v", "--version" -> System.out.println(VERSION);
-            case "-h", "--help" -> showHelp();
-            case "--license" -> System.out.println(LICENSE_TEXT);
-            case "--listar-drivers" -> System.out.println(TokenProfileCatalog.formatTableForCurrentOs());
+            case "-v", "--version", "-version" -> System.out.println(VERSION);
+            case "-h", "--help", "-ayuda" -> showHelp();
+            case "--license", "-licencia" -> System.out.println(LICENSE_TEXT);
+            case "--listar-drivers", "-listar-drivers" -> System.out.println(TokenProfileCatalog.formatTableForCurrentOs());
             default -> {
                 errorStream.println("Error: Argumento no reconocido: " + arg);
                 showHelp();

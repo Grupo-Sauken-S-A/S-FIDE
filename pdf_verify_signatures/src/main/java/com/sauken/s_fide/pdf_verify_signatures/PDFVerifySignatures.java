@@ -104,12 +104,17 @@ public class PDFVerifySignatures {
                 String argLower = args[0].toLowerCase();
                 switch (argLower) {
                     case "-version":
+                    case "-v":
+                    case "--version":
                         System.out.println(VERSION);
                         return;
                     case "-licencia":
+                    case "--license":
                         System.out.println(LICENSE_TEXT);
                         return;
                     case "-ayuda":
+                    case "-h":
+                    case "--help":
                         showHelp();
                         return;
                     default:

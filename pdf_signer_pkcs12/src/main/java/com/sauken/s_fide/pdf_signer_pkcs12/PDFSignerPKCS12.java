@@ -149,8 +149,9 @@ public class PDFSignerPKCS12 {
     private static void processSpecialArgument(String arg) {
         String argLower = arg.toLowerCase();
         switch (argLower) {
-            case "-v", "--version" -> System.out.println(VERSION);
-            case "-h", "--help" -> showHelp();
+            case "-v", "--version", "-version" -> System.out.println(VERSION);
+            case "-h", "--help", "-ayuda" -> showHelp();
+            case "--license", "-licencia" -> System.out.println(LICENSE_TEXT);
             default -> {
                 logger.log(Level.SEVERE, "Argumento no reconocido: " + arg);
                 showHelp();
@@ -386,10 +387,10 @@ public class PDFSignerPKCS12 {
                         .setPageNumber(1)
                         .setLayer2FontSize(8.0f)
                         .setLayer2Text(signatureText);
+            }
 
-                if (params.lock()) {
-                    signer.setCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
-                }
+            if (params.lock()) {
+                signer.setCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
             }
 
             IExternalSignature signature = new PrivateKeySignature(

@@ -112,15 +112,21 @@ public class XMLSignerPKCS11 {
         if (args.length == 1) {
             switch (args[0].toLowerCase()) {
                 case "-version":
+                case "-v":
+                case "--version":
                     outputStream.println(VERSION);
                     return;
                 case "-licencia":
+                case "--license":
                     showLicense();
                     return;
                 case "-ayuda":
+                case "-h":
+                case "--help":
                     showHelp();
                     return;
                 case "-listar-drivers":
+                case "--listar-drivers":
                     outputStream.println(TokenProfileCatalog.formatTableForCurrentOs());
                     return;
                 default:

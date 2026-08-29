@@ -138,10 +138,10 @@ public class PDFSignerWindowsCSP {
 
     private static void processSpecialArgument(String arg) throws Exception {
         switch (arg.toLowerCase(Locale.ROOT)) {
-            case "-v", "--version" -> System.out.println(VERSION);
-            case "-h", "--help" -> showHelp();
-            case "--license" -> System.out.println(readResourceFile("/LICENSE.txt"));
-            case "--listar-certificados" -> listarCertificados();
+            case "-v", "--version", "-version" -> System.out.println(VERSION);
+            case "-h", "--help", "-ayuda" -> showHelp();
+            case "--license", "-licencia" -> System.out.println(readResourceFile("/LICENSE.txt"));
+            case "--listar-certificados", "-listar-certificados" -> listarCertificados();
             default -> {
                 errorStream.println("Error: Argumento no reconocido: " + arg);
                 showHelp();
@@ -281,6 +281,28 @@ public class PDFSignerWindowsCSP {
         Path pdfPath = Paths.get(params.pdfPath());
         if (!Files.exists(pdfPath) || !Files.isRegularFile(pdfPath)) {
             throw new IllegalArgumentException("El archivo PDF no existe o no es accesible: " + params.pdfPath());
+        }
+
+        try (InputStream checkStream = Files.newInputStream(pdfPath);
+             PdfReader checkReader = new PdfReader(checkStream);
+             PdfDocument checkDoc = new PdfDocument(checkReader)) {
+
+            if (checkReader.isEncrypted()) {
+                throw new IllegalArgumentException("El PDF está encriptado y no puede ser firmado");
+            }
+
+            SignatureUtil signUtil = new SignatureUtil(checkDoc);
+            List<String> existingSignatures = signUtil.getSignatureNames();
+            if (!existingSignatures.isEmpty()) {
+                System.out.println("Firmas existentes encontradas:");
+                for (String sigName : existingSignatures) {
+                    PdfPKCS7 pkcs7 = signUtil.readSignatureData(sigName);
+                    if (!pkcs7.verifySignatureIntegrityAndAuthenticity()) {
+                        throw new IllegalArgumentException("La firma existente '" + sigName + "' no es válida");
+                    }
+                    System.out.println("- " + sigName + ": válida");
+                }
+            }
         }
 
         KeyStore keyStore = loadWindowsKeyStore();

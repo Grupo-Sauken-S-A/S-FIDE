@@ -393,11 +393,12 @@
             <li><a href="#m13">S-FiDE GUI</a></li>
           </ol>
         </li>
-        <li><a href="#s10">Integración desde otras apps</a></li>
-        <li><a href="#s11">Distribución y despliegue</a></li>
-        <li><a href="#s12">Historial de versiones</a></li>
-        <li><a href="#s13">Glosario</a></li>
-        <li><a href="#s14">Soporte y contacto</a></li>
+        <li><a href="#s10">Especialización ALADI/MERCOSUR</a></li>
+        <li><a href="#s11">Integración desde otras apps</a></li>
+        <li><a href="#s12">Distribución y despliegue</a></li>
+        <li><a href="#s13">Historial de versiones</a></li>
+        <li><a href="#s14">Glosario</a></li>
+        <li><a href="#s15">Soporte y contacto</a></li>
       </ol>
     </nav>
   </aside>
@@ -406,7 +407,7 @@
     <div class="doc-header">
       <span class="eyebrow">Grupo Sauken S.A. — Manual técnico</span>
       <h1>Manual de Integración S-FiDE</h1>
-      <p>Sistema de Firma Digital Extendido — todo lo que un integrador necesita: qué hace cada programa, cómo invocarlo, los tres mecanismos de firma disponibles y cuándo usar cada uno, y las especificaciones completas del producto.</p>
+      <p>Sistema de Firma Digital Extendido — todo lo que un integrador necesita: qué hace cada programa, cómo invocarlo, los tres mecanismos de firma disponibles y cuándo usar cada uno, la especialización de comercio exterior ALADI/MERCOSUR, y las especificaciones completas del producto.</p>
       <div class="meta">
         <span>Versión del producto: <strong>1.1.0-beta.1</strong></span>
         <span>Documento: <strong>29/08/2026</strong></span>
@@ -427,6 +428,7 @@
         <li><strong>UTF-8 de punta a punta</strong>, en cualquier sistema operativo.</li>
         <li><strong>Multiplataforma</strong> — Windows, Linux y macOS, salvo los dos módulos de almacén de Windows (exclusivos de ese sistema por diseño).</li>
         <li><strong>La GUI no es un atajo privilegiado.</strong> Invoca exactamente los mismos <code>.jar</code> con los mismos argumentos que usaría un integrador externo.</li>
+        <li><strong>Vocabulario de comandos especiales unificado.</strong> Todos los módulos aceptan las mismas familias de alias: <code>-version</code>/<code>-v</code>/<code>--version</code>, <code>-ayuda</code>/<code>-h</code>/<code>--help</code>, <code>-licencia</code>/<code>--license</code>. Unificado en 1.1.0-beta.1 — ver sección 13.</li>
       </ul>
     </section>
 
@@ -443,15 +445,20 @@
           <tr><td>Sistemas operativos</td><td>Windows, GNU/Linux, macOS (64 bits) — CSP/KSP exclusivo de Windows</td></tr>
           <tr><td>Arquitectura de CPU</td><td>x86-64 (64 bits obligatorio)</td></tr>
           <tr><td>Requisito mínimo Windows</td><td>Windows 10 de 64 bits o superior</td></tr>
-          <tr><td>Estándares de firma</td><td>XMLDSig / XAdES (XML), PAdES ETSI EN 319 142 (PDF)</td></tr>
-          <tr><td>Algoritmos</td><td>RSA 2048 bits, SHA-256, PKCS#1 v1.5</td></tr>
-          <tr><td>Acceso a hardware</td><td>PKCS#11 v2.20, PKCS#12 v1.1, CryptoAPI/CNG (CSP/KSP)</td></tr>
+          <tr><td>Estándares de firma</td><td>XML-DSig (XML), CMS/PKCS#7 detached conforme ETSI EN 319 142 (PDF)</td></tr>
+          <tr><td>Algoritmos al firmar</td><td>RSA 2048 bits, SHA-256, PKCS#1 v1.5</td></tr>
+          <tr><td>Algoritmos al verificar</td><td>SHA-256 y SHA-1 (compatibilidad con firmas de terceros) — sección 7.6</td></tr>
+          <tr><td>Acceso a hardware</td><td>PKCS#11, PKCS#12, CryptoAPI/CNG (CSP/KSP)</td></tr>
           <tr><td>Validación de revocación</td><td>OCSP y CRL (requiere Internet para validación completa)</td></tr>
         </table>
       </div>
       <div class="callout note">
         <span class="label">Portable por diseño</span>
         <p>La distribución final embebe su propio runtime de Java y su propio SDK de JavaFX — no requiere Java preinstalado en el equipo destino. Puede ejecutarse desde una carpeta portable, incluyendo un pendrive, en un Windows, Linux o macOS "limpios".</p>
+      </div>
+      <div class="callout warn">
+        <span class="label">Sobre números de versión de estándares</span>
+        <p>El código de S-FiDE no declara ni verifica una versión puntual de PKCS#11 o PKCS#12 (p. ej. "v2.20"/"v1.1") — se accede vía los proveedores del JDK, cuya conformidad depende del propio OpenJDK. Documentación previa que citaba versiones puntuales no estaba respaldada por el código y fue corregida.</p>
       </div>
     </section>
 
@@ -462,7 +469,7 @@
         <table>
           <tr><th>Componente</th><th>Versión</th><th>Uso</th><th>Licencia</th></tr>
           <tr><td>BouncyCastle</td><td>1.85</td><td>Primitivos criptográficos, ASN.1, <code>DigestInfo</code></td><td>MIT-like</td></tr>
-          <tr><td>iText</td><td>8.0.5</td><td>Firma y verificación PDF (PAdES)</td><td>AGPL v3 / comercial</td></tr>
+          <tr><td>iText</td><td>8.0.5</td><td>Firma y verificación PDF</td><td>AGPL v3 / comercial</td></tr>
           <tr><td>Apache Santuario (xmlsec)</td><td>4.0.4</td><td>Soporte de firma XML adicional</td><td>Apache 2.0</td></tr>
           <tr><td>JavaFX</td><td>23.0.1</td><td>GUI únicamente</td><td>GPLv2 + Classpath Exception</td></tr>
           <tr><td>SLF4J</td><td>2.0.17</td><td>Fachada de logging</td><td>MIT</td></tr>
@@ -584,13 +591,26 @@ cd S-FIDE
       <p>Un certificado puede ser matemáticamente válido (no vencido, cadena de confianza correcta) y sin embargo haber sido <strong>revocado</strong> por su emisor — por ejemplo, porque el token fue robado o la clave se vio comprometida. La única forma de saberlo es consultar a la autoridad certificante; no hay manera de verificar esto sin conexión.</p>
       <p>Al verificar una firma, <code>XMLVerifySignatures</code> y <code>PDFVerifySignatures</code> intentan dos mecanismos, en este orden:</p>
       <ol>
-        <li><strong>OCSP</strong> (Online Certificate Status Protocol): consulta en tiempo real al respondedor de la autoridad certificante — su URL está publicada dentro del propio certificado (extensión <em>Authority Information Access</em>). S-FiDE arma una solicitud identificando el certificado por su número de serie, y la autoridad responde con un mensaje firmado: <code>GOOD</code> o <code>REVOKED</code>. Es el mecanismo más preciso, refleja el estado en el instante exacto de la consulta.</li>
-        <li><strong>CRL</strong> (Certificate Revocation List): si OCSP no responde, se recurre a la lista de revocados que la autoridad publica periódicamente (URL también en el certificado, extensión <em>CRL Distribution Point</em>). Menos preciso — puede no reflejar una revocación muy reciente — pero funciona aunque el respondedor OCSP puntual esté caído.</li>
+        <li><strong>OCSP</strong> (Online Certificate Status Protocol): consulta en tiempo real al respondedor de la autoridad certificante — su URL está publicada dentro del propio certificado (extensión <em>Authority Information Access</em>). S-FiDE arma una solicitud identificando el certificado por su número de serie, y la autoridad responde indicando si está vigente o revocado. Es el mecanismo más preciso, refleja el estado en el instante exacto de la consulta.</li>
+        <li><strong>CRL</strong> (Certificate Revocation List): si OCSP no responde o el resultado es indeterminado, se recurre a la lista de revocados que la autoridad publica periódicamente (URL también en el certificado, extensión <em>CRL Distribution Point</em>). Menos preciso — puede no reflejar una revocación muy reciente — pero funciona aunque el respondedor OCSP puntual esté caído.</li>
       </ol>
-      <p>Cada intento tiene 10 segundos de espera. Si ninguno responde, el estado queda <strong>"No verificable" / <code>UNKNOWN</code></strong> — esto <strong>no invalida la firma</strong>: integridad criptográfica y revocación son dos verificaciones independientes. Un documento puede salir <code>VÁLIDO</code> con revocación "No verificable": la firma es genuina, solo que no se pudo confirmar en ese momento que el certificado siga vigente.</p>
+      <p><strong>Tiempos de espera exactos</strong> (verificados en el código): la comprobación de conectividad usa un socket de prueba con <strong>3 segundos</strong> de espera; las consultas HTTP a OCSP y CRL usan <strong>5 segundos</strong> de espera de conexión cada una.</p>
+      <p>Si ninguno responde, o no hay URLs de OCSP/CRL en el certificado, el estado queda <strong>"No verificable"</strong> — esto <strong>no invalida la firma</strong>: integridad criptográfica y revocación son dos verificaciones independientes. Un documento puede salir <code>VÁLIDO</code> con revocación "No verificable": la firma es genuina, solo que no se pudo confirmar en ese momento que el certificado siga vigente.</p>
       <div class="callout warn">
         <span class="label">Por qué hace falta Internet</span>
         <p>Tanto la URL de OCSP como la de CRL son direcciones de la autoridad certificante en Internet. Sin conexión, ninguno de los dos mecanismos puede completarse. Un certificado de prueba autofirmado (sin autoridad certificante real) siempre da "No verificable — Sin URLs de OCSP/CRL", porque nunca declaró esas extensiones.</p>
+      </div>
+      <p>La fecha usada por defecto para evaluar si una revocación es anterior o posterior a la firma es la fecha <strong>actual</strong> del sistema — con una excepción deliberada para documentos ALADI/MERCOSUR, ver sección 10.</p>
+
+      <h3>7.6 — Compatibilidad con firmas SHA-1 de aplicaciones de terceros</h3>
+      <p>S-FiDE <strong>firma</strong> exclusivamente con SHA-256 — es una decisión deliberada, SHA-1 se considera criptográficamente débil para firmar documentos nuevos. Sus <strong>verificadores</strong>, en cambio, están diseñados para validar cualquier firma conforme al estándar, sin importar qué aplicación la generó ni con qué algoritmo de hash — incluyendo firmas <strong>SHA-1</strong> de software de terceros ya discontinuado.</p>
+      <ul>
+        <li><strong>XML</strong> (<code>XMLVerifySignatures</code>, <code>XMLVerifyXSDStructure</code>): deshabilitan explícitamente el modo "validación segura" de JSR-105 (<code>secureValidation = false</code>), que de lo contrario rechazaría de plano cualquier firma SHA-1. Ambos reconocen <code>rsa-sha1</code> y <code>rsa-sha256</code>.</li>
+        <li><strong>PDF</strong> (<code>PDFVerifySignatures</code>): verifica vía <code>PdfPKCS7.verifySignatureIntegrityAndAuthenticity()</code> de iText, sin restricción de algoritmo — el algoritmo se informa de manera descriptiva pero nunca se usa como criterio de rechazo.</li>
+      </ul>
+      <div class="callout note">
+        <span class="label">Propiedad intencional, a preservar</span>
+        <p>Esta capacidad de verificar SHA-1 es independiente de qué algoritmos usan los propios firmadores de S-FiDE para producir firmas nuevas. El rol de S-FiDE como verificador es validar lo que ya fue firmado, sin importar antigüedad ni herramienta de origen.</p>
       </div>
     </section>
 
@@ -612,7 +632,7 @@ cd S-FIDE
       <h3>Ayuda de selección de driver</h3>
       <ul>
         <li><strong>GUI:</strong> combo de marca/modelo + botón "Detectar automáticamente" (revisa qué rutas de la tabla existen en el equipo).</li>
-        <li><strong>CLI:</strong> parámetro <code>-listar-drivers</code> (<code>--listar-drivers</code> en los módulos PDF) en <code>TokenSlotsView</code>, <code>TokenCertificateExtractor</code>, <code>XMLSignerPKCS11</code> y <code>PDFSignerPKCS11</code>.</li>
+        <li><strong>CLI:</strong> comando <code>-listar-drivers</code> (también aceptado como <code>--listar-drivers</code>) en <code>TokenSlotsView</code>, <code>TokenCertificateExtractor</code>, <code>XMLSignerPKCS11</code> y <code>PDFSignerPKCS11</code>.</li>
       </ul>
       <div class="callout note">
         <span class="label">Solo un hint de UX</span>
@@ -623,43 +643,52 @@ cd S-FIDE
     <section class="chapter" id="s9">
       <span class="chapter-num">09</span>
       <h2>Catálogo de aplicaciones</h2>
-      <p>Convenciones comunes: código de salida <code>0</code> éxito / <code>1</code> error (salvo aclaración); todas leen y escriben en UTF-8; <code>-version</code>/<code>-licencia</code>/<code>-ayuda</code> disponibles en todas (el nombre exacto de la opción varía levemente entre módulos por motivos históricos).</p>
+      <p>Convenciones comunes: código de salida <code>0</code> éxito / <code>1</code> error (salvo aclaración); todas leen y escriben en UTF-8; los comandos <code>-version</code>/<code>-v</code>/<code>--version</code>, <code>-ayuda</code>/<code>-h</code>/<code>--help</code> y <code>-licencia</code>/<code>--license</code> son idénticos en los 12 módulos de línea de comandos desde 1.1.0-beta.1.</p>
 
       <div class="module" id="m1">
         <div class="module-head"><h3>9.1 — TokenSlotsView</h3><span class="module-jar">TokenSlotsView.jar</span></div>
         <p>Visualiza los slots disponibles en un token PKCS#11 y la información de certificados/claves en cada uno. Primera herramienta a usar frente a un token nuevo.</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar TokenSlotsView.jar &lt;biblioteca PKCS#11&gt; &lt;contraseña&gt;</code></pre>
+        <pre><code>java -jar TokenSlotsView.jar &lt;biblioteca PKCS#11&gt; &lt;contraseña&gt;
+java -jar TokenSlotsView.jar [-version | -ayuda | -licencia | -listar-drivers]</code></pre>
+        <div class="field-label">Validaciones</div>
+        <p>Distingue entradas "Clave Privada" de "Certificado" (<code>KeyStore.isKeyEntry</code>/<code>isCertificateEntry</code>); reporta sujeto, emisor, validez y número de serie de certificados X.509.</p>
         <div class="field-label">Salida</div>
         <p>Por cada slot con contenido: número de slot, alias, tipo, sujeto, emisor, validez, número de serie.</p>
         <div class="field-label">Errores posibles</div>
-        <p class="errlist"><code>El archivo de la biblioteca PKCS#11 no existe</code> · <code>El proveedor SunPKCS11 no está disponible</code> · <code>Contraseña incorrecta o error al acceder al token</code> · <code>No se encontraron certificados ni claves en el token</code></p>
+        <p class="errlist"><code>El archivo de la biblioteca PKCS#11 no existe</code> · <code>El proveedor SunPKCS11 no está disponible</code> · <code>Contraseña incorrecta o error al acceder al token</code> · <code>Error al leer el token</code></p>
+        <div class="callout note"><span class="label">Nota sobre exit code</span><p>Ejecutarlo sin argumentos muestra la ayuda y termina con código <code>1</code> — a diferencia de invocar <code>-ayuda</code> explícitamente, que termina en <code>0</code>.</p></div>
       </div>
 
       <div class="module" id="m2">
         <div class="module-head"><h3>9.2 — TokenCertificateExtractor</h3><span class="module-jar">TokenCertificateExtractor.jar</span></div>
         <p>Extrae el certificado de un slot específico de un token PKCS#11 y lo exporta como <code>.pem</code>.</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar TokenCertificateExtractor.jar &lt;biblioteca PKCS#11&gt; &lt;contraseña&gt; &lt;slot&gt;</code></pre>
+        <pre><code>java -jar TokenCertificateExtractor.jar &lt;biblioteca PKCS#11&gt; &lt;contraseña&gt; &lt;slot&gt;
+java -jar TokenCertificateExtractor.jar [-version | -ayuda | -licencia | -listar-drivers]</code></pre>
+        <div class="field-label">Salida</div>
+        <p>Por consola: <code>Sujeto</code>, <code>Emisor</code>, <code>Número de Serie</code>, <code>Válido desde/hasta</code>, <code>Algoritmo de Firma</code>. Archivo <code>&lt;CN&gt;.pem</code> en el directorio de trabajo (nombre derivado del <code>CN=</code> del sujeto, caracteres no alfanuméricos reemplazados por <code>_</code>).</p>
         <div class="field-label">Errores posibles</div>
-        <p class="errlist"><code>Proveedor SunPKCS11 no disponible</code> · <code>Error al cargar el almacén de claves</code> · <code>No se encontró ningún certificado en el slot [n]</code></p>
+        <p class="errlist"><code>Proveedor SunPKCS11 no disponible</code> · <code>Error al cargar el almacén de claves</code> · <code>El número de slot debe ser un número entero</code> · <code>No se encontró ningún certificado en el slot [n]</code></p>
       </div>
 
       <div class="module" id="m3">
         <div class="module-head"><h3>9.3 — PKCS12CertificateExtractor</h3><span class="module-jar">PKCS12CertificateExtractor.jar</span></div>
-        <p>Equivalente al anterior, para archivos PKCS#12 — sin hardware.</p>
+        <p>Equivalente al anterior, para archivos PKCS#12 — sin hardware. No aplica <code>-listar-drivers</code>.</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar PKCS12CertificateExtractor.jar &lt;archivo.p12&gt; &lt;password&gt;</code></pre>
+        <pre><code>java -jar PKCS12CertificateExtractor.jar &lt;archivo.p12&gt; &lt;password&gt;
+java -jar PKCS12CertificateExtractor.jar [-version | -ayuda | -licencia]</code></pre>
         <div class="field-label">Errores posibles</div>
         <p class="errlist"><code>El archivo no es un PKCS#12 válido o la contraseña es incorrecta</code> · <code>No se encontró ningún certificado X.509 en el archivo</code></p>
       </div>
 
       <div class="module" id="m4">
         <div class="module-head"><h3>9.4 — XMLSignerPKCS11</h3><span class="module-jar">XMLSignerPKCS11.jar</span></div>
-        <p>Firma un XML (completo o un elemento por su atributo <code>Id</code>) con un token PKCS#11. XMLDSig/XAdES, con resolución automática del mecanismo de hash (sección 7.1).</p>
+        <p>Firma un XML (completo o un elemento por su atributo <code>Id</code>) con un token PKCS#11. XML-DSig con canonicalización inclusiva y RSA-SHA256, con resolución automática del mecanismo de hash (sección 7.1).</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar XMLSignerPKCS11.jar &lt;biblioteca&gt; &lt;contraseña&gt; &lt;slot&gt; &lt;archivo.xml&gt; &lt;elemento&gt;</code></pre>
-        <p><code>elemento</code> vacío (<code>""</code>) firma todo el documento. Valores conocidos: <code>COD</code>, <code>CODEH</code>, <code>DJO</code>, <code>DJOEH</code>.</p>
+        <pre><code>java -jar XMLSignerPKCS11.jar &lt;biblioteca&gt; &lt;contraseña&gt; &lt;slot&gt; &lt;archivo.xml&gt; &lt;elemento&gt;
+java -jar XMLSignerPKCS11.jar [-version | -ayuda | -licencia | -listar-drivers]</code></pre>
+        <p><code>elemento</code> vacío (<code>""</code>) firma todo el documento — capacidad estándar de XML-DSig, no exclusiva de ningún elemento. Un valor no vacío firma ese elemento embebido, identificado por <code>Id</code>/<code>id</code>/<code>ID</code>. Los valores <code>COD</code>, <code>CODEH</code>, <code>DJO</code>, <code>DJOEH</code> tienen además un significado especializado — ver sección 10.</p>
         <div class="field-label">Salida</div>
         <p>Archivo <code>&lt;nombre&gt;-signed.xml</code>.</p>
         <div class="field-label">Errores posibles</div>
@@ -668,24 +697,28 @@ cd S-FIDE
 
       <div class="module" id="m5">
         <div class="module-head"><h3>9.5 — XMLSignerPKCS12</h3><span class="module-jar">XMLSignerPKCS12.jar</span></div>
-        <p>Idéntico al anterior en funcionalidad, usando un archivo PKCS#12.</p>
+        <p>Idéntico al anterior en funcionalidad y configuración criptográfica, usando un archivo PKCS#12. No aplica <code>-listar-drivers</code>.</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar XMLSignerPKCS12.jar &lt;certificado.p12&gt; &lt;password&gt; &lt;archivo.xml&gt; &lt;elemento&gt;</code></pre>
+        <pre><code>java -jar XMLSignerPKCS12.jar &lt;certificado.p12&gt; &lt;password&gt; &lt;archivo.xml&gt; &lt;elemento&gt;
+java -jar XMLSignerPKCS12.jar [-version | -ayuda | -licencia]</code></pre>
       </div>
 
       <div class="module" id="m6">
         <div class="module-head"><h3>9.6 — XMLVerifySignatures</h3><span class="module-jar">XMLVerifySignatures.jar</span></div>
-        <p>Verifica integridad, validez de certificado y revocación (OCSP/CRL) de las firmas de un XML.</p>
+        <p>Verifica integridad, validez de certificado y revocación (OCSP/CRL) de las firmas de un XML. Acepta RSA-SHA256 y RSA-SHA1 de cualquier aplicación conforme a XML-DSig (sección 7.6).</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar XMLVerifySignatures.jar &lt;archivo.xml&gt; [-simple]</code></pre>
-        <div class="callout note"><span class="label">Código de salida especial</span><p>A diferencia de los firmadores, acá el exit code refleja el <strong>resultado de la validación</strong>: <code>0</code> si todas las firmas son válidas, <code>1</code> si alguna no lo es.</p></div>
+        <pre><code>java -jar XMLVerifySignatures.jar &lt;archivo.xml&gt; [-simple]
+java -jar XMLVerifySignatures.jar [-version | -ayuda | -licencia]</code></pre>
+        <div class="field-label">Validaciones</div>
+        <p>Integridad de cada <code>Reference</code>, estado del certificado, revocación OCSP→CRL. Trata como no confiable cualquier certificado con emisor vacío o que contenga "self signed"/"localhost". Para <code>COD</code>/<code>CODEH</code>, usa la fecha real del documento para la revocación (sección 10).</p>
+        <div class="callout note"><span class="label">Código de salida especial</span><p>A diferencia de los firmadores, acá el exit code refleja el <strong>resultado de la validación</strong>: <code>0</code> si todas las firmas son válidas, <code>1</code> si alguna no lo es o si el proceso no pudo completarse (mismo código para ambos casos).</p></div>
       </div>
 
       <div class="module" id="m7">
         <div class="module-head"><h3>9.7 — XMLVerifyXSDStructure</h3><span class="module-jar">XMLVerifyXSDStructure.jar</span></div>
-        <p>Valida que un XML cumpla la estructura definida por un esquema XSD (tipos, elementos obligatorios/opcionales, cardinalidad) y además verifica sus firmas.</p>
+        <p>Valida que un XML cumpla la estructura definida por un esquema XSD (tipos, elementos obligatorios/opcionales, cardinalidad) y además verifica sus firmas (SHA-256 y SHA-1, igual que <code>XMLVerifySignatures</code>).</p>
         <div class="field-label">¿Es obligatorio un XSD externo?</div>
-        <p><strong>No.</strong> Busca automáticamente una referencia al esquema dentro del propio XML — primero <code>xsi:schemaLocation</code>, luego <code>xsi:noNamespaceSchemaLocation</code>. Si encuentra una URL ahí, la <strong>descarga sola</strong> (requiere Internet).</p>
+        <p><strong>No.</strong> Busca automáticamente una referencia al esquema dentro del propio XML — primero <code>xsi:schemaLocation</code>, luego <code>xsi:noNamespaceSchemaLocation</code>. Si encuentra una URL ahí, la <strong>descarga sola</strong> (requiere Internet, con reintento automático <code>http</code>↔<code>https</code>).</p>
         <div class="field-label">¿Puedo indicar un XSD propio?</div>
         <p>Sí, como segundo argumento — para validar contra una versión local sin depender de Internet, o si el XML no declara ninguno. Si el nombre no coincide con el referenciado en el XML, avisa (no es un error) y usa el indicado:</p>
         <pre><code>NOTA: Diferencia en nombres de archivo XSD
@@ -693,13 +726,18 @@ cd S-FIDE
 ├─ XSD proporcionado: esquema-v1-local.xsd
 └─ Se utilizará el archivo proporcionado: esquema-v1-local.xsd</code></pre>
         <div class="field-label">Qué se valida</div>
-        <p>Dos pasos independientes, ambos deben pasar: (1) estructura contra el XSD, (2) firmas digitales del documento (integridad y certificado).</p>
+        <p>Dos pasos independientes, ambos deben pasar: (1) estructura contra el XSD, usando <strong>XML Schema 1.0</strong> — no 1.1; (2) firmas digitales del documento (integridad y certificado, sin restricción de algoritmo de hash).</p>
         <div class="callout warn">
           <span class="label">No valida revocación</span>
           <p>A diferencia de <code>XMLVerifySignatures</code>, lo indica explícitamente al finalizar: <em>"Este proceso no realiza validación de revocación de las firmas digitales aplicadas"</em>. Para confirmar que el certificado no fue revocado (sección 7.5), hay que correr además <code>XMLVerifySignatures</code>.</p>
         </div>
+        <div class="callout warn">
+          <span class="label">Acceso externo habilitado para poder descargar XSD</span>
+          <p>Para resolver esquemas remotos, este módulo habilita explícitamente el acceso externo a DTD/esquema (<code>accessExternalSchema</code>/<code>accessExternalDTD = "all"</code>) a nivel de proceso. No aplica el bloqueo estricto de entidades externas de un parser endurecido por defecto — no usarlo contra XML de origen no confiable sin las debidas precauciones de red.</p>
+        </div>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar XMLVerifyXSDStructure.jar &lt;archivo.xml&gt; [esquema.xsd]</code></pre>
+        <pre><code>java -jar XMLVerifyXSDStructure.jar &lt;archivo.xml&gt; [esquema.xsd]
+java -jar XMLVerifyXSDStructure.jar [-version | -ayuda | -licencia]</code></pre>
       </div>
 
       <h3>Opciones específicas de los firmadores de PDF</h3>
@@ -708,15 +746,18 @@ cd S-FIDE
         <li><strong>Firma visible vs. invisible.</strong> Sin <code>-x</code>/<code>-y</code> (o en <code>0</code>), la firma es igual de válida criptográficamente pero no se dibuja nada. Con coordenadas, se dibuja un recuadro con firmante, fecha y el texto de <code>-t</code> si se indicó.</li>
         <li><strong>Sistema de coordenadas.</strong> PDF usa el estándar PostScript: origen <code>(0,0)</code> en la <strong>esquina inferior izquierda</strong> de la página, X crece a la derecha, Y crece <strong>hacia arriba</strong>. <code>-x</code>/<code>-y</code> ubican la esquina <strong>inferior izquierda</strong> del recuadro (160×70 puntos, tamaño fijo) — no es "de abajo a la derecha", es de abajo a la <strong>izquierda</strong>. 1 punto PDF = 1/72 de pulgada. Siempre en la página 1.</li>
         <li><strong>Texto personalizado (<code>-t</code>).</strong> Se agrega debajo del nombre y la fecha, dentro del mismo recuadro. Sin efecto si la firma es invisible.</li>
-        <li><strong>Bloquear el documento (<code>-k true</code>).</strong> Dos efectos a la vez: (1) marca la firma como <strong>certificante</strong> (permiso PDF <code>DocMDP</code> = "sin cambios permitidos" — solo puede haber una por documento, y debe ser la primera), y (2) cifra el PDF en AES-256 restringiendo permisos a solo impresión y lectores de pantalla.</li>
+        <li><strong>Bloquear el documento (<code>-k</code>/<code>-l true</code>, según el módulo).</strong> Dos efectos, siempre acoplados desde 1.1.0-beta.1: (1) marca la firma como <strong>certificante</strong> (permiso PDF <code>DocMDP</code> = "sin cambios permitidos" — solo puede haber una por documento, y debe ser la primera), y (2) cifra el PDF en AES-256 restringiendo permisos a solo impresión y lectores de pantalla.</li>
+        <li><strong>Validación de firmas preexistentes.</strong> Los tres firmadores verifican, antes de firmar, que cualquier firma ya presente sea íntegra — si no lo es, no se modifica el archivo.</li>
       </ul>
-      <div class="callout warn"><span class="label">Cuidado con -k true</span><p>Si se planea agregar más firmas al mismo documento más adelante, no usar <code>-k true</code> en la primera — una firma certificante bloquea cualquier cambio posterior, incluidas nuevas firmas.</p></div>
+      <div class="callout note"><span class="label">Corrección de consistencia — 1.1.0-beta.1</span><p>Antes, <code>PDFSignerPKCS12</code> solo aplicaba la certificación DocMDP si además la firma era visible; con firma invisible y bloqueo, el PDF quedaba cifrado pero sin certificar. Se corrigió para que los tres firmadores acoplen siempre ambos efectos. También se agregó a <code>PDFSignerWindowsCSP</code> la validación de firmas preexistentes, que antes solo hacían <code>PDFSignerPKCS11</code>/<code>PDFSignerPKCS12</code>.</p></div>
+      <div class="callout warn"><span class="label">Cuidado con el bloqueo</span><p>Si se planea agregar más firmas al mismo documento más adelante, no bloquear la primera — una firma certificante impide cualquier cambio posterior, incluidas nuevas firmas.</p></div>
 
       <div class="module" id="m8">
         <div class="module-head"><h3>9.8 — PDFSignerPKCS11</h3><span class="module-jar">PDFSignerPKCS11.jar</span></div>
-        <p>Firma un PDF con un token PKCS#11 (ver opciones arriba). PAdES (ETSI EN 319 142), con timestamp y OCSP.</p>
+        <p>Firma un PDF con un token PKCS#11 (ver opciones arriba). Firma detached CMS/PKCS#7, con validación previa de firmas existentes.</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar PDFSignerPKCS11.jar -i &lt;pdf&gt; -l &lt;biblioteca&gt; -p &lt;password&gt; -s &lt;slot&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"]</code></pre>
+        <pre><code>java -jar PDFSignerPKCS11.jar -i &lt;pdf&gt; -l &lt;biblioteca&gt; -p &lt;password&gt; -s &lt;slot&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"]
+java -jar PDFSignerPKCS11.jar [-v | -h | --license | --listar-drivers]</code></pre>
         <div class="table-wrap">
           <table>
             <tr><th>Flag</th><th>Obligatorio</th><th>Descripción</th></tr>
@@ -729,6 +770,8 @@ cd S-FIDE
             <tr><td><code>-t, --text</code></td><td>No</td><td>Texto adicional en la firma visible</td></tr>
           </table>
         </div>
+        <div class="field-label">Errores posibles</div>
+        <p class="errlist"><code>La biblioteca PKCS#11 no existe o no es accesible</code> · <code>El token no contiene una clave privada válida</code> · <code>No se encontró una cadena de certificados válida en el token</code> · <code>El token no admite ningún mecanismo de firma RSA-SHA256 compatible</code></p>
         <div class="callout note"><span class="label">Certificados de Origen</span><p>Posiciones de convención Grupo Sauken: <code>-x 40 -y 55</code> Exportador, <code>-x 310 -y 55</code> Funcionario Habilitado.</p></div>
       </div>
 
@@ -736,23 +779,28 @@ cd S-FIDE
         <div class="module-head"><h3>9.9 — PDFSignerPKCS12</h3><span class="module-jar">PDFSignerPKCS12.jar</span></div>
         <p>Idéntico al anterior, con archivo PKCS#12 (<code>-c</code>) en vez de <code>-l</code>/<code>-s</code>.</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar PDFSignerPKCS12.jar -i &lt;pdf&gt; -c &lt;certificado.p12&gt; -p &lt;password&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"]</code></pre>
+        <pre><code>java -jar PDFSignerPKCS12.jar -i &lt;pdf&gt; -c &lt;certificado.p12&gt; -p &lt;password&gt; [-l true|false] [-x pos] [-y pos] [-t "texto"]
+java -jar PDFSignerPKCS12.jar [-v | -h | --license]</code></pre>
+        <div class="callout warn"><span class="label">Nomenclatura distinta</span><p>En este módulo el flag de bloqueo es <code>-l</code>/<code>--lock</code> (no <code>-k</code>) — diferencia histórica frente a los otros dos firmadores de PDF.</p></div>
       </div>
 
       <div class="module" id="m10">
         <div class="module-head"><h3>9.10 — PDFVerifySignatures</h3><span class="module-jar">PDFVerifySignatures.jar</span></div>
-        <p>Verifica integridad, autenticidad, revocación, y si el PDF fue modificado tras la última firma.</p>
+        <p>Verifica integridad, autenticidad, revocación, y si el PDF fue modificado tras la última firma. Acepta SHA-256 y SHA-1 de cualquier aplicación (sección 7.6).</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar PDFVerifySignatures.jar &lt;archivo.pdf&gt; [-simple]</code></pre>
+        <pre><code>java -jar PDFVerifySignatures.jar &lt;archivo.pdf&gt; [-simple]
+java -jar PDFVerifySignatures.jar [-version | -ayuda | -licencia]</code></pre>
         <p>Igual que <code>XMLVerifySignatures</code>: el exit code refleja el resultado de la validación.</p>
+        <div class="field-label">Errores posibles</div>
+        <p class="errlist"><code>El documento no contiene firmas digitales</code> · <code>Certificado revocado al momento de la firma</code> · <code>Certificado no confiable o autofirmado</code></p>
       </div>
 
       <div class="module" id="m11">
         <div class="module-head"><h3>9.11 — XMLSignerWindowsCSP<span class="windows-only">Solo Windows</span></h3><span class="module-jar">XMLSignerWindowsCSP.jar</span></div>
-        <p>Firma XML usando un certificado ya presente en el almacén de Windows (sección 7.3), como alternativa a <code>XMLSignerPKCS11</code>.</p>
+        <p>Firma XML usando un certificado ya presente en el almacén de Windows (sección 7.3), como alternativa a <code>XMLSignerPKCS11</code>. Misma configuración criptográfica (XML-DSig, RSA-SHA256).</p>
         <div class="field-label">Sintaxis</div>
         <pre><code>java -jar XMLSignerWindowsCSP.jar &lt;alias o fragmento del CN&gt; &lt;archivo.xml&gt; &lt;elemento&gt;
-java -jar XMLSignerWindowsCSP.jar -listar-certificados</code></pre>
+java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certificados]</code></pre>
         <p><strong>No se pasa contraseña</strong> — el acceso a la clave lo administra Windows.</p>
         <div class="field-label">Errores posibles</div>
         <p class="errlist"><code>No se encontró ningún certificado con clave privada que coincida con "[texto]"</code> · <code>"[texto]" coincide con N certificados distintos</code></p>
@@ -760,20 +808,52 @@ java -jar XMLSignerWindowsCSP.jar -listar-certificados</code></pre>
 
       <div class="module" id="m12">
         <div class="module-head"><h3>9.12 — PDFSignerWindowsCSP<span class="windows-only">Solo Windows</span></h3><span class="module-jar">PDFSignerWindowsCSP.jar</span></div>
-        <p>Equivalente al anterior para PDF, con las mismas opciones de posición/texto/bloqueo que <code>PDFSignerPKCS11</code>.</p>
+        <p>Equivalente al anterior para PDF, con las mismas opciones de posición/texto/bloqueo que <code>PDFSignerPKCS11</code>, incluida la validación de firmas preexistentes (agregada en 1.1.0-beta.1).</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar PDFSignerWindowsCSP.jar -i &lt;pdf&gt; -a &lt;alias o fragmento CN&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"]</code></pre>
+        <pre><code>java -jar PDFSignerWindowsCSP.jar -i &lt;pdf&gt; -a &lt;alias o fragmento CN&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"]
+java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]</code></pre>
       </div>
 
       <div class="module" id="m13">
         <div class="module-head"><h3>9.13 — S-FiDE GUI</h3><span class="module-jar">SFide-GUI.jar</span></div>
-        <p>Interfaz JavaFX que expone las 12 aplicaciones como pestañas, para uso manual sin línea de comandos. Invoca los mismos <code>.jar</code> vía <code>ProcessBuilder</code> — no reimplementa ninguna lógica de firma.</p>
+        <p>Interfaz JavaFX que expone las 12 aplicaciones como pestañas, para uso manual sin línea de comandos. Invoca los mismos <code>.jar</code> vía <code>ProcessBuilder</code> — no reimplementa ninguna lógica de firma. El título de la ventana muestra la versión en ejecución.</p>
         <div class="callout warn"><span class="label">No es para integración por proceso</span><p>No tiene un contrato de argumentos/exit-code pensado para ser invocada por otro programa. Un integrador debe usar los módulos CLI individuales de esta sección.</p></div>
       </div>
     </section>
 
     <section class="chapter" id="s10">
       <span class="chapter-num">10</span>
+      <h2>Especialización de comercio exterior ALADI/MERCOSUR: COD, CODEH, DJO y DJOEH</h2>
+      <p>Esta sección documenta una funcionalidad <strong>adicional</strong> (add-on) por encima del soporte estándar de firma XML, orientada al intercambio de documentación de comercio exterior entre países miembros de la ALADI (Asociación Latinoamericana de Integración), incluyendo el bloque MERCOSUR.</p>
+
+      <h3>10.1 — Contexto</h3>
+      <p>Los acuerdos comerciales entre países miembros de ALADI obligan a las partes a intercambiar datos de comercio exterior mediante documentos XML normalizados. Dos tipos de documento son centrales:</p>
+      <ul>
+        <li><strong>Certificado de Origen Digital</strong>, agrupado en un elemento <code>COD</code> (firma como Exportador) o <code>CODEH</code> (firma como Funcionario Habilitado del organismo emisor).</li>
+        <li><strong>Declaración Jurada de Origen</strong>, agrupada en un elemento <code>DJO</code> (Exportador) o <code>DJOEH</code> (Funcionario Habilitado).</li>
+      </ul>
+      <p>Estos documentos deben llevar <strong>firmas digitales embebidas</strong> exactamente sobre esos elementos — no sobre el documento completo — de modo que cada parte quede firmada de manera independiente y verificable por separado, dentro del mismo XML.</p>
+
+      <h3>10.2 — Lo estándar vs. lo especializado</h3>
+      <p><strong>Capa estándar (XML-DSig), para cualquier documento y cualquier nombre de elemento:</strong> los tres firmadores XML (<code>XMLSignerPKCS11</code>, <code>XMLSignerPKCS12</code>, <code>XMLSignerWindowsCSP</code>) pueden firmar el documento completo o un elemento específico identificado por su atributo <code>Id</code>/<code>id</code>/<code>ID</code>, con la firma embebida asociada a ese elemento. Es una capacidad genérica de XML-DSig — no tiene nada de especial en <code>COD</code>/<code>CODEH</code>/<code>DJO</code>/<code>DJOEH</code> en particular.</p>
+      <p><strong>Capa especializada, exclusiva de <code>COD</code> y <code>CODEH</code>:</strong> al <strong>verificar</strong> una firma cuya referencia apunta a un elemento llamado exactamente <code>COD</code> o <code>CODEH</code>, <code>XMLVerifySignatures</code> no usa la fecha actual del sistema para evaluar si una eventual revocación es anterior o posterior a la firma — extrae la <strong>fecha real del documento</strong>:</p>
+      <ul>
+        <li>Para <code>COD</code>: toma <code>&lt;DeclarationDate&gt;</code> y <code>&lt;ExporterCountry&gt;</code> del elemento raíz.</li>
+        <li>Para <code>CODEH</code>: toma <code>&lt;CertificateDate&gt;</code> del elemento raíz.</li>
+      </ul>
+      <p>La fecha se convierte a UTC según la zona horaria del país declarado, con una tabla interna que cubre: Argentina, Bolivia, Brasil, Chile, Colombia, Cuba, Ecuador, México, Panamá, Paraguay, Perú, Uruguay y Venezuela.</p>
+      <p>Esto permite validar correctamente, meses o años después, si un certificado estaba vigente <strong>en el momento real en que se emitió</strong> el documento — no en el momento en que alguien ejecuta la verificación. Si la referencia no es <code>COD</code> ni <code>CODEH</code> (incluido <code>DJO</code>/<code>DJOEH</code> en el estado actual de esta funcionalidad), se usa la fecha actual del sistema, con una advertencia informativa.</p>
+      <div class="callout note">
+        <span class="label">Comportamiento intencional — no corregir</span>
+        <p>Esta especialización es lo que hace a S-FiDE apto para el caso de uso ALADI/MERCOSUR. Los detalles operativos completos de <code>COD</code>, <code>CODEH</code>, <code>DJO</code> y <code>DJOEH</code> se ampliarán en una futura revisión de este manual.</p>
+      </div>
+
+      <h3>10.3 — Sensibilidad a mayúsculas/minúsculas</h3>
+      <p>El nombre del elemento a firmar es sensible a mayúsculas y minúsculas. Para Certificados de Origen Digitales y Declaraciones Juradas de Origen, usar siempre los identificadores en mayúsculas: <code>COD</code>, <code>CODEH</code>, <code>DJO</code>, <code>DJOEH</code>.</p>
+    </section>
+
+    <section class="chapter" id="s11">
+      <span class="chapter-num">11</span>
       <h2>Integración desde otras aplicaciones</h2>
       <p>Patrón recomendado por Grupo Sauken: <strong>redirigir <code>stdout</code>/<code>stderr</code> a archivos separados y capturar el código de salida</strong>, para que la aplicación integradora los lea una vez que el proceso terminó.</p>
       <h3>Windows (.bat)</h3>
@@ -812,8 +892,8 @@ echo $RESULT &gt; "/tmp/result.txt"
 exit $RESULT</code></pre>
     </section>
 
-    <section class="chapter" id="s11">
-      <span class="chapter-num">11</span>
+    <section class="chapter" id="s12">
+      <span class="chapter-num">12</span>
       <h2>Distribución y despliegue</h2>
       <p>Una distribución lista para usar es una carpeta autocontenida:</p>
       <pre><code>S-FiDE/
@@ -829,8 +909,8 @@ exit $RESULT</code></pre>
       </div>
     </section>
 
-    <section class="chapter" id="s12">
-      <span class="chapter-num">12</span>
+    <section class="chapter" id="s13">
+      <span class="chapter-num">13</span>
       <h2>Historial de versiones</h2>
       <h3>v1.1.0-beta.1 (2026-08) — en QA</h3>
       <ul>
@@ -838,35 +918,41 @@ exit $RESULT</code></pre>
         <li>Autodetección de marca/modelo y ayuda de selección de driver.</li>
         <li>Dos módulos nuevos: <code>XMLSignerWindowsCSP</code> y <code>PDFSignerWindowsCSP</code>.</li>
         <li>Actualización de dependencias criptográficas por alertas de seguridad.</li>
-        <li>Corrección de dos errores hallados en QA con hardware real. Validado de punta a punta con SafeNet 5110+ L3 y con PKCS#12 — pendiente ePass2003 y mToken CryptoID.</li>
+        <li>Corrección de dos errores hallados en QA con hardware real (SafeNet 5110+ L3).</li>
+        <li><strong>Auditoría de código y corrección de inconsistencias entre módulos hermanos:</strong> se eliminó un stack trace expuesto en <code>XMLVerifySignatures</code>; <code>PDFSignerPKCS12</code> ahora acopla siempre certificación DocMDP + cifrado al bloquear (antes solo con firma visible); <code>PDFSignerWindowsCSP</code> ahora valida firmas preexistentes y rechaza PDFs ya encriptados; se unificó el vocabulario de comandos especiales en los 12 módulos CLI; se corrigieron afirmaciones de documentación no respaldadas por el código (versión de PKCS#11/12, XAdES, XML Schema 1.1, timeouts de OCSP/CRL).</li>
+        <li>Validado de punta a punta con SafeNet 5110+ L3 real y con PKCS#12 — pendiente ePass2003 y mToken CryptoID.</li>
       </ul>
       <h3>v1.0.0 (2024-12) — primer release estable</h3>
       <p>Suite inicial de 10 módulos más la GUI JavaFX.</p>
     </section>
 
-    <section class="chapter" id="s13">
-      <span class="chapter-num">13</span>
+    <section class="chapter" id="s14">
+      <span class="chapter-num">14</span>
       <h2>Glosario</h2>
       <div class="table-wrap">
         <table>
           <tr><td><strong>AC-ONTI</strong></td><td>Autoridad Certificante de la Oficina Nacional de Tecnologías de Información (Argentina)</td></tr>
+          <tr><td><strong>ALADI</strong></td><td>Asociación Latinoamericana de Integración, incluye el bloque MERCOSUR</td></tr>
           <tr><td><strong>CAPI / CNG</strong></td><td>Las dos generaciones de la API criptográfica nativa de Windows</td></tr>
+          <tr><td><strong>COD / CODEH</strong></td><td>Elementos XML de un Certificado de Origen Digital, firmados por Exportador / Funcionario Habilitado (sección 10)</td></tr>
           <tr><td><strong>CRL</strong></td><td>Certificate Revocation List</td></tr>
           <tr><td><strong>CSP / KSP</strong></td><td>Proveedores que implementan CAPI/CNG respectivamente</td></tr>
           <tr><td><strong>DigestInfo</strong></td><td>Estructura ASN.1 que envuelve un hash con su identificador de algoritmo</td></tr>
+          <tr><td><strong>DJO / DJOEH</strong></td><td>Elementos XML de una Declaración Jurada de Origen, firmados por Exportador / Funcionario Habilitado (sección 10)</td></tr>
+          <tr><td><strong>DocMDP</strong></td><td>Permiso PDF aplicado por una firma certificante, restringe qué cambios son válidos después</td></tr>
           <tr><td><strong>FIPS 140-2/3</strong></td><td>Estándar de seguridad del NIST para módulos criptográficos</td></tr>
           <tr><td><strong>HSM</strong></td><td>Hardware Security Module</td></tr>
+          <tr><td><strong>MERCOSUR</strong></td><td>Mercado Común del Sur, subconjunto de países miembro de ALADI</td></tr>
           <tr><td><strong>OCSP</strong></td><td>Online Certificate Status Protocol</td></tr>
-          <tr><td><strong>PAdES</strong></td><td>PDF Advanced Electronic Signatures (ETSI)</td></tr>
           <tr><td><strong>PKCS#11 / #12</strong></td><td>Estándares para tokens criptográficos y contenedores cert+clave</td></tr>
           <tr><td><strong>Slot</strong></td><td>Ranura lógica de un token PKCS#11</td></tr>
-          <tr><td><strong>XAdES / XMLDSig</strong></td><td>Perfil de firma con metadatos / estándar W3C de firma XML</td></tr>
+          <tr><td><strong>XML-DSig</strong></td><td>Estándar W3C de firma XML — único estándar de firma XML implementado por S-FiDE (no XAdES)</td></tr>
         </table>
       </div>
     </section>
 
-    <section class="chapter" id="s14">
-      <span class="chapter-num">14</span>
+    <section class="chapter" id="s15">
+      <span class="chapter-num">15</span>
       <h2>Soporte y contacto</h2>
       <p><strong>Grupo Sauken S.A.</strong> — Córdoba, Argentina</p>
       <p>Email: <a href="mailto:soporte@sauken.com.ar">soporte@sauken.com.ar</a> · Sitio: <a href="https://www.sauken.com.ar/">www.sauken.com.ar</a> · Repositorio: <a href="https://github.com/Grupo-Sauken-S-A/S-FIDE">github.com/Grupo-Sauken-S-A/S-FIDE</a></p>

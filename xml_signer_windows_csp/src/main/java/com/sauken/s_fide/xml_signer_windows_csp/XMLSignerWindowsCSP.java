@@ -139,15 +139,21 @@ public class XMLSignerWindowsCSP {
         if (args.length == 1) {
             switch (args[0].toLowerCase(Locale.ROOT)) {
                 case "-version":
+                case "-v":
+                case "--version":
                     outputStream.println(VERSION);
                     return;
                 case "-licencia":
+                case "--license":
                     outputStream.println(loadResourceFile("/LICENSE.txt"));
                     return;
                 case "-ayuda":
+                case "-h":
+                case "--help":
                     showHelp();
                     return;
                 case "-listar-certificados":
+                case "--listar-certificados":
                     listarCertificados();
                     return;
                 default:

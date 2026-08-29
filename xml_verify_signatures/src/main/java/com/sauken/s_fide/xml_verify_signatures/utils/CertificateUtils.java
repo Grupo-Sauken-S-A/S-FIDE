@@ -149,7 +149,6 @@ public class CertificateUtils {
             }
         } catch (Exception e) {
             System.err.println("Error al obtener el certificado emisor: " + e.getMessage());
-            e.printStackTrace();
         }
         return null;
     }

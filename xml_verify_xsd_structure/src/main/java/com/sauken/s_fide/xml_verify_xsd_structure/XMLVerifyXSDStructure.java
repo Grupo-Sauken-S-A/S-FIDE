@@ -145,14 +145,19 @@ public class XMLVerifyXSDStructure {
             if (args.length == 1) {
                 switch (args[0].toLowerCase()) {
                     case "-version":
+                    case "-v":
+                    case "--version":
                         System.out.println(VERSION);
                         System.exit(0);
                         break;
                     case "-licencia":
+                    case "--license":
                         System.out.println(LICENSE_TEXT);
                         System.exit(0);
                         break;
                     case "-ayuda":
+                    case "-h":
+                    case "--help":
                         showHelp();
                         System.exit(0);
                         break;

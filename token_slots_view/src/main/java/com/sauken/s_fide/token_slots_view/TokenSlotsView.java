@@ -112,19 +112,19 @@ public class TokenSlotsView {
         if (args.length == 1) {
             String argLower = args[0].toLowerCase();
             switch (argLower) {
-                case "-version" -> {
+                case "-version", "-v", "--version" -> {
                     standardOutput.println(VERSION);
                     System.exit(0);
                 }
-                case "-licencia" -> {
+                case "-licencia", "--license" -> {
                     standardOutput.println(LICENSE_TEXT);
                     System.exit(0);
                 }
-                case "-ayuda" -> {
+                case "-ayuda", "-h", "--help" -> {
                     showHelp();
                     System.exit(0);
                 }
-                case "-listar-drivers" -> {
+                case "-listar-drivers", "--listar-drivers" -> {
                     standardOutput.println(TokenProfileCatalog.formatTableForCurrentOs());
                     System.exit(0);
                 }

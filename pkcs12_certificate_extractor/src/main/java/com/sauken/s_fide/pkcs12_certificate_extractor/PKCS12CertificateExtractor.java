@@ -108,9 +108,9 @@ public class PKCS12CertificateExtractor {
     private static void processSpecialArgument(String arg) {
         String argLower = arg.toLowerCase();
         switch (argLower) {
-            case "-version" -> System.out.println(VERSION);
-            case "-licencia" -> System.out.println(LICENSE_TEXT);
-            case "-ayuda" -> showHelp();
+            case "-version", "-v", "--version" -> System.out.println(VERSION);
+            case "-licencia", "--license" -> System.out.println(LICENSE_TEXT);
+            case "-ayuda", "-h", "--help" -> showHelp();
             default -> throw new CustomException("Argumento no reconocido: " + arg);
         }
     }
