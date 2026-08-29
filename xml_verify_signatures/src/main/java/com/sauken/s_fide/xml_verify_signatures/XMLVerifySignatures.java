@@ -310,7 +310,15 @@ public class XMLVerifySignatures {
                 }
             }
 
-            return coreValidity && sv && referencesValid && !isRevoked;
+            boolean finalValid = coreValidity && sv && referencesValid && !isRevoked;
+            if (!simpleOutput) {
+                System.out.println("  Estado final de la firma #" + signatureNumber + ": " +
+                        (finalValid ? "VÁLIDA" : "INVÁLIDA" +
+                                (isRevoked && coreValidity && sv && referencesValid
+                                        ? " (certificado revocado — ver detalle arriba)"
+                                        : "")));
+            }
+            return finalValid;
 
         } catch (Exception e) {
             throw new IllegalArgumentException("Error en la verificación de la firma #" +
@@ -366,7 +374,7 @@ public class XMLVerifySignatures {
     private static void printSignatureInfo(XMLSignature signature, int signatureNumber, boolean isValid)
             throws Exception {
         System.out.println("\nDetalles de la Firma #" + signatureNumber + ":");
-        System.out.println("  Estado: " + (isValid ? "VÁLIDA" : "INVÁLIDA"));
+        System.out.println("  Estado (integridad criptográfica, sin considerar revocación): " + (isValid ? "VÁLIDA" : "INVÁLIDA"));
 
         SignedInfo signedInfo = signature.getSignedInfo();
         System.out.println("  Método de Canonicalización: " +
@@ -501,6 +509,8 @@ public class XMLVerifySignatures {
                 System.out.println("  El documento se firmó " + Math.abs(diffDays) +
                         " días " + (diffDays >= 0 ? "después" : "antes") + " de la revocación del certificado");
             }
+            System.out.println("  → El certificado fue revocado por su autoridad certificante. Aunque la firma es "
+                    + "criptográficamente correcta, esta firma se considera INVÁLIDA por ese motivo.");
         }
 
         if (result.getErrorMessage() != null) {
@@ -583,6 +593,8 @@ public class XMLVerifySignatures {
             if (result.getRevocationDate() != null) {
                 System.out.println("  Certificado revocado desde: " + formatDate(result.getRevocationDate()));
             }
+            System.out.println("  → El certificado fue revocado por su autoridad certificante. Aunque la firma es "
+                    + "criptográficamente correcta, esta firma se considera INVÁLIDA por ese motivo.");
         }
 
         if (result.isUsedCurrentTime()) {

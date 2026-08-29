@@ -601,6 +601,7 @@ cd S-FIDE
         <p>Tanto la URL de OCSP como la de CRL son direcciones de la autoridad certificante en Internet. Sin conexión, ninguno de los dos mecanismos puede completarse. Un certificado de prueba autofirmado (sin autoridad certificante real) siempre da "No verificable — Sin URLs de OCSP/CRL", porque nunca declaró esas extensiones.</p>
       </div>
       <p>La fecha usada por defecto para evaluar si una revocación es anterior o posterior a la firma es la fecha <strong>actual</strong> del sistema — con una excepción deliberada para documentos ALADI/MERCOSUR, ver sección 10.</p>
+      <p><strong>Por qué un certificado revocado invalida la firma, en términos simples:</strong> la revocación significa que la autoridad certificante retiró la confianza en ese certificado — por ejemplo, porque la clave privada se filtró o el titular dejó de estar habilitado — <strong>después</strong> de haberlo emitido. Que la firma sea criptográficamente correcta solo demuestra que el documento no fue alterado y que fue producido con esa clave privada; no demuestra que esa clave siga siendo confiable. Por eso <code>XMLVerifySignatures</code> marca como INVÁLIDA cualquier firma cuyo certificado figure como revocado en el momento correspondiente, y lo informa explícitamente: <em>"El certificado fue revocado por su autoridad certificante. Aunque la firma es criptográficamente correcta, esta firma se considera INVÁLIDA por ese motivo."</em></p>
 
       <h3>7.6 — Compatibilidad con firmas SHA-1 de aplicaciones de terceros</h3>
       <p>S-FiDE <strong>firma</strong> exclusivamente con SHA-256 — es una decisión deliberada, SHA-1 se considera criptográficamente débil para firmar documentos nuevos. Sus <strong>verificadores</strong>, en cambio, están diseñados para validar cualquier firma conforme al estándar, sin importar qué aplicación la generó ni con qué algoritmo de hash — incluyendo firmas <strong>SHA-1</strong> de software de terceros ya discontinuado.</p>
@@ -612,6 +613,7 @@ cd S-FIDE
         <span class="label">Propiedad intencional, a preservar</span>
         <p>Esta capacidad de verificar SHA-1 es independiente de qué algoritmos usan los propios firmadores de S-FiDE para producir firmas nuevas. El rol de S-FiDE como verificador es validar lo que ya fue firmado, sin importar antigüedad ni herramienta de origen.</p>
       </div>
+      <p><strong>Por qué esto es especialmente relevante para COD y DJO</strong> (sección 10): en la práctica, los elementos <code>COD</code>/<code>CODEH</code>/<code>DJO</code>/<code>DJOEH</code> de un mismo documento a veces se firman con software de distintas empresas — un exportador puede usar S-FiDE mientras que la Entidad Habilitada usa otra aplicación (o viceversa), y esas otras aplicaciones pueden seguir usando SHA-1. <code>XMLVerifySignatures</code> tiene que poder validar ambas firmas del mismo documento sin importar cuál de las dos las generó ni con qué algoritmo — es exactamente el escenario que este soporte está pensado para cubrir.</p>
     </section>
 
     <section class="chapter" id="s8">
@@ -710,6 +712,16 @@ java -jar PKCS12CertificateExtractor.jar [-version | -ayuda | -licencia]</code><
         <pre><code>java -jar PKCS12CertificateExtractor.jar C:\certificados\empresa.pfx "MiContraseña123"</code></pre>
       </div>
 
+      <h3 id="reglas-firma-comunes">Reglas de firma comunes a los tres firmadores XML</h3>
+      <p><code>XMLSignerPKCS11</code>, <code>XMLSignerPKCS12</code> y <code>XMLSignerWindowsCSP</code> aplican, antes de firmar, dos controles obligatorios:</p>
+      <ol>
+        <li><strong>Nunca firmar un elemento que ya tiene una firma digital aplicada</strong> — vale para cualquier XML genérico, no solo los especializados de comercio exterior. Si el elemento indicado (o el documento completo, con <code>""</code>) ya tiene una <code>&lt;ds:Signature&gt;</code> cuya <code>Reference</code> apunta a él, el programa rechaza la operación sin modificar el archivo.</li>
+        <li><strong>Regla de orden para <code>CODEH</code>/<code>DJOEH</code></strong> (sección 10): no se puede firmar <code>CODEH</code> sin una firma previa sobre <code>COD</code>, ni firmar <code>DJOEH</code> sin una firma previa sobre <code>DJO</code>.</li>
+      </ol>
+      <p>Ambos controles buscan <code>&lt;ds:Signature&gt;</code>/<code>&lt;ds:Reference&gt;</code> existentes en el documento — no vuelven a verificar criptográficamente la firma previa, solo confirman que existe.</p>
+      <div class="field-label">Mensajes de error</div>
+      <p class="errlist"><code>El elemento '[id]' ya tiene una firma digital aplicada. No se puede firmar el mismo elemento dos veces.</code> · <code>El documento ya tiene una firma digital aplicada sobre todo su contenido...</code> (con elemento vacío) · <code>No se puede firmar el elemento CODEH: no existe una firma digital previa sobre el elemento COD.</code> · <code>No se puede firmar el elemento DJOEH: no existe una firma digital previa sobre el elemento DJO.</code></p>
+
       <div class="module" id="m4">
         <div class="module-head"><h3>9.4 — XMLSignerPKCS11</h3><span class="module-jar">XMLSignerPKCS11.jar</span></div>
         <p>Firma un XML (completo o un elemento por su atributo <code>Id</code>) con un token PKCS#11. XML-DSig con canonicalización inclusiva y RSA-SHA256, con resolución automática del mecanismo de hash (sección 7.1).</p>
@@ -729,7 +741,7 @@ java -jar XMLSignerPKCS11.jar [-version | -ayuda | -licencia | -listar-drivers]<
         <div class="field-label">Salida</div>
         <p>Archivo <code>&lt;nombre&gt;-signed.xml</code>.</p>
         <div class="field-label">Errores posibles</div>
-        <p class="errlist"><code>El elemento o párrafo XML especificado no existe</code> · <code>Contraseña incorrecta</code> · <code>El token no admite ningún mecanismo de firma RSA-SHA256 compatible</code></p>
+        <p class="errlist"><code>El elemento o párrafo XML especificado no existe</code> · <code>Contraseña incorrecta</code> · <code>El token no admite ningún mecanismo de firma RSA-SHA256 compatible</code> · más las <a href="#reglas-firma-comunes">reglas de firma comunes</a></p>
         <div class="field-label">Ejemplo</div>
         <pre><code>java -jar XMLSignerPKCS11.jar C:\Windows\System32\eTPKCS11.dll "MiPIN123" 0 C:\docs\certificado-origen.xml COD</code></pre>
       </div>
@@ -749,6 +761,8 @@ java -jar XMLSignerPKCS12.jar [-version | -ayuda | -licencia]</code></pre>
             <tr><td>Elemento a firmar</td><td>Sí (puede ser <code>""</code>)</td><td>Mismas reglas que XMLSignerPKCS11, incluida la especialización ALADI/MERCOSUR (sección 10)</td></tr>
           </table>
         </div>
+        <div class="field-label">Errores posibles</div>
+        <p class="errlist"><code>El archivo PKCS#12 no existe</code> · <code>El elemento o párrafo XML especificado no existe en el documento XML</code> · más las <a href="#reglas-firma-comunes">reglas de firma comunes</a></p>
         <div class="field-label">Ejemplo</div>
         <pre><code>java -jar XMLSignerPKCS12.jar C:\certificados\empresa.pfx "MiContraseña123" C:\docs\declaracion.xml DJO</code></pre>
       </div>
@@ -767,7 +781,9 @@ java -jar XMLVerifySignatures.jar [-version | -ayuda | -licencia]</code></pre>
           </table>
         </div>
         <div class="field-label">Validaciones</div>
-        <p>Integridad de cada <code>Reference</code>, estado del certificado, revocación OCSP→CRL. Trata como no confiable cualquier certificado con emisor vacío o que contenga "self signed"/"localhost". Para <code>COD</code>/<code>CODEH</code>, usa la fecha real del documento para la revocación (sección 10).</p>
+        <p>Integridad de cada <code>Reference</code>, estado del certificado, revocación OCSP→CRL. Trata como no confiable cualquier certificado con emisor vacío o que contenga "self signed"/"localhost". Para <code>COD</code>/<code>CODEH</code>/<code>DJO</code>/<code>DJOEH</code>, usa la fecha real del documento para la revocación (sección 10).</p>
+        <div class="field-label">Salida por firma</div>
+        <p>Un <strong>"Estado (integridad criptográfica, sin considerar revocación)"</strong> — calculado antes del chequeo de revocación, por eso etiquetado así explícitamente — y, al final, un <strong>"Estado final de la firma #N"</strong> que sí combina integridad criptográfica y revocación; es este último el que determina el resultado consolidado del documento. Si la causa específica es un certificado revocado, lo indica: <code>INVÁLIDA (certificado revocado — ver detalle arriba)</code>.</p>
         <div class="callout note"><span class="label">Código de salida especial</span><p>A diferencia de los firmadores, acá el exit code refleja el <strong>resultado de la validación</strong>: <code>0</code> si todas las firmas son válidas, <code>1</code> si alguna no lo es o si el proceso no pudo completarse (mismo código para ambos casos).</p></div>
         <div class="field-label">Ejemplo</div>
         <pre><code>java -jar XMLVerifySignatures.jar C:\docs\certificado-origen-signed.xml
@@ -906,7 +922,7 @@ java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certi
         </div>
         <p><strong>No se pasa contraseña</strong> — el acceso a la clave lo administra Windows.</p>
         <div class="field-label">Errores posibles</div>
-        <p class="errlist"><code>No se encontró ningún certificado con clave privada que coincida con "[texto]"</code> · <code>"[texto]" coincide con N certificados distintos</code></p>
+        <p class="errlist"><code>No se encontró ningún certificado con clave privada que coincida con "[texto]"</code> · <code>"[texto]" coincide con N certificados distintos</code> · más las <a href="#reglas-firma-comunes">reglas de firma comunes</a></p>
         <div class="field-label">Ejemplo</div>
         <pre><code>java -jar XMLSignerWindowsCSP.jar "Juan Carlos Ríos" C:\docs\certificado-origen.xml COD</code></pre>
       </div>
@@ -1016,7 +1032,17 @@ java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]<
         <p>Esta especialización es exactamente lo que requiere el caso de uso ALADI/MERCOSUR, verificada contra ejemplos reales de COD y DJO.</p>
       </div>
 
-      <h3>10.5 — Sensibilidad a mayúsculas/minúsculas</h3>
+      <h3>10.5 — Reglas de firma obligatorias</h3>
+      <p>Además de la <a href="#reglas-firma-comunes">regla genérica</a> de no volver a firmar un elemento ya firmado, los tres firmadores XML aplican una regla de orden específica para esta especialización, reflejando la secuencia operativa real de 10.2/10.3:</p>
+      <ul>
+        <li><strong><code>CODEH</code> no puede firmarse si <code>COD</code> no tiene ya una firma digital aplicada.</strong></li>
+        <li><strong><code>DJOEH</code> no puede firmarse si <code>DJO</code> no tiene ya una firma digital aplicada.</strong></li>
+      </ul>
+      <p>Ambas verificaciones son de <strong>existencia</strong>, no de validez criptográfica completa: el firmador confirma que hay una <code>&lt;ds:Signature&gt;</code> con <code>Reference</code> al elemento requerido, sin volver a verificarla — la disciplina de orden real la garantiza el sistema externo que orquesta las llamadas a S-FiDE, no S-FiDE actuando como autoridad de validación completa al momento de firmar.</p>
+      <div class="field-label">Mensajes de error</div>
+      <p class="errlist"><code>No se puede firmar el elemento CODEH: no existe una firma digital previa sobre el elemento COD.</code> · <code>No se puede firmar el elemento DJOEH: no existe una firma digital previa sobre el elemento DJO.</code></p>
+
+      <h3>10.6 — Sensibilidad a mayúsculas/minúsculas</h3>
       <p>El nombre del elemento a firmar es sensible a mayúsculas y minúsculas. Para Certificados de Origen Digitales y Declaraciones Juradas de Origen, usar siempre los identificadores en mayúsculas: <code>COD</code>, <code>CODEH</code>, <code>DJO</code>, <code>DJOEH</code>.</p>
     </section>
 
@@ -1087,7 +1113,7 @@ exit $RESULT</code></pre>
         <li>Dos módulos nuevos: <code>XMLSignerWindowsCSP</code> y <code>PDFSignerWindowsCSP</code>.</li>
         <li>Actualización de dependencias criptográficas por alertas de seguridad.</li>
         <li>Corrección de dos errores hallados en QA con hardware real (SafeNet 5110+ L3).</li>
-        <li><strong>Especialización ALADI/MERCOSUR completada (sección 10):</strong> corregido un error real — la revocación de la firma sobre <code>CODEH</code> usaba <code>ExporterCountry</code> en vez de <code>EHCountry</code> para convertir a UTC; agregado soporte de extracción de fecha para <code>DJO</code>/<code>DJOEH</code> (literal como UTC, sin conversión de huso horario); verificado contra archivos DJO reales en sus 4 etapas.</li>
+        <li><strong>Especialización ALADI/MERCOSUR completada (sección 10):</strong> corregido un error real — la revocación de la firma sobre <code>CODEH</code> usaba <code>ExporterCountry</code> en vez de <code>EHCountry</code> para convertir a UTC; agregado soporte de extracción de fecha para <code>DJO</code>/<code>DJOEH</code> (literal como UTC, sin conversión de huso horario); verificado contra archivos DJO reales en sus 4 etapas; agregadas dos reglas de firma obligatorias (nunca firmar un elemento ya firmado, nunca firmar CODEH/DJOEH sin firma previa en COD/DJO); mensajes de revocación de <code>XMLVerifySignatures</code> aclarados para explicar por qué un certificado revocado invalida la firma.</li>
         <li><strong>Auditoría de código y corrección de inconsistencias entre módulos hermanos:</strong> se eliminó un stack trace expuesto en <code>XMLVerifySignatures</code>; <code>PDFSignerPKCS12</code> ahora acopla siempre certificación DocMDP + cifrado al bloquear (antes solo con firma visible); <code>PDFSignerWindowsCSP</code> ahora valida firmas preexistentes y rechaza PDFs ya encriptados; se unificó el vocabulario de comandos especiales en los 12 módulos CLI; se corrigieron afirmaciones de documentación no respaldadas por el código (versión de PKCS#11/12, XAdES, XML Schema 1.1, timeouts de OCSP/CRL).</li>
         <li>Validado de punta a punta con SafeNet 5110+ L3 real y con PKCS#12 — pendiente ePass2003 y mToken CryptoID.</li>
       </ul>

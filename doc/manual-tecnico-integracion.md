@@ -207,6 +207,8 @@ Si **ninguno de los dos mecanismos** responde, o no se encuentra ninguna URL de 
 
 **Fecha usada para evaluar la revocación.** Por defecto, `XMLVerifySignatures` usa la fecha y hora **actuales** del sistema para decidir si una revocación encontrada es anterior o posterior a la firma. Existe una excepción deliberada e importante para documentos de comercio exterior ALADI/MERCOSUR — ver [sección 10](#10-especialización-de-comercio-exterior-aladimercosur-cod-codeh-djo-y-djoeh).
 
+**Por qué un certificado revocado invalida la firma, en términos simples:** la revocación significa que la autoridad certificante retiró la confianza en ese certificado — por ejemplo, porque la clave privada se filtró o el titular dejó de estar habilitado — **después** de haberlo emitido. Que la firma sea criptográficamente correcta solo demuestra que el documento no fue alterado y que fue producido con esa clave privada; no demuestra que esa clave siga siendo confiable. Por eso `XMLVerifySignatures` marca como INVÁLIDA cualquier firma cuyo certificado figure como revocado en el momento correspondiente (ver [sección 10.4](#104-validación-de-revocación-por-elemento--la-regla-completa-y-verificada) para qué fecha exacta se usa según el tipo de documento), y lo informa explícitamente en su salida: *"El certificado fue revocado por su autoridad certificante. Aunque la firma es criptográficamente correcta, esta firma se considera INVÁLIDA por ese motivo."*
+
 ### 7.6 Compatibilidad con firmas SHA-1 de aplicaciones de terceros
 
 S-FiDE **firma** exclusivamente con SHA-256 (no ofrece SHA-1 como opción al firmar: es una decisión deliberada, SHA-1 se considera criptográficamente débil para firmar documentos nuevos). Sin embargo, sus verificadores (`XMLVerifySignatures`, `XMLVerifyXSDStructure`, `PDFVerifySignatures`) están diseñados para validar **cualquier firma digital conforme al estándar**, sin importar qué aplicación la haya generado ni con qué algoritmo de hash — incluyendo firmas **SHA-1**, habituales en documentos firmados años atrás con software de terceros ya discontinuado.
@@ -215,6 +217,8 @@ S-FiDE **firma** exclusivamente con SHA-256 (no ofrece SHA-1 como opción al fir
 - En el lado PDF, `PDFVerifySignatures` verifica la firma a través de `PdfPKCS7.verifySignatureIntegrityAndAuthenticity()` de iText, que no impone ninguna restricción de algoritmo — el algoritmo de firma se informa de manera descriptiva (`Algoritmo de firma: ...`) pero nunca se usa como criterio de rechazo.
 
 Esta capacidad es intencional y debe mantenerse: la función de S-FiDE como verificador es validar lo que **ya fue firmado**, sin importar la antigüedad ni la herramienta de origen — es una propiedad distinta e independiente de qué algoritmos usan los propios firmadores de S-FiDE para producir firmas nuevas.
+
+**Por qué esto es especialmente relevante para COD y DJO** (ver [sección 10](#10-especialización-de-comercio-exterior-aladimercosur-cod-codeh-djo-y-djoeh)): en la práctica, los elementos `COD`/`CODEH`/`DJO`/`DJOEH` de un mismo documento a veces se firman con software de distintas empresas — un exportador puede usar S-FiDE mientras que la Entidad Habilitada usa otra aplicación (o viceversa), y esas otras aplicaciones pueden seguir usando SHA-1. `XMLVerifySignatures` tiene que poder validar ambas firmas del mismo documento sin importar cuál de las dos aplicaciones las generó ni con qué algoritmo — es exactamente el escenario que este soporte de compatibilidad está pensado para cubrir.
 
 ---
 
@@ -357,6 +361,21 @@ java -jar PKCS12CertificateExtractor.jar C:\certificados\empresa.pfx "MiContrase
 
 ---
 
+### Reglas de firma comunes a los tres firmadores XML
+
+`XMLSignerPKCS11`, `XMLSignerPKCS12` y `XMLSignerWindowsCSP` aplican, antes de firmar, dos controles obligatorios:
+
+1. **Nunca firmar un elemento que ya tiene una firma digital aplicada.** Esto vale para cualquier XML genérico, no solo para los especializados de comercio exterior: si el elemento indicado (o el documento completo, si se pasó `""`) ya tiene una `<ds:Signature>` cuya `Reference` apunta a él, el programa rechaza la operación sin modificar el archivo.
+2. **Regla de orden para `CODEH`/`DJOEH`** (ver [sección 10](#10-especialización-de-comercio-exterior-aladimercosur-cod-codeh-djo-y-djoeh)): no se puede firmar `CODEH` sin una firma previa sobre `COD`, ni firmar `DJOEH` sin una firma previa sobre `DJO`.
+
+Ambos controles se implementan buscando `<ds:Signature>`/`<ds:Reference>` existentes en el documento — no requieren volver a verificar criptográficamente la firma previa, solo confirmar que existe.
+
+**Mensajes de error de estos controles:**
+- `"El elemento '[id]' ya tiene una firma digital aplicada. No se puede firmar el mismo elemento dos veces."`
+- `"El documento ya tiene una firma digital aplicada sobre todo su contenido. No se puede firmar el mismo elemento dos veces."` (al firmar con elemento vacío `""`)
+- `"No se puede firmar el elemento CODEH: no existe una firma digital previa sobre el elemento COD."`
+- `"No se puede firmar el elemento DJOEH: no existe una firma digital previa sobre el elemento DJO."`
+
 ### 9.4 XMLSignerPKCS11
 
 **Qué hace:** firma digitalmente un documento XML (completo, o un elemento/párrafo específico por su atributo `Id`) usando un token PKCS#11. Implementa XML-DSig (firma enveloped, canonicalización inclusiva), con el mecanismo de hash interno o externo resuelto automáticamente (ver [sección 7.1](#71-pkcs11-tokens-criptográficos-y-hsm)).
@@ -386,7 +405,7 @@ java -jar XMLSignerPKCS11.jar [-version | -ayuda | -licencia | -listar-drivers]
 
 **Salida:** archivo `<nombre>-signed.xml` en el mismo directorio que el original; mensaje de confirmación con la ruta de salida por `stdout`.
 
-**Mensajes de error posibles:** "El archivo de la biblioteca PKCS#11 no existe", "El archivo XML no existe", "El elemento o párrafo XML especificado no existe en el documento XML", "Contraseña incorrecta", "Proveedor SunPKCS11 no disponible", "No se encontró el elemento XML con identificador [...]", "El token no admite ningún mecanismo de firma RSA-SHA256 compatible (ni interno ni externo)" (caso extremo, token no soportado).
+**Mensajes de error posibles:** "El archivo de la biblioteca PKCS#11 no existe", "El archivo XML no existe", "El elemento o párrafo XML especificado no existe en el documento XML", "Contraseña incorrecta", "Proveedor SunPKCS11 no disponible", "No se encontró el elemento XML con identificador [...]", "El token no admite ningún mecanismo de firma RSA-SHA256 compatible (ni interno ni externo)" (caso extremo, token no soportado), más las [reglas de firma comunes](#reglas-de-firma-comunes-a-los-tres-firmadores-xml) (elemento ya firmado, orden CODEH/DJOEH).
 
 **Advertencia de seguridad:** un número elevado de intentos fallidos de contraseña puede dejar inutilizado el certificado del token, exigiendo tramitar uno nuevo ante la autoridad certificante.
 
@@ -420,7 +439,7 @@ No aplica `-listar-drivers` (no hay driver involucrado con archivos PKCS#12).
 
 **Salida:** igual que `XMLSignerPKCS11` — archivo `-signed.xml`.
 
-**Mensajes de error posibles:** "El archivo PKCS#12 no existe", "El archivo XML no existe", "El archivo no es un PKCS#12 válido o la contraseña es incorrecta", "El archivo PKCS#12 no contiene ningún certificado", "El elemento o párrafo XML especificado no existe en el documento XML", "No se encontró el elemento XML con identificador [...]".
+**Mensajes de error posibles:** "El archivo PKCS#12 no existe", "El archivo XML no existe", "El archivo no es un PKCS#12 válido o la contraseña es incorrecta", "El archivo PKCS#12 no contiene ningún certificado", "El elemento o párrafo XML especificado no existe en el documento XML", "No se encontró el elemento XML con identificador [...]", más las [reglas de firma comunes](#reglas-de-firma-comunes-a-los-tres-firmadores-xml) (elemento ya firmado, orden CODEH/DJOEH).
 
 **Ejemplo:**
 ```
@@ -453,7 +472,7 @@ java -jar XMLVerifySignatures.jar [-version | -ayuda | -licencia]
 - Trata como no confiable cualquier certificado cuyo emisor sea vacío o contenga las palabras "self signed"/"localhost" (heurística orientada a detectar certificados de prueba).
 - Para documentos de comercio exterior firmados sobre los elementos `COD`/`CODEH`, usa la fecha real del documento (no la fecha del sistema) para evaluar la revocación — ver [sección 10](#10-especialización-de-comercio-exterior-aladimercosur-cod-codeh-djo-y-djoeh).
 
-**Salida:** por cada firma, estado, algoritmo de hash, método de canonicalización, método de firma, valor de la firma, información del certificado y estado de revocación; al final, un resultado consolidado `DOCUMENTO VÁLIDO` o `DOCUMENTO INVÁLIDO`.
+**Salida:** por cada firma, algoritmo de hash, método de canonicalización, método de firma, valor de la firma, un **"Estado (integridad criptográfica, sin considerar revocación)"** (etiquetado así explícitamente porque se calcula antes de chequear la revocación), información del certificado, estado de revocación y, al final de cada firma, un **"Estado final de la firma #N"** que sí combina integridad criptográfica y revocación — es ese estado final, no el criptográfico previo, el que determina el resultado consolidado `DOCUMENTO VÁLIDO`/`DOCUMENTO INVÁLIDO` de todo el documento. Si el motivo de invalidez es específicamente que el certificado fue revocado, el estado final lo indica explícitamente (`"INVÁLIDA (certificado revocado — ver detalle arriba)"`) y el detalle de revocación explica la causa en texto plano: *"El certificado fue revocado por su autoridad certificante. Aunque la firma es criptográficamente correcta, esta firma se considera INVÁLIDA por ese motivo."*
 
 **Código de salida:** `0` si todas las firmas son válidas, `1` si alguna no lo es o si el proceso no pudo completarse (a diferencia de los firmadores, acá el exit code refleja el **resultado de la validación**, no solo si el proceso corrió sin errores; ambos casos usan el mismo código `1`, sin distinción entre "firma inválida" y "error de proceso").
 
@@ -652,7 +671,7 @@ java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certi
 
 **A diferencia de los módulos PKCS#11, no se pasa contraseña** — el acceso a la clave lo administra Windows (puede aparecer un diálogo nativo del sistema pidiendo el PIN).
 
-**Mensajes de error posibles:** "Este módulo solo funciona en Windows [...]" (al ejecutarlo en otro SO), "No se encontró ningún certificado con clave privada que coincida con '[texto]'", "'[texto]' coincide con N certificados distintos. Sea más específico [...]", "El proveedor SunMSCAPI no está disponible en este JDK".
+**Mensajes de error posibles:** "Este módulo solo funciona en Windows [...]" (al ejecutarlo en otro SO), "No se encontró ningún certificado con clave privada que coincida con '[texto]'", "'[texto]' coincide con N certificados distintos. Sea más específico [...]", "El proveedor SunMSCAPI no está disponible en este JDK", más las [reglas de firma comunes](#reglas-de-firma-comunes-a-los-tres-firmadores-xml) (elemento ya firmado, orden CODEH/DJOEH).
 
 **Ejemplo:**
 ```
@@ -795,7 +814,20 @@ Si la referencia de una firma no es ninguna de las cuatro anteriores, `XMLVerify
 
 > **Este comportamiento es intencional y debe preservarse tal cual.** No es una limitación a "completar": es la especialización exacta que requiere el caso de uso de comercio exterior ALADI/MERCOSUR, verificada contra ejemplos reales de COD y DJO.
 
-### 10.5 Sensibilidad a mayúsculas/minúsculas
+### 10.5 Reglas de firma obligatorias
+
+Además de la regla genérica de no volver a firmar un elemento ya firmado (ver [reglas de firma comunes](#reglas-de-firma-comunes-a-los-tres-firmadores-xml), aplicable a cualquier XML), los tres firmadores XML aplican una regla de orden específica para esta especialización, reflejando exactamente la secuencia operativa real descrita en 10.2/10.3:
+
+- **`CODEH` no puede firmarse si `COD` no tiene ya una firma digital aplicada.**
+- **`DJOEH` no puede firmarse si `DJO` no tiene ya una firma digital aplicada.**
+
+Ambas verificaciones son de **existencia**, no de validez criptográfica completa: el firmador confirma que hay una `<ds:Signature>` cuya `Reference` apunta al elemento requerido (`COD` o `DJO`), sin volver a verificar esa firma criptográficamente — mantiene la regla simple, consistente con que la disciplina de orden real (ver 10.2) la garantiza el sistema externo que orquesta las llamadas a S-FiDE, no S-FiDE mismo actuando como autoridad de validación completa en el momento de firmar.
+
+**Mensajes de error:**
+- `"No se puede firmar el elemento CODEH: no existe una firma digital previa sobre el elemento COD."`
+- `"No se puede firmar el elemento DJOEH: no existe una firma digital previa sobre el elemento DJO."`
+
+### 10.6 Sensibilidad a mayúsculas/minúsculas
 
 El nombre del elemento a firmar es sensible a mayúsculas y minúsculas. Para Certificados de Origen Digitales y Declaraciones Juradas de Origen, usar siempre los identificadores en mayúsculas (`COD`, `CODEH`, `DJO`, `DJOEH`) tal como los reconoce esta especialización.
 
@@ -895,6 +927,8 @@ El script `install.bat` (incluido en el repositorio) automatiza la generación d
   - Se corrigió un error real en `XMLVerifySignatures`: la validación de revocación de la firma sobre `CODEH` usaba el país del exportador (`ExporterCountry`) para convertir la fecha a UTC; ahora usa correctamente el país de la Entidad Habilitada (`EHCountry`), que es quien realmente firma ese elemento.
   - Se agregó soporte de extracción de fecha para `DJO` (desde `DeclarationDate`) y `DJOEH` (desde `ApprovalDate`) — a diferencia de COD/CODEH, ambos se toman literalmente como UTC, sin conversión de huso horario, ya que una Declaración Jurada de Origen se opera siempre dentro de un mismo país.
   - Verificado end-to-end contra archivos DJO reales (etapas: sin firmar → firmado por Exportador → con datos de Entidad Habilitada → firmado por Funcionario Habilitado).
+  - Se agregaron dos reglas de firma obligatorias a los tres firmadores XML: nunca firmar un elemento que ya tiene una firma digital aplicada (regla genérica, cualquier XML), y nunca firmar `CODEH`/`DJOEH` sin una firma previa sobre `COD`/`DJO` respectivamente — ver [sección 10.5](#105-reglas-de-firma-obligatorias).
+  - Se revisaron y aclararon los mensajes de `XMLVerifySignatures` en torno a la revocación: el estado de integridad criptográfica ahora se etiqueta explícitamente como previo a la revocación, se agregó un "Estado final de la firma" por firma que sí combina ambos criterios, y un certificado revocado ahora explica en texto plano por qué invalida la firma.
 - **Validado de punta a punta** con token SafeNet real y con PKCS#12 — pendiente de validación con ePass2003 y mToken CryptoID.
 
 ### v1.0.0 (2024-12) — primer release estable

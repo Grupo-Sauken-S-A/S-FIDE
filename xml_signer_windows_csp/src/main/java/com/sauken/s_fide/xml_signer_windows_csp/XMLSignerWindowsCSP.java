@@ -283,6 +283,8 @@ public class XMLSignerWindowsCSP {
                 throw new IllegalArgumentException("El elemento o párrafo XML especificado no existe en el documento XML.");
             }
 
+            validateSignatureRules(doc, uri);
+
             applySignature(doc, uri, privateKey, cert);
             saveSignedDocument(doc, xmlFile, xmlDeclaration);
         } catch (Exception e) {
@@ -334,6 +336,36 @@ public class XMLSignerWindowsCSP {
                         cleanUri, cleanUri, cleanUri, cleanUri));
         NodeList nl = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
         return nl.getLength() > 0;
+    }
+
+    private static boolean hasExistingSignatureForUri(Document doc, String targetUri) {
+        String cleanTarget = targetUri.startsWith("#") ? targetUri.substring(1) : targetUri;
+        NodeList refs = doc.getElementsByTagNameNS("http://www.w3.org/2000/09/xmldsig#", "Reference");
+        for (int i = 0; i < refs.getLength(); i++) {
+            Element ref = (Element) refs.item(i);
+            String refUri = ref.getAttribute("URI");
+            String cleanRefUri = refUri.startsWith("#") ? refUri.substring(1) : refUri;
+            if (cleanRefUri.equals(cleanTarget)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void validateSignatureRules(Document doc, String uri) {
+        if (hasExistingSignatureForUri(doc, uri)) {
+            throw new IllegalArgumentException(uri.isEmpty()
+                    ? "El documento ya tiene una firma digital aplicada sobre todo su contenido. No se puede firmar el mismo elemento dos veces."
+                    : "El elemento '" + uri + "' ya tiene una firma digital aplicada. No se puede firmar el mismo elemento dos veces.");
+        }
+        if ("CODEH".equals(uri) && !hasExistingSignatureForUri(doc, "COD")) {
+            throw new IllegalArgumentException(
+                    "No se puede firmar el elemento CODEH: no existe una firma digital previa sobre el elemento COD.");
+        }
+        if ("DJOEH".equals(uri) && !hasExistingSignatureForUri(doc, "DJO")) {
+            throw new IllegalArgumentException(
+                    "No se puede firmar el elemento DJOEH: no existe una firma digital previa sobre el elemento DJO.");
+        }
     }
 
     private static void applySignature(Document doc, String uri, PrivateKey privateKey, X509Certificate cert)
