@@ -952,21 +952,71 @@ java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]<
       </ul>
       <p>Estos documentos deben llevar <strong>firmas digitales embebidas</strong> exactamente sobre esos elementos — no sobre el documento completo — de modo que cada parte quede firmada de manera independiente y verificable por separado, dentro del mismo XML.</p>
 
-      <h3>10.2 — Lo estándar vs. lo especializado</h3>
-      <p><strong>Capa estándar (XML-DSig), para cualquier documento y cualquier nombre de elemento:</strong> los tres firmadores XML (<code>XMLSignerPKCS11</code>, <code>XMLSignerPKCS12</code>, <code>XMLSignerWindowsCSP</code>) pueden firmar el documento completo o un elemento específico identificado por su atributo <code>Id</code>/<code>id</code>/<code>ID</code>, con la firma embebida asociada a ese elemento. Es una capacidad genérica de XML-DSig — no tiene nada de especial en <code>COD</code>/<code>CODEH</code>/<code>DJO</code>/<code>DJOEH</code> en particular.</p>
-      <p><strong>Capa especializada, exclusiva de <code>COD</code> y <code>CODEH</code>:</strong> al <strong>verificar</strong> una firma cuya referencia apunta a un elemento llamado exactamente <code>COD</code> o <code>CODEH</code>, <code>XMLVerifySignatures</code> no usa la fecha actual del sistema para evaluar si una eventual revocación es anterior o posterior a la firma — extrae la <strong>fecha real del documento</strong>:</p>
-      <ul>
-        <li>Para <code>COD</code>: toma <code>&lt;DeclarationDate&gt;</code> y <code>&lt;ExporterCountry&gt;</code> del elemento raíz.</li>
-        <li>Para <code>CODEH</code>: toma <code>&lt;CertificateDate&gt;</code> del elemento raíz.</li>
-      </ul>
-      <p>La fecha se convierte a UTC según la zona horaria del país declarado, con una tabla interna que cubre: Argentina, Bolivia, Brasil, Chile, Colombia, Cuba, Ecuador, México, Panamá, Paraguay, Perú, Uruguay y Venezuela.</p>
-      <p>Esto permite validar correctamente, meses o años después, si un certificado estaba vigente <strong>en el momento real en que se emitió</strong> el documento — no en el momento en que alguien ejecuta la verificación. Si la referencia no es <code>COD</code> ni <code>CODEH</code> (incluido <code>DJO</code>/<code>DJOEH</code> en el estado actual de esta funcionalidad), se usa la fecha actual del sistema, con una advertencia informativa.</p>
+      <h3>10.2 — Estructura real de un COD/CODEH</h3>
+      <p>Ejemplo real (esquema <code>codaladi.org/directorio/cod_ver_1.8.2.xsd</code>):</p>
+      <pre><code>ns1:Envelope
+  ns1:CertOrigin
+    CODEH (id="CODEH")            ← elemento EXTERIOR, envuelve todo
+      CODExporter
+        COD (id="COD")            ← elemento INTERIOR, anidado vía CODExporter
+          CODVer, CODSubmitterType, Agreement, FormA18...
+        [firma del Exportador]    ← Reference="#COD", justo después de &lt;/COD&gt;
+      /CODExporter
+      EH (EHId, EHCountry, EHName, EHAddress, EHCity, EHTelephone, EHFax, EHEmail, EHURL)
+      CertificationEH (CertificateControlCode, CertificateDate, CertificateID)
+    /CODEH
+    [firma del Funcionario]       ← Reference="#CODEH", justo después de &lt;/CODEH&gt;
+  /ns1:CertOrigin</code></pre>
+      <p>Cuatro etapas estrictamente secuenciales: (1) el XML se crea con <code>COD</code> completo, sin firmas — en ese momento solo <code>COD</code> puede firmarse, porque <code>CODEH</code> aún no tiene <code>EH</code>/<code>CertificationEH</code>; (2) el <strong>Exportador</strong> firma <code>COD</code>, la firma queda hermana justo después de <code>&lt;/COD&gt;</code>, dentro de <code>CODExporter</code>; (3) el sistema externo de gestión de certificados (no S-FiDE) agrega <code>&lt;EH&gt;</code> y <code>&lt;CertificationEH&gt;</code> dentro de <code>CODEH</code>, después de <code>&lt;/CODExporter&gt;</code>; (4) recién ahí el <strong>Funcionario Habilitado</strong> puede firmar <code>CODEH</code> — esa firma queda hermana justo después de <code>&lt;/CODEH&gt;</code>, y su digest cubre todo el subárbol de <code>CODEH</code>, incluida la firma del Exportador ya embebida.</p>
+      <p><strong>Regla de orden</strong> (no se puede firmar <code>CODEH</code> sin firma válida en <code>COD</code>, ni sin los datos de certificación): la garantiza el sistema externo que orquesta las llamadas a S-FiDE — <strong>S-FiDE no la conoce ni la valida</strong>. Los firmadores solo firman el elemento por <code>Id</code> que se les indique, cuando se los invoque.</p>
+      <div class="callout note">
+        <span class="label">Confirmado contra el código — sin lógica especial</span>
+        <p><code>XMLSignerPKCS11.createSignatureContext()</code> arma el <code>DOMSignContext</code> con el nodo padre y el hermano siguiente del elemento encontrado por <code>Id</code>, lo que coloca la firma exactamente como hermana justo después del cierre del elemento firmado. Es genérico — no hay nada hardcodeado para COD/CODEH, por eso funciona igual para DJO/DJOEH (sección 10.3).</p>
+      </div>
+      <p><strong>Nombre de archivo:</strong> el contenido de <code>&lt;CertificateID&gt;</code> más <code>.xml</code> — p. ej. <code>AR001A18170000043000.xml</code> (país + código de entidad ALADI + código de acuerdo + año + número de certificado). Se recomienda enviarlo al importador dentro de un ZIP.</p>
+
+      <h3>10.3 — Estructura real de un DJO/DJOEH</h3>
+      <p>Misma mecánica de dos etapas, para una Declaración Jurada de Origen:</p>
+      <pre><code>ns1:Envelope
+  ns1:Affidavit                   ← raíz distinta a la de COD (CertOrigin)
+    DJOEH (id="DJOEH")
+      DJOExporter
+        DJO (id="DJO")
+          DJOVer, DJOSubmitterType, Agreement, Exporter, Producer,
+          Declaration (DeclarationDate), FormDJO...
+        [firma del Exportador]    ← Reference="#DJO"
+      /DJOExporter
+      EH (EHId, EHCountry, EHName, EHAddress, EHCity, EHTelephone, EHEmail, EHURL)
+      ApprovalEH (ApprovalNumber, ApprovalDate, ROMCompliance)
+    /DJOEH
+    [firma del Funcionario]       ← Reference="#DJOEH"
+  /ns1:Affidavit</code></pre>
+      <p>Mismas cuatro etapas que COD/CODEH, con nombres propios: el bloque de certificación del funcionario se llama <strong><code>ApprovalEH</code></strong> (no <code>CertificationEH</code>), con campos <code>ApprovalNumber</code>/<code>ApprovalDate</code>/<code>ROMCompliance</code> — una declaración de cumplimiento del Régimen de Origen Mercosur, no un número de certificado.</p>
+
+      <h3>10.4 — Validación de revocación por elemento</h3>
+      <p>Un documento completo (COD o DJO) contiene <strong>dos firmas independientes</strong>, de titulares y momentos distintos. <code>XMLVerifySignatures</code> extrae, para cada una, la fecha correcta según a qué elemento apunta su <code>Reference</code>:</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Referencia</th><th>Campo de fecha</th><th>Campo de país</th><th>Conversión horaria</th></tr>
+          <tr><td><code>#COD</code></td><td><code>DeclarationDate</code></td><td><code>ExporterCountry</code></td><td>Sí — país del exportador → UTC</td></tr>
+          <tr><td><code>#CODEH</code></td><td><code>CertificateDate</code></td><td><code>EHCountry</code></td><td>Sí — país de la Entidad Habilitada → UTC (no el del exportador)</td></tr>
+          <tr><td><code>#DJO</code></td><td><code>DeclarationDate</code></td><td>—</td><td><strong>No.</strong> Literal como UTC, sin conversión</td></tr>
+          <tr><td><code>#DJOEH</code></td><td><code>ApprovalDate</code></td><td>—</td><td><strong>No.</strong> Misma regla que DJO</td></tr>
+        </table>
+      </div>
+      <p>Tabla de husos horarios (<code>TimezoneConverter</code>): Argentina, Bolivia, Brasil, Chile, Colombia, Cuba, Ecuador, México, Panamá, Paraguay, Perú, Uruguay y Venezuela.</p>
+      <p><strong>Por qué DJO/DJOEH no convierten huso horario:</strong> a diferencia de un Certificado de Origen, una Declaración Jurada de Origen se opera siempre dentro de un mismo país — el que emite el XML. El valor de fecha ya representa el instante correcto tal cual está escrito.</p>
+      <p><strong>Por qué <code>CODEH</code> usa <code>EHCountry</code> y no <code>ExporterCountry</code>:</strong> la firma sobre <code>CODEH</code> la aplica el Funcionario Habilitado, actuando por la Entidad Habilitada — su acto de firma ocurre en el país de esa entidad, no necesariamente en el del exportador.</p>
+      <div class="callout warn">
+        <span class="label">Corrección — 2026-08-29</span>
+        <p>La implementación original usaba <code>ExporterCountry</code> también para <code>CODEH</code>, un error real que desplazaba la fecha de referencia por el huso horario incorrecto en casos donde exportador y Entidad Habilitada están en países distintos. Corregido para usar <code>EHCountry</code>.</p>
+      </div>
       <div class="callout note">
         <span class="label">Comportamiento intencional — no corregir</span>
-        <p>Esta especialización es lo que hace a S-FiDE apto para el caso de uso ALADI/MERCOSUR. Los detalles operativos completos de <code>COD</code>, <code>CODEH</code>, <code>DJO</code> y <code>DJOEH</code> se ampliarán en una futura revisión de este manual.</p>
+        <p>Esta especialización es exactamente lo que requiere el caso de uso ALADI/MERCOSUR, verificada contra ejemplos reales de COD y DJO.</p>
       </div>
 
-      <h3>10.3 — Sensibilidad a mayúsculas/minúsculas</h3>
+      <h3>10.5 — Sensibilidad a mayúsculas/minúsculas</h3>
       <p>El nombre del elemento a firmar es sensible a mayúsculas y minúsculas. Para Certificados de Origen Digitales y Declaraciones Juradas de Origen, usar siempre los identificadores en mayúsculas: <code>COD</code>, <code>CODEH</code>, <code>DJO</code>, <code>DJOEH</code>.</p>
     </section>
 
@@ -1037,6 +1087,7 @@ exit $RESULT</code></pre>
         <li>Dos módulos nuevos: <code>XMLSignerWindowsCSP</code> y <code>PDFSignerWindowsCSP</code>.</li>
         <li>Actualización de dependencias criptográficas por alertas de seguridad.</li>
         <li>Corrección de dos errores hallados en QA con hardware real (SafeNet 5110+ L3).</li>
+        <li><strong>Especialización ALADI/MERCOSUR completada (sección 10):</strong> corregido un error real — la revocación de la firma sobre <code>CODEH</code> usaba <code>ExporterCountry</code> en vez de <code>EHCountry</code> para convertir a UTC; agregado soporte de extracción de fecha para <code>DJO</code>/<code>DJOEH</code> (literal como UTC, sin conversión de huso horario); verificado contra archivos DJO reales en sus 4 etapas.</li>
         <li><strong>Auditoría de código y corrección de inconsistencias entre módulos hermanos:</strong> se eliminó un stack trace expuesto en <code>XMLVerifySignatures</code>; <code>PDFSignerPKCS12</code> ahora acopla siempre certificación DocMDP + cifrado al bloquear (antes solo con firma visible); <code>PDFSignerWindowsCSP</code> ahora valida firmas preexistentes y rechaza PDFs ya encriptados; se unificó el vocabulario de comandos especiales en los 12 módulos CLI; se corrigieron afirmaciones de documentación no respaldadas por el código (versión de PKCS#11/12, XAdES, XML Schema 1.1, timeouts de OCSP/CRL).</li>
         <li>Validado de punta a punta con SafeNet 5110+ L3 real y con PKCS#12 — pendiente ePass2003 y mToken CryptoID.</li>
       </ul>

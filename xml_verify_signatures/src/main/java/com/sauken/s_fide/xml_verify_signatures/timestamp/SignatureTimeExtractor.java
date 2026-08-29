@@ -54,6 +54,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 public class SignatureTimeExtractor {
     public static class SigningTimeResult {
@@ -116,6 +117,10 @@ public class SignatureTimeExtractor {
                     return extractDateFromCOD(rootElement);
                 case "CODEH":
                     return extractDateFromCODEH(rootElement);
+                case "DJO":
+                    return extractDateFromDJO(rootElement);
+                case "DJOEH":
+                    return extractDateFromDJOEH(rootElement);
                 default:
                     return new SigningTimeResult(
                             new Date(),
@@ -200,22 +205,22 @@ public class SignatureTimeExtractor {
                 );
             }
 
-            // Obtener el país exportador
-            NodeList exporterCountries = rootElement.getElementsByTagName("ExporterCountry");
-            if (exporterCountries.getLength() == 0) {
+            // Obtener el país de la Entidad Habilitada (el funcionario firma como esa entidad, no como el exportador)
+            NodeList ehCountries = rootElement.getElementsByTagName("EHCountry");
+            if (ehCountries.getLength() == 0) {
                 return new SigningTimeResult(
                         new Date(),
-                        "No se encontró el elemento ExporterCountry. Se utilizará la fecha actual.",
+                        "No se encontró el elemento EHCountry. Se utilizará la fecha actual.",
                         true
                 );
             }
 
-            String countryCode = exporterCountries.item(0).getTextContent().trim();
+            String countryCode = ehCountries.item(0).getTextContent().trim();
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
             Date localDate = sdf.parse(timeStr);
 
-            // Convertir a UTC usando el país exportador
+            // Convertir a UTC usando el país de la Entidad Habilitada
             Date utcDate = TimezoneConverter.convertToUTC(localDate, countryCode);
             return new SigningTimeResult(utcDate, null, false);
 
@@ -223,6 +228,77 @@ public class SignatureTimeExtractor {
             return new SigningTimeResult(
                     new Date(),
                     "Error al procesar CertificateDate en CODEH: " + e.getMessage() + ". Se utilizará la fecha actual.",
+                    true
+            );
+        }
+    }
+
+    private static SigningTimeResult extractDateFromDJO(Element rootElement) {
+        try {
+            NodeList declarationDates = rootElement.getElementsByTagName("DeclarationDate");
+            if (declarationDates.getLength() == 0) {
+                return new SigningTimeResult(
+                        new Date(),
+                        "No se encontró el elemento DeclarationDate en DJO. Se utilizará la fecha actual.",
+                        true
+                );
+            }
+
+            String timeStr = declarationDates.item(0).getTextContent().trim();
+            if (timeStr.isEmpty()) {
+                return new SigningTimeResult(
+                        new Date(),
+                        "DeclarationDate en DJO está vacío. Se utilizará la fecha actual.",
+                        true
+                );
+            }
+
+            // DJO se opera siempre dentro de un mismo país: DeclarationDate se toma
+            // literalmente como UTC, sin buscar país ni aplicar ninguna conversión horaria.
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+            Date utcDate = sdf.parse(timeStr);
+            return new SigningTimeResult(utcDate, null, false);
+
+        } catch (Exception e) {
+            return new SigningTimeResult(
+                    new Date(),
+                    "Error al procesar DeclarationDate en DJO: " + e.getMessage() + ". Se utilizará la fecha actual.",
+                    true
+            );
+        }
+    }
+
+    private static SigningTimeResult extractDateFromDJOEH(Element rootElement) {
+        try {
+            NodeList approvalDates = rootElement.getElementsByTagName("ApprovalDate");
+            if (approvalDates.getLength() == 0) {
+                return new SigningTimeResult(
+                        new Date(),
+                        "No se encontró el elemento ApprovalDate en DJOEH. Se utilizará la fecha actual.",
+                        true
+                );
+            }
+
+            String timeStr = approvalDates.item(0).getTextContent().trim();
+            if (timeStr.isEmpty()) {
+                return new SigningTimeResult(
+                        new Date(),
+                        "ApprovalDate en DJOEH está vacío. Se utilizará la fecha actual.",
+                        true
+                );
+            }
+
+            // Misma regla que DJO: ApprovalDate se toma literalmente como UTC, sin conversión.
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+            Date utcDate = sdf.parse(timeStr);
+            return new SigningTimeResult(utcDate, null, false);
+
+        } catch (Exception e) {
+            return new SigningTimeResult(
+                    new Date(),
+                    "Error al procesar ApprovalDate en DJOEH: " + e.getMessage() + ". Se utilizará la fecha actual.",
                     true
             );
         }
