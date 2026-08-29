@@ -1,0 +1,880 @@
+<title>Manual de Integración S-FiDE</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #eef1f6;
+    --surface: #ffffff;
+    --surface-2: #e4e9f1;
+    --ink: #16233a;
+    --muted: #52607a;
+    --faint: #8493ac;
+    --line: #d6dce6;
+    --accent: #24487d;
+    --accent-strong: #14335e;
+    --accent-soft: #dde6f3;
+    --ok: #2f7a4f;
+    --ok-soft: #e2f1e7;
+    --warn: #9a5518;
+    --warn-soft: #f5e9dc;
+    --code-bg: #0f1c30;
+    --code-fg: #dbe6f5;
+    --code-accent: #8fb4e8;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1524;
+      --surface: #151f34;
+      --surface-2: #1c2a45;
+      --ink: #e7ecf6;
+      --muted: #a6b1c9;
+      --faint: #67728c;
+      --line: #283552;
+      --accent: #7fa3dd;
+      --accent-strong: #b0cbf3;
+      --accent-soft: #1f2d4a;
+      --ok: #74c491;
+      --ok-soft: #16281d;
+      --warn: #e0aa71;
+      --warn-soft: #33230f;
+      --code-bg: #0a1220;
+      --code-fg: #d7e2f2;
+      --code-accent: #9dc0ef;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0e1524;
+    --surface: #151f34;
+    --surface-2: #1c2a45;
+    --ink: #e7ecf6;
+    --muted: #a6b1c9;
+    --faint: #67728c;
+    --line: #283552;
+    --accent: #7fa3dd;
+    --accent-strong: #b0cbf3;
+    --accent-soft: #1f2d4a;
+    --ok: #74c491;
+    --ok-soft: #16281d;
+    --warn: #e0aa71;
+    --warn-soft: #33230f;
+    --code-bg: #0a1220;
+    --code-fg: #d7e2f2;
+    --code-accent: #9dc0ef;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  code, kbd, .mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  code {
+    background: var(--surface-2);
+    color: var(--accent-strong);
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+    font-size: 0.85em;
+  }
+
+  pre {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border-radius: 10px;
+    padding: 1rem 1.15rem;
+    overflow-x: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.84rem;
+    line-height: 1.6;
+    margin: 1rem 0;
+  }
+
+  pre code { background: none; color: inherit; padding: 0; font-size: 1em; }
+
+  a { color: var(--accent-strong); }
+  a.quiet { color: inherit; text-decoration: none; }
+
+  ::selection { background: var(--accent-soft); }
+
+  /* ---------- Shell layout ---------- */
+
+  .shell {
+    display: grid;
+    grid-template-columns: 272px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 940px) {
+    .shell { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Sidebar ---------- */
+
+  aside.nav {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 2rem 1.4rem 2rem 1.75rem;
+    border-right: 1px solid var(--line);
+    scrollbar-width: thin;
+  }
+
+  @media (max-width: 940px) {
+    aside.nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); padding: 1.25rem 1.25rem; }
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.6rem;
+  }
+
+  .brand .mark {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1.4px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--accent);
+    flex: none;
+  }
+
+  .brand .name { font-weight: 700; font-size: 0.95rem; letter-spacing: -0.01em; }
+  .brand .tag { display: block; font-size: 0.68rem; color: var(--faint); font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.03em; }
+
+  nav.toc { font-size: 0.86rem; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: sec; }
+  nav.toc > ol > li { counter-increment: sec; margin-bottom: 0.05rem; }
+
+  nav.toc a {
+    display: block;
+    padding: 0.32rem 0.5rem;
+    border-radius: 6px;
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  nav.toc > ol > li > a::before {
+    content: counter(sec) ". ";
+    color: var(--faint);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+  }
+
+  nav.toc a:hover { background: var(--surface-2); color: var(--ink); }
+
+  nav.toc ol ol { margin: 0.1rem 0 0.4rem 1.1rem; counter-reset: sub; }
+  nav.toc ol ol li { counter-increment: sub; }
+  nav.toc ol ol a { font-size: 0.82rem; padding: 0.22rem 0.5rem; }
+  nav.toc ol ol a::before { content: counter(sec) "." counter(sub) " "; }
+
+  /* ---------- Main content ---------- */
+
+  main { padding: 3.5rem 3rem 8rem; min-width: 0; }
+  @media (max-width: 940px) { main { padding: 2.25rem 1.25rem 5rem; } }
+
+  .doc-header { max-width: 700px; margin-bottom: 3.5rem; }
+
+  .eyebrow {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 4vw, 2.7rem);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.9rem;
+    text-wrap: balance;
+  }
+
+  .doc-header .meta {
+    color: var(--muted);
+    font-size: 0.95rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.4rem;
+  }
+
+  .doc-header .meta strong { color: var(--ink); font-weight: 600; }
+
+  section.chapter {
+    max-width: 760px;
+    padding-top: 3rem;
+    margin-top: 3rem;
+    border-top: 1px solid var(--line);
+    scroll-margin-top: 1.5rem;
+  }
+
+  section.chapter:first-of-type { border-top: none; margin-top: 0; }
+
+  .chapter-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.65rem;
+    margin: 0 0 1.1rem;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 500;
+    font-size: 1.22rem;
+    margin: 2rem 0 0.8rem;
+  }
+
+  h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 1.4rem 0 0.5rem;
+    color: var(--ink);
+  }
+
+  p { margin: 0 0 1rem; max-width: 68ch; }
+  ul, ol { padding-left: 1.3rem; margin: 0 0 1.1rem; }
+  li { margin-bottom: 0.4rem; max-width: 66ch; }
+  strong { font-weight: 700; }
+
+  /* ---------- Tables ---------- */
+
+  .table-wrap { overflow-x: auto; margin: 1.2rem 0 1.6rem; border: 1px solid var(--line); border-radius: 10px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 0.87rem; background: var(--surface); }
+
+  th, td { text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  td code { white-space: nowrap; }
+
+  /* ---------- Callouts ---------- */
+
+  .callout {
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin: 1.2rem 0 1.6rem;
+    font-size: 0.92rem;
+    max-width: 66ch;
+  }
+
+  .callout.note { background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
+  .callout.warn { background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .label { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 0.4rem; }
+  .callout.note .label { color: var(--accent-strong); }
+  .callout.warn .label { color: var(--warn); }
+
+  /* ---------- Module cards ---------- */
+
+  .module {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.6rem 1.7rem;
+    margin-bottom: 1.6rem;
+    background: var(--surface);
+    max-width: 760px;
+  }
+
+  .module-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.3rem; }
+  .module-head h3 { margin: 0; font-size: 1.15rem; }
+  .module-jar { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--faint); }
+
+  .module .windows-only {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--warn);
+    background: var(--warn-soft);
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    margin-left: 0.5rem;
+  }
+
+  .field-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); margin: 1.1rem 0 0.35rem; }
+  .field-label:first-of-type { margin-top: 0.9rem; }
+
+  .errlist { font-size: 0.87rem; color: var(--muted); }
+  .errlist code { color: var(--warn); background: var(--warn-soft); }
+
+  /* ---------- Compare table emphasis ---------- */
+
+  table.compare th:not(:first-child) { color: var(--accent-strong); font-size: 0.74rem; }
+  table.compare td:first-child { font-weight: 600; color: var(--ink); white-space: nowrap; }
+
+  /* ---------- Footer ---------- */
+
+  footer.doc-footer {
+    max-width: 760px;
+    margin-top: 4rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--line);
+    color: var(--faint);
+    font-size: 0.85rem;
+  }
+
+  /* mobile collapsible nav */
+  details.mobile-toc { display: none; }
+  @media (max-width: 940px) {
+    details.mobile-toc { display: block; }
+    aside.nav > nav.toc { display: none; }
+    details.mobile-toc[open] + aside.nav > nav.toc,
+    aside.nav.open nav.toc { display: block; }
+  }
+</style>
+
+<div class="shell">
+  <aside class="nav">
+    <div class="brand">
+      <div class="mark">SF</div>
+      <div>
+        <span class="name">S-FiDE</span>
+        <span class="tag">Manual de integración</span>
+      </div>
+    </div>
+    <nav class="toc">
+      <ol>
+        <li><a href="#s1">Introducción y filosofía</a></li>
+        <li><a href="#s2">Especificaciones técnicas</a></li>
+        <li><a href="#s3">Software de terceros</a></li>
+        <li><a href="#s4">Licencia de uso</a></li>
+        <li><a href="#s5">Código fuente y repositorio</a></li>
+        <li><a href="#s6">Arquitectura de integración</a></li>
+        <li><a href="#s7">Mecanismos de firma</a></li>
+        <li><a href="#s8">Tokens y drivers soportados</a></li>
+        <li><a href="#s9">Catálogo de aplicaciones</a>
+          <ol>
+            <li><a href="#m1">TokenSlotsView</a></li>
+            <li><a href="#m2">TokenCertificateExtractor</a></li>
+            <li><a href="#m3">PKCS12CertificateExtractor</a></li>
+            <li><a href="#m4">XMLSignerPKCS11</a></li>
+            <li><a href="#m5">XMLSignerPKCS12</a></li>
+            <li><a href="#m6">XMLVerifySignatures</a></li>
+            <li><a href="#m7">XMLVerifyXSDStructure</a></li>
+            <li><a href="#m8">PDFSignerPKCS11</a></li>
+            <li><a href="#m9">PDFSignerPKCS12</a></li>
+            <li><a href="#m10">PDFVerifySignatures</a></li>
+            <li><a href="#m11">XMLSignerWindowsCSP</a></li>
+            <li><a href="#m12">PDFSignerWindowsCSP</a></li>
+            <li><a href="#m13">S-FiDE GUI</a></li>
+          </ol>
+        </li>
+        <li><a href="#s10">Integración desde otras apps</a></li>
+        <li><a href="#s11">Distribución y despliegue</a></li>
+        <li><a href="#s12">Historial de versiones</a></li>
+        <li><a href="#s13">Glosario</a></li>
+        <li><a href="#s14">Soporte y contacto</a></li>
+      </ol>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="doc-header">
+      <span class="eyebrow">Grupo Sauken S.A. — Manual técnico</span>
+      <h1>Manual de Integración S-FiDE</h1>
+      <p>Sistema de Firma Digital Extendido — todo lo que un integrador necesita: qué hace cada programa, cómo invocarlo, los tres mecanismos de firma disponibles y cuándo usar cada uno, y las especificaciones completas del producto.</p>
+      <div class="meta">
+        <span>Versión del producto: <strong>1.1.0-beta.1</strong></span>
+        <span>Documento: <strong>29/08/2026</strong></span>
+        <span>Licencia: <strong>GNU GPL v2+</strong></span>
+      </div>
+    </div>
+
+    <section class="chapter" id="s1">
+      <span class="chapter-num">01</span>
+      <h2>Introducción y filosofía</h2>
+      <p>S-FiDE (<strong>Si</strong>stema de <strong>F</strong>irma D<strong>i</strong>gital Extendido) es una suite de programas Java independientes para firmar y verificar firmas digitales en documentos XML y PDF, y para extraer o inspeccionar certificados digitales desde tokens criptográficos (PKCS#11), archivos PKCS#12 o el almacén de certificados de Windows.</p>
+      <p>El diseño responde a un principio central: <strong>cada capacidad es un programa independiente</strong>, invocable por línea de comandos, que cualquier aplicación externa puede ejecutar como proceso hijo sin integrar ninguna librería Java. No existe una "librería S-FiDE" para enlazar — se distribuye como un conjunto de archivos <code>.jar</code> ejecutables, más una interfaz gráfica opcional que orquesta esos mismos programas.</p>
+
+      <h3>Principios de diseño</h3>
+      <ul>
+        <li><strong>Contrato uniforme de proceso.</strong> Todo se invoca como <code>java -jar Programa.jar &lt;argumentos&gt;</code>. Código de salida <code>0</code> = éxito, <code>1</code> = error.</li>
+        <li><strong>Salidas separadas y limpias.</strong> Resultado normal por <code>stdout</code>, errores por <code>stderr</code>, siempre como texto simple. Nunca un stack trace de Java al usuario final.</li>
+        <li><strong>UTF-8 de punta a punta</strong>, en cualquier sistema operativo.</li>
+        <li><strong>Multiplataforma</strong> — Windows, Linux y macOS, salvo los dos módulos de almacén de Windows (exclusivos de ese sistema por diseño).</li>
+        <li><strong>La GUI no es un atajo privilegiado.</strong> Invoca exactamente los mismos <code>.jar</code> con los mismos argumentos que usaría un integrador externo.</li>
+      </ul>
+    </section>
+
+    <section class="chapter" id="s2">
+      <span class="chapter-num">02</span>
+      <h2>Especificaciones técnicas del producto</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Ítem</th><th>Detalle</th></tr>
+          <tr><td>Lenguaje / runtime</td><td>Java 23 (OpenJDK 23.0.1)</td></tr>
+          <tr><td>Interfaz gráfica</td><td>JavaFX 23.0.1 (solo <code>s_fide_gui</code>)</td></tr>
+          <tr><td>Sistema de build</td><td>Apache Maven, multi-módulo (13 módulos)</td></tr>
+          <tr><td>Empaquetado</td><td>Jars autocontenidos ("fat jars") — sin classpath externo</td></tr>
+          <tr><td>Sistemas operativos</td><td>Windows, GNU/Linux, macOS (64 bits) — CSP/KSP exclusivo de Windows</td></tr>
+          <tr><td>Arquitectura de CPU</td><td>x86-64 (64 bits obligatorio)</td></tr>
+          <tr><td>Requisito mínimo Windows</td><td>Windows 10 de 64 bits o superior</td></tr>
+          <tr><td>Estándares de firma</td><td>XMLDSig / XAdES (XML), PAdES ETSI EN 319 142 (PDF)</td></tr>
+          <tr><td>Algoritmos</td><td>RSA 2048 bits, SHA-256, PKCS#1 v1.5</td></tr>
+          <tr><td>Acceso a hardware</td><td>PKCS#11 v2.20, PKCS#12 v1.1, CryptoAPI/CNG (CSP/KSP)</td></tr>
+          <tr><td>Validación de revocación</td><td>OCSP y CRL (requiere Internet para validación completa)</td></tr>
+        </table>
+      </div>
+      <div class="callout note">
+        <span class="label">Portable por diseño</span>
+        <p>La distribución final embebe su propio runtime de Java y su propio SDK de JavaFX — no requiere Java preinstalado en el equipo destino. Puede ejecutarse desde una carpeta portable, incluyendo un pendrive, en un Windows, Linux o macOS "limpios".</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="s3">
+      <span class="chapter-num">03</span>
+      <h2>Software de terceros y dependencias</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Componente</th><th>Versión</th><th>Uso</th><th>Licencia</th></tr>
+          <tr><td>BouncyCastle</td><td>1.85</td><td>Primitivos criptográficos, ASN.1, <code>DigestInfo</code></td><td>MIT-like</td></tr>
+          <tr><td>iText</td><td>8.0.5</td><td>Firma y verificación PDF (PAdES)</td><td>AGPL v3 / comercial</td></tr>
+          <tr><td>Apache Santuario (xmlsec)</td><td>4.0.4</td><td>Soporte de firma XML adicional</td><td>Apache 2.0</td></tr>
+          <tr><td>JavaFX</td><td>23.0.1</td><td>GUI únicamente</td><td>GPLv2 + Classpath Exception</td></tr>
+          <tr><td>SLF4J</td><td>2.0.17</td><td>Fachada de logging</td><td>MIT</td></tr>
+          <tr><td>Logback</td><td>1.5.18</td><td>Implementación de logging</td><td>EPL 1.0 / LGPL 2.1</td></tr>
+          <tr><td>Apache Maven</td><td>3.9.x</td><td>Build del proyecto</td><td>Apache 2.0</td></tr>
+        </table>
+      </div>
+      <div class="callout note">
+        <span class="label">Compatibilidad de licencias</span>
+        <p>iText 8.x es AGPL v3 (o comercial). Los fuentes de S-FiDE son GPLv2 <strong>"o cualquier versión posterior"</strong> — esa cláusula habilita la compatibilidad de combinación con AGPLv3 (§13). No hace falta ningún trámite adicional para usar S-FiDE tal como se distribuye.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="s4">
+      <span class="chapter-num">04</span>
+      <h2>Licencia de uso</h2>
+      <p>S-FiDE se distribuye bajo la <strong>Licencia Pública General GNU (GPL), versión 2 o cualquier versión posterior</strong>, publicada por la Free Software Foundation.</p>
+      <ul>
+        <li>Es software libre: se puede redistribuir y/o modificar bajo esos términos.</li>
+        <li>Se distribuye con la intención de que sea útil, <strong>sin garantía</strong> de ningún tipo.</li>
+        <li>Texto completo en el archivo <code>LICENSE.txt</code> de cada módulo, y en <a href="https://www.gnu.org/licenses/gpl-2.0.html">gnu.org/licenses/gpl-2.0.html</a>.</li>
+        <li>Copyright © 2024 Juan Carlos Ríos y Juan Ignacio Ríos, Grupo Sauken S.A.</li>
+        <li>El soporte técnico es un servicio con cargo, independiente de la libertad de uso del software.</li>
+      </ul>
+    </section>
+
+    <section class="chapter" id="s5">
+      <span class="chapter-num">05</span>
+      <h2>Código fuente y repositorio</h2>
+      <ul>
+        <li>Repositorio: <a href="https://github.com/Grupo-Sauken-S-A/S-FIDE">github.com/Grupo-Sauken-S-A/S-FIDE</a></li>
+        <li>Proyecto Maven multi-módulo (13 módulos), un <code>pom.xml</code> raíz agregador.</li>
+        <li>Versionado <a href="https://semver.org/">SemVer</a>. Tags publicados: <code>v1.0.0</code>, <code>v1.1.0-beta.1</code> (actual).</li>
+      </ul>
+      <p>Compilar desde el código fuente:</p>
+      <pre><code>git clone https://github.com/Grupo-Sauken-S-A/S-FIDE.git
+cd S-FIDE
+./mvnw clean install</code></pre>
+      <p>Requiere JDK 23 — el proyecto incluye Maven Wrapper, no hace falta Maven instalado aparte. El código fuente completo está disponible conforme a la GPLv2: cualquier integrador puede auditar qué hace cada programa antes de confiar en él para documentos con validez legal.</p>
+    </section>
+
+    <section class="chapter" id="s6">
+      <span class="chapter-num">06</span>
+      <h2>Arquitectura de integración</h2>
+      <svg viewBox="0 0 680 260" role="img" aria-label="Diagrama: una aplicación integradora y la GUI de S-FiDE invocan ambas el mismo proceso java -jar Modulo.jar" style="width:100%;height:auto;max-width:680px;margin:1.2rem 0 1.6rem;font-family:'IBM Plex Mono',monospace;">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"></path>
+          </marker>
+        </defs>
+        <rect x="12" y="16" width="230" height="70" rx="10" fill="var(--surface)" stroke="var(--line)"></rect>
+        <text x="127" y="46" text-anchor="middle" fill="var(--ink)" font-size="13" font-weight="600">Aplicación integradora</text>
+        <text x="127" y="65" text-anchor="middle" fill="var(--muted)" font-size="11">(cualquier lenguaje)</text>
+
+        <rect x="438" y="16" width="230" height="70" rx="10" fill="var(--code-bg)" stroke="var(--accent)"></rect>
+        <text x="553" y="46" text-anchor="middle" fill="var(--code-fg)" font-size="13" font-weight="600">java -jar Modulo.jar</text>
+        <text x="553" y="65" text-anchor="middle" fill="var(--code-accent)" font-size="11">(proceso independiente)</text>
+
+        <line x1="245" y1="38" x2="435" y2="38" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#arrow)"></line>
+        <text x="340" y="30" text-anchor="middle" fill="var(--accent-strong)" font-size="11">spawn</text>
+
+        <line x1="435" y1="66" x2="245" y2="66" stroke="var(--faint)" stroke-width="1.4" stroke-dasharray="3 3" marker-end="url(#arrow)"></line>
+        <text x="340" y="112" text-anchor="middle" fill="var(--muted)" font-size="11">stdout / stderr / exit code</text>
+
+        <rect x="12" y="176" width="230" height="70" rx="10" fill="var(--surface)" stroke="var(--line)"></rect>
+        <text x="127" y="206" text-anchor="middle" fill="var(--ink)" font-size="13" font-weight="600">S-FiDE GUI</text>
+        <text x="127" y="225" text-anchor="middle" fill="var(--muted)" font-size="11">(JavaFX, uso manual)</text>
+
+        <path d="M 242 200 C 400 200, 500 160, 553 90" fill="none" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#arrow)"></path>
+        <text x="470" y="210" text-anchor="middle" fill="var(--accent-strong)" font-size="11">spawn (idéntico)</text>
+      </svg>
+      <p>Tanto una aplicación integradora externa como la propia GUI invocan los módulos exactamente igual: como proceso hijo, mismos argumentos, misma salida. No hay una API interna distinta para "uso avanzado" — el contrato de línea de comandos <strong>es</strong> la API.</p>
+      <p>Cada módulo recibe sus parámetros por argumentos de línea de comandos (nunca por variables de entorno ni configuración, salvo la excepción documentada de <code>sfide-defaults.properties</code> que usa solo la GUI), realiza su tarea, escribe el resultado en <code>stdout</code> y/o un archivo, y termina con código <code>0</code> o <code>1</code>.</p>
+    </section>
+
+    <section class="chapter" id="s7">
+      <span class="chapter-num">07</span>
+      <h2>Mecanismos de firma digital: PKCS#11, PKCS#12 y Windows CSP/KSP</h2>
+      <p>S-FiDE soporta tres formas distintas de acceder a una clave privada para firmar. Elegir la correcta depende de dónde vive esa clave.</p>
+
+      <h3>7.1 — PKCS#11 (tokens criptográficos y HSM)</h3>
+      <p><strong>PKCS#11</strong> es un estándar de la industria (OASIS) que define una API en C para que cualquier aplicación hable con un dispositivo criptográfico sin conocer los detalles del fabricante. El fabricante provee una biblioteca dinámica (<code>.dll</code>/<code>.so</code>/<code>.dylib</code>) que la aplicación carga en tiempo de ejecución. En Java esto se hace vía el proveedor <code>SunPKCS11</code>, incluido en el JDK.</p>
+
+      <h4>Hash interno vs. externo — el detalle que resolvimos en 1.1.0</h4>
+      <p>Un token firma RSA-SHA256 mediante un "mecanismo" (<code>CK_MECHANISM</code>). Existen dos posibles:</p>
+      <ul>
+        <li><strong><code>CKM_SHA256_RSA_PKCS</code></strong> (combinado): el token calcula el hash internamente. Un solo llamado. Los tokens SafeNet/Thales lo soportan.</li>
+        <li><strong><code>CKM_RSA_PKCS</code></strong> (puro): el token solo aplica padding PKCS#1 v1.5 y la operación RSA — el hash SHA-256 debe calcularlo la aplicación antes, envuelto en una estructura ASN.1 <code>DigestInfo</code>. El Feitian ePass2003 en modo FIPS 140-2 Nivel 3 solo expone este mecanismo.</li>
+      </ul>
+      <p>Desde 1.1.0, <code>XMLSignerPKCS11</code> y <code>PDFSignerPKCS11</code> prueban el mecanismo combinado primero y, si el token lo rechaza, calculan el hash por software y reintentan — de forma transparente. No hay ningún parámetro para elegir el mecanismo.</p>
+
+      <h3>7.2 — PKCS#12 (archivos de certificado)</h3>
+      <p><strong>PKCS#12</strong> es un formato de contenedor de archivo (<code>.p12</code>/<code>.pfx</code>) que empaqueta, cifrado con contraseña, un certificado X.509 junto a su clave privada — sin hardware involucrado.</p>
+      <p><strong>Ventajas:</strong> simple, sin drivers, igual en cualquier SO. <strong>Desventajas:</strong> la clave es un archivo copiable — la seguridad depende de proteger ese archivo y su contraseña; no aceptable para trámites que exigen hardware homologado FIPS 140-2.</p>
+
+      <h3>7.3 — Windows CSP/KSP (almacén de certificados de Windows)</h3>
+      <p>En Windows existe un mecanismo nativo: CryptoAPI (CAPI, legado) y su sucesor CNG, vía <strong>CSP</strong> o <strong>KSP</strong> respectivamente. Los fabricantes de tokens suelen instalar, además de PKCS#11, un minidriver CSP/KSP certificado por Microsoft — el certificado aparece solo en el Administrador de certificados de Windows.</p>
+      <p>Este es el mecanismo que usa <strong>Adobe Acrobat/Reader por defecto en Windows</strong> — por eso un token "funciona solo" en Acrobat sin configurar PKCS#11.</p>
+      <p>S-FiDE incorpora esta alternativa vía <code>XMLSignerWindowsCSP</code> y <code>PDFSignerWindowsCSP</code>, usando <code>SunMSCAPI</code> para acceder al almacén <code>Windows-MY</code>. <strong>No se pasa contraseña</strong> — el acceso lo administra Windows.</p>
+      <div class="callout warn">
+        <span class="label">Limitación conocida</span>
+        <p><code>SunMSCAPI</code> habla CryptoAPI legado, no CNG moderno directamente — funciona porque Windows tiende un puente CAPI↔KSP automático. La actualización de Windows de octubre 2025 (KB5066835) empuja el ecosistema hacia KSP puro, así que ese puente podría no cubrir todos los tokens en el futuro.</p>
+      </div>
+
+      <h3>7.4 — Comparación</h3>
+      <div class="table-wrap">
+        <table class="compare">
+          <tr><th></th><th>PKCS#11</th><th>PKCS#12</th><th>Windows CSP/KSP</th></tr>
+          <tr><td>Dónde vive la clave</td><td>Hardware</td><td>Archivo cifrado</td><td>Hardware o software, vía almacén</td></tr>
+          <tr><td>Multiplataforma</td><td>Sí</td><td>Sí</td><td>No</td></tr>
+          <tr><td>Configurar ruta de driver</td><td>Sí</td><td>No aplica</td><td>No</td></tr>
+          <tr><td>Contraseña por el programa</td><td>Sí (PIN)</td><td>Sí</td><td>No</td></tr>
+          <tr><td>Seguridad típica</td><td>Alta (FIPS 140-2/3)</td><td>Según protección del archivo</td><td>Igual al hardware subyacente</td></tr>
+          <tr><td>Recomendado para</td><td>Uso regulado (AC-ONTI)</td><td>Pruebas, servidor</td><td>Simplicidad sobre portabilidad</td></tr>
+        </table>
+      </div>
+
+      <h3>7.5 — Validación de revocación: OCSP y CRL</h3>
+      <p>Un certificado puede ser matemáticamente válido (no vencido, cadena de confianza correcta) y sin embargo haber sido <strong>revocado</strong> por su emisor — por ejemplo, porque el token fue robado o la clave se vio comprometida. La única forma de saberlo es consultar a la autoridad certificante; no hay manera de verificar esto sin conexión.</p>
+      <p>Al verificar una firma, <code>XMLVerifySignatures</code> y <code>PDFVerifySignatures</code> intentan dos mecanismos, en este orden:</p>
+      <ol>
+        <li><strong>OCSP</strong> (Online Certificate Status Protocol): consulta en tiempo real al respondedor de la autoridad certificante — su URL está publicada dentro del propio certificado (extensión <em>Authority Information Access</em>). S-FiDE arma una solicitud identificando el certificado por su número de serie, y la autoridad responde con un mensaje firmado: <code>GOOD</code> o <code>REVOKED</code>. Es el mecanismo más preciso, refleja el estado en el instante exacto de la consulta.</li>
+        <li><strong>CRL</strong> (Certificate Revocation List): si OCSP no responde, se recurre a la lista de revocados que la autoridad publica periódicamente (URL también en el certificado, extensión <em>CRL Distribution Point</em>). Menos preciso — puede no reflejar una revocación muy reciente — pero funciona aunque el respondedor OCSP puntual esté caído.</li>
+      </ol>
+      <p>Cada intento tiene 10 segundos de espera. Si ninguno responde, el estado queda <strong>"No verificable" / <code>UNKNOWN</code></strong> — esto <strong>no invalida la firma</strong>: integridad criptográfica y revocación son dos verificaciones independientes. Un documento puede salir <code>VÁLIDO</code> con revocación "No verificable": la firma es genuina, solo que no se pudo confirmar en ese momento que el certificado siga vigente.</p>
+      <div class="callout warn">
+        <span class="label">Por qué hace falta Internet</span>
+        <p>Tanto la URL de OCSP como la de CRL son direcciones de la autoridad certificante en Internet. Sin conexión, ninguno de los dos mecanismos puede completarse. Un certificado de prueba autofirmado (sin autoridad certificante real) siempre da "No verificable — Sin URLs de OCSP/CRL", porque nunca declaró esas extensiones.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="s8">
+      <span class="chapter-num">08</span>
+      <h2>Catálogo de tokens y drivers soportados</h2>
+      <p>Cualquier token PKCS#11 es utilizable. La siguiente tabla —fuente única en <code>shared-resources/token-profiles.txt</code>— documenta los modelos del ecosistema AC-ONTI argentino:</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Marca / Modelo</th><th>Windows</th><th>Hash</th><th>Estado</th></tr>
+          <tr><td>SafeNet/Thales eToken 5110/5110+</td><td><code>eTPKCS11.dll</code></td><td>Interno</td><td>Vigente — recomendado</td></tr>
+          <tr><td>Feitian ePass2003</td><td><code>eps2003csp11.dll</code></td><td>Externo</td><td>Vigente — reemplazo estándar SCBA</td></tr>
+          <tr><td>mToken CryptoID nueva (140-3)</td><td><code>lm_cryptoide_pkcs11.dll</code></td><td>Externo (sin confirmar)</td><td>Válido solo variante 140-3</td></tr>
+          <tr><td>mToken CryptoID vieja (140-2)</td><td><code>CryptoIDA_pkcs11.dll</code></td><td>Externo (sin confirmar)</td><td>Discontinuado</td></tr>
+          <tr><td>Athena IDProtect/ASECard</td><td><code>asepkcs.dll</code></td><td>Desconocido</td><td>Discontinuado, en retiro</td></tr>
+          <tr><td>OpenSC (genérico)</td><td><code>opensc-pkcs11.dll</code></td><td>Depende del token</td><td>Driver de respaldo</td></tr>
+        </table>
+      </div>
+      <h3>Ayuda de selección de driver</h3>
+      <ul>
+        <li><strong>GUI:</strong> combo de marca/modelo + botón "Detectar automáticamente" (revisa qué rutas de la tabla existen en el equipo).</li>
+        <li><strong>CLI:</strong> parámetro <code>-listar-drivers</code> (<code>--listar-drivers</code> en los módulos PDF) en <code>TokenSlotsView</code>, <code>TokenCertificateExtractor</code>, <code>XMLSignerPKCS11</code> y <code>PDFSignerPKCS11</code>.</li>
+      </ul>
+      <div class="callout note">
+        <span class="label">Solo un hint de UX</span>
+        <p>Esta detección nunca es la única fuente de verdad — el nombre de archivo puede cambiar entre versiones de middleware. El código de firma siempre reintenta en tiempo de ejecución según lo que el token realmente responde (sección 7.1).</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="s9">
+      <span class="chapter-num">09</span>
+      <h2>Catálogo de aplicaciones</h2>
+      <p>Convenciones comunes: código de salida <code>0</code> éxito / <code>1</code> error (salvo aclaración); todas leen y escriben en UTF-8; <code>-version</code>/<code>-licencia</code>/<code>-ayuda</code> disponibles en todas (el nombre exacto de la opción varía levemente entre módulos por motivos históricos).</p>
+
+      <div class="module" id="m1">
+        <div class="module-head"><h3>9.1 — TokenSlotsView</h3><span class="module-jar">TokenSlotsView.jar</span></div>
+        <p>Visualiza los slots disponibles en un token PKCS#11 y la información de certificados/claves en cada uno. Primera herramienta a usar frente a un token nuevo.</p>
+        <div class="field-label">Sintaxis</div>
+        <pre><code>java -jar TokenSlotsView.jar &lt;biblioteca PKCS#11&gt; &lt;contraseña&gt;</code></pre>
+        <div class="field-label">Salida</div>
+        <p>Por cada slot con contenido: número de slot, alias, tipo, sujeto, emisor, validez, número de serie.</p>
+        <div class="field-label">Errores posibles</div>
+        <p class="errlist"><code>El archivo de la biblioteca PKCS#11 no existe</code> · <code>El proveedor SunPKCS11 no está disponible</code> · <code>Contraseña incorrecta o error al acceder al token</code> · <code>No se encontraron certificados ni claves en el token</code></p>
+      </div>
+
+      <div class="module" id="m2">
+        <div class="module-head"><h3>9.2 — TokenCertificateExtractor</h3><span class="module-jar">TokenCertificateExtractor.jar</span></div>
+        <p>Extrae el certificado de un slot específico de un token PKCS#11 y lo exporta como <code>.pem</code>.</p>
+        <div class="field-label">Sintaxis</div>
+        <pre><code>java -jar TokenCertificateExtractor.jar &lt;biblioteca PKCS#11&gt; &lt;contraseña&gt; &lt;slot&gt;</code></pre>
+        <div class="field-label">Errores posibles</div>
+        <p class="errlist"><code>Proveedor SunPKCS11 no disponible</code> · <code>Error al cargar el almacén de claves</code> · <code>No se encontró ningún certificado en el slot [n]</code></p>
+      </div>
+
+      <div class="module" id="m3">
+        <div class="module-head"><h3>9.3 — PKCS12CertificateExtractor</h3><span class="module-jar">PKCS12CertificateExtractor.jar</span></div>
+        <p>Equivalente al anterior, para archivos PKCS#12 — sin hardware.</p>
+        <div class="field-label">Sintaxis</div>
+        <pre><code>java -jar PKCS12CertificateExtractor.jar &lt;archivo.p12&gt; &lt;password&gt;</code></pre>
+        <div class="field-label">Errores posibles</div>
+        <p class="errlist"><code>El archivo no es un PKCS#12 válido o la contraseña es incorrecta</code> · <code>No se encontró ningún certificado X.509 en el archivo</code></p>
+      </div>
+
+      <div class="module" id="m4">
+        <div class="module-head"><h3>9.4 — XMLSignerPKCS11</h3><span class="module-jar">XMLSignerPKCS11.jar</span></div>
+        <p>Firma un XML (completo o un elemento por su atributo <code>Id</code>) con un token PKCS#11. XMLDSig/XAdES, con resolución automática del mecanismo de hash (sección 7.1).</p>
+        <div class="field-label">Sintaxis</div>
+        <pre><code>java -jar XMLSignerPKCS11.jar &lt;biblioteca&gt; &lt;contraseña&gt; &lt;slot&gt; &lt;archivo.xml&gt; &lt;elemento&gt;</code></pre>
+        <p><code>elemento</code> vacío (<code>""</code>) firma todo el documento. Valores conocidos: <code>COD</code>, <code>CODEH</code>, <code>DJO</code>, <code>DJOEH</code>.</p>
+        <div class="field-label">Salida</div>
+        <p>Archivo <code>&lt;nombre&gt;-signed.xml</code>.</p>
+        <div class="field-label">Errores posibles</div>
+        <p class="errlist"><code>El elemento o párrafo XML especificado no existe</code> · <code>Contraseña incorrecta</code> · <code>El token no admite ningún mecanismo de firma RSA-SHA256 compatible</code></p>
+      </div>
+
+      <div class="module" id="m5">
+        <div class="module-head"><h3>9.5 — XMLSignerPKCS12</h3><span class="module-jar">XMLSignerPKCS12.jar</span></div>
+        <p>Idéntico al anterior en funcionalidad, usando un archivo PKCS#12.</p>
+        <div class="field-label">Sintaxis</div>
+        <pre><code>java -jar XMLSignerPKCS12.jar &lt;certificado.p12&gt; &lt;password&gt; &lt;archivo.xml&gt; &lt;elemento&gt;</code></pre>
+      </div>
+
+      <div class="module" id="m6">
+        <div class="module-head"><h3>9.6 — XMLVerifySignatures</h3><span class="module-jar">XMLVerifySignatures.jar</span></div>
+        <p>Verifica integridad, validez de certificado y revocación (OCSP/CRL) de las firmas de un XML.</p>
+        <div class="field-label">Sintaxis</div>
+        <pre><code>java -jar XMLVerifySignatures.jar &lt;archivo.xml&gt; [-simple]</code></pre>
+        <div class="callout note"><span class="label">Código de salida especial</span><p>A diferencia de los firmadores, acá el exit code refleja el <strong>resultado de la validación</strong>: <code>0</code> si todas las firmas son válidas, <code>1</code> si alguna no lo es.</p></div>
+      </div>
+
+      <div class="module" id="m7">
+        <div class="module-head"><h3>9.7 — XMLVerifyXSDStructure</h3><span class="module-jar">XMLVerifyXSDStructure.jar</span></div>
+        <p>Valida que un XML cumpla la estructura definida por un esquema XSD (tipos, elementos obligatorios/opcionales, cardinalidad) y además verifica sus firmas.</p>
+        <div class="field-label">¿Es obligatorio un XSD externo?</div>
+        <p><strong>No.</strong> Busca automáticamente una referencia al esquema dentro del propio XML — primero <code>xsi:schemaLocation</code>, luego <code>xsi:noNamespaceSchemaLocation</code>. Si encuentra una URL ahí, la <strong>descarga sola</strong> (requiere Internet).</p>
+        <div class="field-label">¿Puedo indicar un XSD propio?</div>
+        <p>Sí, como segundo argumento — para validar contra una versión local sin depender de Internet, o si el XML no declara ninguno. Si el nombre no coincide con el referenciado en el XML, avisa (no es un error) y usa el indicado:</p>
+        <pre><code>NOTA: Diferencia en nombres de archivo XSD
+├─ XSD referenciado en XML: esquema-v2.xsd
+├─ XSD proporcionado: esquema-v1-local.xsd
+└─ Se utilizará el archivo proporcionado: esquema-v1-local.xsd</code></pre>
+        <div class="field-label">Qué se valida</div>
+        <p>Dos pasos independientes, ambos deben pasar: (1) estructura contra el XSD, (2) firmas digitales del documento (integridad y certificado).</p>
+        <div class="callout warn">
+          <span class="label">No valida revocación</span>
+          <p>A diferencia de <code>XMLVerifySignatures</code>, lo indica explícitamente al finalizar: <em>"Este proceso no realiza validación de revocación de las firmas digitales aplicadas"</em>. Para confirmar que el certificado no fue revocado (sección 7.5), hay que correr además <code>XMLVerifySignatures</code>.</p>
+        </div>
+        <div class="field-label">Sintaxis</div>
+        <pre><code>java -jar XMLVerifyXSDStructure.jar &lt;archivo.xml&gt; [esquema.xsd]</code></pre>
+      </div>
+
+      <h3>Opciones específicas de los firmadores de PDF</h3>
+      <p><code>PDFSignerPKCS11</code>, <code>PDFSignerPKCS12</code> y <code>PDFSignerWindowsCSP</code> comparten estas opciones, sin equivalente en los firmadores de XML — un XML no tiene "apariencia visual" ni concepto de página.</p>
+      <ul>
+        <li><strong>Firma visible vs. invisible.</strong> Sin <code>-x</code>/<code>-y</code> (o en <code>0</code>), la firma es igual de válida criptográficamente pero no se dibuja nada. Con coordenadas, se dibuja un recuadro con firmante, fecha y el texto de <code>-t</code> si se indicó.</li>
+        <li><strong>Sistema de coordenadas.</strong> PDF usa el estándar PostScript: origen <code>(0,0)</code> en la <strong>esquina inferior izquierda</strong> de la página, X crece a la derecha, Y crece <strong>hacia arriba</strong>. <code>-x</code>/<code>-y</code> ubican la esquina <strong>inferior izquierda</strong> del recuadro (160×70 puntos, tamaño fijo) — no es "de abajo a la derecha", es de abajo a la <strong>izquierda</strong>. 1 punto PDF = 1/72 de pulgada. Siempre en la página 1.</li>
+        <li><strong>Texto personalizado (<code>-t</code>).</strong> Se agrega debajo del nombre y la fecha, dentro del mismo recuadro. Sin efecto si la firma es invisible.</li>
+        <li><strong>Bloquear el documento (<code>-k true</code>).</strong> Dos efectos a la vez: (1) marca la firma como <strong>certificante</strong> (permiso PDF <code>DocMDP</code> = "sin cambios permitidos" — solo puede haber una por documento, y debe ser la primera), y (2) cifra el PDF en AES-256 restringiendo permisos a solo impresión y lectores de pantalla.</li>
+      </ul>
+      <div class="callout warn"><span class="label">Cuidado con -k true</span><p>Si se planea agregar más firmas al mismo documento más adelante, no usar <code>-k true</code> en la primera — una firma certificante bloquea cualquier cambio posterior, incluidas nuevas firmas.</p></div>
+
+      <div class="module" id="m8">
+        <div class="module-head"><h3>9.8 — PDFSignerPKCS11</h3><span class="module-jar">PDFSignerPKCS11.jar</span></div>
+        <p>Firma un PDF con un token PKCS#11 (ver opciones arriba). PAdES (ETSI EN 319 142), con timestamp y OCSP.</p>
+        <div class="field-label">Sintaxis</div>
+        <pre><code>java -jar PDFSignerPKCS11.jar -i &lt;pdf&gt; -l &lt;biblioteca&gt; -p &lt;password&gt; -s &lt;slot&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"]</code></pre>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Flag</th><th>Obligatorio</th><th>Descripción</th></tr>
+            <tr><td><code>-i, --input</code></td><td>Sí</td><td>PDF a firmar</td></tr>
+            <tr><td><code>-l, --library</code></td><td>Sí</td><td>Biblioteca PKCS#11</td></tr>
+            <tr><td><code>-p, --password</code></td><td>Sí</td><td>PIN del token</td></tr>
+            <tr><td><code>-s, --slot</code></td><td>Sí</td><td>Número de slot</td></tr>
+            <tr><td><code>-k, --lock</code></td><td>No</td><td>Bloquea el documento tras firmar (default <code>false</code>)</td></tr>
+            <tr><td><code>-x</code> / <code>-y</code></td><td>No</td><td>Posición de firma visible (default <code>0</code>, invisible)</td></tr>
+            <tr><td><code>-t, --text</code></td><td>No</td><td>Texto adicional en la firma visible</td></tr>
+          </table>
+        </div>
+        <div class="callout note"><span class="label">Certificados de Origen</span><p>Posiciones de convención Grupo Sauken: <code>-x 40 -y 55</code> Exportador, <code>-x 310 -y 55</code> Funcionario Habilitado.</p></div>
+      </div>
+
+      <div class="module" id="m9">
+        <div class="module-head"><h3>9.9 — PDFSignerPKCS12</h3><span class="module-jar">PDFSignerPKCS12.jar</span></div>
+        <p>Idéntico al anterior, con archivo PKCS#12 (<code>-c</code>) en vez de <code>-l</code>/<code>-s</code>.</p>
+        <div class="field-label">Sintaxis</div>
+        <pre><code>java -jar PDFSignerPKCS12.jar -i &lt;pdf&gt; -c &lt;certificado.p12&gt; -p &lt;password&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"]</code></pre>
+      </div>
+
+      <div class="module" id="m10">
+        <div class="module-head"><h3>9.10 — PDFVerifySignatures</h3><span class="module-jar">PDFVerifySignatures.jar</span></div>
+        <p>Verifica integridad, autenticidad, revocación, y si el PDF fue modificado tras la última firma.</p>
+        <div class="field-label">Sintaxis</div>
+        <pre><code>java -jar PDFVerifySignatures.jar &lt;archivo.pdf&gt; [-simple]</code></pre>
+        <p>Igual que <code>XMLVerifySignatures</code>: el exit code refleja el resultado de la validación.</p>
+      </div>
+
+      <div class="module" id="m11">
+        <div class="module-head"><h3>9.11 — XMLSignerWindowsCSP<span class="windows-only">Solo Windows</span></h3><span class="module-jar">XMLSignerWindowsCSP.jar</span></div>
+        <p>Firma XML usando un certificado ya presente en el almacén de Windows (sección 7.3), como alternativa a <code>XMLSignerPKCS11</code>.</p>
+        <div class="field-label">Sintaxis</div>
+        <pre><code>java -jar XMLSignerWindowsCSP.jar &lt;alias o fragmento del CN&gt; &lt;archivo.xml&gt; &lt;elemento&gt;
+java -jar XMLSignerWindowsCSP.jar -listar-certificados</code></pre>
+        <p><strong>No se pasa contraseña</strong> — el acceso a la clave lo administra Windows.</p>
+        <div class="field-label">Errores posibles</div>
+        <p class="errlist"><code>No se encontró ningún certificado con clave privada que coincida con "[texto]"</code> · <code>"[texto]" coincide con N certificados distintos</code></p>
+      </div>
+
+      <div class="module" id="m12">
+        <div class="module-head"><h3>9.12 — PDFSignerWindowsCSP<span class="windows-only">Solo Windows</span></h3><span class="module-jar">PDFSignerWindowsCSP.jar</span></div>
+        <p>Equivalente al anterior para PDF, con las mismas opciones de posición/texto/bloqueo que <code>PDFSignerPKCS11</code>.</p>
+        <div class="field-label">Sintaxis</div>
+        <pre><code>java -jar PDFSignerWindowsCSP.jar -i &lt;pdf&gt; -a &lt;alias o fragmento CN&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"]</code></pre>
+      </div>
+
+      <div class="module" id="m13">
+        <div class="module-head"><h3>9.13 — S-FiDE GUI</h3><span class="module-jar">SFide-GUI.jar</span></div>
+        <p>Interfaz JavaFX que expone las 12 aplicaciones como pestañas, para uso manual sin línea de comandos. Invoca los mismos <code>.jar</code> vía <code>ProcessBuilder</code> — no reimplementa ninguna lógica de firma.</p>
+        <div class="callout warn"><span class="label">No es para integración por proceso</span><p>No tiene un contrato de argumentos/exit-code pensado para ser invocada por otro programa. Un integrador debe usar los módulos CLI individuales de esta sección.</p></div>
+      </div>
+    </section>
+
+    <section class="chapter" id="s10">
+      <span class="chapter-num">10</span>
+      <h2>Integración desde otras aplicaciones</h2>
+      <p>Patrón recomendado por Grupo Sauken: <strong>redirigir <code>stdout</code>/<code>stderr</code> a archivos separados y capturar el código de salida</strong>, para que la aplicación integradora los lea una vez que el proceso terminó.</p>
+      <h3>Windows (.bat)</h3>
+      <pre><code>@echo off
+set SFIDE=C:\ruta\a\S-FiDE
+C:
+cd %SFIDE%
+set JAVA_HOME=%SFIDE%\openjdk-23.0.1\windows-x64
+set PATH=%JAVA_HOME%\bin;%PATH%
+
+%JAVA_HOME%\bin\java -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -jar PKCS12CertificateExtractor.jar "C:\ruta\al\certificado.pfx" "&lt;Contraseña&gt;" 1&gt;"C:\temp\salida.txt" 2&gt;"C:\temp\error.txt"
+
+set RESULT=%ERRORLEVEL%
+echo %RESULT% &gt; "C:\temp\result.txt"
+exit /b %RESULT%</code></pre>
+      <ul>
+        <li><code>JAVA_HOME</code>/<code>PATH</code> apuntan al runtime embebido en la propia distribución — no dependen de que el sistema tenga Java instalado.</li>
+        <li><code>-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8</code>: recomendado incluir siempre, fuerza UTF-8 en salida y en rutas/argumentos con acentos.</li>
+        <li><code>1&gt;archivo</code> / <code>2&gt;archivo</code> redirigen stdout/stderr por separado.</li>
+        <li><code>%ERRORLEVEL%</code> es el código de salida del proceso, sin transformación.</li>
+      </ul>
+      <p>Este patrón sirve para <strong>cualquiera</strong> de los 12 módulos — solo cambia el jar y sus argumentos.</p>
+      <h3>Linux/macOS (shell)</h3>
+      <pre><code>#!/bin/sh
+SFIDE=/opt/S-FiDE
+cd "$SFIDE"
+JAVA_HOME="$SFIDE/openjdk-23.0.1/linux-x64"   # macOS: "$SFIDE/openjdk-23.0.1/macos"
+PATH="$JAVA_HOME/bin:$PATH"
+
+"$JAVA_HOME/bin/java" -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 \
+    -jar PKCS12CertificateExtractor.jar "/ruta/al/certificado.pfx" "&lt;Contraseña&gt;" \
+    &gt;"/tmp/salida.txt" 2&gt;"/tmp/error.txt"
+
+RESULT=$?
+echo $RESULT &gt; "/tmp/result.txt"
+exit $RESULT</code></pre>
+    </section>
+
+    <section class="chapter" id="s11">
+      <span class="chapter-num">11</span>
+      <h2>Distribución y despliegue</h2>
+      <p>Una distribución lista para usar es una carpeta autocontenida:</p>
+      <pre><code>S-FiDE/
+├── openjdk-23.0.1/          ← runtime de Java embebido (por plataforma)
+├── javafx-sdk-23.0.1/       ← SDK de JavaFX embebido (por plataforma)
+├── *.jar                    ← los 13 módulos, nombre "amigable" sin versión
+├── SFide-GUI.bat / .sh      ← launchers, se autodetectan solos
+├── doc/  test/  xsd/        ← documentación y ejemplos</code></pre>
+      <p><strong>No requiere instalación ni Java preinstalado</strong> — puede copiarse a cualquier ubicación, incluido un medio removible, y correr en un equipo "limpio", gracias al runtime embebido y a que los launchers se autodetectan (sin rutas ni letras de unidad hardcodeadas).</p>
+      <div class="callout note">
+        <span class="label">Convención de nombres — importante para integradores</span>
+        <p>El jar de distribución (<code>XMLSignerPKCS11.jar</code>) <strong>nunca</strong> incluye la versión, a diferencia del artefacto crudo de Maven (<code>xml_signer_pkcs11-1.1.0-beta.1-jar-with-dependencies.jar</code>). Es deliberado: un integrador con el nombre ya hardcodeado no debe romperse cuando S-FiDE actualiza de versión.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="s12">
+      <span class="chapter-num">12</span>
+      <h2>Historial de versiones</h2>
+      <h3>v1.1.0-beta.1 (2026-08) — en QA</h3>
+      <ul>
+        <li>Compatibilidad ampliada de tokens PKCS#11 (hash externo, sección 7.1).</li>
+        <li>Autodetección de marca/modelo y ayuda de selección de driver.</li>
+        <li>Dos módulos nuevos: <code>XMLSignerWindowsCSP</code> y <code>PDFSignerWindowsCSP</code>.</li>
+        <li>Actualización de dependencias criptográficas por alertas de seguridad.</li>
+        <li>Corrección de dos errores hallados en QA con hardware real. Validado de punta a punta con SafeNet 5110+ L3 y con PKCS#12 — pendiente ePass2003 y mToken CryptoID.</li>
+      </ul>
+      <h3>v1.0.0 (2024-12) — primer release estable</h3>
+      <p>Suite inicial de 10 módulos más la GUI JavaFX.</p>
+    </section>
+
+    <section class="chapter" id="s13">
+      <span class="chapter-num">13</span>
+      <h2>Glosario</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><td><strong>AC-ONTI</strong></td><td>Autoridad Certificante de la Oficina Nacional de Tecnologías de Información (Argentina)</td></tr>
+          <tr><td><strong>CAPI / CNG</strong></td><td>Las dos generaciones de la API criptográfica nativa de Windows</td></tr>
+          <tr><td><strong>CRL</strong></td><td>Certificate Revocation List</td></tr>
+          <tr><td><strong>CSP / KSP</strong></td><td>Proveedores que implementan CAPI/CNG respectivamente</td></tr>
+          <tr><td><strong>DigestInfo</strong></td><td>Estructura ASN.1 que envuelve un hash con su identificador de algoritmo</td></tr>
+          <tr><td><strong>FIPS 140-2/3</strong></td><td>Estándar de seguridad del NIST para módulos criptográficos</td></tr>
+          <tr><td><strong>HSM</strong></td><td>Hardware Security Module</td></tr>
+          <tr><td><strong>OCSP</strong></td><td>Online Certificate Status Protocol</td></tr>
+          <tr><td><strong>PAdES</strong></td><td>PDF Advanced Electronic Signatures (ETSI)</td></tr>
+          <tr><td><strong>PKCS#11 / #12</strong></td><td>Estándares para tokens criptográficos y contenedores cert+clave</td></tr>
+          <tr><td><strong>Slot</strong></td><td>Ranura lógica de un token PKCS#11</td></tr>
+          <tr><td><strong>XAdES / XMLDSig</strong></td><td>Perfil de firma con metadatos / estándar W3C de firma XML</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="chapter" id="s14">
+      <span class="chapter-num">14</span>
+      <h2>Soporte y contacto</h2>
+      <p><strong>Grupo Sauken S.A.</strong> — Córdoba, Argentina</p>
+      <p>Email: <a href="mailto:soporte@sauken.com.ar">soporte@sauken.com.ar</a> · Sitio: <a href="https://www.sauken.com.ar/">www.sauken.com.ar</a> · Repositorio: <a href="https://github.com/Grupo-Sauken-S-A/S-FIDE">github.com/Grupo-Sauken-S-A/S-FIDE</a></p>
+      <p>El software se distribuye libremente bajo GNU GPLv2 o posterior. El soporte técnico es un servicio comercial, con cargo, independiente de la licencia de uso.</p>
+    </section>
+
+    <footer class="doc-footer">
+      Manual de Integración S-FiDE · Grupo Sauken S.A. · Versión del documento acompaña a S-FiDE v1.1.0-beta.1
+    </footer>
+  </main>
+</div>

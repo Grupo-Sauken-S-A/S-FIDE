@@ -90,14 +90,23 @@ import java.util.Arrays;
 import java.util.List;
 
 public class SFideGUI extends Application {
-    private static final String VERSION = "S-FIDE GUI v1.1.0-beta.1 - Grupo Sauken S.A.";
+    private static final String VERSION_NUMBER = "1.1.0-beta.1";
+    private static final String VERSION = "S-FIDE GUI v" + VERSION_NUMBER + " - Grupo Sauken S.A.";
     private static final String CSS_FILE = "css/styles.css";
     private static final String HELP_FILE = "text/HELP.txt";
     private static final String LICENSE_FILE = "text/LICENSE.txt";
     private static final String FAQ_FILE = "text/FAQ.txt";
     private static final int WINDOW_WIDTH = 900;
     private static final int WINDOW_HEIGHT = 700;
-    private static final String ICON_FILE = "/images/sauken.png";
+    private static final String[] ICON_FILES = {
+            "/images/sfide-icon-16.png",
+            "/images/sfide-icon-32.png",
+            "/images/sfide-icon-48.png",
+            "/images/sfide-icon-64.png",
+            "/images/sfide-icon-128.png",
+            "/images/sfide-icon-256.png",
+            "/images/sfide-icon-512.png"
+    };
 
     private TextArea sharedOutputArea;
     private ExecutorService executorService;
@@ -427,18 +436,21 @@ public class SFideGUI extends Application {
     private void configureStage(Scene scene) {
         try {
             Platform.setImplicitExit(true);
-            primaryStage.setTitle("S-FIDE - Sistema de Firma Digital Extendido");
+            primaryStage.setTitle("S-FIDE - Sistema de Firma Digital Extendido - v" + VERSION_NUMBER);
             primaryStage.setScene(scene);
 
             try {
-                InputStream iconStream = getClass().getResourceAsStream(ICON_FILE);
-                if (iconStream == null) {
-                    iconStream = getClass().getClassLoader().getResourceAsStream("/main/images/sauken.png");
+                int cargados = 0;
+                for (String iconFile : ICON_FILES) {
+                    try (InputStream iconStream = getClass().getResourceAsStream(iconFile)) {
+                        if (iconStream != null) {
+                            primaryStage.getIcons().add(new Image(iconStream));
+                            cargados++;
+                        }
+                    }
                 }
-                if (iconStream != null) {
-                    Image icon = new Image(iconStream);
-                    primaryStage.getIcons().add(icon);
-                    System.out.println("Ícono cargado exitosamente");
+                if (cargados > 0) {
+                    System.out.println("Ícono cargado exitosamente (" + cargados + " resoluciones)");
                 } else {
                     System.err.println("No se pudo encontrar el archivo de ícono");
                 }
