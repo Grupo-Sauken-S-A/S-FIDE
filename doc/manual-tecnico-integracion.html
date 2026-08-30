@@ -418,6 +418,10 @@
     <section class="chapter" id="s1">
       <span class="chapter-num">01</span>
       <h2>Introducción y filosofía</h2>
+      <div class="callout note">
+        <span class="label">¿Ya integraste S-FiDE 1.0.0?</span>
+        <p>Casi todo lo agregado en 1.1.0-beta.1 es aditivo y no requiere ningún cambio de tu lado — pero hay un puñado de casos puntuales donde cambió el comportamiento de un jar que ya usabas. Antes de actualizar, revisá la <a href="#migracion-100">Guía de migración desde 1.0.0</a> al final de la sección 13.</p>
+      </div>
       <p>S-FiDE (<strong>Si</strong>stema de <strong>F</strong>irma D<strong>i</strong>gital Extendido) es una suite de programas Java independientes para firmar y verificar firmas digitales en documentos XML y PDF, y para extraer o inspeccionar certificados digitales desde tokens criptográficos (PKCS#11), archivos PKCS#12 o el almacén de certificados de Windows.</p>
       <p>El diseño responde a un principio central: <strong>cada capacidad es un programa independiente</strong>, invocable por línea de comandos, que cualquier aplicación externa puede ejecutar como proceso hijo sin integrar ninguna librería Java. No existe una "librería S-FiDE" para enlazar — se distribuye como un conjunto de archivos <code>.jar</code> ejecutables, más una interfaz gráfica opcional que orquesta esos mismos programas.</p>
 
@@ -1142,6 +1146,48 @@ exit $RESULT</code></pre>
       </ul>
       <h3>v1.0.0 (2024-12) — primer release estable</h3>
       <p>Suite inicial de 10 módulos más la GUI JavaFX.</p>
+
+      <h3 id="migracion-100">Guía de migración desde 1.0.0</h3>
+      <p>Si ya tenías una integración funcionando contra los jars de S-FiDE 1.0.0, la gran mayoría de los cambios de 1.1.0-beta.1 son <strong>aditivos</strong> (flags opcionales nuevos, módulos nuevos) y no requieren ningún cambio de tu lado. Esta guía identifica puntualmente los pocos casos donde cambió el <strong>comportamiento</strong> de un jar que ya usabas en 1.0.0. No aplica a <code>XMLSignerWindowsCSP.jar</code>/<code>PDFSignerWindowsCSP.jar</code>: son módulos nuevos, no existían en 1.0.0.</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Jar (ya existía en 1.0.0)</th><th>Qué cambió</th><th>¿Puede romper tu integración?</th><th>Qué revisar</th></tr>
+          <tr>
+            <td><code>XMLSignerPKCS11.jar</code>, <code>XMLSignerPKCS12.jar</code></td>
+            <td>Tres reglas de firma nuevas: (1) ya no se puede volver a firmar un elemento ya firmado; (2) no se puede firmar <code>CODEH</code>/<code>DJOEH</code> sin firma previa en <code>COD</code>/<code>DJO</code>; (3) si el XML contiene <code>COD</code> o <code>DJO</code>, ya no se admite <code>""</code> como elemento a firmar.</td>
+            <td><strong>Sí</strong>, solo si tu integración alguna vez firmaba dos veces el mismo elemento, fuera de orden, o con elemento vacío un XML de comercio exterior. Antes esas llamadas terminaban en éxito (código <code>0</code>); ahora terminan en <code>1</code> con error explícito.</td>
+            <td>Si tu flujo siempre firmó el elemento correcto, una sola vez, en orden, no hay nada que cambiar. Revisá solo lógica de reintento que pudiera reinvocar el firmador sobre el mismo archivo/elemento.</td>
+          </tr>
+          <tr>
+            <td><code>PDFSignerPKCS12.jar</code></td>
+            <td>Con <code>-l true</code> (bloquear) y firma invisible, antes solo se aplicaba el cifrado; ahora también la certificación DocMDP, igual que ya hacía <code>PDFSignerPKCS11</code>.</td>
+            <td><strong>Sí</strong>, si tu flujo agrega más de una firma al mismo PDF y una que no era la última usaba <code>-l true</code> invisible esperando poder seguir firmando después.</td>
+            <td>Si usás <code>-l true</code> solo en la última firma de cada documento, no cambia nada. Si no, movelo a la última firma del flujo.</td>
+          </tr>
+          <tr>
+            <td><code>XMLVerifySignatures.jar</code></td>
+            <td>La revocación de <code>CODEH</code> ahora usa el país de la Entidad Habilitada (<code>EHCountry</code>) en vez del país del exportador (<code>ExporterCountry</code>) para convertir la fecha a UTC.</td>
+            <td>Solo si exportador y Entidad Habilitada están en países distintos y hay una revocación cerca de la fecha de certificación — el resultado <code>VÁLIDO</code>/<code>REVOCADO</code> de esa firma puntual puede diferir (el de 1.0.0 era el incorrecto).</td>
+            <td>Si siempre coinciden de país, sin diferencia observable. Si no, reverificá los <code>CODEH</code> cercanos a una revocación conocida.</td>
+          </tr>
+          <tr>
+            <td><code>XMLVerifySignatures.jar</code>, <code>PDFVerifySignatures.jar</code></td>
+            <td>Cambió el texto de algunas líneas de salida ("Estado: ..." → "Estado (integridad criptográfica, sin considerar revocación): ...", nueva línea "Estado final de la firma #N"). El código de salida no cambió.</td>
+            <td>Solo si tu integración lee texto de <code>stdout</code> en vez del exit code — algo que este manual siempre desaconsejó.</td>
+            <td>Si ya usabas el exit code, no te afecta. Si buscabas el texto literal "Estado: VÁLIDA", actualizá esa búsqueda o pasá a usar el exit code.</td>
+          </tr>
+          <tr>
+            <td><code>TokenSlotsView.jar</code>, <code>TokenCertificateExtractor.jar</code>, <code>PKCS12CertificateExtractor.jar</code>, <code>XMLVerifyXSDStructure.jar</code>, <code>PDFSignerPKCS11.jar</code>, <code>PDFVerifySignatures.jar</code></td>
+            <td>Sin cambios de comportamiento frente a 1.0.0, más allá de la unificación de vocabulario de comandos.</td>
+            <td>No.</td>
+            <td>Ninguna acción necesaria.</td>
+          </tr>
+        </table>
+      </div>
+      <div class="callout note">
+        <span class="label">Dos cosas que no cambiaron</span>
+        <p><strong>Los nombres de los jars</strong> siguen siendo los mismos, sin versión (sección 12). <strong>Los flags que ya usabas siguen funcionando igual</strong> — la unificación de vocabulario (sección 9) fue puramente aditiva: se agregaron alias nuevos, ninguno de 1.0.0 se quitó ni cambió de significado.</p>
+      </div>
     </section>
 
     <section class="chapter" id="s14">
