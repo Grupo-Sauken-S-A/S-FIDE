@@ -2,30 +2,44 @@
 .root {
     -fx-font-family: "Segoe UI", "SF Pro Display", system-ui, sans-serif;
     -fx-font-size: 13px;
-    -fx-background-color: #D6E7E7;
 }
 
-/* Button styles */
+/* Button styles: solo "Ejecutar" lleva color sólido por pantalla (ver .button.execute
+   más abajo). El resto de los botones usa un estilo secundario más discreto, para que
+   el ojo encuentre rápido cuál es la acción principal. */
 .button {
     -fx-padding: 6px 14px;
     -fx-background-radius: 6px;
     -fx-border-radius: 6px;
     -fx-cursor: hand;
     -fx-font-weight: 600;
+    -fx-background-color: transparent;
+    -fx-border-color: #5A8C8C;
+    -fx-border-width: 1px;
+    -fx-text-fill: #063C3C;
 }
 
-/* Browse button style */
+.button:hover {
+    -fx-background-color: #D6E7E7;
+}
+
+.button:pressed {
+    -fx-background-color: #C3DCDC;
+}
+
+/* Browse button style: un tinte suave, un escalón por debajo de "Ejecutar" */
 .button.browse {
-    -fx-background-color: #063C3C;
-    -fx-text-fill: #FFFFFF;
+    -fx-background-color: #E4F0EF;
+    -fx-border-color: #5A8C8C;
+    -fx-text-fill: #063C3C;
 }
 
 .button.browse:hover {
-    -fx-background-color: #095C5D;
+    -fx-background-color: #CFE4E2;
 }
 
 .button.browse:pressed {
-    -fx-background-color: #2F7774;
+    -fx-background-color: #B9D8D5;
 }
 
 /* Execute button style */
@@ -168,77 +182,91 @@
     -fx-font-weight: bold;
 }
 
-/* Tab Pane styles */
-.tab-pane {
-    -fx-background-color: #D6E7E7;
-    -fx-tab-min-height: 32px;
-    -fx-tab-max-height: 32px;
+/* Panel lateral de navegación (reemplaza la antigua barra de pestañas horizontal,
+   que con 12-14 módulos no entraba en el ancho de la ventana y hacía scroll). */
+.main-layout {
+    -fx-background-color: transparent;
 }
 
-.tab-pane > .tab-header-area {
-    -fx-background-color: #D6E7E7;
-    -fx-padding: 2 35 0 0;
-}
-
-.tab-pane > .tab-header-area > .headers-region {
-    -fx-background-color: #D6E7E7;
-}
-
-.tab-pane > .tab-header-area > .tab-header-background {
-    -fx-background-color: #D6E7E7;
-}
-
-/* Tab styles */
-.tab {
-    -fx-background-color: #5A8C8C;
-    -fx-padding: 4px 12px;
-    -fx-background-radius: 6px 6px 0 0;
+.sidebar-nav {
+    -fx-background-color: #063C3C;
+    -fx-background-insets: 0;
     -fx-border-width: 0;
+    -fx-padding: 8px 0;
 }
 
-.tab:hover {
+.sidebar-nav .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 10px 16px;
+}
+
+.sidebar-nav .list-cell:filled:hover {
+    -fx-background-color: #095C5D;
+}
+
+.sidebar-nav .list-cell:filled:selected {
     -fx-background-color: #2F7774;
 }
 
-.tab:selected {
-    -fx-background-color: #063C3C;
+.sidebar-nav .list-cell:focused {
+    -fx-background-color: transparent;
 }
 
-.tab .tab-label {
+.sidebar-nav .list-cell:filled:hover:focused,
+.sidebar-nav .list-cell:filled:hover {
+    -fx-background-color: #095C5D;
+}
+
+.sidebar-nav .list-cell:filled:selected:focused,
+.sidebar-nav .list-cell:filled:selected {
+    -fx-background-color: #2F7774;
+}
+
+.sidebar-nav .nav-icon {
+    -fx-text-fill: #7FB8B5;
+    -fx-font-size: 13px;
+    -fx-min-width: 16px;
+}
+
+.sidebar-nav .nav-text {
     -fx-text-fill: #FFFFFF;
-    -fx-font-size: 12px;
-    -fx-font-weight: normal;
+    -fx-font-size: 12.5px;
 }
 
-.tab:selected .tab-label {
+.sidebar-nav .list-cell:filled:selected .nav-icon,
+.sidebar-nav .list-cell:filled:selected .nav-text {
     -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
 }
 
-/* Tab overflow button styles */
-.tab-pane > .tab-header-area > .control-buttons-tab {
+.sidebar-nav .scroll-bar:vertical {
+    -fx-background-color: #063C3C;
+}
+
+.sidebar-nav .scroll-bar:horizontal {
+    -fx-max-height: 0;
+    -fx-pref-height: 0;
+    -fx-opacity: 0;
+}
+
+/* Área de contenido: el módulo elegido se muestra en una tarjeta blanca sobre el
+   fondo neutro de la ventana, para que se distinga del panel lateral en vez de
+   competir en el mismo tono. */
+.content-scroll {
     -fx-background-color: transparent;
-    -fx-padding: 0;
-    -fx-translate-x: 15;
+    -fx-padding: 0 0 0 14px;
 }
 
-.tab-down-button {
-    -fx-background-color: #004846;
-    -fx-background-radius: 4px;
-    -fx-padding: 4px;
-    -fx-border-width: 1px;
-    -fx-border-color: #FFFFFF;
+.content-scroll > .viewport {
+    -fx-background-color: transparent;
 }
 
-.tab-down-button:hover {
-    -fx-background-color: #095C5D;
-}
-
-.tab-down-button .arrow {
+.content-card {
     -fx-background-color: #FFFFFF;
-    -fx-background-insets: 1;
-    -fx-padding: 3px;
-    -fx-shape: "M4,10h16l-8,-8Z";
+    -fx-background-radius: 12px;
+    -fx-border-color: #E1E6E3;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
 }
 
 /* Context Menu styles genéricos */

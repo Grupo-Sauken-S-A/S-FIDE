@@ -73,6 +73,10 @@ import javafx.util.Duration;
 import javafx.stage.Screen;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.FontPosture;
 import java.util.Optional;
 import javafx.scene.control.ButtonType;
 import java.awt.Desktop;
@@ -96,6 +100,8 @@ public class SFideGUI extends Application {
     private static final String HELP_FILE = "text/HELP.txt";
     private static final String LICENSE_FILE = "text/LICENSE.txt";
     private static final String FAQ_FILE = "text/FAQ.txt";
+    private static final String GLOSARIO_FILE = "text/GLOSARIO.txt";
+    private static final String COMEX_FILE = "text/COMEX.txt";
     private static final int WINDOW_WIDTH = 900;
     private static final int WINDOW_HEIGHT = 700;
     private static final String[] ICON_FILES = {
@@ -114,6 +120,8 @@ public class SFideGUI extends Application {
     private String licenseText;
     private String helpText;
     private String faqText;
+    private String glosarioText;
+    private String comexText;
     private ConfigurationManager configManager;
 
     @Override
@@ -133,6 +141,8 @@ public class SFideGUI extends Application {
             helpText = loadTextResource(HELP_FILE, "Archivo de ayuda");
             faqText = loadTextResource(FAQ_FILE, "Archivo de FAQ");
             licenseText = loadTextResource(LICENSE_FILE, "Archivo de licencia");
+            glosarioText = loadTextResource(GLOSARIO_FILE, "Archivo de glosario");
+            comexText = loadTextResource(COMEX_FILE, "Archivo de comercio exterior");
 
             System.out.println("Inicialización completada correctamente");
         } catch (Exception e) {
@@ -193,7 +203,9 @@ public class SFideGUI extends Application {
                 if (field != null) {
                     if (field.getText().equals(configManager.getDefaultPKCS11LibPath()) ||
                             field.getText().equals(configManager.getDefaultPKCS12Path()) ||
-                            field.getText().equals(configManager.getDefaultSlotNumber())) {
+                            field.getText().equals(configManager.getDefaultSlotNumber()) ||
+                            field.getText().equals(configManager.signatureXProperty().get()) ||
+                            field.getText().equals(configManager.signatureYProperty().get())) {
                         continue;
                     }
 
@@ -374,6 +386,13 @@ public class SFideGUI extends Application {
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
                 System.out.println("Cerrando aplicación por solicitud del usuario");
+                configManager.saveWindowBounds(
+                        primaryStage.getX(),
+                        primaryStage.getY(),
+                        primaryStage.getWidth(),
+                        primaryStage.getHeight(),
+                        primaryStage.isMaximized()
+                );
                 Platform.runLater(() -> {
                     try {
                         if (executorService != null) {
@@ -408,9 +427,12 @@ public class SFideGUI extends Application {
         root.setPadding(new Insets(10));
         root.setStyle("-fx-background-color: #f5f5f5;");
 
+        Node mainLayout = createMainLayout();
+        VBox.setVgrow(mainLayout, Priority.ALWAYS);
+
         root.getChildren().addAll(
                 createMenuBar(),
-                createTabPane(),
+                mainLayout,
                 createOutputPane(),
                 createControlBox()
         );
@@ -460,11 +482,7 @@ public class SFideGUI extends Application {
 
             Screen screen = Screen.getPrimary();
             Rectangle2D bounds = screen.getVisualBounds();
-            primaryStage.setX(bounds.getMinX());
-            primaryStage.setY(bounds.getMinY());
-            primaryStage.setWidth(bounds.getWidth());
-            primaryStage.setHeight(bounds.getHeight());
-            primaryStage.setMaximized(true);
+            applyRememberedWindowBounds(bounds);
 
             primaryStage.setOnCloseRequest(windowEvent -> {
                 windowEvent.consume();
@@ -475,6 +493,29 @@ public class SFideGUI extends Application {
         } catch (Exception e) {
             handleFatalError("Error al configurar la ventana principal", e);
         }
+    }
+
+    private void applyRememberedWindowBounds(Rectangle2D screenBounds) {
+        try {
+            String savedWidth = configManager.getWindowWidth();
+            String savedHeight = configManager.getWindowHeight();
+            if (savedWidth != null && !savedWidth.isBlank() && savedHeight != null && !savedHeight.isBlank()) {
+                primaryStage.setX(Double.parseDouble(configManager.getWindowX()));
+                primaryStage.setY(Double.parseDouble(configManager.getWindowY()));
+                primaryStage.setWidth(Double.parseDouble(savedWidth));
+                primaryStage.setHeight(Double.parseDouble(savedHeight));
+                primaryStage.setMaximized(configManager.isWindowMaximized());
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Tamaño/posición de ventana guardados inválidos, se usa el valor por defecto: " + e.getMessage());
+        }
+
+        primaryStage.setX(screenBounds.getMinX());
+        primaryStage.setY(screenBounds.getMinY());
+        primaryStage.setWidth(screenBounds.getWidth());
+        primaryStage.setHeight(screenBounds.getHeight());
+        primaryStage.setMaximized(true);
     }
 
     private void copyToClipboardWithConfirmation(String text, Node source, String confirmationMessage) {
@@ -585,11 +626,21 @@ public class SFideGUI extends Application {
         combo.setOnAction(e -> {
             TokenProfileCatalog.TokenProfile selected = combo.getValue();
             if (selected != null) {
-                String path = selected.rutaParaSistemaActual();
+                String remembered = configManager.getLibraryPathForProfile(selected.descripcion());
+                String path = (remembered != null && !remembered.isBlank())
+                        ? remembered
+                        : selected.rutaParaSistemaActual();
                 if (path != null && !path.isBlank()) {
                     Platform.runLater(() -> pkcs11LibPathField.setText(path));
                     configManager.setDefaultPKCS11LibPath(path);
                 }
+            }
+        });
+
+        pkcs11LibPathField.textProperty().addListener((observable, oldValue, newValue) -> {
+            TokenProfileCatalog.TokenProfile selected = combo.getValue();
+            if (selected != null && newValue != null && !newValue.isBlank()) {
+                configManager.setLibraryPathForProfile(selected.descripcion(), newValue);
             }
         });
 
@@ -622,8 +673,12 @@ public class SFideGUI extends Application {
         } else if (found.size() == 1) {
             TokenProfileCatalog.TokenProfile profile = found.get(0);
             combo.setValue(profile);
-            pkcs11LibPathField.setText(profile.rutaParaSistemaActual());
-            configManager.setDefaultPKCS11LibPath(profile.rutaParaSistemaActual());
+            String remembered = configManager.getLibraryPathForProfile(profile.descripcion());
+            String path = (remembered != null && !remembered.isBlank())
+                    ? remembered
+                    : profile.rutaParaSistemaActual();
+            pkcs11LibPathField.setText(path);
+            configManager.setDefaultPKCS11LibPath(path);
             alert.setHeaderText("Detectado: " + profile.descripcion());
             alert.setContentText("Estado: " + profile.estado()
                     + "\nEstrategia de hash: " + profile.estrategiaHash());
@@ -672,8 +727,9 @@ public class SFideGUI extends Application {
     }
 
     private VBox createTabContent(String description, GridPane grid) {
-        VBox content = new VBox(15);
-        content.setPadding(new Insets(10));
+        VBox content = new VBox(10);
+        content.getStyleClass().add("content-card");
+        content.setPadding(new Insets(12));
 
         Label descLabel = new Label(description);
         descLabel.setWrapText(true);
@@ -808,23 +864,30 @@ public class SFideGUI extends Application {
         sharedOutputArea.setEditable(false);
         sharedOutputArea.setWrapText(true);
         if (isLowResolution()) {
-            sharedOutputArea.setPrefRowCount(12);
+            sharedOutputArea.setPrefRowCount(8);
         }
         else {
-            sharedOutputArea.setPrefRowCount(15);
+            sharedOutputArea.setPrefRowCount(10);
         }
         sharedOutputArea.setStyle("-fx-font-family: 'Consolas', monospace; -fx-control-inner-background: white;");
         System.setProperty("file.encoding", "UTF-8");
         System.setProperty("sun.jnu.encoding", "UTF-8");
 
         TitledPane outputPane = new TitledPane("Salida del Proceso", sharedOutputArea);
-        outputPane.setCollapsible(false);
+        outputPane.setCollapsible(true);
+        outputPane.setExpanded(false);
         if (isLowResolution()) {
-            outputPane.setPrefHeight(200);
+            outputPane.setPrefHeight(150);
         }
         else {
-            outputPane.setPrefHeight(250);
+            outputPane.setPrefHeight(190);
         }
+
+        sharedOutputArea.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && !newValue.isEmpty() && !outputPane.isExpanded()) {
+                outputPane.setExpanded(true);
+            }
+        });
 
         return outputPane;
     }
@@ -880,6 +943,118 @@ public class SFideGUI extends Application {
         textArea.setStyle("-fx-font-family: 'Segoe UI', sans-serif;");
         textArea.setPrefWidth(600);
         textArea.setPrefRowCount(rows);
+    }
+
+    /**
+     * Convierte texto plano con una convención mínima de marcado ("# " título,
+     * "## " subtítulo, "- " viñeta, "**negrita**" en línea) en un panel con
+     * jerarquía visual real, en vez de un TextArea de texto corrido. Sigue
+     * siendo un archivo .txt fácil de editar a mano — no requiere HTML ni un
+     * motor de render nuevo (WebView).
+     */
+    private ScrollPane createRichTextView(String content) {
+        VBox container = new VBox(8);
+        container.setPadding(new Insets(14, 18, 14, 18));
+        container.setMaxWidth(Double.MAX_VALUE);
+
+        StringBuilder paragraphBuffer = new StringBuilder();
+        StringBuilder[] bulletBuffer = {null};
+
+        for (String rawLine : content.split("\n", -1)) {
+            String trimmed = rawLine.replace("\r", "").trim();
+
+            if (trimmed.isEmpty()) {
+                flushParagraph(container, paragraphBuffer);
+                flushBullet(container, bulletBuffer);
+                continue;
+            }
+
+            if (trimmed.startsWith("# ")) {
+                flushParagraph(container, paragraphBuffer);
+                flushBullet(container, bulletBuffer);
+                container.getChildren().add(createHeading(trimmed.substring(2), 16));
+                continue;
+            }
+
+            if (trimmed.startsWith("## ")) {
+                flushParagraph(container, paragraphBuffer);
+                flushBullet(container, bulletBuffer);
+                container.getChildren().add(createHeading(trimmed.substring(3), 13.5));
+                continue;
+            }
+
+            if (trimmed.startsWith("- ")) {
+                flushParagraph(container, paragraphBuffer);
+                flushBullet(container, bulletBuffer);
+                bulletBuffer[0] = new StringBuilder(trimmed.substring(2));
+                continue;
+            }
+
+            if (bulletBuffer[0] != null) {
+                bulletBuffer[0].append(' ').append(trimmed);
+            } else {
+                if (paragraphBuffer.length() > 0) {
+                    paragraphBuffer.append(' ');
+                }
+                paragraphBuffer.append(trimmed);
+            }
+        }
+        flushParagraph(container, paragraphBuffer);
+        flushBullet(container, bulletBuffer);
+
+        ScrollPane scrollPane = new ScrollPane(container);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: white;");
+        return scrollPane;
+    }
+
+    private void flushParagraph(VBox container, StringBuilder buffer) {
+        if (buffer.length() > 0) {
+            container.getChildren().add(createInlineFlow(buffer.toString(), 12.5));
+            buffer.setLength(0);
+        }
+    }
+
+    private void flushBullet(VBox container, StringBuilder[] buffer) {
+        if (buffer[0] != null && buffer[0].length() > 0) {
+            TextFlow flow = createInlineFlow(buffer[0].toString(), 12.5);
+            Label bulletMark = new Label("•");
+            bulletMark.setStyle("-fx-font-size: 12.5px; -fx-text-fill: #2F7774; -fx-font-weight: bold;");
+            HBox row = new HBox(8, bulletMark, flow);
+            HBox.setHgrow(flow, Priority.ALWAYS);
+            row.setAlignment(Pos.TOP_LEFT);
+            row.setPadding(new Insets(0, 0, 0, 6));
+            container.getChildren().add(row);
+        }
+        buffer[0] = null;
+    }
+
+    private Label createHeading(String text, double fontSize) {
+        Label label = new Label(text);
+        label.setWrapText(true);
+        label.setStyle(String.format(
+                "-fx-font-size: %.1fpx; -fx-font-weight: bold; -fx-text-fill: #063C3C;",
+                fontSize));
+        label.setMaxWidth(Double.MAX_VALUE);
+        return label;
+    }
+
+    private TextFlow createInlineFlow(String text, double fontSize) {
+        TextFlow flow = new TextFlow();
+        flow.setMaxWidth(Double.MAX_VALUE);
+        String[] parts = text.split("\\*\\*", -1);
+        for (int i = 0; i < parts.length; i++) {
+            if (parts[i].isEmpty()) {
+                continue;
+            }
+            boolean bold = (i % 2 == 1);
+            Text run = new Text(parts[i]);
+            run.setStyle(String.format(
+                    "-fx-font-size: %.1fpx; -fx-fill: #1a1a1a;%s",
+                    fontSize, bold ? " -fx-font-weight: bold;" : ""));
+            flow.getChildren().add(run);
+        }
+        return flow;
     }
 
     private VBox createContactContent() {
@@ -999,23 +1174,25 @@ public class SFideGUI extends Application {
             tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
             Tab quickGuideTab = new Tab("Guía Rápida");
-            TextArea quickGuideArea = new TextArea(helpText);
-            configureInfoTextArea(quickGuideArea, 25);
-            quickGuideTab.setContent(quickGuideArea);
+            quickGuideTab.setContent(createRichTextView(helpText));
 
             Tab faqTab = new Tab("Preguntas Frecuentes");
-            TextArea faqArea = new TextArea(faqText);
-            configureInfoTextArea(faqArea, 25);
-            faqTab.setContent(faqArea);
+            faqTab.setContent(createRichTextView(faqText));
+
+            Tab glosarioTab = new Tab("Glosario");
+            glosarioTab.setContent(createRichTextView(glosarioText));
+
+            Tab comexTab = new Tab("Comercio Exterior");
+            comexTab.setContent(createRichTextView(comexText));
 
             Tab contactTab = new Tab("Contacto");
             contactTab.setContent(createContactContent());
 
-            tabPane.getTabs().addAll(quickGuideTab, faqTab, contactTab);
+            tabPane.getTabs().addAll(quickGuideTab, faqTab, glosarioTab, comexTab, contactTab);
 
             alert.getDialogPane().setContent(tabPane);
-            alert.getDialogPane().setPrefWidth(700);
-            alert.getDialogPane().setPrefHeight(500);
+            alert.getDialogPane().setPrefWidth(760);
+            alert.getDialogPane().setPrefHeight(520);
 
             alert.showAndWait();
 
@@ -1064,12 +1241,10 @@ public class SFideGUI extends Application {
         }
     }
 
-    private TabPane createTabPane() {
-        System.out.println("Creando panel de pestañas");
-        TabPane tabPane = new TabPane();
-        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+    private BorderPane createMainLayout() {
+        System.out.println("Creando panel de navegación y contenido");
 
-        tabPane.getTabs().addAll(
+        List<Tab> modules = new java.util.ArrayList<>(List.of(
                 createTokenSlotsViewTab(),
                 createTokenCertificateExtractorTab(),
                 createPKCS12CertificateExtractorTab(),
@@ -1080,34 +1255,94 @@ public class SFideGUI extends Application {
                 createPDFSignerPKCS11Tab(),
                 createPDFSignerPKCS12Tab(),
                 createPDFVerifySignaturesTab()
-        );
+        ));
 
         if (isWindowsOS()) {
-            tabPane.getTabs().addAll(
-                    createXMLSignerWindowsCSPTab(),
-                    createPDFSignerWindowsCSPTab()
-            );
+            modules.add(createXMLSignerWindowsCSPTab());
+            modules.add(createPDFSignerWindowsCSPTab());
         }
 
-        tabPane.getSelectionModel().selectedItemProperty().addListener(
+        ScrollPane contentScroll = new ScrollPane();
+        contentScroll.getStyleClass().add("content-scroll");
+        contentScroll.setFitToWidth(true);
+        contentScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+
+        ListView<Tab> nav = new ListView<>();
+        nav.getStyleClass().add("sidebar-nav");
+        nav.getItems().addAll(modules);
+        nav.setCellFactory(lv -> createModuleNavCell(nav));
+        nav.setPrefWidth(250);
+        nav.setMinWidth(200);
+
+        nav.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldTab, newTab) -> {
                     if (newTab != null) {
-                        System.out.println("Cambio a pestaña: " + newTab.getText());
+                        System.out.println("Cambio a módulo: " + newTab.getText());
+                        contentScroll.setContent(newTab.getContent());
+                        configManager.lastModuleProperty().set(newTab.getText());
                     }
                 }
         );
 
-        return tabPane;
+        BorderPane layout = new BorderPane();
+        layout.getStyleClass().add("main-layout");
+        layout.setLeft(nav);
+        layout.setCenter(contentScroll);
+
+        String rememberedModule = configManager.lastModuleProperty().get();
+        Tab moduleToSelect = modules.stream()
+                .filter(t -> t.getText().equals(rememberedModule))
+                .findFirst()
+                .orElse(modules.get(0));
+        nav.getSelectionModel().select(moduleToSelect);
+        nav.scrollTo(moduleToSelect);
+
+        return layout;
+    }
+
+    private ListCell<Tab> createModuleNavCell(ListView<Tab> nav) {
+        Label icon = new Label();
+        icon.getStyleClass().add("nav-icon");
+        Label text = new Label();
+        text.getStyleClass().add("nav-text");
+        text.maxWidthProperty().bind(nav.widthProperty().subtract(70));
+
+        HBox box = new HBox(10, icon, text);
+        box.setAlignment(Pos.CENTER_LEFT);
+
+        ListCell<Tab> cell = new ListCell<>() {
+            @Override
+            protected void updateItem(Tab item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    icon.setText(iconForModule(item.getText()));
+                    text.setText(item.getText());
+                    setText(null);
+                    setGraphic(box);
+                }
+            }
+        };
+        cell.setPrefWidth(0);
+        return cell;
+    }
+
+    private String iconForModule(String title) {
+        if (title.contains("Slots")) return "⊙";
+        if (title.contains("Certificado")) return "▤";
+        if (title.contains("Windows")) return "⧉";
+        if (title.contains("Firmar")) return "✎";
+        if (title.contains("Verificar")) return "✓";
+        return "●";
     }
 
     private Tab createTokenSlotsViewTab() {
         Tab tab = new Tab("Ver Slots de Token");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs11LibPath = createTextField(
-                "Ruta de la biblioteca PKCS#11",
-                configManager.getDefaultPKCS11LibPath()
-        );
+        TextField pkcs11LibPath = createTextField("Ruta de la biblioteca PKCS#11");
+        pkcs11LibPath.textProperty().bindBidirectional(configManager.pkcs11LibraryPathProperty());
         PasswordField password = createPasswordField("Contraseña del token");
 
         Button browseLib = createBrowseButton();
@@ -1138,15 +1373,11 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Ver Certificado de Token");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs11LibPath = createTextField(
-                "Ruta de la biblioteca PKCS#11",
-                configManager.getDefaultPKCS11LibPath()
-        );
+        TextField pkcs11LibPath = createTextField("Ruta de la biblioteca PKCS#11");
+        pkcs11LibPath.textProperty().bindBidirectional(configManager.pkcs11LibraryPathProperty());
         PasswordField password = createPasswordField("Contraseña del token");
-        TextField slotNumber = createNumericTextField(
-                "Número de slot",
-                configManager.getDefaultSlotNumber()
-        );
+        TextField slotNumber = createNumericTextField("Número de slot");
+        slotNumber.textProperty().bindBidirectional(configManager.pkcs11SlotNumberProperty());
 
         Button browseLib = createBrowseButton();
         browseLib.setOnAction(e -> Platform.runLater(() -> selectLibraryFile(pkcs11LibPath)));
@@ -1178,10 +1409,8 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Ver Certificado de PKCS#12");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs12Path = createTextField(
-                "Ruta del archivo PKCS#12",
-                configManager.getDefaultPKCS12Path()
-        );
+        TextField pkcs12Path = createTextField("Ruta del archivo PKCS#12");
+        pkcs12Path.textProperty().bindBidirectional(configManager.pkcs12FilePathProperty());
         PasswordField password = createPasswordField("Contraseña del archivo");
 
         Button browsePKCS12 = createBrowseButton();
@@ -1211,15 +1440,11 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Firmar XML con Token");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs11LibPath = createTextField(
-                "Ruta de la biblioteca PKCS#11",
-                configManager.getDefaultPKCS11LibPath()
-        );
+        TextField pkcs11LibPath = createTextField("Ruta de la biblioteca PKCS#11");
+        pkcs11LibPath.textProperty().bindBidirectional(configManager.pkcs11LibraryPathProperty());
         PasswordField password = createPasswordField("Contraseña del token");
-        TextField slotNumber = createNumericTextField(
-                "Número de slot",
-                configManager.getDefaultSlotNumber()
-        );
+        TextField slotNumber = createNumericTextField("Número de slot");
+        slotNumber.textProperty().bindBidirectional(configManager.pkcs11SlotNumberProperty());
         TextField xmlPath = createTextField("Ruta del archivo XML");
         TextField uri = createTextField("Párrafo o elemento XML con ID (opcional)");
 
@@ -1259,10 +1484,8 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Firmar XML con PKCS#12");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs12Path = createTextField(
-                "Ruta del archivo PKCS#12",
-                configManager.getDefaultPKCS12Path()
-        );
+        TextField pkcs12Path = createTextField("Ruta del archivo PKCS#12");
+        pkcs12Path.textProperty().bindBidirectional(configManager.pkcs12FilePathProperty());
         PasswordField password = createPasswordField("Contraseña del archivo");
         TextField xmlPath = createTextField("Ruta del archivo XML");
         TextField uri = createTextField("Párrafo o elemento XML con ID (opcional)");
@@ -1363,24 +1586,23 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Firmar PDF con Token");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs11LibPath = createTextField(
-                "Ruta de la biblioteca PKCS#11",
-                configManager.getDefaultPKCS11LibPath()
-        );
+        TextField pkcs11LibPath = createTextField("Ruta de la biblioteca PKCS#11");
+        pkcs11LibPath.textProperty().bindBidirectional(configManager.pkcs11LibraryPathProperty());
         PasswordField password = createPasswordField("Contraseña del token");
-        TextField slotNumber = createNumericTextField(
-                "Número de slot",
-                configManager.getDefaultSlotNumber()
-        );
+        TextField slotNumber = createNumericTextField("Número de slot");
+        slotNumber.textProperty().bindBidirectional(configManager.pkcs11SlotNumberProperty());
         TextField pdfPath = createTextField("Ruta del archivo PDF");
         TextField xPos = createNumericTextField("X");
         TextField yPos = createNumericTextField("Y");
+        xPos.textProperty().bindBidirectional(configManager.signatureXProperty());
+        yPos.textProperty().bindBidirectional(configManager.signatureYProperty());
         xPos.setPrefWidth(190);
         yPos.setPrefWidth(190);
         HBox positionBox = new HBox(20);
         positionBox.getChildren().addAll(xPos, yPos);
         TextField customText = createTextField("Texto personalizado (opcional)");
         CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
+        lockDocument.selectedProperty().bindBidirectional(configManager.lockDocumentProperty());
 
         Button browseLib = createBrowseButton();
         browseLib.setOnAction(e -> Platform.runLater(() -> selectLibraryFile(pkcs11LibPath)));
@@ -1427,20 +1649,21 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Firmar PDF con PKCS#12");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs12Path = createTextField(
-                "Ruta del archivo PKCS#12",
-                configManager.getDefaultPKCS12Path()
-        );
+        TextField pkcs12Path = createTextField("Ruta del archivo PKCS#12");
+        pkcs12Path.textProperty().bindBidirectional(configManager.pkcs12FilePathProperty());
         PasswordField password = createPasswordField("Contraseña del archivo");
         TextField pdfPath = createTextField("Ruta del archivo PDF");
         TextField xPos = createNumericTextField("X");
         TextField yPos = createNumericTextField("Y");
+        xPos.textProperty().bindBidirectional(configManager.signatureXProperty());
+        yPos.textProperty().bindBidirectional(configManager.signatureYProperty());
         xPos.setPrefWidth(190);
         yPos.setPrefWidth(190);
         HBox positionBox = new HBox(20);
         positionBox.getChildren().addAll(xPos, yPos);
         TextField customText = createTextField("Texto personalizado (opcional)");
         CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
+        lockDocument.selectedProperty().bindBidirectional(configManager.lockDocumentProperty());
 
         Button browsePKCS12 = createBrowseButton();
         browsePKCS12.setOnAction(e -> Platform.runLater(() -> selectPKCS12File(pkcs12Path)));
@@ -1826,12 +2049,15 @@ public class SFideGUI extends Application {
         TextField pdfPath = createTextField("Ruta del archivo PDF");
         TextField xPos = createNumericTextField("X");
         TextField yPos = createNumericTextField("Y");
+        xPos.textProperty().bindBidirectional(configManager.signatureXProperty());
+        yPos.textProperty().bindBidirectional(configManager.signatureYProperty());
         xPos.setPrefWidth(190);
         yPos.setPrefWidth(190);
         HBox positionBox = new HBox(20);
         positionBox.getChildren().addAll(xPos, yPos);
         TextField customText = createTextField("Texto personalizado (opcional)");
         CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
+        lockDocument.selectedProperty().bindBidirectional(configManager.lockDocumentProperty());
 
         Button listCerts = new Button("Ver certificados");
         listCerts.setTooltip(new Tooltip("Lista los certificados disponibles en el almacén de Windows"));

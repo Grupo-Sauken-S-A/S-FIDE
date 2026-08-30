@@ -1,0 +1,81 @@
+# Glosario de términos usados en S-FiDE
+
+## AC-ONTI
+- Autoridad Certificante de la Oficina Nacional de Tecnologías de Información (Argentina),
+  emisora de certificados de firma digital con validez legal
+
+## ALADI
+- Asociación Latinoamericana de Integración: organismo intergubernamental que agrupa a países
+  de Sudamérica, incluido el bloque MERCOSUR, para promover el comercio regional
+
+## CAPI / CNG
+- CryptoAPI / Cryptography API: Next Generation: las dos generaciones de la API criptográfica
+  nativa de Windows, usadas por los módulos que firman contra el almacén de certificados de
+  Windows (CSP/KSP)
+
+## COD / CODEH
+- Elementos XML que agrupan un Certificado de Origen Digital, firmados respectivamente por el
+  Exportador (COD) y por el Funcionario Habilitado (CODEH). Ver la pestaña **Comercio Exterior**
+  de esta ayuda para el detalle operativo completo
+
+## CRL (Certificate Revocation List)
+- Lista de certificados revocados publicada periódicamente por una autoridad certificante,
+  usada para verificar si un certificado sigue vigente
+
+## CSP / KSP
+- Cryptographic Service Provider / Key Storage Provider: los proveedores que implementan
+  CAPI/CNG respectivamente, usados por los módulos de firma con el almacén de Windows
+
+## DigestInfo
+- Estructura ASN.1 que envuelve un hash junto con el identificador del algoritmo usado,
+  requerida por algunos tokens PKCS#11 que solo exponen el mecanismo de firma "puro"
+  (sin cálculo de hash interno)
+
+## DJO / DJOEH
+- Elementos XML que agrupan una Declaración Jurada de Origen, firmados respectivamente por el
+  Exportador (DJO) y por el Funcionario Habilitado (DJOEH). Ver la pestaña **Comercio Exterior**
+  de esta ayuda para el detalle operativo completo
+
+## DocMDP (Document Modification Detection and Prevention)
+- Permiso de PDF que, aplicado por una firma certificante, restringe qué cambios son válidos
+  después de firmar. Se activa con la opción "Bloquear documento después de firmar"
+
+## FIPS 140-2 / 140-3
+- Estándar de seguridad del NIST (EE.UU.) para módulos criptográficos, con niveles de 1 a 4.
+  La normativa AC-ONTI exige homologación FIPS para los tokens usados en firma digital
+
+## HSM (Hardware Security Module)
+- Dispositivo dedicado al resguardo y uso de claves criptográficas
+
+## MERCOSUR
+- Mercado Común del Sur: bloque comercial de países sudamericanos, subconjunto de los
+  miembros de ALADI
+
+## OCSP (Online Certificate Status Protocol)
+- Consulta en línea, en tiempo real, del estado de revocación de un certificado ante su
+  autoridad certificante
+
+## PKCS#11
+- Estándar de la familia PKCS (Public-Key Cryptography Standards) para el acceso a tokens
+  criptográficos (dispositivos de hardware) mediante una biblioteca del fabricante
+
+## PKCS#12
+- Estándar de la familia PKCS para contenedores de archivo (.p12 o .pfx) que empaquetan,
+  cifrado con contraseña, un certificado junto con su clave privada
+
+## Revocación
+- Acto por el cual una autoridad certificante retira la confianza en un certificado ya
+  emitido (por ejemplo, porque la clave privada se filtró). **Un certificado revocado invalida
+  cualquier firma posterior**, aunque esa firma sea criptográficamente correcta
+
+## Slot
+- En PKCS#11, cada "ranura" lógica de un token donde puede haber un certificado/clave. El
+  número de slot correcto para su token se obtiene con "Ver Slots de Token"
+
+## XML-DSig (XML Digital Signature)
+- Estándar W3C para firmar documentos XML; es el único estándar de firma XML que S-FiDE
+  implementa (no XAdES)
+
+## XSD (XML Schema Definition)
+- Esquema que define la estructura válida de un documento XML (qué elementos son obligatorios,
+  su orden, sus tipos de dato). "Verificar XML con XSD" valida un documento contra su esquema

@@ -1,63 +1,94 @@
-Preguntas Frecuentes:
+# Preguntas Frecuentes
 
-1. ¿Qué tipos de tokens son compatibles?
-- Cualquier token que cumpla con el estándar PKCS#11 y permita firmar documentos electrónicamente usando
-  certificados X.509. En el ecosistema de firma digital argentino (AC-ONTI) esto incluye, entre otros,
-  SafeNet/Thales eToken 5110/5110+, Feitian ePass2003, mToken CryptoID (Century Longmai) y Athena
-  IDProtect. La normativa AC-ONTI exige además que el dispositivo tenga homologación FIPS 140-2 Nivel 2
-  o superior con certificación NIST vigente - eso es un requisito regulatorio del trámite ante la
-  autoridad certificante, no una limitación de este software
-- Desde la versión 1.1.0, S-FiDE reconoce automáticamente varias marcas/modelos conocidos por el nombre
-  de archivo de su driver (ver pregunta 9) y admite tanto tokens con mecanismo de firma combinado
-  (hash calculado por el propio token, ej. SafeNet) como los que requieren calcularlo externamente
-  (ej. ePass2003)
+## 1. ¿Qué tipos de tokens son compatibles?
 
-2. ¿Qué formatos de certificados se soportan (sin usar tokens)?
+- Cualquier token que cumpla con el estándar PKCS#11 y permita firmar documentos
+  electrónicamente usando certificados X.509. En el ecosistema de firma digital argentino
+  (AC-ONTI) esto incluye, entre otros, SafeNet/Thales eToken 5110/5110+, Feitian ePass2003,
+  mToken CryptoID (Century Longmai) y Athena IDProtect. La normativa AC-ONTI exige además que
+  el dispositivo tenga homologación FIPS 140-2 Nivel 2 o superior con certificación NIST
+  vigente - eso es un requisito regulatorio del trámite ante la autoridad certificante, no una
+  limitación de este software
+- Desde la versión 1.1.0, S-FiDE reconoce automáticamente varias marcas/modelos conocidos por
+  el nombre de archivo de su driver (ver pregunta 9) y admite tanto tokens con mecanismo de
+  firma combinado (hash calculado por el propio token, ej. SafeNet) como los que requieren
+  calcularlo externamente (ej. ePass2003)
+
+## 2. ¿Qué formatos de certificados se soportan (sin usar tokens)?
+
 - Certificados X.509 en formato PKCS#12 (.p12 o .pfx)
 
-3. ¿Cómo verifico si mi firma es válida?
+## 3. ¿Cómo verifico si mi firma es válida?
+
 - Use la función "Verificar Firmas en XML/PDF" después de firmar
 
-4. ¿Qué hago si mi token no es reconocido?
-- Verifique que los drivers estén instalados correctamente
-- Asegúrese de que la biblioteca PKCS#11 sea la correcta - use el botón "Detectar automáticamente" o la
-  lista desplegable de marca/modelo (ver pregunta 9) para no tener que recordar la ruta exacta
-- Si su modelo de token es reciente o poco común, puede que la selección automática no lo reconozca por
-  nombre de archivo; en ese caso indique la ruta manualmente con "Examinar..."
+## 4. ¿Qué hago si mi token no es reconocido?
 
-5. ¿Puedo firmar múltiples documentos a la vez?
+- Verifique que los drivers estén instalados correctamente
+- Asegúrese de que la biblioteca PKCS#11 sea la correcta - use el botón "Detectar
+  automáticamente" o la lista desplegable de marca/modelo (ver pregunta 9) para no tener que
+  recordar la ruta exacta
+- Si su modelo de token es reciente o poco común, puede que la selección automática no lo
+  reconozca por nombre de archivo; en ese caso indique la ruta manualmente con "Examinar..."
+
+## 5. ¿Puedo firmar múltiples documentos a la vez?
+
 - Por el momento, solo se permite firmar un documento a la vez
 
-6. ¿Qué hacer si olvido mi contraseña?
+## 6. ¿Qué hacer si olvido mi contraseña?
+
 - Las contraseñas no pueden ser recuperadas
-- Deberá contactar a su autoridad certificante (AC) para revocar y solicitar una nueva firma digital
+- Deberá contactar a su autoridad certificante (AC) para revocar y solicitar una nueva firma
+  digital
 
-7. ¿Puedo embeber las funciones que provee este software dentro de mi aplicación?
-- Si, los desarrolladores de sistemas puede embeber cualquiera de los módulos de este software dentro de su
-  aplicación, invocándolos como procesos externos (no se distribuye como librería Java para enlazar)
+## 7. ¿Puedo embeber las funciones que provee este software dentro de mi aplicación?
 
-8. ¿Hay una guía de como se usa individualmente cada una de esta funciones?
-- Si, cada una de las aplicaciones se puede usar individualmente en una línea de comando (java -jar <Programa.jar>)
-- Puede ejecutar "java -jar <Programa.jar> -h" (o "-ayuda" según la aplicación) para obtener ayuda sobre
-  los parámetros de entrada de cada aplicación
-- En "doc/manual-tecnico-integracion.md" hay una sección "Integración desde otras aplicaciones" con ejemplos
-  concretos de invocación por línea de comandos, redirección de salida y captura de código de resultado
-  (útil para integradores)
+- Sí, los desarrolladores de sistemas pueden embeber cualquiera de los módulos de este
+  software dentro de su aplicación, invocándolos como procesos externos (no se distribuye
+  como librería Java para enlazar)
 
-9. ¿Qué es la detección automática de drivers?
-- Desde la versión 1.1.0, las pestañas que piden una biblioteca PKCS#11 muestran una lista desplegable de
-  marca/modelo conocido (con su estado de recomendación según normativa AC-ONTI/AIF) y un botón
-  "Detectar automáticamente" que revisa cuál de las rutas típicas existe realmente en su equipo
-- Es solo una ayuda para completar el campo más rápido - siempre puede indicar la ruta manualmente con
-  "Examinar..." si su driver está en otra ubicación
-- Por línea de comandos, el parámetro equivalente es "-listar-drivers" (o "--listar-drivers" en
-  PDFSignerPKCS11)
+## 8. ¿Hay una guía de cómo se usa individualmente cada una de estas funciones?
 
-10. ¿Qué es la opción de firmar con el "almacén de Windows (CSP/KSP)"? ¿Cuándo la uso en vez de PKCS#11?
-- Es una forma alternativa de firmar, exclusiva de Windows, que usa un certificado ya instalado en el
-  Administrador de certificados de Windows en lugar de una biblioteca PKCS#11
-- Úsela si su certificado ya aparece ahí y prefiere no configurar la ruta de un driver PKCS#11. Para la
-  mayoría de los casos, PKCS#11 sigue siendo la opción recomendada por ser un estándar multiplataforma;
-  la alternativa de Windows queda a criterio del usuario
-- No pide contraseña: el acceso a la clave privada lo administra el propio sistema operativo (según su
-  token, puede aparecer un diálogo de Windows pidiendo el PIN al momento de firmar)
+- Sí, cada una de las aplicaciones se puede usar individualmente en una línea de comando
+  (java -jar Programa.jar)
+- Puede ejecutar "java -jar Programa.jar -h" (o "-ayuda" según la aplicación) para obtener
+  ayuda sobre los parámetros de entrada de cada aplicación
+- En "doc/manual-tecnico-integracion.md" hay una sección "Integración desde otras
+  aplicaciones" con ejemplos concretos de invocación por línea de comandos, redirección de
+  salida y captura de código de resultado (útil para integradores)
+
+## 9. ¿Qué es la detección automática de drivers?
+
+- Desde la versión 1.1.0, los módulos que piden una biblioteca PKCS#11 muestran una lista
+  desplegable de marca/modelo conocido (con su estado de recomendación según normativa
+  AC-ONTI/AIF) y un botón "Detectar automáticamente" que revisa cuál de las rutas típicas
+  existe realmente en su equipo
+- Es solo una ayuda para completar el campo más rápido - siempre puede indicar la ruta
+  manualmente con "Examinar..." si su driver está en otra ubicación
+- Por línea de comandos, el parámetro equivalente es "-listar-drivers" (o "--listar-drivers"
+  en PDFSignerPKCS11)
+
+## 10. ¿Qué es la opción de firmar con el "almacén de Windows (CSP/KSP)"? ¿Cuándo la uso en vez de PKCS#11?
+
+- Es una forma alternativa de firmar, exclusiva de Windows, que usa un certificado ya
+  instalado en el Administrador de certificados de Windows en lugar de una biblioteca PKCS#11
+- Úsela si su certificado ya aparece ahí y prefiere no configurar la ruta de un driver
+  PKCS#11. Para la mayoría de los casos, PKCS#11 sigue siendo la opción recomendada por ser un
+  estándar multiplataforma; la alternativa de Windows queda a criterio del usuario
+- No pide contraseña: el acceso a la clave privada lo administra el propio sistema operativo
+  (según su token, puede aparecer un diálogo de Windows pidiendo el PIN al momento de firmar)
+- **Importante para integración por lotes:** si necesita firmar muchos documentos sin
+  intervención humana, esta opción **no** es adecuada - Windows puede pedir el PIN por
+  diálogo en cada documento. Para eso, use PKCS#11 o PKCS#12
+
+## 11. ¿Qué valores recuerda S-FiDE entre una sesión y otra?
+
+- La ruta de biblioteca PKCS#11/PKCS#12 y el número de slot - se guardan tanto al usar
+  "Examinar.../Detectar automáticamente" como al escribirlos a mano, y quedan sincronizados en
+  vivo entre todos los módulos que los usan
+- Una ruta de biblioteca particular para cada marca/modelo de token que elija en el selector
+- El último módulo que tenía abierto, para reabrirlo directamente la próxima vez
+- El tamaño y la posición de la ventana
+- La casilla "Bloquear documento después de firmar" y la posición X/Y de firma visible,
+  compartidas entre los tres firmadores de PDF
+- **Nunca** se guarda ninguna contraseña

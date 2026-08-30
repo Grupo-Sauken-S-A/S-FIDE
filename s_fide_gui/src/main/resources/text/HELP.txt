@@ -1,112 +1,122 @@
-S-FiDE (Sistema de Firma Digital Extendida) - Versión 1.1.0 - Grupo Sauken S.A.
+# S-FiDE - Guía Rápida
 
-SFide-GUI proporciona una interface gráfica de usuario para asignar los parámetros adecuados
-a cada una de las aplicaciones de la plataforma S-FiDE. Las aplicaciones se muestran de manera
-independiente sobre pestañas o solapas. Estas aplicaciones también se pueden ejecutar desde
-una línea de comando, lo que permite una sencilla integración con otras aplicaciones
-pre-existentes. La salida de cada uno de estos procesos se despliega en un cuadro de diálogo.
-Sobre este cuadro de diálogo se unifican la salida estándar y la de errores. Todas las entradas
+Sistema de Firma Digital Extendida - Versión 1.1.0 - Grupo Sauken S.A.
+
+SFide-GUI proporciona una interfaz gráfica de usuario para asignar los parámetros adecuados a
+cada una de las aplicaciones de la plataforma S-FiDE. Las aplicaciones se muestran de manera
+independiente, elegibles desde el panel lateral de navegación. Estas aplicaciones también se
+pueden ejecutar desde una línea de comando, lo que permite una sencilla integración con otras
+aplicaciones pre-existentes. La salida de cada uno de estos procesos se despliega en el panel
+"Salida del Proceso", donde se unifican la salida estándar y la de errores. Todas las entradas
 y salidas de los procesos usan codificación UTF-8. Los procesos devuelven el control indicando
 el resultado del mismo al programa que los ejecuta o bien al sistema operativo (0 es éxito,
-1 es error)
+1 es error).
 
-APLICACIONES DISPONIBLES:
+## Aplicaciones disponibles
 
-1. Ver Slots de Token (TokenSlotsView)
-   - Permite visualizar los slots disponibles en un token criptográfico
-   - Requiere biblioteca PKCS#11 y contraseña
+## 1. Ver Slots de Token (TokenSlotsView)
+- Permite visualizar los slots disponibles en un token criptográfico
+- Requiere biblioteca PKCS#11 y contraseña
 
-2. Ver Certificados de Token (TokenCertificateExtractor)
-   - Extrae certificados digitales almacenados en un token criptográfico
-   - Requiere biblioteca PKCS#11, contraseña y número de slot
+## 2. Ver Certificados de Token (TokenCertificateExtractor)
+- Extrae certificados digitales almacenados en un token criptográfico
+- Requiere biblioteca PKCS#11, contraseña y número de slot
 
-3. Ver Certificados PKCS#12 (PKCS12CertificateExtractor)
-   - Extrae certificados desde archivos PKCS#12 (.p12 o .pfx)
-   - Requiere archivo PKCS#12 y contraseña
+## 3. Ver Certificados PKCS#12 (PKCS12CertificateExtractor)
+- Extrae certificados desde archivos PKCS#12 (.p12 o .pfx)
+- Requiere archivo PKCS#12 y contraseña
 
-4. Firmar XML con Token (XMLSignerPKCS11)
-   - Firma documentos XML usando un token criptográfico
-   - Requiere biblioteca PKCS#11, contraseña, número de slot, archivo XML y Elemento a firmar (opcional)
+## 4. Firmar XML con Token (XMLSignerPKCS11)
+- Firma documentos XML usando un token criptográfico
+- Requiere biblioteca PKCS#11, contraseña, número de slot, archivo XML y elemento a firmar
+  (opcional)
 
-5. Firmar XML con PKCS#12 (XMLSignerPKCS12)
-   - Firma documentos XML usando un archivo PKCS#12
-   - Requiere archivo PKCS#12, contraseña, archivo XML y Elemento a firmar (opcional)
+## 5. Firmar XML con PKCS#12 (XMLSignerPKCS12)
+- Firma documentos XML usando un archivo PKCS#12
+- Requiere archivo PKCS#12, contraseña, archivo XML y elemento a firmar (opcional)
 
-6. Verificar Firmas en XML (XMLVerifySignatures)
-   - Verifica la validez de firmas en documentos XML
-   - Requiere archivo XML firmado
+## 6. Verificar Firmas en XML (XMLVerifySignatures)
+- Verifica la validez de firmas en documentos XML
+- Requiere archivo XML firmado
 
-7. Verificar XML con XSD (XMLVerifyXSDStructure)
-   - Valida documentos XML contra un esquema XSD
-   - Requiere archivo XML y archivo XSD (si no se referencia a uno dentro del XML)
+## 7. Verificar XML con XSD (XMLVerifyXSDStructure)
+- Valida documentos XML contra un esquema XSD
+- Requiere archivo XML y archivo XSD (si no se referencia a uno dentro del XML)
 
-8. Firmar PDF con Token (PDFSignerPKCS11)
-   - Firma documentos PDF usando un token criptográfico
-   - Requiere biblioteca PKCS#11, contraseña, número de slot, documento PDF, posición en ejes X e Y
-     para colocar cuadro con la firma digital, texto adicional para adjuntar a la firma digital y
-     una opción que permite bloquear o no el documento PDF firmado
+## 8. Firmar PDF con Token (PDFSignerPKCS11)
+- Firma documentos PDF usando un token criptográfico
+- Requiere biblioteca PKCS#11, contraseña, número de slot, documento PDF, posición en ejes X e
+  Y para colocar el cuadro con la firma digital, texto adicional para adjuntar a la firma y una
+  opción que permite bloquear o no el documento PDF firmado
 
-9. Firmar PDF con PKCS#12 (PDFSignerPKCS12)
-   - Firma documentos PDF usando un archivo PKCS#12
-   - Requiere archivo PKCS#12, contraseña, documento PDF, posición en ejes X e Y para
-     colocar cuadro con la firma digital, texto adicional para adjuntar a la firma digital y
-     una opción que permite bloquear o no el documento PDF firmado
+## 9. Firmar PDF con PKCS#12 (PDFSignerPKCS12)
+- Firma documentos PDF usando un archivo PKCS#12
+- Requiere archivo PKCS#12, contraseña, documento PDF, posición en ejes X e Y para colocar el
+  cuadro con la firma digital, texto adicional para adjuntar a la firma y una opción que
+  permite bloquear o no el documento PDF firmado
 
-10. Verificar Firmas en PDF (PDFVerifySignatures)
-   - Verifica la validez de firmas en documentos PDF
-   - Requiere archivo PDF firmado
+## 10. Verificar Firmas en PDF (PDFVerifySignatures)
+- Verifica la validez de firmas en documentos PDF
+- Requiere archivo PDF firmado
 
-11. Firmar XML con Windows CSP/KSP (XMLSignerWindowsCSP) - solo Windows
-   - Firma documentos XML usando un certificado ya presente en el almacén de certificados de
-     Windows (CSP/KSP), sin necesitar configurar una biblioteca PKCS#11
-   - Requiere el alias exacto o un fragmento del nombre (CN) del certificado, archivo XML y
-     Elemento a firmar (opcional). No pide contraseña: el acceso a la clave lo administra Windows
-   - Útil cuando el certificado de su token ya aparece en el Administrador de certificados de
-     Windows. Para la mayoría de los casos, PKCS#11 sigue siendo la opción recomendada por ser
-     estándar y multiplataforma; esta es una alternativa a elección del usuario
+## 11. Firmar XML con Windows CSP/KSP (XMLSignerWindowsCSP) - solo Windows
+- Firma documentos XML usando un certificado ya presente en el almacén de certificados de
+  Windows (CSP/KSP), sin necesitar configurar una biblioteca PKCS#11
+- Requiere el alias exacto o un fragmento del nombre (CN) del certificado, archivo XML y
+  elemento a firmar (opcional). No pide contraseña: el acceso a la clave lo administra Windows
+- Útil cuando el certificado de su token ya aparece en el Administrador de certificados de
+  Windows. Para la mayoría de los casos, PKCS#11 sigue siendo la opción recomendada por ser
+  estándar y multiplataforma; esta es una alternativa a elección del usuario
 
-12. Firmar PDF con Windows CSP/KSP (PDFSignerWindowsCSP) - solo Windows
-   - Igual que el anterior, pero para documentos PDF. Admite las mismas opciones de posición,
-     texto adicional y bloqueo del documento que "Firmar PDF con Token"
+## 12. Firmar PDF con Windows CSP/KSP (PDFSignerWindowsCSP) - solo Windows
+- Igual que el anterior, pero para documentos PDF. Admite las mismas opciones de posición,
+  texto adicional y bloqueo del documento que "Firmar PDF con Token"
 
+## Novedades en la versión 1.1.0
 
-NUEVO EN LA VERSIÓN 1.1.0:
-- Detección de driver PKCS#11: en las pestañas que usan una biblioteca PKCS#11, un botón
+- **Panel lateral de navegación**, en reemplazo de la antigua barra de pestañas horizontal
+- **Detección de driver PKCS#11**: en los módulos que usan una biblioteca PKCS#11, un botón
   "Detectar automáticamente" revisa las rutas típicas conocidas (SafeNet, ePass2003, mToken
   CryptoID, Athena) e indica cuál está instalada en su equipo. También puede elegir la
   marca/modelo manualmente en la lista desplegable, que completa la ruta por usted
-- Compatibilidad ampliada de tokens PKCS#11: los módulos de firma ahora prueban
+- **Compatibilidad ampliada de tokens PKCS#11**: los módulos de firma ahora prueban
   automáticamente un mecanismo de firma alternativo si el token no admite el mecanismo
   combinado habitual (por ejemplo, tokens tipo ePass2003), sin necesidad de configuración
   adicional de su parte
-- Alternativa de firma con el almacén de certificados de Windows (CSP/KSP), ver aplicaciones
-  11 y 12 arriba
+- **Alternativa de firma con el almacén de certificados de Windows (CSP/KSP)**, ver
+  aplicaciones 11 y 12 arriba
+- La ruta de biblioteca PKCS#11/PKCS#12, el número de slot, el último módulo abierto, el
+  tamaño de la ventana y algunas preferencias de firma de PDF ahora se recuerdan entre
+  sesiones (ver "Preguntas Frecuentes")
 
+## Requerimientos
 
-REQUERIMIENTOS:
-- openJava 23 o superior
-- JavaFX 23 o superior (sólo para la aplicación con UI gráfica)
+- OpenJDK 23 o superior
+- JavaFX 23 o superior (solo para esta aplicación con interfaz gráfica)
 - Biblioteca PKCS#11 del token (para funciones relacionadas con tokens)
 - Biblioteca iText 8 o superior (para funciones relacionadas con documentos PDF)
 - Permisos de lectura en los archivos a procesar
 - Permisos de escritura en las carpetas de salida
 - Permiso de lectura y ejecución de la biblioteca PKCS#11 del token
 
-NOTAS:
+## Notas
+
 - Los archivos de salida se generan en el mismo directorio que los archivos de entrada
 - Mantenga sus certificados y contraseñas en lugar seguro. No los comparta
 - Asegúrese de tener copias de respaldo de los archivos antes de procesarlos
-- Cuando use un token criptográfico tenga en cuenta que un número elevado de intentos de
-  acceso fallido (contraseña inválida) puede dejar inutilizada su firma digital por lo que
-  deberá concurrir a solicitar una nueva a una autoridad certificante (AC). Esto no aplica a
-  las aplicaciones que usan el almacén de Windows (CSP/KSP), donde el PIN lo administra Windows
+- **Cuidado con los tokens criptográficos:** un número elevado de intentos de acceso fallido
+  (contraseña inválida) puede dejar inutilizada su firma digital, por lo que deberá concurrir
+  a solicitar una nueva a una autoridad certificante (AC). Esto **no** aplica a las
+  aplicaciones que usan el almacén de Windows (CSP/KSP), donde el PIN lo administra Windows
 - Por línea de comandos, las aplicaciones que trabajan con tokens PKCS#11 aceptan el parámetro
   "-listar-drivers" (o "--listar-drivers" en PDFSignerPKCS11) para ver las rutas típicas de
   driver conocidas para su sistema operativo
 
-SOPORTE:
+## Soporte
+
 Para soporte técnico, contacte a Grupo Sauken S.A.
-Email: soporte@sauken.com.ar
-Website: https://www.sauken.com.ar/
+
+- Email: soporte@sauken.com.ar
+- Website: https://www.sauken.com.ar/
 
 Este software se licencia bajo la GNU GPLv2. El servicio de soporte es con cargo.

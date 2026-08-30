@@ -286,7 +286,7 @@ Un modelo que no figura en esta tabla no está descartado — solo no fue probad
 
 ### Ayuda de selección de driver
 
-- **Desde la GUI:** las pestañas que piden una biblioteca PKCS#11 muestran un `ComboBox` con marca/modelo y un botón "Detectar automáticamente", que revisa cuáles de las rutas de la tabla existen realmente en el equipo.
+- **Desde la GUI:** los módulos que piden una biblioteca PKCS#11 muestran un `ComboBox` con marca/modelo y un botón "Detectar automáticamente", que revisa cuáles de las rutas de la tabla existen realmente en el equipo.
 - **Desde línea de comandos:** el comando `-listar-drivers` (también aceptado como `--listar-drivers`) imprime la misma tabla, filtrada por sistema operativo, indicando además si cada ruta existe en el equipo actual. Disponible en `TokenSlotsView`, `TokenCertificateExtractor`, `XMLSignerPKCS11` y `PDFSignerPKCS11`.
 
 Esta detección es **solo una ayuda de UX** — nunca la única fuente de verdad. El nombre de archivo de una biblioteca puede cambiar entre versiones de middleware sin previo aviso; el código de firma siempre reintenta en tiempo de ejecución según lo que el token realmente responde (ver [sección 7.1](#71-pkcs11-tokens-criptográficos-y-hsm)), sin depender de esta tabla para decidir el mecanismo.
@@ -770,14 +770,17 @@ java -jar PDFSignerWindowsCSP.jar -i C:\docs\certificado.pdf -a "Juan Carlos Rí
 
 ### 9.13 S-FiDE GUI
 
-**Qué hace:** interfaz gráfica JavaFX que expone las 12 aplicaciones anteriores como pestañas, para usuarios que prefieren no operar por línea de comandos. Invoca los mismos `.jar` con `ProcessBuilder`, mostrando la salida combinada de `stdout`/`stderr` en un cuadro de texto y el código de resultado en un diálogo. El título de la ventana muestra la versión de S-FiDE en ejecución.
+**Qué hace:** interfaz gráfica JavaFX que expone las 12 aplicaciones anteriores como módulos elegibles desde un panel lateral de navegación, para usuarios que prefieren no operar por línea de comandos. Invoca los mismos `.jar` con `ProcessBuilder`, mostrando la salida combinada de `stdout`/`stderr` en un panel colapsable y el código de resultado en un diálogo. El título de la ventana muestra la versión de S-FiDE en ejecución.
 
 **No es una aplicación para integración por proceso** (no tiene un contrato de argumentos/exit-code pensado para ser invocada por otro programa) — se documenta acá por completitud del producto. Un integrador debe usar los módulos CLI individuales.
 
+**Navegación (rediseñada en 1.1.0):** hasta la 1.1.0-beta.1, los 12-14 módulos se mostraban como pestañas horizontales en la parte superior — con esa cantidad de títulos, no entraban en el ancho de la ventana y quedaban con scroll horizontal. Se reemplazó por un panel lateral vertical (cada módulo con un ícono según su categoría: ver, firmar o verificar) — el espacio vertical disponible es mucho mayor que el horizontal, así que la lista completa entra sin necesidad de scroll salvo en pantallas muy bajas. El formulario del módulo elegido se muestra en un panel con scroll vertical propio, para que ningún campo quede inaccesible en pantallas chicas, y el panel "Salida del Proceso" ahora se puede colapsar (arranca colapsado y se expande solo cuando aparece un resultado nuevo), liberando espacio para el formulario mientras no se ejecutó nada.
+
 **Funciones adicionales relevantes para quien la use manualmente:**
-- Recuerda la última ruta de biblioteca PKCS#11 / archivo PKCS#12 usada, en `sfide-defaults.properties`.
+- Recuerda entre sesiones, en `sfide-defaults.properties`: la ruta de biblioteca PKCS#11 / archivo PKCS#12 / número de slot (se guardan tanto al usar "Examinar..."/"Detectar automáticamente" como al escribirlos a mano), una ruta de biblioteca particular por cada marca/modelo de token elegida en el selector (en vez de una sola ruta global), el último módulo abierto (se reabre ahí directamente al iniciar), el tamaño/posición/maximizado de la ventana, la casilla "Bloquear documento después de firmar" y la posición X/Y de firma visible (estas dos últimas compartidas entre los tres firmadores de PDF). **Nunca se persiste ninguna contraseña.**
+- La ruta de biblioteca PKCS#11 y el número de slot están sincronizados en vivo entre todos los módulos que los usan: cambiarlos en un módulo los actualiza inmediatamente en los demás, sin necesidad de reiniciar la aplicación.
 - Detección automática de driver PKCS#11 por marca/modelo (ver [sección 8](#8-catálogo-de-tokens-y-drivers-soportados)).
-- Las pestañas de CSP/KSP (`XMLSignerWindowsCSP`/`PDFSignerWindowsCSP`) solo aparecen si la GUI corre en Windows.
+- Los módulos de CSP/KSP (`XMLSignerWindowsCSP`/`PDFSignerWindowsCSP`) solo aparecen en el panel lateral si la GUI corre en Windows.
 - Validación de que todos los `.jar` necesarios estén presentes junto a `SFide-GUI.jar` antes de permitir su uso.
 
 ---

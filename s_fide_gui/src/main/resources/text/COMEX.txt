@@ -1,0 +1,109 @@
+# Comercio Exterior ALADI/MERCOSUR
+
+Certificados de Origen (COD/CODEH) y Declaraciones Juradas de Origen (DJO/DJOEH).
+
+Esta pestaña es para usuarios que firman documentación de comercio exterior según la
+normativa ALADI/MERCOSUR. Si no trabaja con estos documentos, puede ignorarla: el resto de
+S-FiDE funciona igual para cualquier XML estándar.
+
+## 1. Qué escribir en "Elemento XML a firmar"
+
+Un Certificado de Origen Digital o una Declaración Jurada de Origen se firman en **dos
+etapas**, por dos personas distintas, sobre dos elementos distintos del mismo archivo XML. En
+"Elemento XML a firmar" (en Firmar XML con Token, con PKCS#12 o con Windows CSP/KSP) debe
+escribir exactamente uno de estos cuatro identificadores, **en MAYÚSCULAS**:
+
+- **COD** - lo firma el Exportador, en la primera etapa de un Certificado de Origen
+- **CODEH** - lo firma el Funcionario Habilitado, en la segunda etapa (solo después de que el
+  sistema de gestión agregó los datos de certificación del organismo)
+- **DJO** - lo firma el Exportador, en la primera etapa de una Declaración Jurada de Origen
+- **DJOEH** - lo firma el Funcionario Habilitado, en la segunda etapa (solo después de que el
+  sistema de gestión agregó los datos de aprobación del organismo)
+
+**IMPORTANTE:** en un XML de comercio exterior, S-FiDE **nunca** permite dejar este campo
+vacío (lo que en un XML común firmaría todo el documento). Si el XML contiene un COD o un
+DJO, hay que indicar siempre uno de los cuatro identificadores de arriba.
+
+## El orden de las cuatro etapas
+
+- El XML se crea con COD (o DJO) completo, sin firmar
+- El Exportador firma COD (o DJO)
+- El sistema de gestión agrega los datos del organismo (certificación o aprobación)
+- Recién ahí el Funcionario Habilitado firma CODEH (o DJOEH)
+
+S-FiDE hace cumplir el orden entre las dos firmas: no deja firmar CODEH si COD todavía no
+tiene una firma digital, ni DJOEH si DJO todavía no la tiene. Si intenta firmar fuera de
+orden, va a ver uno de estos mensajes:
+
+- "No se puede firmar el elemento CODEH: no existe una firma digital previa sobre el
+  elemento COD."
+- "No se puede firmar el elemento DJOEH: no existe una firma digital previa sobre el
+  elemento DJO."
+
+Al firmar un XML de comercio exterior, S-FiDE también le confirma por la salida del proceso
+qué tipo de documento detectó y qué elemento firmó, por ejemplo:
+
+- "El XML a firmar es un Certificado de Origen Digital de ALADI (sin verificación de
+  contenido)."
+- "Elemento firmado: COD"
+
+La aclaración "sin verificación de contenido" es intencional: S-FiDE no revisa si el
+documento corresponde a la etapa correcta ni si está completo - eso queda a cargo de su
+sistema de gestión.
+
+## 2. Cómo se validan las firmas digitales en comex
+
+Un Certificado de Origen o una Declaración Jurada de Origen ya firmados por completo tienen
+**dos firmas independientes**, aplicadas en momentos distintos por personas distintas. Al
+verificarlas con "Verificar Firmas en XML", cada firma se evalúa contra la fecha que
+corresponde a **su** elemento, no contra la fecha actual del sistema.
+
+## Firma sobre COD
+- Fecha que se usa: <DeclarationDate>
+- País de referencia: <ExporterCountry>
+- ¿Conversión horaria?: Sí, del país exportador a UTC
+
+## Firma sobre CODEH
+- Fecha que se usa: <CertificateDate>
+- País de referencia: <EHCountry>
+- ¿Conversión horaria?: Sí, del país del Funcionario Habilitado a UTC (**no** el del
+  exportador)
+
+## Firma sobre DJO
+- Fecha que se usa: <DeclarationDate>
+- País de referencia: no aplica
+- ¿Conversión horaria?: No - el valor se toma literal como UTC
+
+## Firma sobre DJOEH
+- Fecha que se usa: <ApprovalDate>
+- País de referencia: no aplica
+- ¿Conversión horaria?: No - el valor se toma literal como UTC
+
+Por qué DJO/DJOEH no convierten huso horario: una Declaración Jurada de Origen se opera
+siempre dentro de un mismo país (el que emite el XML), así que no hace falta resolver una
+zona horaria distinta.
+
+Por qué CODEH usa el país del Funcionario Habilitado y no el del exportador: quien firma
+CODEH es el Funcionario Habilitado, actuando en nombre de su organismo - su firma ocurre en
+el país de ese organismo, no necesariamente en el país del exportador.
+
+Esta fecha correcta por elemento es la que se usa para decidir si una revocación del
+certificado es anterior o posterior a la firma - de eso depende que la firma se considere
+válida o inválida por revocación.
+
+## 3. Validación contra esquema XSD (estructura del documento)
+
+Además de verificar las firmas digitales, "Verificar XML con XSD" valida que la estructura
+del documento (elementos, tipos de dato, orden) cumpla el esquema oficial de ALADI. No hace
+falta indicar el esquema a mano: si el XML declara su propio esquema (como lo hacen los COD
+y DJO reales), S-FiDE lo descarga automáticamente y valida contra ese.
+
+El dominio oficial de ALADI (codaladi.org) suele estar caído. Si eso pasa, S-FiDE reintenta
+automáticamente contra un espejo (cod.certificadoorigen.com.ar), avisando por la salida del
+proceso que está usando el dominio alternativo. No hace falta ninguna acción de su parte
+para que este reintento ocurra.
+
+**IMPORTANTE:** "Verificar XML con XSD" valida estructura y firmas, pero **no** valida
+revocación de certificados - lo indica explícitamente al finalizar. Para confirmar que los
+certificados no fueron revocados, corra también "Verificar Firmas en XML" sobre el mismo
+archivo.
