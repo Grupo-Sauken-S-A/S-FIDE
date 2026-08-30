@@ -4,6 +4,11 @@ S-FiDE v1.1.0 - Leeme primero:
   instalados (no hace falta editarlos) - puede copiar la carpeta completa de S-FiDE a cualquier ubicación,
   incluyendo un pendrive u otro medio removible, y ejecutarla desde ahí en cualquier PC sin instalar nada
 
+- En Linux/macOS, si al descomprimir el ZIP de distribución "SFide-GUI.sh" y los binarios de
+  "openjdk-23.0.1" pierden el permiso de ejecución (algo común si el ZIP se armó en Windows, que no
+  guarda permisos Unix), otórgueselo una sola vez con:
+    chmod +x SFide-GUI.sh openjdk-23.0.1/linux-x64/bin/*
+
 - Puede configurar valores por defecto editando con bloc de notas el archivo "sfide-defaults.properties"
   tomando como base el ejemplo "sfide-defaults.demo.properties". Estos valores por defecto se actualizan
   automáticamente a medida que los usa desde la GUI, no solo al cerrar el programa
