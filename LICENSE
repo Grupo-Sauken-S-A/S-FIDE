@@ -344,10 +344,3 @@ proprietary programs.  If your program is a subroutine library, you may
 consider it more useful to permit linking proprietary applications with the
 library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.
-
---------------------------------------------------------------------------
-
-Nota en español (aclaratoria, sin agregar ni quitar nada al texto legal
-anterior en inglés, que es el que rige): S-FiDE se distribuye bajo esta
-Licencia Pública General GNU, versión 2, o -a elección de quien la use-
-cualquier versión posterior publicada por la Free Software Foundation.
