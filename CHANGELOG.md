@@ -4,6 +4,11 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), y el versionado sigue [SemVer](https://semver.org/lang/es/).
 
+## [Sin publicar]
+
+### Cambiado
+- Manual técnico de integración (MD y HTML): agregada una advertencia crítica en la sección 7.3 (Windows CSP/KSP) explicando en detalle por qué este mecanismo no es apto para firma desatendida por lotes (Windows puede pedir el PIN por diálogo en cada documento, sin forma de evitarlo) — dejando explícito que es una estrategia de seguridad deliberada de Windows/CryptoAPI-CNG, no una limitación de S-FiDE. Agregada la fila correspondiente en la tabla comparativa de la sección 7.4 y avisos cruzados en el catálogo de `XMLSignerWindowsCSP`/`PDFSignerWindowsCSP` (sección 9.11/9.12).
+
 ## [1.1.0] — 2026-08-30
 
 ### Agregado

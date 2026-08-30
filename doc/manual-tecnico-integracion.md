@@ -177,13 +177,34 @@ Desde la versión 1.1.0, `XMLSignerPKCS11` y `PDFSignerPKCS11` prueban automáti
 
 **En una frase, para quien no conoce PKCS#11:** en Windows, la forma más simple de firmar con un token es la misma que usa **Adobe Acrobat/Reader por defecto** — sin indicar ninguna ruta de biblioteca de fabricante ni saber la marca/modelo exacto del token. Es exactamente lo que ve un usuario cuando abre el "Administrador de certificados de Windows" (`certmgr.msc`) y su certificado ya aparece ahí listo para usar, sin haber configurado nada: Acrobat, y ahora S-FiDE, leen el certificado directamente de ese mismo lugar.
 
-> **Recomendación práctica:** si no conocés con exactitud el nombre de archivo de la biblioteca PKCS#11 de tu token, ni su marca/modelo, **probá primero con CSP/KSP** (`XMLSignerWindowsCSP`/`PDFSignerWindowsCSP`, [sección 9.11](#911-xmlsignerwindowscsp)/[9.12](#912-pdfsignerwindowscsp)) antes de buscar esa información para usar los módulos PKCS#11. Es la ruta con menos pasos de configuración siempre que el certificado ya sea visible en Windows — que es el caso más común una vez que el driver del fabricante está instalado. Ver la comparación completa en la [sección 7.4](#74-comparación).
+> **Recomendación práctica:** si no conocés con exactitud el nombre de archivo de la biblioteca PKCS#11 de tu token, ni su marca/modelo, **probá primero con CSP/KSP** (`XMLSignerWindowsCSP`/`PDFSignerWindowsCSP`, [sección 9.11](#911-xmlsignerwindowscsp)/[9.12](#912-pdfsignerwindowscsp)) antes de buscar esa información para usar los módulos PKCS#11. Es la ruta con menos pasos de configuración siempre que el certificado ya sea visible en Windows — que es el caso más común una vez que el driver del fabricante está instalado. **Esta recomendación aplica a firma ocasional, con una persona presente frente al equipo** (exactamente el mismo uso que le das a Adobe Acrobat). Si necesitás firmar muchos documentos por lote sin intervención humana, leé primero la advertencia de la siguiente subsección — CSP/KSP no es la herramienta adecuada para eso. Ver también la comparación completa en la [sección 7.4](#74-comparación).
 
 **Cómo funciona, en detalle:** además de PKCS#11, Windows ofrece un mecanismo **nativo del sistema operativo**: CryptoAPI (CAPI, interfaz legada) y su sucesor CNG (Cryptography API: Next Generation), a través de **CSP** (Cryptographic Service Provider) o **KSP** (Key Storage Provider) respectivamente. Los fabricantes de tokens suelen instalar, además del módulo PKCS#11, un *minidriver* CSP/KSP certificado por Microsoft — esto hace que el certificado del token aparezca automáticamente en el almacén de certificados de Windows, sin que ninguna aplicación deba configurar una ruta de biblioteca.
 
 S-FiDE 1.1.0 incorpora esta alternativa a través de `XMLSignerWindowsCSP` y `PDFSignerWindowsCSP`, que usan el proveedor `SunMSCAPI` del JDK para acceder al almacén `Windows-MY` (Personal del usuario actual). En vez de indicar una biblioteca `.dll` y un número de slot, estos dos módulos piden un **alias o fragmento del nombre del titular del certificado** (ver `-listar-certificados` en cada uno para ver qué hay disponible en el almacén). **No se pasa contraseña**: el acceso a la clave privada lo administra el propio Windows (según el token, puede aparecer un diálogo nativo del sistema operativo pidiendo el PIN al momento de firmar) — a diferencia de los módulos PKCS#11, donde el PIN se pasa como argumento del programa.
 
-**Ventajas:** no requiere configurar ninguna ruta de biblioteca ni conocer la marca/modelo del token, comportamiento idéntico al de Acrobat. **Desventajas:** exclusivo de Windows (no portable a Linux/macOS); `SunMSCAPI` habla el CryptoAPI **legado**, no CNG moderno directamente — funciona en la práctica porque Windows tiende un puente CAPI↔KSP automático a nivel de sistema operativo, pero ese puente podría dejar de cubrir algún token en el futuro (la actualización de Windows de octubre de 2025, KB5066835, empuja el ecosistema hacia KSP puro).
+#### ⚠️ Limitación crítica — CSP/KSP no sirve para firma desatendida por lotes
+
+**Esto no es un mal funcionamiento ni una limitación de S-FiDE: es una estrategia de seguridad distinta, diseñada así deliberadamente por Windows.** Es importante entenderla bien antes de elegir CSP/KSP para integrar un flujo automatizado (por ejemplo, firmar 100 XML o PDF por línea de comandos, sin que haya una persona presente frente a cada firma).
+
+**La diferencia de fondo entre PKCS#11 y CSP/KSP:**
+
+- **PKCS#11** fue diseñado para que la *aplicación* controle la autenticación: el estándar define una función (`C_Login`) a la que la aplicación le pasa el PIN explícitamente. Por eso `XMLSignerPKCS11`/`PDFSignerPKCS11` reciben la contraseña como argumento de línea de comandos y **nunca** aparece ningún diálogo — todo ocurre de forma programática, sin intervención humana.
+- **CSP/KSP (CryptoAPI/CNG)** tiene el diseño opuesto, y es intencional: Microsoft construyó estas interfaces para que el acceso a la clave privada quede bajo control exclusivo del *proveedor criptográfico* (el driver del token), no de la aplicación que pide firmar. La idea es que ninguna aplicación de terceros pueda leer o inyectar un PIN de forma silenciosa — eso es, para Windows, una protección de seguridad, no una carencia.
+
+**Por qué S-FiDE no puede evitar el diálogo:** el proveedor `SunMSCAPI` del JDK, para el almacén `Windows-MY`, **no acepta ninguna contraseña** — su `KeyStore.load()` se invoca siempre con `null`. No es que falte implementar un parámetro: la propia API de Java para este mecanismo no tiene ningún punto de entrada para pasar un PIN. El diálogo lo dispara Windows (CryptoAPI/CNG) en el momento de usar la clave privada, completamente fuera del control de cualquier aplicación — ni S-FiDE, ni Acrobat, ni ninguna otra.
+
+**Por qué a veces pide el PIN una sola vez y otras veces en cada firma:** esto depende de un ajuste llamado *Strong Private Key Protection*, definido al aprovisionar el certificado en el token (no es una configuración de S-FiDE ni de Windows en general):
+
+- Sin protección extra: el driver cachea el PIN durante la sesión y no lo vuelve a pedir por un rato.
+- "Preguntar una vez por sesión": pide el PIN la primera vez y lo reutiliza mientras el token siga conectado.
+- "Preguntar siempre": exige el diálogo en **cada** operación de firma, sin excepción — ninguna aplicación puede evitarlo, es una política del propio certificado/token. Muchos certificados de firma digital argentinos vienen aprovisionados así, precisamente para que cada firma sea un acto consciente del firmante.
+
+**El diseño de S-FiDE agrava el problema en el peor caso:** cada invocación de `java -jar XMLSignerWindowsCSP.jar ...`/`PDFSignerWindowsCSP.jar ...` es un **proceso nuevo** (por diseño — ver el principio de "cada capacidad es un programa independiente" en la [sección 1](#1-introducción-y-filosofía)). Aunque el driver del token cachee el PIN a nivel de sesión, ese caché muchas veces queda atado al proceso o al handle que lo abrió, no al token físico — así que firmar 100 documentos con 100 invocaciones separadas puede disparar 100 diálogos, incluso en un token configurado como "una vez por sesión".
+
+**Conclusión — cuándo usar cada mecanismo:** CSP/KSP sirve para firma interactiva y ocasional, con una persona presente frente al diálogo — el mismo escenario en el que usás Adobe Acrobat. **Para integración end-to-end por lotes (firmar muchos documentos por CLI sin intervención humana), usá `XMLSignerPKCS11`/`PDFSignerPKCS11` (PIN por argumento, cero diálogos) o `XMLSignerPKCS12`/`PDFSignerPKCS12` (contraseña de archivo, sin token ni diálogo alguno).** Ver también la fila correspondiente en la tabla comparativa de la [sección 7.4](#74-comparación).
+
+**Ventajas:** no requiere configurar ninguna ruta de biblioteca ni conocer la marca/modelo del token, comportamiento idéntico al de Acrobat. **Desventajas:** exclusivo de Windows (no portable a Linux/macOS); no apto para firma desatendida por lotes (ver arriba); `SunMSCAPI` habla el CryptoAPI **legado**, no CNG moderno directamente — funciona en la práctica porque Windows tiende un puente CAPI↔KSP automático a nivel de sistema operativo, pero ese puente podría dejar de cubrir algún token en el futuro (la actualización de Windows de octubre de 2025, KB5066835, empuja el ecosistema hacia KSP puro).
 
 ### 7.4 Comparación
 
@@ -193,6 +214,7 @@ S-FiDE 1.1.0 incorpora esta alternativa a través de `XMLSignerWindowsCSP` y `PD
 | Multiplataforma | Sí | Sí | No (solo Windows) |
 | Requiere configurar ruta de driver | Sí | No aplica | No |
 | Contraseña pasada por el programa | Sí (PIN del token) | Sí (contraseña del archivo) | No (la administra Windows) |
+| **Apto para firma desatendida por lotes (CLI, muchos documentos, sin intervención humana)** | **Sí** | **Sí** | **No** — Windows puede pedir el PIN por diálogo en cada documento, sin ninguna forma de evitarlo (ver [sección 7.3](#73-windows-cspksp-almacén-de-certificados-de-windows)) |
 | Nivel de seguridad típico | Alto (FIPS 140-2 Nivel 2-3) | Depende de la protección del archivo | Igual que el hardware subyacente |
 | Recomendado para | Uso regulado (AC-ONTI), la mayoría de los casos | Pruebas, entornos sin hardware, automatización de servidor | Punto de partida si no se conoce la marca/modelo del token o el nombre exacto de su biblioteca PKCS#11, o si se prioriza simplicidad sobre portabilidad |
 
@@ -684,7 +706,9 @@ java -jar PDFVerifySignatures.jar C:\docs\certificado-signed.pdf -simple
 
 ### 9.11 XMLSignerWindowsCSP
 
-**Qué hace:** firma XML usando un certificado ya presente en el almacén de certificados de Windows (CSP/KSP), tal como lo hace Adobe Acrobat/Reader por defecto — sin ruta de biblioteca de fabricante ni número de slot, ver [sección 7.3](#73-windows-cspksp-almacén-de-certificados-de-windows). Es el punto de partida recomendado si no se conoce con exactitud el nombre de la biblioteca PKCS#11 o la marca/modelo del token. Alternativa a `XMLSignerPKCS11`. **Exclusivo de Windows.** Misma configuración criptográfica que los otros firmadores XML (XML-DSig, canonicalización inclusiva, RSA-SHA256).
+**Qué hace:** firma XML usando un certificado ya presente en el almacén de certificados de Windows (CSP/KSP), tal como lo hace Adobe Acrobat/Reader por defecto — sin ruta de biblioteca de fabricante ni número de slot, ver [sección 7.3](#73-windows-cspksp-almacén-de-certificados-de-windows). Es el punto de partida recomendado para firma ocasional si no se conoce con exactitud el nombre de la biblioteca PKCS#11 o la marca/modelo del token. Alternativa a `XMLSignerPKCS11`. **Exclusivo de Windows.** Misma configuración criptográfica que los otros firmadores XML (XML-DSig, canonicalización inclusiva, RSA-SHA256).
+
+> ⚠️ **No usar para firma desatendida por lotes:** Windows puede abrir un diálogo pidiendo el PIN en cada documento firmado, sin que este módulo (ni ningún otro) pueda evitarlo — es una política de seguridad del propio certificado/token, no un defecto de S-FiDE. Para firmar muchos documentos por CLI sin intervención humana, usar `XMLSignerPKCS11` o `XMLSignerPKCS12`. Ver la explicación completa en la [sección 7.3](#73-windows-cspksp-almacén-de-certificados-de-windows).
 
 **Sintaxis:**
 ```
@@ -714,6 +738,8 @@ java -jar XMLSignerWindowsCSP.jar "Juan Carlos Ríos" C:\docs\certificado-origen
 ### 9.12 PDFSignerWindowsCSP
 
 **Qué hace:** el equivalente de `XMLSignerWindowsCSP` para documentos PDF (ver [sección 7.3](#73-windows-cspksp-almacén-de-certificados-de-windows) para la explicación completa y cuándo conviene elegir esta opción antes que PKCS#11) — mismas opciones de posición, texto y bloqueo que `PDFSignerPKCS11`, incluida la validación de firmas preexistentes (agregada en la 1.1.0 para igualarlo con los otros dos firmadores de PDF). **Exclusivo de Windows.**
+
+> ⚠️ **No usar para firma desatendida por lotes** — mismo motivo que en `XMLSignerWindowsCSP`: ver la [sección 7.3](#73-windows-cspksp-almacén-de-certificados-de-windows). Para firmar muchos PDF por CLI sin intervención humana, usar `PDFSignerPKCS11` o `PDFSignerPKCS12`.
 
 **Sintaxis:**
 ```
