@@ -12,9 +12,9 @@ Opciones:
   -t, --text <texto>           Texto adicional para el campo de firma (opcional)
 
 Opciones Adicionales
-  -v, --version                Muestra la versión del programa
-  -h, --help                   Muestra esta ayuda
-  --license                    Muestra la licencia del programa
+  -v, --version, -version      Muestra la versión del programa
+  -h, --help, -ayuda           Muestra esta ayuda
+  --license, -licencia         Muestra la licencia del programa
 
 ERRORES POSIBLES:
     - Archivo PDF no existe o no es accesible

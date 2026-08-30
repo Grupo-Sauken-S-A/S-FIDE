@@ -261,9 +261,10 @@ public class TokenCertificateExtractor {
 
             Base64.Encoder encoder = Base64.getMimeEncoder(64, System.lineSeparator().getBytes());
             String certEncoded = encoder.encodeToString(cert.getEncoded());
-            String pemContent = "-----BEGIN CERTIFICATE-----\n" +
-                    certEncoded + "\n" +
-                    "-----END CERTIFICATE-----";
+            String pemContent = String.format(
+                    "-----BEGIN CERTIFICATE-----%n%s%n-----END CERTIFICATE-----",
+                    certEncoded
+            );
 
             Files.writeString(outputPath, pemContent, StandardCharsets.UTF_8);
             System.out.println("Certificado exportado como: " + fileName);

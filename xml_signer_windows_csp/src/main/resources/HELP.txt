@@ -9,10 +9,10 @@ legado o KSP/CNG moderno) además de exponer PKCS#11.
 Uso: java -jar XMLSignerWindowsCSP.jar [OPCIÓN] | <Alias o fragmento del Subject CN> <Archivo XML> <Elemento XML a firmar>
 
 Opciones:
-  -version          Muestra la versión del programa
-  -licencia         Muestra la información de licencia
-  -ayuda            Muestra este mensaje de ayuda
-  -listar-certificados   Lista los certificados disponibles en el almacén de Windows (alias y Subject)
+  -version, -v, --version                        Muestra la versión del programa
+  -ayuda, -h, --help                              Muestra este mensaje de ayuda
+  -licencia, --license                            Muestra la información de licencia
+  -listar-certificados, --listar-certificados     Lista los certificados disponibles en el almacén de Windows (alias y Subject)
 
 Para firmar un documento XML:
   java -jar XMLSignerWindowsCSP.jar <Alias o fragmento del Subject CN> <Archivo XML> <Elemento XML a firmar>

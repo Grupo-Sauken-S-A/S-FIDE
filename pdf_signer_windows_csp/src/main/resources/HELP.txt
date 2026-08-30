@@ -15,10 +15,10 @@ Opciones:
   -t, --text <texto>           Texto adicional para el campo de firma (opcional)
 
 Opciones Adicionales:
-  -v, --version                 Muestra la versión del programa
-  -h, --help                    Muestra esta ayuda
-  --license                     Muestra la licencia del programa
-  --listar-certificados         Lista los certificados disponibles en el almacén de Windows (alias y Subject)
+  -v, --version, -version                 Muestra la versión del programa
+  -h, --help, -ayuda                      Muestra esta ayuda
+  --license, -licencia                    Muestra la licencia del programa
+  --listar-certificados, -listar-certificados   Lista los certificados disponibles en el almacén de Windows (alias y Subject)
 
 Ejemplo:
   java -jar pdf_signer_windows_csp.jar -i documento.pdf -a "Juan Carlos Rios" -x 50 -y 50

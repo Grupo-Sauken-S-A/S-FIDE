@@ -352,8 +352,8 @@ public class PDFSignerPKCS12 {
             subjectDN = cert.getSubjectX500Principal();
         }
 
-        Path tempPath = Files.createTempFile("sig", ".tmp");
         Path finalOutputPath = Paths.get(createOutputPath(params.pdfPath()));
+        Path encryptedIntermediate = null;
 
         PdfSignatureAppearance appearance = null;
         String signatureText = null;
@@ -365,91 +365,121 @@ public class PDFSignerPKCS12 {
             );
         }
 
-        try (InputStream inputStream = Files.newInputStream(Paths.get(params.pdfPath()));
-             OutputStream outputStream = Files.newOutputStream(tempPath)) {
-
-            PdfReader reader = new PdfReader(inputStream);
-            StampingProperties stampingProperties = new StampingProperties();
-            stampingProperties.useAppendMode();
-
-            PdfSigner signer = new PdfSigner(reader, outputStream, stampingProperties);
-
-            String fieldName = String.format("Signature_%s_%d",
-                    getNameFromDN(subjectDN.getName()).replaceAll("[^a-zA-Z0-9]", "_"),
-                    System.currentTimeMillis());
-            signer.setFieldName(fieldName);
-
-            if (params.xPos() != 0 || params.yPos() != 0) {
-                Rectangle rect = new Rectangle(params.xPos(), params.yPos(), 160, 70);
-
-                appearance = signer.getSignatureAppearance();
-                appearance.setPageRect(rect)
-                        .setPageNumber(1)
-                        .setLayer2FontSize(8.0f)
-                        .setLayer2Text(signatureText);
-            }
+        try {
+            Path sourceForSigning;
+            byte[] ownerPassword = null;
 
             if (params.lock()) {
-                signer.setCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
+                // Si hay que bloquear, primero se cifra el documento ORIGINAL (todavía sin
+                // firmar) y recién después se firma en modo append sobre ese archivo ya
+                // cifrado — es el orden que espera iText para combinar cifrado y firma.
+                // Hacerlo al revés (firmar primero y volver a serializar todo el documento
+                // con cifrado en una segunda pasada) corrompe el /Contents de la firma: esa
+                // segunda pasada no sabe que ese campo debe quedar exento de cifrado, y el
+                // PKCS#7 queda ilegible al verificarlo ("Cannot decode PKCS#7 SignedData
+                // object").
+                encryptedIntermediate = Files.createTempFile("enc", ".tmp");
+                ownerPassword = generateRandomOwnerPassword();
+
+                try (InputStream inputStream = Files.newInputStream(Paths.get(params.pdfPath()));
+                     OutputStream outputStream = Files.newOutputStream(encryptedIntermediate)) {
+
+                    WriterProperties writerProps = new WriterProperties()
+                            .addXmpMetadata()
+                            .setCompressionLevel(CompressionConstants.BEST_COMPRESSION)
+                            .setStandardEncryption(
+                                    null,
+                                    ownerPassword,
+                                    EncryptionConstants.ALLOW_PRINTING |
+                                            EncryptionConstants.ALLOW_SCREENREADERS,
+                                    EncryptionConstants.ENCRYPTION_AES_256 |
+                                            EncryptionConstants.DO_NOT_ENCRYPT_METADATA
+                            );
+
+                    PdfReader reader = new PdfReader(inputStream);
+                    PdfWriter writer = new PdfWriter(outputStream, writerProps);
+                    new PdfDocument(reader, writer).close();
+                }
+
+                sourceForSigning = encryptedIntermediate;
+            } else {
+                sourceForSigning = Paths.get(params.pdfPath());
             }
 
-            IExternalSignature signature = new PrivateKeySignature(
-                    privateKey,
-                    DigestAlgorithms.SHA256,
-                    BouncyCastleProvider.PROVIDER_NAME
-            );
+            try (InputStream inputStream = Files.newInputStream(sourceForSigning);
+                 OutputStream outputStream = Files.newOutputStream(finalOutputPath)) {
 
-            signer.signDetached(
-                    new BouncyCastleDigest(),
-                    signature,
-                    chain,
-                    null,
-                    null,
-                    null,
-                    0,
-                    PdfSigner.CryptoStandard.CMS
-            );
+                // Al firmar el intermedio ya cifrado hace falta abrirlo con la contraseña
+                // de propietario: agregar una firma de certificación modifica los permisos
+                // del documento, y eso requiere acceso de propietario, no solo de lectura.
+                PdfReader reader = (ownerPassword != null)
+                        ? new PdfReader(inputStream, new ReaderProperties().setPassword(ownerPassword))
+                        : new PdfReader(inputStream);
+                StampingProperties stampingProperties = new StampingProperties();
+                stampingProperties.useAppendMode();
+
+                PdfSigner signer = new PdfSigner(reader, outputStream, stampingProperties);
+
+                String fieldName = String.format("Signature_%s_%d",
+                        getNameFromDN(subjectDN.getName()).replaceAll("[^a-zA-Z0-9]", "_"),
+                        System.currentTimeMillis());
+                signer.setFieldName(fieldName);
+
+                if (params.xPos() != 0 || params.yPos() != 0) {
+                    Rectangle rect = new Rectangle(params.xPos(), params.yPos(), 160, 70);
+
+                    appearance = signer.getSignatureAppearance();
+                    appearance.setPageRect(rect)
+                            .setPageNumber(1)
+                            .setLayer2FontSize(8.0f)
+                            .setLayer2Text(signatureText);
+                }
+
+                if (params.lock()) {
+                    signer.setCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
+                }
+
+                IExternalSignature signature = new PrivateKeySignature(
+                        privateKey,
+                        DigestAlgorithms.SHA256,
+                        BouncyCastleProvider.PROVIDER_NAME
+                );
+
+                signer.signDetached(
+                        new BouncyCastleDigest(),
+                        signature,
+                        chain,
+                        null,
+                        null,
+                        null,
+                        0,
+                        PdfSigner.CryptoStandard.CMS
+                );
+            }
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error al firmar el documento");
             throw e;
-        }
-
-        if (params.lock()) {
-            Path finalTempPath = Files.createTempFile("sig_final", ".tmp");
-
-            try (InputStream tempInputStream = Files.newInputStream(tempPath);
-                 OutputStream finalOutputStream = Files.newOutputStream(finalTempPath)) {
-
-                WriterProperties writerProps = new WriterProperties()
-                        .addXmpMetadata()
-                        .setCompressionLevel(CompressionConstants.BEST_COMPRESSION)
-                        .setStandardEncryption(
-                                null,
-                                null,
-                                EncryptionConstants.ALLOW_PRINTING |
-                                        EncryptionConstants.ALLOW_SCREENREADERS,
-                                EncryptionConstants.ENCRYPTION_AES_256 |
-                                        EncryptionConstants.DO_NOT_ENCRYPT_METADATA
-                        );
-
-                PdfReader reader = new PdfReader(tempInputStream);
-                PdfWriter writer = new PdfWriter(finalOutputStream, writerProps);
-                new PdfDocument(reader, writer).close();
-                reader.close();
-                writer.close();
-
-                Files.move(finalTempPath, finalOutputPath,
-                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            } finally {
-                Files.deleteIfExists(tempPath);
-                Files.deleteIfExists(finalTempPath);
+        } finally {
+            if (encryptedIntermediate != null) {
+                Files.deleteIfExists(encryptedIntermediate);
             }
-        } else {
-            Files.move(tempPath, finalOutputPath,
-                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         }
 
         logger.log(Level.INFO, "Documento firmado exitosamente: " + finalOutputPath.toAbsolutePath());
+    }
+
+    /**
+     * Genera una contraseña de propietario aleatoria, usada únicamente en memoria
+     * durante el proceso de firma para poder reabrir con permisos plenos el PDF
+     * intermedio ya cifrado. Nunca se persiste ni se informa al usuario: el PDF
+     * final queda con lectura libre (contraseña de usuario vacía) pero con
+     * permisos de edición restringidos, sin que nadie —ni siquiera S-FiDE—
+     * conserve la contraseña de propietario después de este proceso.
+     */
+    private static byte[] generateRandomOwnerPassword() {
+        byte[] password = new byte[16];
+        new java.security.SecureRandom().nextBytes(password);
+        return password;
     }
 
     private static String buildSignatureText(

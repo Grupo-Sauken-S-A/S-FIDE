@@ -50,7 +50,9 @@
 
 package com.sauken.s_fide.pdf_verify_signatures;
 
+import com.itextpdf.kernel.pdf.PdfDictionary;
 import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfName;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.signatures.*;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -183,11 +185,23 @@ public class PDFVerifySignatures {
             }
 
             System.out.println("\nEstado del documento:");
-            System.out.println("- Documento bloqueado: " + (pdfDoc.getWriter() == null ? "Sí" : "No"));
+            System.out.println("- Documento bloqueado: " + (isCertified(pdfDoc) ? "Sí" : "No"));
             System.out.println("- Documento encriptado: " + (reader.isEncrypted() ? "Sí" : "No"));
 
             System.exit(hasErrors ? 1 : 0);
         }
+    }
+
+    /**
+     * El documento está "bloqueado" cuando tiene una certificación DocMDP (la que aplican
+     * PDFSignerPKCS11/PKCS12/WindowsCSP con "-l true"/"Bloquear documento"). Esa marca vive en
+     * el diccionario /Perms/DocMDP del catálogo del PDF, no en si el PdfDocument se abrió para
+     * escritura — comprobar pdfDoc.getWriter() (como se hacía antes) siempre daba "Sí" porque
+     * este módulo solo abre el PDF en modo lectura.
+     */
+    private static boolean isCertified(PdfDocument pdfDoc) {
+        PdfDictionary perms = pdfDoc.getCatalog().getPdfObject().getAsDictionary(PdfName.Perms);
+        return perms != null && perms.getAsDictionary(PdfName.DocMDP) != null;
     }
 
     private static boolean verifySignature(SignatureUtil signUtil, String name)
