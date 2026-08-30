@@ -750,7 +750,7 @@ java -jar XMLSignerPKCS11.jar [-version | -ayuda | -licencia | -listar-drivers]<
         <div class="field-label">Salida</div>
         <p>Archivo <code>&lt;nombre&gt;-signed.xml</code>.</p>
         <div class="field-label">Errores posibles</div>
-        <p class="errlist"><code>El elemento o párrafo XML especificado no existe</code> · <code>Contraseña incorrecta</code> · <code>El token no admite ningún mecanismo de firma RSA-SHA256 compatible</code> · más las <a href="#reglas-firma-comunes">reglas de firma comunes</a></p>
+        <p class="errlist"><code>El elemento o párrafo XML especificado no existe</code> · <code>Contraseña incorrecta</code> · <code>El token no admite ningún mecanismo de firma RSA-SHA256 compatible</code> · más las <a href="#reglas-firma-comunes">reglas de firma comunes</a> y las <a href="#s10">reglas de comercio exterior (sección 10.5)</a></p>
         <div class="field-label">Ejemplo</div>
         <pre><code>java -jar XMLSignerPKCS11.jar C:\Windows\System32\eTPKCS11.dll "MiPIN123" 0 C:\docs\certificado-origen.xml COD</code></pre>
       </div>
@@ -771,7 +771,7 @@ java -jar XMLSignerPKCS12.jar [-version | -ayuda | -licencia]</code></pre>
           </table>
         </div>
         <div class="field-label">Errores posibles</div>
-        <p class="errlist"><code>El archivo PKCS#12 no existe</code> · <code>El elemento o párrafo XML especificado no existe en el documento XML</code> · más las <a href="#reglas-firma-comunes">reglas de firma comunes</a></p>
+        <p class="errlist"><code>El archivo PKCS#12 no existe</code> · <code>El elemento o párrafo XML especificado no existe en el documento XML</code> · más las <a href="#reglas-firma-comunes">reglas de firma comunes</a> y las <a href="#s10">reglas de comercio exterior (sección 10.5)</a></p>
         <div class="field-label">Ejemplo</div>
         <pre><code>java -jar XMLSignerPKCS12.jar C:\certificados\empresa.pfx "MiContraseña123" C:\docs\declaracion.xml DJO</code></pre>
       </div>
@@ -937,7 +937,7 @@ java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certi
         </div>
         <p><strong>No se pasa contraseña</strong> — el acceso a la clave lo administra Windows.</p>
         <div class="field-label">Errores posibles</div>
-        <p class="errlist"><code>No se encontró ningún certificado con clave privada que coincida con "[texto]"</code> · <code>"[texto]" coincide con N certificados distintos</code> · más las <a href="#reglas-firma-comunes">reglas de firma comunes</a></p>
+        <p class="errlist"><code>No se encontró ningún certificado con clave privada que coincida con "[texto]"</code> · <code>"[texto]" coincide con N certificados distintos</code> · más las <a href="#reglas-firma-comunes">reglas de firma comunes</a> y las <a href="#s10">reglas de comercio exterior (sección 10.5)</a></p>
         <div class="field-label">Ejemplo</div>
         <pre><code>java -jar XMLSignerWindowsCSP.jar "Juan Carlos Ríos" C:\docs\certificado-origen.xml COD</code></pre>
       </div>
@@ -1057,6 +1057,14 @@ java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]<
       <div class="field-label">Mensajes de error</div>
       <p class="errlist"><code>No se puede firmar el elemento CODEH: no existe una firma digital previa sobre el elemento COD.</code> · <code>No se puede firmar el elemento DJOEH: no existe una firma digital previa sobre el elemento DJO.</code></p>
 
+      <h4>Regla adicional — no se permite firmar el documento completo</h4>
+      <p>Los tres firmadores XML detectan automáticamente si el XML es un documento de comercio exterior: basta con que exista, en cualquier parte del documento, un elemento con <code>Id</code>/<code>id</code>/<code>ID</code> igual a <code>COD</code> o a <code>DJO</code> (no hace falta que sea justo el elemento que se está por firmar). Si se detecta esta condición y el elemento a firmar indicado es la cadena vacía <code>""</code> (equivalente a firmar todo el documento), la operación se rechaza — en un XML de comercio exterior siempre hay que indicar explícitamente qué elemento firmar (<code>COD</code>, <code>CODEH</code>, <code>DJO</code> o <code>DJOEH</code>, según la etapa). Se suma a las reglas anteriores, no las reemplaza.</p>
+      <p class="errlist"><code>Este XML corresponde a un documento de comercio exterior (un Certificado de Origen Digital / una Declaración Jurada de Origen). No se permite firmar el documento completo: debe indicarse un elemento específico a firmar.</code></p>
+      <div class="callout note">
+        <span class="label">Mensajes informativos al firmar un documento de comercio exterior</span>
+        <p>Cuando la firma se aplica sobre un XML detectado como COD o DJO (nunca en un XML estándar), el firmador informa por consola, antes del mensaje de éxito: <em>"El XML a firmar es un Certificado de Origen Digital de ALADI (sin verificación de contenido)."</em> o <em>"El XML a firmar es una Declaración Jurada de Origen (sin verificación de contenido)."</em>, seguido de <em>"Elemento firmado: &lt;elemento&gt;"</em>. La aclaración "sin verificación de contenido" es intencional: S-FiDE no valida si el documento está completo o corresponde a la etapa operativa correcta (secciones 10.2/10.3) — eso es responsabilidad del sistema externo que orquesta la firma.</p>
+      </div>
+
       <h3>10.6 — Sensibilidad a mayúsculas/minúsculas</h3>
       <p>El nombre del elemento a firmar es sensible a mayúsculas y minúsculas. Para Certificados de Origen Digitales y Declaraciones Juradas de Origen, usar siempre los identificadores en mayúsculas: <code>COD</code>, <code>CODEH</code>, <code>DJO</code>, <code>DJOEH</code>.</p>
     </section>
@@ -1128,7 +1136,7 @@ exit $RESULT</code></pre>
         <li>Dos módulos nuevos: <code>XMLSignerWindowsCSP</code> y <code>PDFSignerWindowsCSP</code>.</li>
         <li>Actualización de dependencias criptográficas por alertas de seguridad.</li>
         <li>Corrección de dos errores hallados en QA con hardware real (SafeNet 5110+ L3).</li>
-        <li><strong>Especialización ALADI/MERCOSUR completada (sección 10):</strong> corregido un error real — la revocación de la firma sobre <code>CODEH</code> usaba <code>ExporterCountry</code> en vez de <code>EHCountry</code> para convertir a UTC; agregado soporte de extracción de fecha para <code>DJO</code>/<code>DJOEH</code> (literal como UTC, sin conversión de huso horario); verificado contra archivos DJO reales en sus 4 etapas; agregadas dos reglas de firma obligatorias (nunca firmar un elemento ya firmado, nunca firmar CODEH/DJOEH sin firma previa en COD/DJO); mensajes de revocación de <code>XMLVerifySignatures</code> aclarados para explicar por qué un certificado revocado invalida la firma; <code>XMLVerifyXSDStructure</code> ahora reintenta contra un dominio espejo (<code>cod.certificadoorigen.com.ar</code>) cuando el dominio oficial de ALADI (<code>codaladi.org</code>) está caído, incluyendo el caso de una redirección HTTP→HTTPS que antes se descargaba como si fuera el XSD.</li>
+        <li><strong>Especialización ALADI/MERCOSUR completada (sección 10):</strong> corregido un error real — la revocación de la firma sobre <code>CODEH</code> usaba <code>ExporterCountry</code> en vez de <code>EHCountry</code> para convertir a UTC; agregado soporte de extracción de fecha para <code>DJO</code>/<code>DJOEH</code> (literal como UTC, sin conversión de huso horario); verificado contra archivos DJO reales en sus 4 etapas; agregadas dos reglas de firma obligatorias (nunca firmar un elemento ya firmado, nunca firmar CODEH/DJOEH sin firma previa en COD/DJO); mensajes de revocación de <code>XMLVerifySignatures</code> aclarados para explicar por qué un certificado revocado invalida la firma; <code>XMLVerifyXSDStructure</code> ahora reintenta contra un dominio espejo (<code>cod.certificadoorigen.com.ar</code>) cuando el dominio oficial de ALADI (<code>codaladi.org</code>) está caído, incluyendo el caso de una redirección HTTP→HTTPS que antes se descargaba como si fuera el XSD; los tres firmadores XML ahora prohíben firmar el documento completo (elemento vacío) cuando detectan un XML de comercio exterior (contiene <code>COD</code> o <code>DJO</code>), e informan en consola de qué tipo de documento se trata y qué elemento se firmó.</li>
         <li><strong>Auditoría de código y corrección de inconsistencias entre módulos hermanos:</strong> se eliminó un stack trace expuesto en <code>XMLVerifySignatures</code>; <code>PDFSignerPKCS12</code> ahora acopla siempre certificación DocMDP + cifrado al bloquear (antes solo con firma visible); <code>PDFSignerWindowsCSP</code> ahora valida firmas preexistentes y rechaza PDFs ya encriptados; se unificó el vocabulario de comandos especiales en los 12 módulos CLI; se corrigieron afirmaciones de documentación no respaldadas por el código (versión de PKCS#11/12, XAdES, XML Schema 1.1, timeouts de OCSP/CRL).</li>
         <li>Validado de punta a punta con SafeNet 5110+ L3 real y con PKCS#12 — pendiente ePass2003 y mToken CryptoID.</li>
       </ul>

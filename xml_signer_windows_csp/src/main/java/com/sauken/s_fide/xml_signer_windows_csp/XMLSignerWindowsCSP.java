@@ -283,7 +283,19 @@ public class XMLSignerWindowsCSP {
                 throw new IllegalArgumentException("El elemento o párrafo XML especificado no existe en el documento XML.");
             }
 
+            String comexType = detectForeignTradeDocumentType(doc);
+            if (comexType != null && uri.isEmpty()) {
+                throw new IllegalArgumentException("Este XML corresponde a un documento de comercio exterior ("
+                        + comexTypeExceptionPhrase(comexType) + "). No se permite firmar el documento completo: "
+                        + "debe indicarse un elemento específico a firmar.");
+            }
+
             validateSignatureRules(doc, uri);
+
+            if (comexType != null) {
+                outputStream.println(comexTypeInfoMessage(comexType));
+                outputStream.println("Elemento firmado: " + uri);
+            }
 
             applySignature(doc, uri, privateKey, cert);
             saveSignedDocument(doc, xmlFile, xmlDeclaration);
@@ -366,6 +378,39 @@ public class XMLSignerWindowsCSP {
             throw new IllegalArgumentException(
                     "No se puede firmar el elemento DJOEH: no existe una firma digital previa sobre el elemento DJO.");
         }
+    }
+
+    private static String detectForeignTradeDocumentType(Document doc) {
+        if (elementExistsWithId(doc, "COD")) {
+            return "COD";
+        }
+        if (elementExistsWithId(doc, "DJO")) {
+            return "DJO";
+        }
+        return null;
+    }
+
+    private static boolean elementExistsWithId(Document doc, String id) {
+        try {
+            XPathFactory xPathfactory = XPathFactory.newInstance();
+            XPath xpath = xPathfactory.newXPath();
+            XPathExpression expr = xpath.compile(
+                    String.format("//*[@Id='%s' or @id='%s' or @ID='%s']", id, id, id));
+            NodeList nl = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+            return nl.getLength() > 0;
+        } catch (XPathExpressionException e) {
+            return false;
+        }
+    }
+
+    private static String comexTypeExceptionPhrase(String comexType) {
+        return "COD".equals(comexType) ? "un Certificado de Origen Digital" : "una Declaración Jurada de Origen";
+    }
+
+    private static String comexTypeInfoMessage(String comexType) {
+        return "COD".equals(comexType)
+                ? "El XML a firmar es un Certificado de Origen Digital de ALADI (sin verificación de contenido)."
+                : "El XML a firmar es una Declaración Jurada de Origen (sin verificación de contenido).";
     }
 
     private static void applySignature(Document doc, String uri, PrivateKey privateKey, X509Certificate cert)

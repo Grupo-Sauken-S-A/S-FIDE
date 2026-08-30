@@ -412,7 +412,7 @@ java -jar XMLSignerPKCS11.jar [-version | -ayuda | -licencia | -listar-drivers]
 
 **Salida:** archivo `<nombre>-signed.xml` en el mismo directorio que el original; mensaje de confirmación con la ruta de salida por `stdout`.
 
-**Mensajes de error posibles:** "El archivo de la biblioteca PKCS#11 no existe", "El archivo XML no existe", "El elemento o párrafo XML especificado no existe en el documento XML", "Contraseña incorrecta", "Proveedor SunPKCS11 no disponible", "No se encontró el elemento XML con identificador [...]", "El token no admite ningún mecanismo de firma RSA-SHA256 compatible (ni interno ni externo)" (caso extremo, token no soportado), más las [reglas de firma comunes](#reglas-de-firma-comunes-a-los-tres-firmadores-xml) (elemento ya firmado, orden CODEH/DJOEH).
+**Mensajes de error posibles:** "El archivo de la biblioteca PKCS#11 no existe", "El archivo XML no existe", "El elemento o párrafo XML especificado no existe en el documento XML", "Contraseña incorrecta", "Proveedor SunPKCS11 no disponible", "No se encontró el elemento XML con identificador [...]", "El token no admite ningún mecanismo de firma RSA-SHA256 compatible (ni interno ni externo)" (caso extremo, token no soportado), más las [reglas de firma comunes](#reglas-de-firma-comunes-a-los-tres-firmadores-xml) (elemento ya firmado, orden CODEH/DJOEH, obligatoriedad de indicar elemento en XML de comercio exterior — [sección 10.5](#105-reglas-de-firma-obligatorias)).
 
 **Advertencia de seguridad:** un número elevado de intentos fallidos de contraseña puede dejar inutilizado el certificado del token, exigiendo tramitar uno nuevo ante la autoridad certificante.
 
@@ -446,7 +446,7 @@ No aplica `-listar-drivers` (no hay driver involucrado con archivos PKCS#12).
 
 **Salida:** igual que `XMLSignerPKCS11` — archivo `-signed.xml`.
 
-**Mensajes de error posibles:** "El archivo PKCS#12 no existe", "El archivo XML no existe", "El archivo no es un PKCS#12 válido o la contraseña es incorrecta", "El archivo PKCS#12 no contiene ningún certificado", "El elemento o párrafo XML especificado no existe en el documento XML", "No se encontró el elemento XML con identificador [...]", más las [reglas de firma comunes](#reglas-de-firma-comunes-a-los-tres-firmadores-xml) (elemento ya firmado, orden CODEH/DJOEH).
+**Mensajes de error posibles:** "El archivo PKCS#12 no existe", "El archivo XML no existe", "El archivo no es un PKCS#12 válido o la contraseña es incorrecta", "El archivo PKCS#12 no contiene ningún certificado", "El elemento o párrafo XML especificado no existe en el documento XML", "No se encontró el elemento XML con identificador [...]", más las [reglas de firma comunes](#reglas-de-firma-comunes-a-los-tres-firmadores-xml) (elemento ya firmado, orden CODEH/DJOEH, obligatoriedad de indicar elemento en XML de comercio exterior — [sección 10.5](#105-reglas-de-firma-obligatorias)).
 
 **Ejemplo:**
 ```
@@ -680,7 +680,7 @@ java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certi
 
 **A diferencia de los módulos PKCS#11, no se pasa contraseña** — el acceso a la clave lo administra Windows (puede aparecer un diálogo nativo del sistema pidiendo el PIN).
 
-**Mensajes de error posibles:** "Este módulo solo funciona en Windows [...]" (al ejecutarlo en otro SO), "No se encontró ningún certificado con clave privada que coincida con '[texto]'", "'[texto]' coincide con N certificados distintos. Sea más específico [...]", "El proveedor SunMSCAPI no está disponible en este JDK", más las [reglas de firma comunes](#reglas-de-firma-comunes-a-los-tres-firmadores-xml) (elemento ya firmado, orden CODEH/DJOEH).
+**Mensajes de error posibles:** "Este módulo solo funciona en Windows [...]" (al ejecutarlo en otro SO), "No se encontró ningún certificado con clave privada que coincida con '[texto]'", "'[texto]' coincide con N certificados distintos. Sea más específico [...]", "El proveedor SunMSCAPI no está disponible en este JDK", más las [reglas de firma comunes](#reglas-de-firma-comunes-a-los-tres-firmadores-xml) (elemento ya firmado, orden CODEH/DJOEH, obligatoriedad de indicar elemento en XML de comercio exterior — [sección 10.5](#105-reglas-de-firma-obligatorias)).
 
 **Ejemplo:**
 ```
@@ -836,6 +836,14 @@ Ambas verificaciones son de **existencia**, no de validez criptográfica complet
 - `"No se puede firmar el elemento CODEH: no existe una firma digital previa sobre el elemento COD."`
 - `"No se puede firmar el elemento DJOEH: no existe una firma digital previa sobre el elemento DJO."`
 
+**Regla adicional — no se permite firmar el documento completo.** Los tres firmadores XML detectan automáticamente si el XML es un documento de comercio exterior: basta con que exista, en cualquier parte del documento, un elemento con `Id`/`id`/`ID` igual a `COD` o a `DJO` (no hace falta que sea justo el elemento que se está por firmar). Si se detecta esta condición y el elemento a firmar indicado es la cadena vacía `""` (equivalente a firmar todo el documento), la operación se rechaza — en un XML de comercio exterior siempre hay que indicar explícitamente qué elemento firmar (`COD`, `CODEH`, `DJO` o `DJOEH`, según corresponda a la etapa). Esta regla se suma a las anteriores, no las reemplaza.
+
+**Mensaje de error:** `"Este XML corresponde a un documento de comercio exterior (un Certificado de Origen Digital / una Declaración Jurada de Origen). No se permite firmar el documento completo: debe indicarse un elemento específico a firmar."`
+
+**Mensajes informativos al firmar un documento de comercio exterior.** Cuando la firma se aplica sobre un XML detectado como COD o DJO (nunca en un XML estándar, que no genera ningún mensaje de este tipo), el firmador informa por consola, antes del mensaje de éxito habitual:
+- `"El XML a firmar es un Certificado de Origen Digital de ALADI (sin verificación de contenido)."` o `"El XML a firmar es una Declaración Jurada de Origen (sin verificación de contenido)."` — la aclaración "sin verificación de contenido" es intencional: S-FiDE no valida si el documento está completo o corresponde a la etapa operativa correcta (ver [sección 10.2](#102-estructura-real-de-un-codcodeh)/[10.3](#103-estructura-real-de-un-djodjoeh)) — eso es responsabilidad del sistema externo que orquesta la firma.
+- `"Elemento firmado: " + <elemento>` — confirma exactamente qué elemento (`COD`, `CODEH`, `DJO` o `DJOEH`) recibió la firma en esa invocación.
+
 ### 10.6 Sensibilidad a mayúsculas/minúsculas
 
 El nombre del elemento a firmar es sensible a mayúsculas y minúsculas. Para Certificados de Origen Digitales y Declaraciones Juradas de Origen, usar siempre los identificadores en mayúsculas (`COD`, `CODEH`, `DJO`, `DJOEH`) tal como los reconoce esta especialización.
@@ -939,6 +947,7 @@ El script `install.bat` (incluido en el repositorio) automatiza la generación d
   - Se agregaron dos reglas de firma obligatorias a los tres firmadores XML: nunca firmar un elemento que ya tiene una firma digital aplicada (regla genérica, cualquier XML), y nunca firmar `CODEH`/`DJOEH` sin una firma previa sobre `COD`/`DJO` respectivamente — ver [sección 10.5](#105-reglas-de-firma-obligatorias).
   - Se revisaron y aclararon los mensajes de `XMLVerifySignatures` en torno a la revocación: el estado de integridad criptográfica ahora se etiqueta explícitamente como previo a la revocación, se agregó un "Estado final de la firma" por firma que sí combina ambos criterios, y un certificado revocado ahora explica en texto plano por qué invalida la firma.
   - `XMLVerifyXSDStructure` ahora reintenta automáticamente contra un dominio espejo (`cod.certificadoorigen.com.ar`) cuando el esquema referenciado es del dominio oficial de ALADI (`codaladi.org`, habitualmente inoperativo) y la descarga falla — incluyendo el caso de una redirección HTTP→HTTPS entre protocolos que Java no sigue automáticamente y que antes se descargaba como si fuera el XSD (produciendo un error de parseo confuso en vez de reintentar). Ver [sección 9.7](#97-xmlverifyxsdstructure).
+  - Los tres firmadores XML ahora prohíben firmar el documento completo (elemento vacío `""`) cuando detectan un XML de comercio exterior (contiene un elemento `COD` o `DJO`) — debe indicarse explícitamente qué elemento firmar. Al firmar sobre uno de estos documentos, se informa además en consola de qué tipo de documento se trata ("sin verificación de contenido") y qué elemento recibió la firma. Ver [sección 10.5](#105-reglas-de-firma-obligatorias).
 - **Validado de punta a punta** con token SafeNet real y con PKCS#12 — pendiente de validación con ePass2003 y mToken CryptoID.
 
 ### v1.0.0 (2024-12) — primer release estable
