@@ -3,7 +3,7 @@
 [![Licencia: GPL v2 o posterior](https://img.shields.io/badge/Licencia-GPLv2%20o%20posterior-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-23-orange.svg)](https://openjdk.org/)
 
-Suite de programas Java independientes, de Grupo Sauken S.A., para firmar y verificar firmas digitales en documentos XML y PDF, y para extraer/inspeccionar certificados digitales desde tokens criptográficos (PKCS#11), archivos PKCS#12 o el almacén de certificados de Windows. Incluye una interfaz gráfica JavaFX opcional (`s_fide_gui`) que orquesta esos mismos programas.
+Suite de programas Java independientes, de Grupo Sauken S.A., para firmar y verificar firmas digitales en documentos XML y PDF en Argentina, y para extraer/inspeccionar certificados digitales desde tokens criptográficos (PKCS#11), archivos PKCS#12 o el almacén de certificados de Windows. Trabaja con certificados de firma digital emitidos bajo la Ley 25.506 de Firma Digital argentina —la misma normativa detrás de los certificados de la Autoridad Certificante de la ONTI (AC-ONTI) y de trámites ante organismos como AFIP/ARCA— y con la especialización de comercio exterior ALADI/MERCOSUR. Incluye una interfaz gráfica JavaFX opcional (`s_fide_gui`) que orquesta esos mismos programas.
 
 ## Filosofía
 
@@ -49,7 +49,7 @@ Cada uno de los 13 módulos genera su jar en su propia carpeta `target/`.
 
 ## Documentación
 
-- **[Manual Técnico de Integración](doc/manual-tecnico-integracion.md)** — referencia completa: arquitectura, cada módulo con sus parámetros y mensajes de error, mecanismos de firma (PKCS#11/PKCS#12/Windows CSP-KSP), validación de revocación OCSP/CRL, especialización ALADI/MERCOSUR, y guía de migración desde 1.0.0.
+- **[Manual Técnico de Integración](doc/manual-tecnico-integracion.md)** ([versión publicada](https://grupo-sauken-s-a.github.io/S-FIDE/manual-tecnico-integracion.html)) — referencia completa: arquitectura, cada módulo con sus parámetros y mensajes de error, mecanismos de firma (PKCS#11/PKCS#12/Windows CSP-KSP), validación de revocación OCSP/CRL, especialización ALADI/MERCOSUR, y guía de migración desde 1.0.0.
 - **[Leeme.txt](Leeme.txt)** — guía rápida para el usuario final de una distribución ya compilada.
 - **[CHANGELOG.md](CHANGELOG.md)** — historial de versiones.
 

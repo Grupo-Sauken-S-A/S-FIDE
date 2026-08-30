@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>S-FiDE — Sistema de Firma Digital Extendido</title>
+<meta name="description" content="S-FiDE es una suite Java de código abierto para firmar y verificar digitalmente documentos XML y PDF en Argentina: tokens PKCS#11, certificados PKCS#12, almacén de Windows, y especialización de comercio exterior ALADI/MERCOSUR.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #eef1f6;
+    --surface: #ffffff;
+    --ink: #16233a;
+    --muted: #52607a;
+    --faint: #8493ac;
+    --line: #d6dce6;
+    --accent: #24487d;
+    --accent-strong: #14335e;
+    --accent-soft: #dde6f3;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.6;
+  }
+
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 4.5rem 1.5rem 5rem;
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+  }
+
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(2rem, 5vw, 2.75rem);
+    font-weight: 600;
+    line-height: 1.15;
+    margin: 0 0 1rem;
+    color: var(--accent-strong);
+  }
+
+  .lead {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 60ch;
+  }
+
+  .cards {
+    display: grid;
+    gap: 1rem;
+    margin: 2.5rem 0;
+  }
+
+  a.card {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+
+  a.card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  a.card .card-title {
+    font-weight: 600;
+    color: var(--accent-strong);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  a.card .card-desc {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-top: 0.35rem;
+  }
+
+  .arrow { opacity: 0.5; }
+
+  ul.modules {
+    columns: 2;
+    column-gap: 2rem;
+    padding: 0;
+    margin: 0.5rem 0 0;
+    list-style: none;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  ul.modules li { break-inside: avoid; padding: 0.15rem 0; }
+
+  footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.85rem;
+    color: var(--faint);
+  }
+
+  footer a { color: var(--accent); }
+
+  @media (max-width: 480px) {
+    ul.modules { columns: 1; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <span class="tag">Software libre · GPLv2 o posterior</span>
+  <h1>S-FiDE<br>Sistema de Firma Digital Extendido</h1>
+  <p class="lead">
+    Suite Java de código abierto, de Grupo Sauken S.A., para firmar y verificar
+    digitalmente documentos XML y PDF en Argentina bajo la Ley 25.506 de Firma
+    Digital — con tokens criptográficos PKCS#11, certificados PKCS#12, el
+    almacén de certificados de Windows, y especialización completa de comercio
+    exterior ALADI/MERCOSUR (Certificado de Origen Digital y Declaración
+    Jurada de Origen).
+  </p>
+
+  <div class="cards">
+    <a class="card" href="manual-tecnico-integracion.html">
+      <div class="card-title">Manual Técnico de Integración <span class="arrow">→</span></div>
+      <div class="card-desc">Arquitectura, cada módulo con sus parámetros y errores, mecanismos de firma (PKCS#11/PKCS#12/Windows CSP-KSP), validación de revocación OCSP/CRL, especialización ALADI/MERCOSUR y guía de migración.</div>
+    </a>
+    <a class="card" href="https://github.com/Grupo-Sauken-S-A/S-FIDE">
+      <div class="card-title">Código fuente en GitHub <span class="arrow">→</span></div>
+      <div class="card-desc">Repositorio completo, releases con distribución lista para usar (Windows/Linux), y CHANGELOG detallado de cada versión.</div>
+    </a>
+  </div>
+
+  <p style="color: var(--muted); font-size: 0.95rem;">Trece módulos independientes, cada uno invocable por línea de comandos como proceso propio, sin librerías para integrar:</p>
+  <ul class="modules">
+    <li>token_slots_view</li>
+    <li>token_certificate_extractor</li>
+    <li>pkcs12_certificate_extractor</li>
+    <li>xml_signer_pkcs11</li>
+    <li>xml_signer_pkcs12</li>
+    <li>xml_signer_windows_csp</li>
+    <li>xml_verify_signatures</li>
+    <li>xml_verify_xsd_structure</li>
+    <li>pdf_signer_pkcs11</li>
+    <li>pdf_signer_pkcs12</li>
+    <li>pdf_signer_windows_csp</li>
+    <li>pdf_verify_signatures</li>
+    <li>s_fide_gui</li>
+  </ul>
+
+  <footer>
+    Grupo Sauken S.A. — Córdoba, Argentina · <a href="https://www.sauken.com.ar/">www.sauken.com.ar</a><br>
+    Distribuido bajo la Licencia Pública General GNU (GPL), versión 2 o cualquier versión posterior.
+  </footer>
+</main>
+</body>
+</html>

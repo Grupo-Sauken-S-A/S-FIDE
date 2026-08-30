@@ -1,10 +1,10 @@
-S-FiDE (Sistema de Firma Digital Extendido) se distribuye bajo esta Licencia
-Pública General GNU, versión 2, o -a elección de quien la use- cualquier
-versión posterior publicada por la Free Software Foundation.
-
+S-FiDE (Sistema de Firma Digital Extendido)
 Copyright (C) 2024 Juan Carlos Ríos y Juan Ignacio Ríos, Grupo Sauken S.A.
 
---------------------------------------------------------------------------
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 2, June 1991
@@ -344,3 +344,10 @@ proprietary programs.  If your program is a subroutine library, you may
 consider it more useful to permit linking proprietary applications with the
 library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.
+
+--------------------------------------------------------------------------
+
+Nota en español (aclaratoria, sin agregar ni quitar nada al texto legal
+anterior en inglés, que es el que rige): S-FiDE se distribuye bajo esta
+Licencia Pública General GNU, versión 2, o -a elección de quien la use-
+cualquier versión posterior publicada por la Free Software Foundation.
