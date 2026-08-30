@@ -1185,8 +1185,8 @@ exit $RESULT</code></pre>
         </table>
       </div>
       <div class="callout note">
-        <span class="label">Dos cosas que no cambiaron</span>
-        <p><strong>Los nombres de los jars</strong> siguen siendo los mismos, sin versión (sección 12). <strong>Los flags que ya usabas siguen funcionando igual</strong> — la unificación de vocabulario (sección 9) fue puramente aditiva: se agregaron alias nuevos, ninguno de 1.0.0 se quitó ni cambió de significado.</p>
+        <span class="label">Tres cosas que no cambiaron — verificado con git diff completo contra el tag v1.0.0</span>
+        <p><strong>Los nombres de los jars</strong> siguen siendo los mismos, sin versión (sección 12). <strong>Ningún flag funcional cambió de nombre ni de forma</strong> — se revisó específicamente <code>-i</code>/<code>--input</code>, <code>-l</code>/<code>--library</code>, <code>-p</code>/<code>--password</code>, <code>-s</code>/<code>--slot</code>, <code>-k</code>/<code>--lock</code>, <code>-x</code>/<code>--xpos</code>, <code>-y</code>/<code>--ypos</code>, <code>-t</code>/<code>--text</code>, <code>-c</code>/<code>--certificate</code> y <code>-simple</code>: ninguno aparece tocado desde v1.0.0. Tampoco cambió el orden ni la cantidad de argumentos posicionales en los módulos sin flags con nombre (<code>XMLSignerPKCS11</code>, <code>XMLSignerPKCS12</code>, <code>TokenSlotsView</code>, <code>TokenCertificateExtractor</code>, <code>PKCS12CertificateExtractor</code>). <strong>Los comandos especiales que ya usabas siguen funcionando igual</strong> — la unificación de vocabulario (sección 9) fue puramente aditiva: se agregaron alias nuevos, ninguno de 1.0.0 se quitó ni cambió de significado.</p>
       </div>
     </section>
 
