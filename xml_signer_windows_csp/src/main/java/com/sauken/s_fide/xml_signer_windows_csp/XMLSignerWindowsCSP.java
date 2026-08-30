@@ -95,7 +95,7 @@ import org.xml.sax.InputSource;
  * legado o KSP/CNG moderno con puente CSP). Solo funciona en Windows.
  */
 public class XMLSignerWindowsCSP {
-    private static final String VERSION = "S-FIDE XMLSignerWindowsCSP v1.1.0-beta.1 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE XMLSignerWindowsCSP v1.1.0 - Grupo Sauken S.A.";
     private static PrintStream outputStream;
     private static PrintStream errorStream;
 

@@ -72,7 +72,7 @@ import java.util.logging.Logger;
 public class PDFSignerPKCS11 {
     private static final Logger logger = Logger.getLogger(PDFSignerPKCS11.class.getName());
     private static final String OUTPUT_SUFFIX = "-signed";
-    private static final String VERSION = "S-FIDE PDFSignerPKCS11 v1.1.0-beta.1 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE PDFSignerPKCS11 v1.1.0 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT = readResourceFile("/LICENSE.txt");
     private static final String HELP_TEXT = readResourceFile("/HELP.txt");
     private static PrintStream errorStream;
@@ -330,8 +330,8 @@ public class PDFSignerPKCS11 {
 
     private static Provider configurePKCS11Provider(String libraryPath, int slotNumber) {
         String config = String.format(
-                "--name=PDFSignerProvider\nlibrary=%s\nslot=%d",
-                libraryPath.replace("\\", "\\\\"),
+                "--name=PDFSignerProvider\nlibrary=%s\nslotListIndex=%d",
+                sanitizeLibraryPathForPkcs11Config(libraryPath),
                 slotNumber);
 
         Provider provider = Security.getProvider("SunPKCS11");
@@ -339,6 +339,17 @@ public class PDFSignerPKCS11 {
             throw new IllegalArgumentException("Error: Proveedor SunPKCS11 no disponible");
         }
         return provider.configure(config);
+    }
+
+    /**
+     * El parser de configuración de SunPKCS11 trata la barra invertida como
+     * carácter de escape, por lo que una ruta de Windows sin convertir (aun
+     * entre comillas) falla al configurar el proveedor. Se reemplaza "\" por
+     * "/" (aceptado igual por el cargador nativo de la biblioteca) y se
+     * encierra el valor entre comillas para tolerar espacios en el path.
+     */
+    private static String sanitizeLibraryPathForPkcs11Config(String path) {
+        return "\"" + path.replace('\\', '/') + "\"";
     }
 
     private static KeyStore loadKeyStore(String password) throws GeneralSecurityException {

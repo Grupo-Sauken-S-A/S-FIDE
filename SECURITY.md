@@ -6,7 +6,7 @@ S-FiDE es software de firma digital y verificación de firmas: un problema de se
 
 | Versión | Soportada |
 |---|---|
-| 1.1.x (en desarrollo/beta) | ✅ |
+| 1.1.x | ✅ |
 | 1.0.x | ⚠️ Solo correcciones críticas de seguridad |
 | Anteriores a 1.0.0 | ❌ |
 

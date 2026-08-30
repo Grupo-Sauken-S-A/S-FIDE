@@ -409,8 +409,8 @@
       <h1>Manual de Integración S-FiDE</h1>
       <p>Sistema de Firma Digital Extendido — todo lo que un integrador necesita: qué hace cada programa, cómo invocarlo, los tres mecanismos de firma disponibles y cuándo usar cada uno, la especialización de comercio exterior ALADI/MERCOSUR, y las especificaciones completas del producto.</p>
       <div class="meta">
-        <span>Versión del producto: <strong>1.1.0-beta.1</strong></span>
-        <span>Documento: <strong>29/08/2026</strong></span>
+        <span>Versión del producto: <strong>1.1.0</strong></span>
+        <span>Documento: <strong>30/08/2026</strong></span>
         <span>Licencia: <strong>GNU GPL v2+</strong></span>
       </div>
     </div>
@@ -420,7 +420,7 @@
       <h2>Introducción y filosofía</h2>
       <div class="callout note">
         <span class="label">¿Ya integraste S-FiDE 1.0.0?</span>
-        <p>Casi todo lo agregado en 1.1.0-beta.1 es aditivo y no requiere ningún cambio de tu lado — pero hay un puñado de casos puntuales donde cambió el comportamiento de un jar que ya usabas. Antes de actualizar, revisá la <a href="#migracion-100">Guía de migración desde 1.0.0</a> al final de la sección 13.</p>
+        <p>Casi todo lo agregado en 1.1.0 es aditivo y no requiere ningún cambio de tu lado — pero hay un puñado de casos puntuales donde cambió el comportamiento de un jar que ya usabas. Antes de actualizar, revisá la <a href="#migracion-100">Guía de migración desde 1.0.0</a> al final de la sección 13.</p>
       </div>
       <p>S-FiDE (<strong>Si</strong>stema de <strong>F</strong>irma D<strong>i</strong>gital Extendido) es una suite de programas Java independientes para firmar y verificar firmas digitales en documentos XML y PDF, y para extraer o inspeccionar certificados digitales desde tokens criptográficos (PKCS#11), archivos PKCS#12 o el almacén de certificados de Windows.</p>
       <p>El diseño responde a un principio central: <strong>cada capacidad es un programa independiente</strong>, invocable por línea de comandos, que cualquier aplicación externa puede ejecutar como proceso hijo sin integrar ninguna librería Java. No existe una "librería S-FiDE" para enlazar — se distribuye como un conjunto de archivos <code>.jar</code> ejecutables, más una interfaz gráfica opcional que orquesta esos mismos programas.</p>
@@ -432,7 +432,7 @@
         <li><strong>UTF-8 de punta a punta</strong>, en cualquier sistema operativo.</li>
         <li><strong>Multiplataforma</strong> — Windows, Linux y macOS, salvo los dos módulos de almacén de Windows (exclusivos de ese sistema por diseño).</li>
         <li><strong>La GUI no es un atajo privilegiado.</strong> Invoca exactamente los mismos <code>.jar</code> con los mismos argumentos que usaría un integrador externo.</li>
-        <li><strong>Vocabulario de comandos especiales unificado.</strong> Todos los módulos aceptan las mismas familias de alias: <code>-version</code>/<code>-v</code>/<code>--version</code>, <code>-ayuda</code>/<code>-h</code>/<code>--help</code>, <code>-licencia</code>/<code>--license</code>. Unificado en 1.1.0-beta.1 — ver sección 13.</li>
+        <li><strong>Vocabulario de comandos especiales unificado.</strong> Todos los módulos aceptan las mismas familias de alias: <code>-version</code>/<code>-v</code>/<code>--version</code>, <code>-ayuda</code>/<code>-h</code>/<code>--help</code>, <code>-licencia</code>/<code>--license</code>. Unificado en 1.1.0 — ver sección 13.</li>
       </ul>
     </section>
 
@@ -506,7 +506,7 @@
       <ul>
         <li>Repositorio: <a href="https://github.com/Grupo-Sauken-S-A/S-FIDE">github.com/Grupo-Sauken-S-A/S-FIDE</a></li>
         <li>Proyecto Maven multi-módulo (13 módulos), un <code>pom.xml</code> raíz agregador.</li>
-        <li>Versionado <a href="https://semver.org/">SemVer</a>. Tags publicados: <code>v1.0.0</code>, <code>v1.1.0-beta.1</code> (actual).</li>
+        <li>Versionado <a href="https://semver.org/">SemVer</a>. Tags publicados: <code>v1.0.0</code>, <code>v1.1.0</code> (actual).</li>
       </ul>
       <p>Compilar desde el código fuente:</p>
       <pre><code>git clone https://github.com/Grupo-Sauken-S-A/S-FIDE.git
@@ -561,18 +561,26 @@ cd S-FIDE
       <p>Un token firma RSA-SHA256 mediante un "mecanismo" (<code>CK_MECHANISM</code>). Existen dos posibles:</p>
       <ul>
         <li><strong><code>CKM_SHA256_RSA_PKCS</code></strong> (combinado): el token calcula el hash internamente. Un solo llamado. Los tokens SafeNet/Thales lo soportan.</li>
-        <li><strong><code>CKM_RSA_PKCS</code></strong> (puro): el token solo aplica padding PKCS#1 v1.5 y la operación RSA — el hash SHA-256 debe calcularlo la aplicación antes, envuelto en una estructura ASN.1 <code>DigestInfo</code>. El Feitian ePass2003 en modo FIPS 140-2 Nivel 3 solo expone este mecanismo.</li>
+        <li><strong><code>CKM_RSA_PKCS</code></strong> (puro): el token solo aplica padding PKCS#1 v1.5 y la operación RSA — el hash SHA-256 debe calcularlo la aplicación antes, envuelto en una estructura ASN.1 <code>DigestInfo</code>. En teoría, tokens en modo FIPS 140-2 Nivel 3 como el Feitian ePass2003 solo exponen este mecanismo a bajo nivel.</li>
       </ul>
       <p>Desde 1.1.0, <code>XMLSignerPKCS11</code> y <code>PDFSignerPKCS11</code> prueban el mecanismo combinado primero y, si el token lo rechaza, calculan el hash por software y reintentan — de forma transparente. No hay ningún parámetro para elegir el mecanismo.</p>
+      <div class="callout note">
+        <span class="label">Hallazgo con hardware real (2026-08-30)</span>
+        <p>Contra un Feitian ePass2003 físico, el primer intento (<code>Signature.getInstance("SHA256withRSA", provider)</code>) nunca falló — el fallback externo de S-FiDE nunca se activó. Esto no contradice necesariamente que el token exponga solo <code>CKM_RSA_PKCS</code> a nivel de hardware: el propio <code>SunPKCS11</code> del JDK puede componer el mecanismo combinado de forma transparente sobre <code>CKM_RSA_PKCS</code>, sin que sea visible desde afuera. Para efectos prácticos — qué camino de código se ejecuta al firmar con S-FiDE — el resultado observado es el mismo que un mecanismo interno nativo, por lo que se documenta como tal en la sección 8. El fallback externo sigue existiendo en el código para el token o middleware que sí lo necesite.</p>
+      </div>
 
       <h3>7.2 — PKCS#12 (archivos de certificado)</h3>
       <p><strong>PKCS#12</strong> es un formato de contenedor de archivo (<code>.p12</code>/<code>.pfx</code>) que empaqueta, cifrado con contraseña, un certificado X.509 junto a su clave privada — sin hardware involucrado.</p>
       <p><strong>Ventajas:</strong> simple, sin drivers, igual en cualquier SO. <strong>Desventajas:</strong> la clave es un archivo copiable — la seguridad depende de proteger ese archivo y su contraseña; no aceptable para trámites que exigen hardware homologado FIPS 140-2.</p>
 
       <h3>7.3 — Windows CSP/KSP (almacén de certificados de Windows)</h3>
-      <p>En Windows existe un mecanismo nativo: CryptoAPI (CAPI, legado) y su sucesor CNG, vía <strong>CSP</strong> o <strong>KSP</strong> respectivamente. Los fabricantes de tokens suelen instalar, además de PKCS#11, un minidriver CSP/KSP certificado por Microsoft — el certificado aparece solo en el Administrador de certificados de Windows.</p>
-      <p>Este es el mecanismo que usa <strong>Adobe Acrobat/Reader por defecto en Windows</strong> — por eso un token "funciona solo" en Acrobat sin configurar PKCS#11.</p>
-      <p>S-FiDE incorpora esta alternativa vía <code>XMLSignerWindowsCSP</code> y <code>PDFSignerWindowsCSP</code>, usando <code>SunMSCAPI</code> para acceder al almacén <code>Windows-MY</code>. <strong>No se pasa contraseña</strong> — el acceso lo administra Windows.</p>
+      <p><strong>En una frase, para quien no conoce PKCS#11:</strong> en Windows, la forma más simple de firmar con un token es la misma que usa <strong>Adobe Acrobat/Reader por defecto</strong> — sin indicar ninguna ruta de biblioteca de fabricante ni saber la marca/modelo exacto del token. Es lo mismo que ve un usuario al abrir el Administrador de certificados de Windows (<code>certmgr.msc</code>) y encontrar su certificado ya listo para usar: Acrobat, y ahora S-FiDE, lo leen directamente de ese mismo lugar.</p>
+      <div class="callout note">
+        <span class="label">Recomendación práctica</span>
+        <p>Si no conocés con exactitud el nombre de archivo de la biblioteca PKCS#11 de tu token, ni su marca/modelo, <strong>probá primero con CSP/KSP</strong> (<code>XMLSignerWindowsCSP</code>/<code>PDFSignerWindowsCSP</code>, secciones 9.11/9.12) antes de buscar esa información para usar los módulos PKCS#11. Es la ruta con menos pasos de configuración siempre que el certificado ya sea visible en Windows — el caso más común una vez instalado el driver del fabricante.</p>
+      </div>
+      <p><strong>Cómo funciona, en detalle:</strong> además de PKCS#11, Windows ofrece un mecanismo nativo del sistema operativo: CryptoAPI (CAPI, legado) y su sucesor CNG, vía <strong>CSP</strong> o <strong>KSP</strong> respectivamente. Los fabricantes de tokens suelen instalar, además de PKCS#11, un minidriver CSP/KSP certificado por Microsoft — el certificado aparece automáticamente en el almacén de certificados de Windows, sin que ninguna aplicación deba configurar una ruta de biblioteca.</p>
+      <p>S-FiDE incorpora esta alternativa vía <code>XMLSignerWindowsCSP</code> y <code>PDFSignerWindowsCSP</code>, usando <code>SunMSCAPI</code> para acceder al almacén <code>Windows-MY</code>. En vez de una biblioteca <code>.dll</code> y un número de slot, estos dos módulos piden un <strong>alias o fragmento del nombre del titular del certificado</strong> (<code>-listar-certificados</code> muestra qué hay disponible). <strong>No se pasa contraseña</strong> — el acceso lo administra Windows (puede pedir el PIN con un diálogo nativo al momento de firmar), a diferencia de los módulos PKCS#11, donde el PIN se pasa como argumento del programa.</p>
       <div class="callout warn">
         <span class="label">Limitación conocida</span>
         <p><code>SunMSCAPI</code> habla CryptoAPI legado, no CNG moderno directamente — funciona porque Windows tiende un puente CAPI↔KSP automático. La actualización de Windows de octubre 2025 (KB5066835) empuja el ecosistema hacia KSP puro, así que ese puente podría no cubrir todos los tokens en el futuro.</p>
@@ -587,7 +595,7 @@ cd S-FIDE
           <tr><td>Configurar ruta de driver</td><td>Sí</td><td>No aplica</td><td>No</td></tr>
           <tr><td>Contraseña por el programa</td><td>Sí (PIN)</td><td>Sí</td><td>No</td></tr>
           <tr><td>Seguridad típica</td><td>Alta (FIPS 140-2/3)</td><td>Según protección del archivo</td><td>Igual al hardware subyacente</td></tr>
-          <tr><td>Recomendado para</td><td>Uso regulado (AC-ONTI)</td><td>Pruebas, servidor</td><td>Simplicidad sobre portabilidad</td></tr>
+          <tr><td>Recomendado para</td><td>Uso regulado (AC-ONTI)</td><td>Pruebas, servidor</td><td>No conocer marca/modelo del token o el nombre de su biblioteca PKCS#11; simplicidad sobre portabilidad</td></tr>
         </table>
       </div>
 
@@ -637,13 +645,24 @@ cd S-FIDE
         <table>
           <tr><th>Marca / Modelo</th><th>Windows</th><th>Hash</th><th>Estado</th></tr>
           <tr><td>SafeNet/Thales eToken 5110/5110+</td><td><code>eTPKCS11.dll</code></td><td>Interno</td><td>Vigente — recomendado</td></tr>
-          <tr><td>Feitian ePass2003</td><td><code>eps2003csp11.dll</code></td><td>Externo</td><td>Vigente — reemplazo estándar SCBA</td></tr>
-          <tr><td>mToken CryptoID nueva (140-3)</td><td><code>lm_cryptoide_pkcs11.dll</code></td><td>Externo (sin confirmar)</td><td>Válido solo variante 140-3</td></tr>
-          <tr><td>mToken CryptoID vieja (140-2)</td><td><code>CryptoIDA_pkcs11.dll</code></td><td>Externo (sin confirmar)</td><td>Discontinuado</td></tr>
+          <tr><td>Feitian ePass2003</td><td><code>eps2003csp11.dll</code></td><td>Interno (confirmado)</td><td>Vigente — reemplazo estándar SCBA</td></tr>
+          <tr><td>mToken CryptoID nueva (140-3)</td><td><code>lm_cryptoide_pkcs11.dll</code></td><td>Interno (confirmado)</td><td>Válido solo variante 140-3</td></tr>
+          <tr><td>mToken CryptoID vieja (140-2)</td><td><code>cryptoide_pkcs11.dll</code></td><td>Externo (sin confirmar)</td><td>Discontinuado</td></tr>
           <tr><td>Athena IDProtect/ASECard</td><td><code>asepkcs.dll</code></td><td>Desconocido</td><td>Discontinuado, en retiro</td></tr>
           <tr><td>OpenSC (genérico)</td><td><code>opensc-pkcs11.dll</code></td><td>Depende del token</td><td>Driver de respaldo</td></tr>
         </table>
       </div>
+      <h3>Hardware validado end-to-end</h3>
+      <p>Modelos efectivamente probados por Grupo Sauken S.A. contra el dispositivo físico real (no solo software/simulación), cubriendo el ciclo completo firma → verificación:</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Modelo</th><th>Fecha</th><th>Módulos probados</th><th>Resultado</th></tr>
+          <tr><td>SafeNet/Thales eToken 5110+ (Nivel 3)</td><td>2026-08</td><td>Los 9 módulos que tocan certificados (PKCS#11, PKCS#12 y Windows CSP/KSP × XML/PDF × firmar/verificar)</td><td>Correcto en todos los casos</td></tr>
+          <tr><td>mToken CryptoID nueva (Century Longmai/Macroseguridad, FIPS 140-3)</td><td>2026-08</td><td><code>TokenSlotsView</code>, <code>TokenCertificateExtractor</code>, <code>XMLSignerPKCS11</code> + <code>XMLVerifySignatures</code> (integridad y OCSP), <code>PDFSignerPKCS11</code> + <code>PDFVerifySignatures</code> (integridad y OCSP)</td><td>Correcto en todos los casos; hash confirmado como interno</td></tr>
+          <tr><td>Feitian ePass2003 (FIPS 140-2 Nivel 3)</td><td>2026-08</td><td><code>TokenSlotsView</code>, <code>TokenCertificateExtractor</code>, <code>XMLSignerPKCS11</code> + <code>XMLVerifySignatures</code> (integridad y OCSP), <code>PDFSignerPKCS11</code> + <code>PDFVerifySignatures</code> (integridad y OCSP)</td><td>Correcto en todos los casos; el mecanismo combinado funcionó directamente, el fallback externo nunca se activó</td></tr>
+        </table>
+      </div>
+      <div class="callout note"><p>Un modelo que no figura en esta tabla no está descartado — solo no fue probado todavía contra hardware físico por Grupo Sauken S.A. El catálogo de arriba sigue siendo válido como guía general para cualquier token PKCS#11 conforme al estándar, esté o no en esta lista.</p></div>
       <h3>Ayuda de selección de driver</h3>
       <ul>
         <li><strong>GUI:</strong> combo de marca/modelo + botón "Detectar automáticamente" (revisa qué rutas de la tabla existen en el equipo).</li>
@@ -658,7 +677,16 @@ cd S-FIDE
     <section class="chapter" id="s9">
       <span class="chapter-num">09</span>
       <h2>Catálogo de aplicaciones</h2>
-      <p>Convenciones comunes: código de salida <code>0</code> éxito / <code>1</code> error (salvo aclaración); todas leen y escriben en UTF-8; los comandos <code>-version</code>/<code>-v</code>/<code>--version</code>, <code>-ayuda</code>/<code>-h</code>/<code>--help</code> y <code>-licencia</code>/<code>--license</code> son idénticos en los 12 módulos de línea de comandos desde 1.1.0-beta.1.</p>
+      <p>Convenciones comunes: código de salida <code>0</code> éxito / <code>1</code> error (salvo aclaración); todas leen y escriben en UTF-8; los comandos <code>-version</code>/<code>-v</code>/<code>--version</code>, <code>-ayuda</code>/<code>-h</code>/<code>--help</code> y <code>-licencia</code>/<code>--license</code> son idénticos en los 12 módulos de línea de comandos desde 1.1.0.</p>
+
+      <div class="callout note">
+        <span class="label">Qué significa exactamente el "número de slot"</span>
+        <p>Aplica a <code>TokenSlotsView</code>, <code>TokenCertificateExtractor</code>, <code>XMLSignerPKCS11</code> y <code>PDFSignerPKCS11</code>. PKCS#11 tiene dos numeraciones de slot distintas y no intercambiables: el <code>CK_SLOT_ID</code> crudo que asigna el driver del fabricante (opaco, no necesariamente pequeño ni secuencial) y el <code>slotListIndex</code>, la posición del slot dentro de la lista que devuelve la biblioteca, siempre empezando en 0. <strong>S-FiDE usa exclusivamente <code>slotListIndex</code></strong> en los cuatro módulos — es también el criterio que usa por defecto <code>TokenSlotsView</code>. En la mayoría de los tokens (SafeNet) ambas numeraciones coinciden y la distinción pasa inadvertida, pero con middleware que asigna <code>CK_SLOT_ID</code> no secuenciales (confirmado con el mToken CryptoID de Century Longmai/Macroseguridad) el número que muestra <code>TokenSlotsView</code> es el que hay que usar en los otros módulos — no corresponde tomar un "número de slot" de ninguna herramienta del fabricante, que puede estar mostrando el <code>CK_SLOT_ID</code>, un número distinto.</p>
+      </div>
+      <div class="callout note">
+        <span class="label">Rutas de biblioteca con espacios (p. ej. <code>C:\Program Files (x86)\...</code>)</span>
+        <p>Los cuatro módulos las aceptan sin que el integrador deba agregar comillas — la conversión necesaria (barra invertida a barra normal, y encomillado interno antes de pasarla al proveedor SunPKCS11) la hace el propio programa. Manejo uniforme en Windows/Linux/macOS.</p>
+      </div>
 
       <div class="module" id="m1">
         <div class="module-head"><h3>9.1 — TokenSlotsView</h3><span class="module-jar">TokenSlotsView.jar</span></div>
@@ -676,7 +704,7 @@ java -jar TokenSlotsView.jar [-version | -ayuda | -licencia | -listar-drivers]</
         <div class="field-label">Validaciones</div>
         <p>Distingue entradas "Clave Privada" de "Certificado" (<code>KeyStore.isKeyEntry</code>/<code>isCertificateEntry</code>); reporta sujeto, emisor, validez y número de serie de certificados X.509.</p>
         <div class="field-label">Salida</div>
-        <p>Por cada slot con contenido: número de slot, alias, tipo, sujeto, emisor, validez, número de serie.</p>
+        <p>Imprime el <code>slotListIndex</code> usado (siempre 0, es el único slot al que este módulo se conecta) y, por cada alias encontrado dentro de ese slot, su tipo, sujeto, emisor, validez y número de serie. Si hay más de un alias, cada uno se numera como "Entrada" — identifica la entrada dentro del slot, no es un número de slot adicional.</p>
         <div class="field-label">Errores posibles</div>
         <p class="errlist"><code>El archivo de la biblioteca PKCS#11 no existe</code> · <code>El proveedor SunPKCS11 no está disponible</code> · <code>Contraseña incorrecta o error al acceder al token</code> · <code>Error al leer el token</code></p>
         <div class="callout note"><span class="label">Nota sobre exit code</span><p>Ejecutarlo sin argumentos muestra la ayuda y termina con código <code>1</code> — a diferencia de invocar <code>-ayuda</code> explícitamente, que termina en <code>0</code>.</p></div>
@@ -851,10 +879,10 @@ java -jar XMLVerifyXSDStructure.jar C:\docs\certificado-origen.xml C:\xsd\esquem
         <li><strong>Firma visible vs. invisible.</strong> Sin <code>-x</code>/<code>-y</code> (o en <code>0</code>), la firma es igual de válida criptográficamente pero no se dibuja nada. Con coordenadas, se dibuja un recuadro con firmante, fecha y el texto de <code>-t</code> si se indicó.</li>
         <li><strong>Sistema de coordenadas.</strong> PDF usa el estándar PostScript: origen <code>(0,0)</code> en la <strong>esquina inferior izquierda</strong> de la página, X crece a la derecha, Y crece <strong>hacia arriba</strong>. <code>-x</code>/<code>-y</code> ubican la esquina <strong>inferior izquierda</strong> del recuadro (160×70 puntos, tamaño fijo) — no es "de abajo a la derecha", es de abajo a la <strong>izquierda</strong>. 1 punto PDF = 1/72 de pulgada. Siempre en la página 1.</li>
         <li><strong>Texto personalizado (<code>-t</code>).</strong> Se agrega debajo del nombre y la fecha, dentro del mismo recuadro. Sin efecto si la firma es invisible.</li>
-        <li><strong>Bloquear el documento (<code>-k</code>/<code>-l true</code>, según el módulo).</strong> Dos efectos, siempre acoplados desde 1.1.0-beta.1: (1) marca la firma como <strong>certificante</strong> (permiso PDF <code>DocMDP</code> = "sin cambios permitidos" — solo puede haber una por documento, y debe ser la primera), y (2) cifra el PDF en AES-256 restringiendo permisos a solo impresión y lectores de pantalla.</li>
+        <li><strong>Bloquear el documento (<code>-k</code>/<code>-l true</code>, según el módulo).</strong> Dos efectos, siempre acoplados desde 1.1.0: (1) marca la firma como <strong>certificante</strong> (permiso PDF <code>DocMDP</code> = "sin cambios permitidos" — solo puede haber una por documento, y debe ser la primera), y (2) cifra el PDF en AES-256 restringiendo permisos a solo impresión y lectores de pantalla.</li>
         <li><strong>Validación de firmas preexistentes.</strong> Los tres firmadores verifican, antes de firmar, que cualquier firma ya presente sea íntegra — si no lo es, no se modifica el archivo.</li>
       </ul>
-      <div class="callout note"><span class="label">Corrección de consistencia — 1.1.0-beta.1</span><p>Antes, <code>PDFSignerPKCS12</code> solo aplicaba la certificación DocMDP si además la firma era visible; con firma invisible y bloqueo, el PDF quedaba cifrado pero sin certificar. Se corrigió para que los tres firmadores acoplen siempre ambos efectos. También se agregó a <code>PDFSignerWindowsCSP</code> la validación de firmas preexistentes, que antes solo hacían <code>PDFSignerPKCS11</code>/<code>PDFSignerPKCS12</code>.</p></div>
+      <div class="callout note"><span class="label">Corrección de consistencia — 1.1.0</span><p>Antes, <code>PDFSignerPKCS12</code> solo aplicaba la certificación DocMDP si además la firma era visible; con firma invisible y bloqueo, el PDF quedaba cifrado pero sin certificar. Se corrigió para que los tres firmadores acoplen siempre ambos efectos. También se agregó a <code>PDFSignerWindowsCSP</code> la validación de firmas preexistentes, que antes solo hacían <code>PDFSignerPKCS11</code>/<code>PDFSignerPKCS12</code>.</p></div>
       <div class="callout warn"><span class="label">Cuidado con el bloqueo</span><p>Si se planea agregar más firmas al mismo documento más adelante, no bloquear la primera — una firma certificante impide cualquier cambio posterior, incluidas nuevas firmas.</p></div>
 
       <div class="module" id="m8">
@@ -927,7 +955,7 @@ java -jar PDFVerifySignatures.jar C:\docs\certificado-signed.pdf -simple</code><
 
       <div class="module" id="m11">
         <div class="module-head"><h3>9.11 — XMLSignerWindowsCSP<span class="windows-only">Solo Windows</span></h3><span class="module-jar">XMLSignerWindowsCSP.jar</span></div>
-        <p>Firma XML usando un certificado ya presente en el almacén de Windows (sección 7.3), como alternativa a <code>XMLSignerPKCS11</code>. Misma configuración criptográfica (XML-DSig, RSA-SHA256).</p>
+        <p>Firma XML usando un certificado ya presente en el almacén de Windows, tal como lo hace Adobe Acrobat/Reader por defecto — sin ruta de biblioteca ni número de slot (sección 7.3). Es el punto de partida recomendado si no se conoce con exactitud la biblioteca PKCS#11 o la marca/modelo del token. Alternativa a <code>XMLSignerPKCS11</code>. Misma configuración criptográfica (XML-DSig, RSA-SHA256).</p>
         <div class="field-label">Sintaxis</div>
         <pre><code>java -jar XMLSignerWindowsCSP.jar &lt;alias o fragmento del CN&gt; &lt;archivo.xml&gt; &lt;elemento&gt;
 java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certificados]</code></pre>
@@ -948,7 +976,7 @@ java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certi
 
       <div class="module" id="m12">
         <div class="module-head"><h3>9.12 — PDFSignerWindowsCSP<span class="windows-only">Solo Windows</span></h3><span class="module-jar">PDFSignerWindowsCSP.jar</span></div>
-        <p>Equivalente al anterior para PDF, con las mismas opciones de posición/texto/bloqueo que <code>PDFSignerPKCS11</code>, incluida la validación de firmas preexistentes (agregada en 1.1.0-beta.1).</p>
+        <p>Equivalente al anterior para PDF (sección 7.3 explica en detalle cuándo conviene esta opción antes que PKCS#11), con las mismas opciones de posición/texto/bloqueo que <code>PDFSignerPKCS11</code>, incluida la validación de firmas preexistentes (agregada en 1.1.0).</p>
         <div class="field-label">Sintaxis</div>
         <pre><code>java -jar PDFSignerWindowsCSP.jar -i &lt;pdf&gt; -a &lt;alias o fragmento CN&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"]
 java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]</code></pre>
@@ -1126,14 +1154,14 @@ exit $RESULT</code></pre>
       <p><strong>No requiere instalación ni Java preinstalado</strong> — puede copiarse a cualquier ubicación, incluido un medio removible, y correr en un equipo "limpio", gracias al runtime embebido y a que los launchers se autodetectan (sin rutas ni letras de unidad hardcodeadas).</p>
       <div class="callout note">
         <span class="label">Convención de nombres — importante para integradores</span>
-        <p>El jar de distribución (<code>XMLSignerPKCS11.jar</code>) <strong>nunca</strong> incluye la versión, a diferencia del artefacto crudo de Maven (<code>xml_signer_pkcs11-1.1.0-beta.1-jar-with-dependencies.jar</code>). Es deliberado: un integrador con el nombre ya hardcodeado no debe romperse cuando S-FiDE actualiza de versión.</p>
+        <p>El jar de distribución (<code>XMLSignerPKCS11.jar</code>) <strong>nunca</strong> incluye la versión, a diferencia del artefacto crudo de Maven (<code>xml_signer_pkcs11-1.1.0-jar-with-dependencies.jar</code>). Es deliberado: un integrador con el nombre ya hardcodeado no debe romperse cuando S-FiDE actualiza de versión.</p>
       </div>
     </section>
 
     <section class="chapter" id="s13">
       <span class="chapter-num">13</span>
       <h2>Historial de versiones</h2>
-      <h3>v1.1.0-beta.1 (2026-08) — en QA</h3>
+      <h3>v1.1.0 (2026-08-30)</h3>
       <ul>
         <li>Compatibilidad ampliada de tokens PKCS#11 (hash externo, sección 7.1).</li>
         <li>Autodetección de marca/modelo y ayuda de selección de driver.</li>
@@ -1142,13 +1170,13 @@ exit $RESULT</code></pre>
         <li>Corrección de dos errores hallados en QA con hardware real (SafeNet 5110+ L3).</li>
         <li><strong>Especialización ALADI/MERCOSUR completada (sección 10):</strong> corregido un error real — la revocación de la firma sobre <code>CODEH</code> usaba <code>ExporterCountry</code> en vez de <code>EHCountry</code> para convertir a UTC; agregado soporte de extracción de fecha para <code>DJO</code>/<code>DJOEH</code> (literal como UTC, sin conversión de huso horario); verificado contra archivos DJO reales en sus 4 etapas; agregadas dos reglas de firma obligatorias (nunca firmar un elemento ya firmado, nunca firmar CODEH/DJOEH sin firma previa en COD/DJO); mensajes de revocación de <code>XMLVerifySignatures</code> aclarados para explicar por qué un certificado revocado invalida la firma; <code>XMLVerifyXSDStructure</code> ahora reintenta contra un dominio espejo (<code>cod.certificadoorigen.com.ar</code>) cuando el dominio oficial de ALADI (<code>codaladi.org</code>) está caído, incluyendo el caso de una redirección HTTP→HTTPS que antes se descargaba como si fuera el XSD; los tres firmadores XML ahora prohíben firmar el documento completo (elemento vacío) cuando detectan un XML de comercio exterior (contiene <code>COD</code> o <code>DJO</code>), e informan en consola de qué tipo de documento se trata y qué elemento se firmó.</li>
         <li><strong>Auditoría de código y corrección de inconsistencias entre módulos hermanos:</strong> se eliminó un stack trace expuesto en <code>XMLVerifySignatures</code>; <code>PDFSignerPKCS12</code> ahora acopla siempre certificación DocMDP + cifrado al bloquear (antes solo con firma visible); <code>PDFSignerWindowsCSP</code> ahora valida firmas preexistentes y rechaza PDFs ya encriptados; se unificó el vocabulario de comandos especiales en los 12 módulos CLI; se corrigieron afirmaciones de documentación no respaldadas por el código (versión de PKCS#11/12, XAdES, XML Schema 1.1, timeouts de OCSP/CRL).</li>
-        <li>Validado de punta a punta con SafeNet 5110+ L3 real y con PKCS#12 — pendiente ePass2003 y mToken CryptoID.</li>
+        <li>Validado de punta a punta con hardware real: SafeNet 5110+ L3, mToken CryptoID nueva y Feitian ePass2003, además de PKCS#12 (sección 8, "Hardware validado end-to-end").</li>
       </ul>
       <h3>v1.0.0 (2024-12) — primer release estable</h3>
       <p>Suite inicial de 10 módulos más la GUI JavaFX.</p>
 
       <h3 id="migracion-100">Guía de migración desde 1.0.0</h3>
-      <p>Si ya tenías una integración funcionando contra los jars de S-FiDE 1.0.0, la gran mayoría de los cambios de 1.1.0-beta.1 son <strong>aditivos</strong> (flags opcionales nuevos, módulos nuevos) y no requieren ningún cambio de tu lado. Esta guía identifica puntualmente los pocos casos donde cambió el <strong>comportamiento</strong> de un jar que ya usabas en 1.0.0. No aplica a <code>XMLSignerWindowsCSP.jar</code>/<code>PDFSignerWindowsCSP.jar</code>: son módulos nuevos, no existían en 1.0.0.</p>
+      <p>Si ya tenías una integración funcionando contra los jars de S-FiDE 1.0.0, la gran mayoría de los cambios de 1.1.0 son <strong>aditivos</strong> (flags opcionales nuevos, módulos nuevos) y no requieren ningún cambio de tu lado. Esta guía identifica puntualmente los pocos casos donde cambió el <strong>comportamiento</strong> de un jar que ya usabas en 1.0.0. No aplica a <code>XMLSignerWindowsCSP.jar</code>/<code>PDFSignerWindowsCSP.jar</code>: son módulos nuevos, no existían en 1.0.0.</p>
       <div class="table-wrap">
         <table>
           <tr><th>Jar (ya existía en 1.0.0)</th><th>Qué cambió</th><th>¿Puede romper tu integración?</th><th>Qué revisar</th></tr>
@@ -1224,7 +1252,7 @@ exit $RESULT</code></pre>
     </section>
 
     <footer class="doc-footer">
-      Manual de Integración S-FiDE · Grupo Sauken S.A. · Versión del documento acompaña a S-FiDE v1.1.0-beta.1
+      Manual de Integración S-FiDE · Grupo Sauken S.A. · Versión del documento acompaña a S-FiDE v1.1.0
     </footer>
   </main>
 </div>

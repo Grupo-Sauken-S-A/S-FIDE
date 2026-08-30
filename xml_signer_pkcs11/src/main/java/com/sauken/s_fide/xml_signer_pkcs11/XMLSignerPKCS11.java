@@ -73,7 +73,7 @@ import javax.xml.crypto.dsig.spec.*;
 import javax.xml.xpath.*;
 
 public class XMLSignerPKCS11 {
-    private static final String VERSION = "S-FIDE XMLSignerPKCS11 v1.1.0-beta.1 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE XMLSignerPKCS11 v1.1.0 - Grupo Sauken S.A.";
     private static PrintStream errorStream;
     private static PrintStream outputStream;
 
@@ -220,8 +220,8 @@ public class XMLSignerPKCS11 {
 
     private static Provider configurePKCS11Provider(String pkcs11LibraryPath, int slotNumber) {
         String config = String.format(
-                "--name=XMLSignerProvider\nlibrary=%s\nslot=%d",
-                pkcs11LibraryPath,
+                "--name=XMLSignerProvider\nlibrary=%s\nslotListIndex=%d",
+                sanitizeLibraryPathForPkcs11Config(pkcs11LibraryPath),
                 slotNumber
         );
         Provider provider = Security.getProvider("SunPKCS11");
@@ -229,6 +229,17 @@ public class XMLSignerPKCS11 {
             throw new IllegalArgumentException("Proveedor SunPKCS11 no disponible");
         }
         return provider.configure(config);
+    }
+
+    /**
+     * El parser de configuración de SunPKCS11 trata la barra invertida como
+     * carácter de escape, por lo que una ruta de Windows sin convertir (aun
+     * entre comillas) falla al configurar el proveedor. Se reemplaza "\" por
+     * "/" (aceptado igual por el cargador nativo de la biblioteca) y se
+     * encierra el valor entre comillas para tolerar espacios en el path.
+     */
+    private static String sanitizeLibraryPathForPkcs11Config(String path) {
+        return "\"" + path.replace('\\', '/') + "\"";
     }
 
     private static KeyStore loadKeyStore(String password) throws Exception {

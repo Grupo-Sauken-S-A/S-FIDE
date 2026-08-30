@@ -1,4 +1,4 @@
-S-FiDE (Sistema de Firma Digital Extendida) - Versión 1.1.0-beta.1 - Grupo Sauken S.A.
+S-FiDE (Sistema de Firma Digital Extendida) - Versión 1.1.0 - Grupo Sauken S.A.
 
 SFide-GUI proporciona una interface gráfica de usuario para asignar los parámetros adecuados
 a cada una de las aplicaciones de la plataforma S-FiDE. Las aplicaciones se muestran de manera

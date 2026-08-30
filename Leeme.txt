@@ -1,4 +1,4 @@
-S-FiDE v1.1.0-beta.1 - Leeme primero:
+S-FiDE v1.1.0 - Leeme primero:
 
 - "SFide-GUI.bat" y "SFide-GUI.sh" detectan solos la carpeta y la unidad/punto de montaje donde están
   instalados (no hace falta editarlos) - puede copiar la carpeta completa de S-FiDE a cualquier ubicación,
@@ -14,25 +14,25 @@ S-FiDE v1.1.0-beta.1 - Leeme primero:
 - Las entradas y salidas de los procesos están codificadas en UTF-8 (si ejecuta las aplicaciones sobre una
   línea de comandos de Windows, las salidas se verán con caracteres extraños, ya que es UTF-8). Si está
   integrando S-FiDE en su propia aplicación, no se olvide de realizar las conversiones a UTF-8. En
-  "doc/guia-uso-sfide.md" hay una sección específica ("Integración desde otras aplicaciones") con ejemplos
-  de invocación por línea de comandos, redirección de salida y captura de código de resultado
+  "doc/manual-tecnico-integracion.md" hay una sección específica ("Integración desde otras aplicaciones") con
+  ejemplos de invocación por línea de comandos, redirección de salida y captura de código de resultado
 
 - Novedades de la versión 1.1.0:
   - Los módulos que trabajan con tokens PKCS#11 ahora reconocen la marca/modelo según el driver
     seleccionado y sugieren la ruta típica por marca/modelo y sistema operativo. En la GUI use el botón
     "Detectar automáticamente"; por línea de comandos use el parámetro "-listar-drivers" (en
     PDFSignerPKCS11 es "--listar-drivers")
-  - Compatibilidad ampliada con tokens que no exponen el mecanismo de firma combinado habitual (por
-    ejemplo ePass2003): XMLSignerPKCS11 y PDFSignerPKCS11 ahora prueban automáticamente un mecanismo
-    alternativo si el primero falla. Esta compatibilidad todavía está en validación con hardware real en
-    esta versión beta
+  - Compatibilidad ampliada con tokens que no exponen el mecanismo de firma combinado habitual: XMLSignerPKCS11
+    y PDFSignerPKCS11 ahora prueban automáticamente un mecanismo alternativo si el primero falla. Validado
+    contra hardware real (SafeNet eToken 5110+, mToken CryptoID y Feitian ePass2003)
   - En Windows están disponibles además los módulos XMLSignerWindowsCSP y PDFSignerWindowsCSP, que firman
     usando el almacén de certificados de Windows (CSP/KSP) en vez de PKCS#11 - útil si su certificado ya
     aparece en el Administrador de certificados de Windows. Son opcionales y exclusivos de Windows; en la
     GUI aparecen como pestañas adicionales solo cuando corre en ese sistema operativo
 
 - En "test" tiene documentos de ejemplo para firmar y validar. En "xsd" tiene ejemplos de archivos XSD para
-  validar. En "doc" encontrará una guía de uso de cada una de las aplicaciones ("guia-uso-sfide.md")
+  validar. En "doc" encontrará el manual técnico de integración con el detalle de cada aplicación
+  ("manual-tecnico-integracion.md" / ".html")
 
 - Para la validación de firmas digitales como para validación de esquema contra un archivo XSD, es conveniente
   disponer de una conexión a Internet para lograr una validación completa

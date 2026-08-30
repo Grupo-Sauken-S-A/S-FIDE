@@ -40,9 +40,9 @@ Preguntas Frecuentes:
 - Si, cada una de las aplicaciones se puede usar individualmente en una línea de comando (java -jar <Programa.jar>)
 - Puede ejecutar "java -jar <Programa.jar> -h" (o "-ayuda" según la aplicación) para obtener ayuda sobre
   los parámetros de entrada de cada aplicación
-- En "doc/guia-uso-sfide.md" hay una sección "Integración desde otras aplicaciones" con ejemplos concretos
-  de invocación por línea de comandos, redirección de salida y captura de código de resultado (útil para
-  integradores)
+- En "doc/manual-tecnico-integracion.md" hay una sección "Integración desde otras aplicaciones" con ejemplos
+  concretos de invocación por línea de comandos, redirección de salida y captura de código de resultado
+  (útil para integradores)
 
 9. ¿Qué es la detección automática de drivers?
 - Desde la versión 1.1.0, las pestañas que piden una biblioteca PKCS#11 muestran una lista desplegable de

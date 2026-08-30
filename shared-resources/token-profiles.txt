@@ -21,10 +21,18 @@
 # ejecución (mecanismo combinado primero, hash externo como fallback) sin
 # confiar ciegamente en esta tabla, porque el nombre de archivo puede cambiar
 # entre versiones de middleware sin previo aviso.
+#
+# NOTA (confirmado con hardware real, ePass2003, 2026-08-30): "interno" en
+# esta tabla significa "el intento de mecanismo combinado nunca falla en la
+# práctica", no necesariamente que el token exponga CKM_SHA256_RSA_PKCS de
+# forma nativa — el propio SunPKCS11 del JDK puede componer ese mecanismo de
+# forma transparente sobre CKM_RSA_PKCS sin que el código de S-FiDE lo note.
+# Para efectos prácticos (qué camino de código se ejecuta) el resultado es
+# el mismo, por eso se clasifica igual.
 
 SafeNet/Thales|eToken 5110 / 5110+|interno|vigente - recomendado por AIF (cert. NIST #4480 activo, Nivel 3)|C:\Windows\System32\eTPKCS11.dll|/usr/lib/libeToken.so|/usr/local/lib/libeTPkcs11.dylib|eTPKCS11.dll,libeToken.so,libIDPrimePKCS11.so,libeTPkcs11.so,libeTPkcs11.dylib
-Feitian|ePass2003 / ePass2003Auto|externo|vigente - reemplazo estándar SCBA|C:\Windows\System32\eps2003csp11.dll|/usr/lib/libcastle.so.1.0.0|/usr/local/lib/libcastle.1.0.0.dylib|eps2003csp11.dll,eps2003csp1164.dll,libcastle.so.1.0.0,libeps2003_pkcs11.so,libePass2003.so,libcastle.1.0.0.dylib
-mToken CryptoID (Century Longmai / Macroseguridad)|nueva - FIPS 140-3 (modelo gris, cert. #4845 activo)|externo-sin-confirmar|válido si se exige el modelo FIPS 140-3 (no recomendado el 140-2)|C:\Program Files (x86)\LMCryptoIDE\lm_cryptoide_pkcs11.dll|/opt/CryptoIDFipsUser/x64/lib/liblm_cryptoide_pkcs11.so|/opt/CryptoIDE/lib/libcryptoide_pkcs11.dylib|lm_cryptoide_pkcs11.dll,liblm_cryptoide_pkcs11.so
-mToken CryptoID (Century Longmai / Macroseguridad)|vieja - FIPS 140-2 (cert. #2626, histórico)|externo-sin-confirmar|discontinuado - no recomendado para compra (AIF: no usar después de 2024-12-30)|C:\Windows\System32\CryptoIDA_pkcs11.dll|/usr/lib/libcryptoide_pkcs11.so|/Applications/CryptoIDEUserTools.app/Contents/lib/mac/libcryptoide_pkcs11.dylib|CryptoIDA_pkcs11.dll,cryptoide_pkcs11.dll,libcryptoide_pkcs11.so,libcryptoide_pkcs11.dylib
+Feitian|ePass2003 / ePass2003Auto|interno|vigente - reemplazo estándar SCBA|C:\Windows\System32\eps2003csp11.dll|/usr/lib/libcastle.so.1.0.0|/usr/local/lib/libcastle.1.0.0.dylib|eps2003csp11.dll,eps2003csp1164.dll,libcastle.so.1.0.0,libeps2003_pkcs11.so,libePass2003.so,libcastle.1.0.0.dylib
+mToken CryptoID (Century Longmai / Macroseguridad)|nueva - FIPS 140-3 (modelo gris, cert. #4845 activo)|interno|válido si se exige el modelo FIPS 140-3 (no recomendado el 140-2)|C:\Windows\System32\lm_cryptoide_pkcs11.dll|/opt/CryptoIDFipsUser/x64/lib/liblm_cryptoide_pkcs11.so|/opt/CryptoIDE/lib/libcryptoide_pkcs11.dylib|lm_cryptoide_pkcs11.dll,liblm_cryptoide_pkcs11.so
+mToken CryptoID (Century Longmai / Macroseguridad)|vieja - FIPS 140-2 (cert. #2626, histórico)|externo-sin-confirmar|discontinuado - no recomendado para compra (AIF: no usar después de 2024-12-30)|C:\Windows\System32\cryptoide_pkcs11.dll|/usr/lib/libcryptoide_pkcs11.so|/Applications/CryptoIDEUserTools.app/Contents/lib/mac/libcryptoide_pkcs11.dylib|CryptoIDA_pkcs11.dll,cryptoide_pkcs11.dll,libcryptoide_pkcs11.so,libcryptoide_pkcs11.dylib
 Athena|IDProtect / ASECard|desconocido|discontinuado - en retiro por Resolución SC Nº 1682/24|C:\Windows\System32\asepkcs.dll|/usr/lib/x64-athena/libASEP11.so|/Library/Application Support/Athena/libASEP11.dylib|asepkcs.dll,libASEP11.so,libASEP11.dylib
 OpenSC|genérico (respaldo, útil sobre todo para ePass2003)|depende del token subyacente|driver de respaldo, no es una marca de token en sí misma|C:\Windows\System32\opensc-pkcs11.dll|/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so|/Library/OpenSC/lib/opensc-pkcs11.so|opensc-pkcs11.so,opensc-pkcs11.dll,onepin-opensc-pkcs11.so

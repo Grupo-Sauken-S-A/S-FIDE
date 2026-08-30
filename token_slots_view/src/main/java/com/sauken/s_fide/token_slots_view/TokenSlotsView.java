@@ -63,7 +63,7 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class TokenSlotsView {
-    private static final String VERSION = "S-FIDE TokenSlotsView v1.1.0-beta.1 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE TokenSlotsView v1.1.0 - Grupo Sauken S.A.";
     private static String LICENSE_TEXT;
     private static String HELP_TEXT;
     private static PrintStream errorOutput;
@@ -151,7 +151,7 @@ public class TokenSlotsView {
 
         Security.addProvider(new BouncyCastleProvider());
 
-        String config = "--name=CustomProvider\nlibrary=" + pkcs11LibraryPath;
+        String config = "--name=CustomProvider\nlibrary=" + sanitizeLibraryPathForPkcs11Config(pkcs11LibraryPath) + "\nslotListIndex=0";
         Provider provider = Security.getProvider("SunPKCS11");
         if (provider == null) {
             throw new IllegalArgumentException("El proveedor SunPKCS11 no está disponible");
@@ -165,6 +165,17 @@ public class TokenSlotsView {
         } finally {
             Security.removeProvider(provider.getName());
         }
+    }
+
+    /**
+     * El parser de configuración de SunPKCS11 trata la barra invertida como
+     * carácter de escape, por lo que una ruta de Windows sin convertir (aun
+     * entre comillas) falla al configurar el proveedor. Se reemplaza "\" por
+     * "/" (aceptado igual por el cargador nativo de la biblioteca) y se
+     * encierra el valor entre comillas para tolerar espacios en el path.
+     */
+    private static String sanitizeLibraryPathForPkcs11Config(String path) {
+        return "\"" + path.replace('\\', '/') + "\"";
     }
 
     private static void readToken(String password) {
@@ -186,14 +197,17 @@ public class TokenSlotsView {
             return;
         }
 
+        standardOutput.println("  Slot: 0");
         for (int i = 0; i < aliases.size(); i++) {
             String alias = aliases.get(i);
-            displaySlotInfo(keyStore, alias, i);
+            if (aliases.size() > 1) {
+                standardOutput.println("  Entrada: " + i);
+            }
+            displaySlotInfo(keyStore, alias);
         }
     }
 
-    private static void displaySlotInfo(KeyStore keyStore, String alias, int slotNumber) throws KeyStoreException {
-        standardOutput.println("  Slot: " + slotNumber);
+    private static void displaySlotInfo(KeyStore keyStore, String alias) throws KeyStoreException {
         standardOutput.println(" Alias: " + alias);
 
         if (keyStore.isKeyEntry(alias)) {
