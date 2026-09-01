@@ -512,16 +512,40 @@ public class SFideGUI extends Application {
             );
             pb.redirectErrorStream(true);
             Process process = pb.start();
-            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+            // Importante: esperar (con límite de tiempo) ANTES de leer la salida, no
+            // al revés. Si algo bloquea a powershell.exe indefinidamente (una política
+            // de seguridad corporativa que abre un diálogo, un antivirus interceptando
+            // la ejecución, etc.), leer con readAllBytes() antes del waitFor() se
+            // queda esperando para siempre — el límite de tiempo del waitFor() nunca
+            // llegaría a aplicarse, porque nunca se alcanzaría esa línea. Solo se
+            // intenta leer la salida DESPUÉS de confirmar que el proceso ya terminó
+            // (es un script corto con poquísima salida, muy por debajo del tamaño del
+            // buffer del pipe del SO, así que no hay riesgo de que él mismo se bloquee
+            // esperando que alguien lea mientras tanto).
             boolean finished = process.waitFor(10, TimeUnit.SECONDS);
 
-            if (!finished || process.exitValue() != 0) {
+            if (!finished) {
+                process.destroyForcibly();
+                System.out.println("No se pudieron crear los accesos directos (escritorio/menú inicio): "
+                        + "tiempo de espera agotado.");
+                return;
+            }
+
+            if (process.exitValue() != 0) {
+                String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
                 System.out.println("No se pudieron crear los accesos directos (escritorio/menú inicio)"
                         + (output.isBlank() ? "" : ": " + output.trim()));
             }
         } catch (Exception e) {
             System.out.println("No se pudieron crear los accesos directos (escritorio/menú inicio): " + e.getMessage());
         } finally {
+            // Se marca como "creado" pase lo que pase en el bloque de arriba —
+            // falta de permisos, políticas de seguridad corporativas que bloqueen
+            // PowerShell o WScript.Shell, ausencia de powershell.exe, lo que sea:
+            // esto nunca debe hacer que el programa se cuelgue, muestre un error al
+            // usuario, ni vuelva a intentarlo en cada arranque. Es una comodidad
+            // opcional, no una función crítica.
             markDesktopShortcutCreated();
         }
     }
@@ -555,7 +579,18 @@ public class SFideGUI extends Application {
      * con executorService.submit() sin revisar el Future).
      */
     private void markDesktopShortcutCreated() {
-        Platform.runLater(() -> configManager.setDesktopShortcutCreated(true));
+        try {
+            Platform.runLater(() -> {
+                try {
+                    configManager.setDesktopShortcutCreated(true);
+                } catch (Exception ignored) {
+                    // Ver el comentario en createDesktopShortcutIfNeeded(): esto nunca
+                    // debe poder colgar ni interrumpir la aplicación.
+                }
+            });
+        } catch (Exception ignored) {
+            // Idem, por si Platform.runLater() mismo llegara a fallar.
+        }
     }
 
     private static String psQuote(Path path) {
