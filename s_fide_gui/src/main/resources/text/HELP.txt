@@ -97,7 +97,8 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
   el último módulo abierto, el tamaño de la ventana y algunas preferencias de firma de PDF
   ahora se recuerdan entre sesiones (ver "Preguntas Frecuentes")
 - (Windows) La primera vez que ejecuta SFide-GUI.bat en una instalación, se crean
-  automáticamente accesos directos en el escritorio y en el menú inicio, con ícono propio
+  automáticamente accesos directos en el escritorio y en el menú inicio, con ícono propio: uno
+  a la aplicación y dos más que abren en el navegador la Guía de Usuario y el Manual Técnico
 
 ## Requerimientos
 

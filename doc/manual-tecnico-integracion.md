@@ -814,6 +814,7 @@ java -jar WindowsCertificateStoreView.jar
 - Detección automática de driver PKCS#11 por marca/modelo (ver [sección 8](#8-catálogo-de-tokens-y-drivers-soportados)).
 - Los módulos de CSP/KSP (`WindowsCertificateStoreView`/`XMLSignerWindowsCSP`/`PDFSignerWindowsCSP`) solo aparecen en el panel lateral si la GUI corre en Windows.
 - Validación de que todos los `.jar` necesarios estén presentes junto a `SFide-GUI.jar` antes de permitir su uso.
+- **(Windows) Accesos directos automáticos, una sola vez por instalación:** al primer arranque de `SFide-GUI.bat`, se crean tres accesos directos en el escritorio y otros tres en el menú inicio (carpeta "S-FiDE"), todos con el ícono de S-FiDE — uno abre la aplicación (`.lnk` hacia el `.bat`), y los otros dos abren en el navegador predeterminado la Guía de Usuario y el Manual Técnico de Integración de la carpeta `doc/` (archivos `.url` con `URL=file:///...`, no requieren asociar ninguna extensión). Cada grupo (aplicación / documentación) se registra con su propia marca independiente en `sfide-defaults.properties` (`desktop.shortcut.created` / `doc.shortcuts.created`) para no repetirse en próximas ejecuciones, incluso si el usuario los borra después. Blindado contra políticas de seguridad corporativas restrictivas (PowerShell bloqueado o colgado, sin permisos de escritura): nunca genera un error visible ni bloquea el arranque.
 
 ---
 
