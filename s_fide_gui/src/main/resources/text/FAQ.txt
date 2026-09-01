@@ -100,8 +100,10 @@
 ## 12. (Windows) Me aparecieron accesos directos solos en el escritorio y el menú inicio, ¿por qué?
 
 - La primera vez que ejecuta SFide-GUI.bat en una instalación de S-FiDE, se crean
-  automáticamente accesos directos en el escritorio y en el menú inicio (carpeta "S-FiDE"),
-  con el ícono propio de S-FiDE, apuntando a ese mismo .bat
+  automáticamente tres accesos directos — tanto en el escritorio como en el menú inicio (carpeta
+  "S-FiDE") —, todos con el ícono propio de S-FiDE: uno apunta a ese mismo .bat (abre la
+  aplicación), y los otros dos abren en su navegador la Guía de Usuario y el Manual Técnico de
+  Integración (los mismos documentos de la carpeta "doc")
 - Solo se crean una vez: si los borra después, no se vuelven a crear solos
 - Es por instalación: si tiene varias copias de S-FiDE en carpetas distintas (por ejemplo,
-  una por cada versión), cada una crea el suyo la primera vez que la ejecute
+  una por cada versión), cada una crea los suyos la primera vez que la ejecute

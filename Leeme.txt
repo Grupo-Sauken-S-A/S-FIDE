@@ -12,9 +12,10 @@ S-FiDE v1.1.1 - Leeme primero:
   incluyendo un pendrive u otro medio removible, y ejecutarla desde ahí en cualquier PC sin instalar nada
 
 - (Windows) La primera vez que ejecuta "SFide-GUI.bat" en una instalación, se crean automáticamente
-  accesos directos en el escritorio y en el menú inicio (carpeta "S-FiDE"), con el ícono de S-FiDE
-  ("S-FiDE.ico", incluido en esta carpeta). Solo se crean una vez: si los borra después, no se vuelven
-  a crear solos
+  tres accesos directos en el escritorio y otros tres en el menú inicio (carpeta "S-FiDE"), todos con
+  el ícono de S-FiDE ("S-FiDE.ico", incluido en esta carpeta): uno abre la aplicación, y los otros dos
+  abren en su navegador la Guía de Usuario y el Manual Técnico de Integración de la carpeta "doc".
+  Solo se crean una vez: si los borra después, no se vuelven a crear solos
 
 - En Linux/macOS, si al descomprimir el ZIP de distribución "SFide-GUI.sh" y los binarios de
   "openjdk-23.0.1" pierden el permiso de ejecución (algo común si el ZIP se armó en Windows, que no

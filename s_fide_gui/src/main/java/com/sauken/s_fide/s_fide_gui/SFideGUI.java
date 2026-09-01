@@ -447,6 +447,7 @@ public class SFideGUI extends Application {
         System.out.println("Interfaz gráfica construida exitosamente");
 
         executorService.submit(this::createDesktopShortcutIfNeeded);
+        executorService.submit(this::createDocShortcutsIfNeeded);
     }
 
     /**
@@ -569,6 +570,141 @@ public class SFideGUI extends Application {
         lines.add(var + ".Description = 'S-FiDE - Sistema de Firma Digital Extendido'");
         lines.add(var + ".Save()");
         return lines;
+    }
+
+    /**
+     * Crea accesos directos al escritorio y al menú inicio (carpeta "S-FiDE")
+     * hacia la guía de usuario y el manual técnico en doc/, la primera vez
+     * que corre esta instalación (Windows únicamente) — mismo patrón que
+     * createDesktopShortcutIfNeeded() de arriba (proceso PowerShell con
+     * timeout+destroyForcibly, comillas simples únicamente, se marca como
+     * "hecho" pase lo que pase). Flag independiente del acceso a la GUI: ver
+     * ConfigurationManager.isDocShortcutsCreated().
+     * <p>
+     * A diferencia del acceso a SFide-GUI.bat (un .lnk que ejecuta un
+     * programa), estos son archivos .url ("acceso directo a Internet") que
+     * apuntan a una URL file:// del documento HTML — Windows los abre con el
+     * navegador predeterminado del usuario, igual que hacer doble clic en el
+     * archivo. No requieren WScript.Shell: son un archivo de texto plano con
+     * formato INI, así que el script de PowerShell solo necesita escribirlos
+     * con Set-Content, sin crear ningún objeto COM.
+     */
+    private void createDocShortcutsIfNeeded() {
+        if (configManager.isDocShortcutsCreated()) {
+            return;
+        }
+        if (!System.getProperty("os.name", "").toLowerCase().contains("win")) {
+            markDocShortcutsCreated();
+            return;
+        }
+
+        try {
+            Path sfideDir = Paths.get(
+                    SFideGUI.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+            ).getParent();
+
+            if (sfideDir == null) {
+                markDocShortcutsCreated();
+                return;
+            }
+
+            Path userGuidePath = sfideDir.resolve("doc").resolve("manual-usuario-sfide-gui.html");
+            Path techManualPath = sfideDir.resolve("doc").resolve("manual-tecnico-integracion.html");
+            Path iconPath = sfideDir.resolve("S-FiDE.ico");
+            String iconPathQuoted = Files.exists(iconPath) ? psQuote(iconPath) : null;
+
+            List<String> lines = new ArrayList<>();
+            lines.add("$startMenuDir = [Environment]::GetFolderPath('Programs') + '\\S-FiDE'");
+            lines.add("New-Item -ItemType Directory -Force -Path $startMenuDir | Out-Null");
+            lines.add("$desktopDir = [Environment]::GetFolderPath('Desktop')");
+
+            boolean anyDoc = false;
+            if (Files.exists(userGuidePath)) {
+                anyDoc = true;
+                lines.addAll(urlShortcutScript("Guía de Usuario S-FiDE GUI.url", userGuidePath, iconPathQuoted));
+            }
+            if (Files.exists(techManualPath)) {
+                anyDoc = true;
+                lines.addAll(urlShortcutScript("Manual Técnico S-FiDE.url", techManualPath, iconPathQuoted));
+            }
+
+            if (!anyDoc) {
+                markDocShortcutsCreated();
+                return;
+            }
+
+            String script = String.join("; ", lines);
+
+            ProcessBuilder pb = new ProcessBuilder(
+                    "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                    "-WindowStyle", "Hidden", "-Command", script
+            );
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            // Mismo orden esperar-antes-de-leer que createDesktopShortcutIfNeeded()
+            // — ver el comentario detallado ahí, aplica igual acá.
+            boolean finished = process.waitFor(10, TimeUnit.SECONDS);
+
+            if (!finished) {
+                process.destroyForcibly();
+                System.out.println("No se pudieron crear los accesos directos a la documentación: "
+                        + "tiempo de espera agotado.");
+                return;
+            }
+
+            if (process.exitValue() != 0) {
+                String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+                System.out.println("No se pudieron crear los accesos directos a la documentación"
+                        + (output.isBlank() ? "" : ": " + output.trim()));
+            }
+        } catch (Exception e) {
+            System.out.println("No se pudieron crear los accesos directos a la documentación: " + e.getMessage());
+        } finally {
+            markDocShortcutsCreated();
+        }
+    }
+
+    /**
+     * Arma las líneas de PowerShell que escriben un archivo .url (Desktop y
+     * Menú Inicio) apuntando a la URI file:// de un documento HTML. La URI se
+     * calcula en Java (Path.toUri()), no en PowerShell — así el saneamiento de
+     * espacios/acentos/caracteres especiales en la ruta lo hace la biblioteca
+     * estándar de Java, en vez de reconstruirlo a mano en el script.
+     */
+    private static List<String> urlShortcutScript(String fileName, Path docPath, String iconPathQuotedOrNull) {
+        String fileUrl = docPath.toUri().toString();
+        List<String> contentParts = new ArrayList<>();
+        contentParts.add("'[InternetShortcut]'");
+        contentParts.add("'URL=" + fileUrl.replace("'", "''") + "'");
+        if (iconPathQuotedOrNull != null) {
+            contentParts.add("'IconFile=" + iconPathQuotedOrNull + "'");
+            contentParts.add("'IconIndex=0'");
+        }
+        String contentExpr = String.join(" + [Environment]::NewLine + ", contentParts);
+
+        List<String> lines = new ArrayList<>();
+        lines.add("Set-Content -LiteralPath ($desktopDir + '\\" + fileName + "') -Value (" + contentExpr
+                + ") -Encoding UTF8");
+        lines.add("Set-Content -LiteralPath ($startMenuDir + '\\" + fileName + "') -Value (" + contentExpr
+                + ") -Encoding UTF8");
+        return lines;
+    }
+
+    /**
+     * Mismo motivo que markDesktopShortcutCreated(): ConfigurationManager solo
+     * se puede tocar desde el hilo de la interfaz gráfica.
+     */
+    private void markDocShortcutsCreated() {
+        try {
+            Platform.runLater(() -> {
+                try {
+                    configManager.setDocShortcutsCreated(true);
+                } catch (Exception ignored) {
+                }
+            });
+        } catch (Exception ignored) {
+        }
     }
 
     /**

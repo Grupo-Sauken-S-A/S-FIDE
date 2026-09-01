@@ -254,4 +254,20 @@ public class ConfigurationManager {
         properties.setProperty("desktop.shortcut.created", String.valueOf(created));
         saveDebounce.playFromStart();
     }
+
+    /**
+     * Igual que isDesktopShortcutCreated()/setDesktopShortcutCreated(), pero
+     * para los accesos directos a la documentación (guía de usuario y manual
+     * técnico) — flag independiente porque una instalación que ya tenía
+     * desktop.shortcut.created=true de antes de agregar esta función también
+     * debe recibir estos accesos una vez.
+     */
+    public boolean isDocShortcutsCreated() {
+        return Boolean.parseBoolean(properties.getProperty("doc.shortcuts.created", "false"));
+    }
+
+    public void setDocShortcutsCreated(boolean created) {
+        properties.setProperty("doc.shortcuts.created", String.valueOf(created));
+        saveDebounce.playFromStart();
+    }
 }
