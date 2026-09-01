@@ -1,0 +1,24 @@
+name: Compilar y verificar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 23
+        uses: actions/setup-java@v4
+        with:
+          java-version: '23'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Compilar el reactor completo
+        run: ./mvnw --batch-mode clean install
