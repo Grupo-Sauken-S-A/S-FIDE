@@ -62,6 +62,8 @@ import java.security.Provider;
  */
 public final class Pkcs11FallbackProvider extends Provider {
 
+    private static final long serialVersionUID = 1L;
+
     public Pkcs11FallbackProvider(Provider delegate) {
         super("SFideXMLDSigFallback", "1.0", "S-FIDE: firma PKCS#11 con fallback de hash externo");
         Pkcs11FallbackSignature.delegateProvider = delegate;

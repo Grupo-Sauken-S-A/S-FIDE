@@ -53,6 +53,7 @@ package com.sauken.s_fide.xml_verify_xsd_structure.utils;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
@@ -69,7 +70,7 @@ public class InternetConnectivityChecker {
 
     public static boolean isInternetAvailable() {
         try {
-            URL url = new URL("https://www.google.com");
+            URL url = URI.create("https://www.google.com").toURL();
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("HEAD");
             int responseCode = connection.getResponseCode();

@@ -1,6 +1,6 @@
 PDFSignerPKCS11 - Programa de Firma Digital de documentos PDF con Token
 
-Uso: java -jar pdf_signer_pkcs11.jar [opciones]
+Uso: java -jar PDFSignerPKCS11.jar [opciones]
 
 Opciones:
   -i, --input <archivo>        Archivo PDF a firmar (obligatorio)

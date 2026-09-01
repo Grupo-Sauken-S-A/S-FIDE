@@ -4,6 +4,15 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), y el versionado sigue [SemVer](https://semver.org/lang/es/).
 
+## [Sin publicar]
+
+### Corregido
+- `PDFVerifySignatures`: el campo "Algoritmo de firma" informaba `cert.getSigAlgName()` — el algoritmo con que la autoridad certificante firmó el *certificado* del firmante, no el de la firma del *documento* (dos datos distintos que solo coinciden por casualidad cuando la CA usa el mismo algoritmo). Ahora se calcula a partir de la firma real leída del PDF (`PdfPKCS7.getDigestAlgorithmName()` + `getSignatureAlgorithmName()`), verificado firmando y verificando un documento real.
+- `PDFSignerPKCS11`, `PDFSignerPKCS12` y `PDFSignerWindowsCSP` usaban una decena de métodos de `PdfSignatureAppearance` ya deprecados en iText 8 (`getSignatureAppearance()`, `setPageRect()`, `setPageNumber()`, `setRenderingMode()`, `setLayer2Text()`, `setLayer2FontSize()`). Migrados a la API vigente (`SignerProperties` + `SignatureFieldAppearance`, ya disponible en la misma versión 8.0.5 que ya se usaba — no hacía falta esperar a iText 9). Verificado firmando y verificando documentos reales con firma visible, invisible y bloqueada: mismo resultado visual y misma validez que antes del cambio.
+- `XSDDownloader`/`InternetConnectivityChecker` (`xml_verify_xsd_structure`) usaban el constructor `new URL(String)`, deprecado desde Java 20. Reemplazado por `URI.create(...).toURL()`, con el mismo comportamiento ante una URL malformada (se sigue traduciendo a un error controlado, nunca una excepción sin capturar).
+- `Pkcs11FallbackProvider` y `PKCS12CertificateExtractor.CustomException` (clases `Serializable`) no declaraban `serialVersionUID` — agregado en ambas.
+- `HELP.txt` de `PDFSignerPKCS11`/`PDFSignerPKCS12` mostraba el nombre del jar en minúscula estilo Maven (`pdf_signer_pkcs11.jar`) en vez del nombre real de distribución (`PDFSignerPKCS11.jar`).
+
 ## [1.1.1] — 2026-09-01
 
 ### Agregado

@@ -50,6 +50,7 @@
 
 package com.sauken.s_fide.pdf_signer_pkcs12;
 
+import com.itextpdf.forms.form.element.SignatureFieldAppearance;
 import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.signatures.*;
@@ -355,7 +356,6 @@ public class PDFSignerPKCS12 {
         Path finalOutputPath = Paths.get(createOutputPath(params.pdfPath()));
         Path encryptedIntermediate = null;
 
-        PdfSignatureAppearance appearance = null;
         String signatureText = null;
 
         if (params.xPos() != 0 || params.yPos() != 0) {
@@ -418,26 +418,28 @@ public class PDFSignerPKCS12 {
                 StampingProperties stampingProperties = new StampingProperties();
                 stampingProperties.useAppendMode();
 
-                PdfSigner signer = new PdfSigner(reader, outputStream, stampingProperties);
-
                 String fieldName = String.format("Signature_%s_%d",
                         getNameFromDN(subjectDN.getName()).replaceAll("[^a-zA-Z0-9]", "_"),
                         System.currentTimeMillis());
-                signer.setFieldName(fieldName);
+
+                SignerProperties signerProperties = new SignerProperties().setFieldName(fieldName);
 
                 if (params.xPos() != 0 || params.yPos() != 0) {
                     Rectangle rect = new Rectangle(params.xPos(), params.yPos(), 160, 70);
 
-                    appearance = signer.getSignatureAppearance();
-                    appearance.setPageRect(rect)
+                    SignatureFieldAppearance appearance = new SignatureFieldAppearance(fieldName)
+                            .setContent(signatureText)
+                            .setFontSize(8.0f);
+                    signerProperties.setPageRect(rect)
                             .setPageNumber(1)
-                            .setLayer2FontSize(8.0f)
-                            .setLayer2Text(signatureText);
+                            .setSignatureAppearance(appearance);
                 }
 
                 if (params.lock()) {
-                    signer.setCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
+                    signerProperties.setCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
                 }
+
+                PdfSigner signer = new PdfSigner(reader, outputStream, null, stampingProperties, signerProperties);
 
                 IExternalSignature signature = new PrivateKeySignature(
                         privateKey,

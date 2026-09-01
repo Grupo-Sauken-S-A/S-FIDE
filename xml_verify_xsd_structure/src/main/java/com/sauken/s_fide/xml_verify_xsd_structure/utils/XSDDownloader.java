@@ -57,6 +57,8 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.channels.Channels;
@@ -203,7 +205,7 @@ public class XSDDownloader {
 
     private static boolean isCodAladiUrl(String urlStr) {
         try {
-            String host = new URL(urlStr).getHost();
+            String host = URI.create(urlStr).toURL().getHost();
             return host != null && host.toLowerCase().contains("codaladi.org");
         } catch (Exception e) {
             return false;
@@ -212,7 +214,7 @@ public class XSDDownloader {
 
     private static String extractFileName(String urlStr) {
         try {
-            String name = new File(new URL(urlStr).getPath()).getName();
+            String name = new File(URI.create(urlStr).toURL().getPath()).getName();
             return name.isEmpty() ? null : name;
         } catch (Exception e) {
             return null;
@@ -220,7 +222,17 @@ public class XSDDownloader {
     }
 
     private static File downloadFromUrl(String xsdUrl) throws IOException {
-        URL url = new URL(xsdUrl);
+        URL url;
+        try {
+            url = URI.create(xsdUrl).toURL();
+        } catch (IllegalArgumentException e) {
+            // URI.create() lanza esta excepción no verificada ante una sintaxis
+            // inválida (donde new URL(String), ya deprecado, lanzaba
+            // MalformedURLException) — se traduce para no romper el contrato
+            // "throws IOException" de este método ni dejar escapar una
+            // excepción sin capturar hacia el llamador.
+            throw new MalformedURLException(e.getMessage());
+        }
         String fileName = new File(url.getPath()).getName();
         File tempFile = Files.createTempFile("schema_", fileName).toFile();
         tempFile.deleteOnExit();

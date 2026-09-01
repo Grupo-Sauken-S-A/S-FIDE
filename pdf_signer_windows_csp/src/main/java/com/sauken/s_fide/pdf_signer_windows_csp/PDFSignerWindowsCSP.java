@@ -50,6 +50,7 @@
 
 package com.sauken.s_fide.pdf_signer_windows_csp;
 
+import com.itextpdf.forms.form.element.SignatureFieldAppearance;
 import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.signatures.*;
@@ -348,23 +349,27 @@ public class PDFSignerWindowsCSP {
                 StampingProperties stampingProperties = new StampingProperties();
                 stampingProperties.useAppendMode();
 
-                PdfSigner signer = new PdfSigner(reader, outputStream, stampingProperties);
                 String fieldName = String.format("Signature_%s_%d",
                         getNameFromDN(subjectDN.getName()).replaceAll("[^a-zA-Z0-9]", "_"),
                         System.currentTimeMillis());
-                signer.setFieldName(fieldName);
+
+                SignerProperties signerProperties = new SignerProperties().setFieldName(fieldName);
 
                 if (params.xPos() != 0 || params.yPos() != 0) {
-                    PdfSignatureAppearance appearance = signer.getSignatureAppearance();
                     Rectangle rect = new Rectangle(params.xPos(), params.yPos(), 160, 70);
-                    appearance.setPageRect(rect).setPageNumber(1);
-                    appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
-                    appearance.setLayer2Text(buildSignatureText(params.customText(), subjectDN)).setLayer2FontSize(8.0f);
+                    SignatureFieldAppearance appearance = new SignatureFieldAppearance(fieldName)
+                            .setContent(buildSignatureText(params.customText(), subjectDN))
+                            .setFontSize(8.0f);
+                    signerProperties.setPageRect(rect)
+                            .setPageNumber(1)
+                            .setSignatureAppearance(appearance);
                 }
 
                 if (params.lock()) {
-                    signer.setCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
+                    signerProperties.setCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
                 }
+
+                PdfSigner signer = new PdfSigner(reader, outputStream, null, stampingProperties, signerProperties);
 
                 IExternalSignature signature = new PrivateKeySignature(
                         privateKey, DigestAlgorithms.SHA256, "SunMSCAPI");

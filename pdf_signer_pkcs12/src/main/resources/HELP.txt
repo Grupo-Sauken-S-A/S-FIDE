@@ -1,6 +1,6 @@
 PDFSignerPKCS12 - Programa de Firma Digital de documentos PDF con certificados PKCS12
 
-Uso: java -jar pdf_signer_pkcs12.jar [opciones]
+Uso: java -jar PDFSignerPKCS12.jar [opciones]
 
 Opciones:
   -i, --input <archivo>        Archivo PDF a firmar (obligatorio)

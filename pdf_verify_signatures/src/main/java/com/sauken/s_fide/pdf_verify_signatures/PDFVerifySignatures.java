@@ -268,7 +268,7 @@ public class PDFVerifySignatures {
         }
 
         System.out.println("Tipo de firma: " + pkcs7.getFilterSubtype());
-        System.out.println("Algoritmo de firma: " + getSignatureAlgorithmName(signingCert));
+        System.out.println("Algoritmo de firma: " + getSignatureAlgorithmName(pkcs7));
 
         try {
             java.security.cert.Certificate[] certChain = pkcs7.getSignCertificateChain();
@@ -303,9 +303,18 @@ public class PDFVerifySignatures {
         return "";
     }
 
-    private static String getSignatureAlgorithmName(X509Certificate cert) {
+    /**
+     * Algoritmo con el que se calculó y firmó esta firma del documento —
+     * no confundir con cert.getSigAlgName(), que informa con qué algoritmo la
+     * autoridad certificante firmó el certificado del firmante (un dato
+     * distinto que puede no coincidir con este). Se reconstruye con la misma
+     * convención de nombre que usa la JCA (p. ej. "SHA256withRSA") a partir
+     * del digest y el algoritmo de firma que iText ya calculó al leer la
+     * firma real del PDF.
+     */
+    private static String getSignatureAlgorithmName(PdfPKCS7 pkcs7) {
         try {
-            return cert.getSigAlgName();
+            return pkcs7.getDigestAlgorithmName() + "with" + pkcs7.getSignatureAlgorithmName();
         } catch (Exception e) {
             return "Desconocido";
         }

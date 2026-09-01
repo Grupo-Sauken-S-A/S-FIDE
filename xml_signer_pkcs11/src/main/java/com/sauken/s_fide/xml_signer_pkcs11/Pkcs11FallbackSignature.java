@@ -167,12 +167,18 @@ public final class Pkcs11FallbackSignature extends SignatureSpi {
                 "Pkcs11FallbackSignature solo se usa para firmar, no para verificar");
     }
 
+    // engineSetParameter(String, Object) y engineGetParameter(String) siguen
+    // siendo métodos abstractos de SignatureSpi (no hay reemplazo moderno que
+    // los sustituya por completo) — toda subclase concreta debe implementarlos
+    // sí o sí, aunque estén marcados @Deprecated desde hace varias versiones.
     @Override
+    @SuppressWarnings("deprecation")
     protected void engineSetParameter(String param, Object value) throws InvalidParameterException {
         throw new InvalidParameterException("Parámetros no soportados");
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     protected Object engineGetParameter(String param) throws InvalidParameterException {
         throw new InvalidParameterException("Parámetros no soportados");
     }
