@@ -6,6 +6,12 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 
 ## [Sin publicar]
 
+### Cambiado
+- `s_fide_gui`: reescritas las 10 descripciones de módulo heredadas de 1.0.0 (mostradas en el encabezado de cada pestaña) — eran una sola oración genérica; ahora explican qué hace cada módulo, con qué particularidad relevante para el usuario y, donde aplica, cuándo conviene usarlo en vez de un módulo hermano. Las dos descripciones de `XMLSignerWindowsCSP`/`PDFSignerWindowsCSP` (agregadas en 1.1.0) no cambiaron, eran ya del nivel deseado.
+
+### Corregido
+- `SFide-GUI.bat` fallaba al ejecutarse desde una carpeta cuyo nombre contiene espacios (p. ej. `C:\S-FiDE versión 1.1.0\`): la línea que invoca `java` no citaba las rutas de `%JAVA_HOME%`/`%JAVA_FX%`, por lo que `cmd.exe` cortaba la línea en el espacio y fallaba con "no se reconoce como un comando interno o externo". `SFide-GUI.sh` no tenía este problema (ya citaba correctamente todas sus variables).
+
 ## [1.1.0] — 2026-08-30
 
 ### Agregado

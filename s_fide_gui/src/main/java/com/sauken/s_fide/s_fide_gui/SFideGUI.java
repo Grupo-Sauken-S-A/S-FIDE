@@ -1361,7 +1361,11 @@ public class SFideGUI extends Application {
         addExecuteButton(grid, execute, 3);
 
         VBox content = createTabContent(
-                "Este módulo permite visualizar los slots disponibles en un token criptográfico.",
+                "Muestra el contenido de cada entrada de un token PKCS#11: el número de slot que el resto de "
+                        + "los módulos necesita como parámetro, y si hay un certificado presente, de quién es y "
+                        + "su vigencia. Es la manera de distinguir, en tokens donde conviven un certificado "
+                        + "vencido y su renovación en entradas distintas del mismo dispositivo —algo frecuente "
+                        + "con las autoridades certificantes—, cuál es cuál antes de usarlo para firmar.",
                 grid
         );
 
@@ -1397,7 +1401,10 @@ public class SFideGUI extends Application {
         addExecuteButton(grid, execute, 4);
 
         VBox content = createTabContent(
-                "Este módulo permite extraer certificados digitales almacenados en un token criptográfico y generar un archivo .PEM con los mismos.",
+                "Extrae el certificado digital presente en un slot de un token PKCS#11: muestra en pantalla sus "
+                        + "datos completos (sujeto, emisor, vigencia, número de serie) y además guarda una copia "
+                        + "real en un archivo .PEM en disco — útil para conservarlo fuera del token, inspeccionarlo, "
+                        + "o cargarlo en otra herramienta.",
                 grid
         );
 
@@ -1428,7 +1435,10 @@ public class SFideGUI extends Application {
         addExecuteButton(grid, execute, 2);
 
         VBox content = createTabContent(
-                "Este módulo permite extraer certificados desde archivos PKCS#12 (.p12 o .pfx) y generar un archivo .PEM con los mismos.",
+                "Extrae el certificado digital de un archivo PKCS#12 (.p12 o .pfx): muestra en pantalla sus "
+                        + "datos completos (sujeto, emisor, vigencia, número de serie) y además guarda una copia "
+                        + "real en un archivo .PEM en disco. Misma utilidad que el extractor de tokens, pero para "
+                        + "certificados que ya existen como archivo.",
                 grid
         );
 
@@ -1472,7 +1482,12 @@ public class SFideGUI extends Application {
         addExecuteButton(grid, execute, 6);
 
         VBox content = createTabContent(
-                "Este módulo permite firmar documentos XML usando un token criptográfico. Permite firmar un párrafo o elemento XML con un ID específico o bien todo el XML.",
+                "Firma digitalmente un documento XML con la clave privada de un token criptográfico, usando "
+                        + "SHA-256. Puede firmar el documento completo, o solo un elemento/párrafo específico "
+                        + "identificado por su atributo Id= —una posibilidad general, válida para cualquier "
+                        + "XML— que además es la que usan los documentos de comercio exterior ALADI/MERCOSUR "
+                        + "(Certificados de Origen Digital, Declaraciones Juradas de Origen), cuyas firmas van "
+                        + "embebidas sobre elementos puntuales del documento y no sobre el XML completo.",
                 grid
         );
 
@@ -1511,7 +1526,10 @@ public class SFideGUI extends Application {
         addExecuteButton(grid, execute, 4);
 
         VBox content = createTabContent(
-                "Este módulo permite firmar documentos XML usando un archivo PKCS#12. Permite firmar un párrafo o elemento XML con un ID específico o bien todo el XML.",
+                "Firma digitalmente un documento XML con SHA-256, igual que la versión con token, pero usando "
+                        + "un archivo de certificado PKCS#12 (.p12/.pfx) en lugar de hardware — ideal para "
+                        + "pruebas, automatización de servidor, o certificados que no requieren token físico. "
+                        + "Admite la misma firma por elemento vía Id= que la versión con token.",
                 grid
         );
 
@@ -1542,7 +1560,11 @@ public class SFideGUI extends Application {
         addExecuteButton(grid, execute, 2);
 
         VBox content = createTabContent(
-                "Este módulo permite verificar validez de las firmas digitales en documentos XML.",
+                "Verifica la integridad criptográfica de las firmas de un XML y consulta el estado de "
+                        + "revocación del certificado firmante (OCSP, con reintento por CRL) contra la fecha de "
+                        + "firma — no la fecha actual, para no invalidar firmas antiguas hechas con un "
+                        + "certificado hoy ya vencido. Admite firmas hechas con SHA-256 y también SHA-1 "
+                        + "(compatibilidad con documentos antiguos).",
                 grid
         );
 
@@ -1574,7 +1596,10 @@ public class SFideGUI extends Application {
         addExecuteButton(grid, execute, 2);
 
         VBox content = createTabContent(
-                "Este módulo permite verificar firmas digitales y la estructura de documentos XML contra un esquema XSD. Puede utilizar un esquema XSD externo o el referenciado por el mismo XML.",
+                "Valida que un XML cumpla la estructura de su esquema XSD —externo o el indicado por el propio "
+                        + "documento— y de paso verifica también sus firmas digitales. Para documentos "
+                        + "ALADI/MERCOSUR usa el esquema oficial, con reintento automático por un dominio espejo "
+                        + "si el sitio de ALADI no responde.",
                 grid
         );
 
@@ -1637,7 +1662,10 @@ public class SFideGUI extends Application {
         addExecuteButton(grid, execute, 8);
 
         VBox content = createTabContent(
-                "Este módulo permite firmar documentos PDF usando un token criptográfico. Permite establecer una firma visible en coordenadas específicas.",
+                "Firma digitalmente un documento PDF con la clave privada de un token criptográfico, usando "
+                        + "SHA-256. La firma puede ser invisible o mostrarse en un recuadro con firmante, fecha "
+                        + "y texto personalizado en coordenadas específicas de la primera página, y opcionalmente "
+                        + "puede bloquear el documento contra modificaciones posteriores (certificación + cifrado).",
                 grid
         );
 
@@ -1695,7 +1723,9 @@ public class SFideGUI extends Application {
         addExecuteButton(grid, execute, 6);
 
         VBox content = createTabContent(
-                "Este módulo permite firmar documentos PDF usando un archivo PKCS#12. Permite establecer una firma visible en coordenadas específicas.",
+                "Firma digitalmente un documento PDF con SHA-256, igual que la versión con token, pero usando "
+                        + "un archivo de certificado PKCS#12 (.p12/.pfx) — ideal para pruebas, automatización de "
+                        + "servidor, o certificados que no requieren hardware.",
                 grid
         );
 
@@ -1726,7 +1756,10 @@ public class SFideGUI extends Application {
         addExecuteButton(grid, execute, 2);
 
         VBox content = createTabContent(
-                "Este módulo permite verificar validez de las firmas digitales en documentos PDF.",
+                "Verifica la integridad criptográfica de cada firma de un PDF, si cubre todo el documento o "
+                        + "solo una versión anterior, si está bloqueado/cifrado, y el estado de revocación del "
+                        + "certificado firmante (OCSP con reintento por CRL) contra la fecha de firma. Admite "
+                        + "firmas hechas con SHA-256 y también SHA-1 (compatibilidad con documentos antiguos).",
                 grid
         );
 
