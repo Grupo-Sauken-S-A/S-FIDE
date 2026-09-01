@@ -1,0 +1,622 @@
+<title>Guía de Usuario — S-FiDE GUI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #eef1f6;
+    --surface: #ffffff;
+    --surface-2: #e4e9f1;
+    --ink: #16233a;
+    --muted: #52607a;
+    --faint: #8493ac;
+    --line: #d6dce6;
+    --accent: #24487d;
+    --accent-strong: #14335e;
+    --accent-soft: #dde6f3;
+    --ok: #2f7a4f;
+    --ok-soft: #e2f1e7;
+    --warn: #9a5518;
+    --warn-soft: #f5e9dc;
+    --code-bg: #0f1c30;
+    --code-fg: #dbe6f5;
+    --code-accent: #8fb4e8;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1524;
+      --surface: #151f34;
+      --surface-2: #1c2a45;
+      --ink: #e7ecf6;
+      --muted: #a6b1c9;
+      --faint: #67728c;
+      --line: #283552;
+      --accent: #7fa3dd;
+      --accent-strong: #b0cbf3;
+      --accent-soft: #1f2d4a;
+      --ok: #74c491;
+      --ok-soft: #16281d;
+      --warn: #e0aa71;
+      --warn-soft: #33230f;
+      --code-bg: #0a1220;
+      --code-fg: #d7e2f2;
+      --code-accent: #9dc0ef;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0e1524;
+    --surface: #151f34;
+    --surface-2: #1c2a45;
+    --ink: #e7ecf6;
+    --muted: #a6b1c9;
+    --faint: #67728c;
+    --line: #283552;
+    --accent: #7fa3dd;
+    --accent-strong: #b0cbf3;
+    --accent-soft: #1f2d4a;
+    --ok: #74c491;
+    --ok-soft: #16281d;
+    --warn: #e0aa71;
+    --warn-soft: #33230f;
+    --code-bg: #0a1220;
+    --code-fg: #d7e2f2;
+    --code-accent: #9dc0ef;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  code, kbd, .mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  code {
+    background: var(--surface-2);
+    color: var(--accent-strong);
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+    font-size: 0.85em;
+  }
+
+  a { color: var(--accent-strong); }
+  ::selection { background: var(--accent-soft); }
+
+  /* ---------- Shell layout ---------- */
+
+  .shell {
+    display: grid;
+    grid-template-columns: 272px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 940px) {
+    .shell { grid-template-columns: 1fr; }
+  }
+
+  aside.nav {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 2rem 1.4rem 2rem 1.75rem;
+    border-right: 1px solid var(--line);
+    scrollbar-width: thin;
+  }
+
+  @media (max-width: 940px) {
+    aside.nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); padding: 1.25rem 1.25rem; }
+  }
+
+  .brand { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.6rem; }
+  .brand .mark {
+    width: 34px; height: 34px; border-radius: 50%; border: 1.4px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 0.82rem; color: var(--accent); flex: none;
+  }
+  .brand .name { font-weight: 700; font-size: 0.95rem; letter-spacing: -0.01em; }
+  .brand .tag { display: block; font-size: 0.68rem; color: var(--faint); font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.03em; }
+
+  nav.toc { font-size: 0.86rem; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: sec; }
+  nav.toc > ol > li { counter-increment: sec; margin-bottom: 0.05rem; }
+  nav.toc a { display: block; padding: 0.32rem 0.5rem; border-radius: 6px; color: var(--muted); text-decoration: none; font-weight: 500; }
+  nav.toc > ol > li > a::before { content: counter(sec) ". "; color: var(--faint); font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; }
+  nav.toc a:hover { background: var(--surface-2); color: var(--ink); }
+  nav.toc ol ol { margin: 0.1rem 0 0.4rem 1.1rem; counter-reset: sub; }
+  nav.toc ol ol li { counter-increment: sub; }
+  nav.toc ol ol a { font-size: 0.8rem; padding: 0.2rem 0.5rem; }
+  nav.toc ol ol a::before { content: counter(sec) "." counter(sub) " "; }
+
+  main { padding: 3.5rem 3rem 8rem; min-width: 0; }
+  @media (max-width: 940px) { main { padding: 2.25rem 1.25rem 5rem; } }
+
+  .doc-header { max-width: 700px; margin-bottom: 3.5rem; }
+  .eyebrow { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+  h1 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: clamp(2rem, 4vw, 2.7rem); line-height: 1.1; letter-spacing: -0.01em; margin: 0 0 0.9rem; text-wrap: balance; }
+  .doc-header .meta { color: var(--muted); font-size: 0.95rem; display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; }
+  .doc-header .meta strong { color: var(--ink); font-weight: 600; }
+
+  section.chapter { max-width: 900px; padding-top: 3rem; margin-top: 3rem; border-top: 1px solid var(--line); scroll-margin-top: 1.5rem; }
+  section.chapter:first-of-type { border-top: none; margin-top: 0; }
+  .chapter-num { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--accent); letter-spacing: 0.06em; display: block; margin-bottom: 0.5rem; }
+  h2 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 1.65rem; margin: 0 0 1.1rem; text-wrap: balance; }
+  h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 1.3rem; margin: 0 0 0.9rem; }
+  h4 { font-size: 0.95rem; font-weight: 700; margin: 1.4rem 0 0.5rem; color: var(--ink); }
+  p { margin: 0 0 1rem; max-width: 68ch; }
+  ul, ol { padding-left: 1.3rem; margin: 0 0 1.1rem; }
+  li { margin-bottom: 0.4rem; max-width: 66ch; }
+  strong { font-weight: 700; }
+
+  .table-wrap { overflow-x: auto; margin: 1.2rem 0 1.6rem; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.87rem; background: var(--surface); }
+  th, td { text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+
+  .callout { border-radius: 10px; padding: 1rem 1.2rem; margin: 1.2rem 0 1.6rem; font-size: 0.92rem; max-width: 66ch; }
+  .callout.note { background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
+  .callout.warn { background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); }
+  .callout.ok { background: var(--ok-soft); border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent); }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .label { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 0.4rem; }
+  .callout.note .label { color: var(--accent-strong); }
+  .callout.warn .label { color: var(--warn); }
+  .callout.ok .label { color: var(--ok); }
+
+  /* ---------- Module blocks ---------- */
+
+  .module {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.8rem 2rem 2rem;
+    margin-bottom: 2.2rem;
+    background: var(--surface);
+  }
+  .module-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.3rem; }
+  .module-head h3 { margin: 0; }
+  .module-num { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--faint); }
+  .module .windows-only {
+    display: inline-flex; align-items: center; gap: 0.3rem; font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--warn);
+    background: var(--warn-soft); padding: 0.15rem 0.5rem; border-radius: 999px; margin-left: 0.5rem;
+  }
+  .module .desc { color: var(--muted); margin-bottom: 1.3rem; }
+
+  figure.shot { margin: 0 0 1.5rem; }
+  figure.shot img {
+    display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line);
+    box-shadow: 0 8px 24px -12px rgba(20, 40, 80, 0.35);
+  }
+  figure.shot figcaption { font-size: 0.8rem; color: var(--faint); margin-top: 0.5rem; text-align: center; }
+
+  .field-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); margin: 1.3rem 0 0.5rem; }
+  .field-label:first-of-type { margin-top: 0.4rem; }
+
+  .errlist { font-size: 0.87rem; color: var(--muted); }
+  .errlist code { color: var(--warn); background: var(--warn-soft); }
+  .oklist { font-size: 0.87rem; color: var(--muted); }
+  .oklist code { color: var(--ok); background: var(--ok-soft); }
+
+  footer.doc-footer { max-width: 900px; margin-top: 4rem; padding-top: 1.6rem; border-top: 1px solid var(--line); color: var(--faint); font-size: 0.85rem; }
+
+  details.mobile-toc { display: none; }
+  @media (max-width: 940px) {
+    details.mobile-toc { display: block; }
+    aside.nav > nav.toc { display: none; }
+    details.mobile-toc[open] + aside.nav > nav.toc, aside.nav.open nav.toc { display: block; }
+  }
+</style>
+
+<div class="shell">
+  <aside class="nav">
+    <div class="brand">
+      <div class="mark">SF</div>
+      <div>
+        <span class="name">S-FiDE</span>
+        <span class="tag">Guía de usuario — GUI</span>
+      </div>
+    </div>
+    <nav class="toc">
+      <ol>
+        <li><a href="#s1">Qué es esta guía</a></li>
+        <li><a href="#s2">Instalación y primer arranque</a></li>
+        <li><a href="#s3">Recorrido de la interfaz</a></li>
+        <li><a href="#s4">Los módulos, uno por uno</a>
+          <ol>
+            <li><a href="#g1">Ver Slots de Token</a></li>
+            <li><a href="#g2">Ver Certificado de Token</a></li>
+            <li><a href="#g3">Ver Certificado de PKCS#12</a></li>
+            <li><a href="#g4">Firmar XML con Token</a></li>
+            <li><a href="#g5">Firmar XML con PKCS#12</a></li>
+            <li><a href="#g6">Verificar Firmas en XML</a></li>
+            <li><a href="#g7">Verificar XML con XSD</a></li>
+            <li><a href="#g8">Firmar PDF con Token</a></li>
+            <li><a href="#g9">Firmar PDF con PKCS#12</a></li>
+            <li><a href="#g10">Verificar Firmas en PDF</a></li>
+            <li><a href="#g11">Ver Certificados de Windows</a></li>
+            <li><a href="#g12">Firmar XML con Windows CSP/KSP</a></li>
+            <li><a href="#g13">Firmar PDF con Windows CSP/KSP</a></li>
+          </ol>
+        </li>
+        <li><a href="#s5">Dónde quedan los archivos generados</a></li>
+        <li><a href="#s6">La ventana de Ayuda</a></li>
+        <li><a href="#s7">Problemas comunes</a></li>
+        <li><a href="#s8">Para integradores y más ayuda</a></li>
+      </ol>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="doc-header">
+      <span class="eyebrow">Grupo Sauken S.A. — Guía de usuario</span>
+      <h1>Guía de Usuario S-FiDE GUI</h1>
+      <p>Cómo usar la interfaz gráfica de S-FiDE para firmar y verificar documentos XML y PDF, paso a paso, con capturas reales de la propia aplicación. Pensada para quien usa el programa haciendo clic, no para quien integra los módulos por línea de comandos — para eso está el <a href="manual-tecnico-integracion.html">Manual Técnico de Integración</a>.</p>
+      <div class="meta">
+        <span>Versión del producto: <strong>1.1.1</strong></span>
+        <span>Documento: <strong>01/09/2026</strong></span>
+      </div>
+    </div>
+
+    <section class="chapter" id="s1">
+      <span class="chapter-num">01</span>
+      <h2>Qué es esta guía</h2>
+      <p>S-FiDE incluye una interfaz gráfica (<strong>S-FiDE GUI</strong>) que agrupa 13 funciones distintas de firma digital y verificación — firmar y verificar documentos XML y PDF, y consultar certificados digitales guardados en un token criptográfico, en un archivo, o en el almacén de Windows — todo desde una sola ventana, sin necesidad de escribir comandos.</p>
+      <p>Esta guía recorre cada una de esas 13 pantallas con capturas reales de la aplicación: qué hace cada una, qué significa cada campo, y qué puede pasar al presionar "Ejecutar" — tanto si todo sale bien como los mensajes más comunes cuando algo falta o está mal.</p>
+      <div class="callout note">
+        <span class="label">Nota sobre las capturas</span>
+        <p>Las capturas de esta guía se hicieron sin un token ni certificado real conectado, por eso los formularios aparecen vacíos o con datos de ejemplo. Los mensajes de error y de éxito que se describen en cada sección son los mensajes reales que imprime cada programa — algunos con captura real (como "Ver Certificados de Windows", que no necesita ningún dato para ejecutarse), y el resto tomados textualmente de la documentación técnica del producto.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="s2">
+      <span class="chapter-num">02</span>
+      <h2>Instalación y primer arranque</h2>
+      <p>S-FiDE es <strong>portable</strong>: no hay un instalador que registre nada en Windows. Se descomprime el ZIP de distribución y se ejecuta.</p>
+      <div class="callout warn">
+        <span class="label">Importante</span>
+        <p>Cree primero una carpeta propia (por ejemplo <code>C:\S-FiDE</code>) y descomprima el ZIP <strong>dentro</strong> de esa carpeta — no directamente en la raíz de una unidad, el Escritorio ni Descargas. La distribución trae más de una decena de archivos <code>.jar</code> y el runtime completo de Java y JavaFX (varios cientos de MB); sin una carpeta contenedora, todo eso queda mezclado con sus otros archivos.</p>
+      </div>
+      <p>Para arrancar la interfaz gráfica, ejecute <code>SFide-GUI.bat</code> (Windows) o <code>SFide-GUI.sh</code> (Linux/macOS) dentro de esa carpeta. La primera vez que se ejecuta en una instalación (solo en Windows), S-FiDE crea automáticamente:</p>
+      <ul>
+        <li>Un acceso directo en el <strong>Escritorio</strong>, con el ícono propio de S-FiDE.</li>
+        <li>Un acceso directo en el <strong>Menú Inicio</strong>, dentro de una carpeta "S-FiDE".</li>
+      </ul>
+      <p>Esto ocurre una sola vez — si borra alguno de los dos después, no se vuelve a crear solo. No requiere ninguna acción de su parte ni interrumpe el arranque; si por alguna política de seguridad de su organización no se pudieran crear (por ejemplo, PowerShell bloqueado), el programa arranca igual, sin avisos molestos, y simplemente no quedan esos accesos directos.</p>
+    </section>
+
+    <section class="chapter" id="s3">
+      <span class="chapter-num">03</span>
+      <h2>Recorrido de la interfaz</h2>
+      <p>La ventana principal tiene tres zonas fijas:</p>
+      <figure class="shot">
+        <img src="img/manual-usuario/01_ver_slots_de_token.png" alt="Ventana principal de S-FiDE GUI, con el panel lateral de módulos, el formulario del módulo elegido, y el panel de salida del proceso">
+        <figcaption>Ventana principal: panel lateral (izquierda), formulario del módulo elegido (centro), salida del proceso (abajo)</figcaption>
+      </figure>
+      <ul>
+        <li><strong>Panel lateral (izquierda):</strong> los 13 módulos disponibles, agrupados por ícono según lo que hacen — ⊙/▤ para "ver" información, ✎ para firmar, ✓ para verificar, ⧉ para los módulos exclusivos de Windows. Los tres módulos de Windows CSP/KSP solo aparecen en esta lista si S-FiDE corre sobre Windows.</li>
+        <li><strong>Formulario del módulo elegido (centro):</strong> una breve descripción arriba, los campos que ese módulo necesita, y el botón <strong>Ejecutar</strong>.</li>
+        <li><strong>Salida del Proceso (abajo):</strong> un panel colapsable que se expande solo cuando hay un resultado que mostrar — ahí aparece exactamente lo que el programa imprime, éxito o error, además de un pequeño diálogo emergente ("Estado del Proceso" / "Error") con el mismo resultado.</li>
+      </ul>
+      <p>S-FiDE recuerda entre sesiones, sin que tenga que volver a escribirlos: la ruta de la biblioteca PKCS#11 o el archivo PKCS#12, el número de slot, el alias del almacén de Windows, la posición de firma visible en PDF, la opción "Bloquear documento", el tamaño y posición de la ventana, y el último módulo que tenía abierto (reabre ahí directamente). <strong>Nunca guarda ninguna contraseña</strong> — esos campos siempre arrancan vacíos.</p>
+    </section>
+
+    <section class="chapter" id="s4">
+      <span class="chapter-num">04</span>
+      <h2>Los módulos, uno por uno</h2>
+      <p>Los tres botones que aparecen abajo de cada formulario — <strong>Limpiar Salida</strong>, <strong>Ayuda</strong>, <strong>Salir</strong> — son los mismos en las 13 pantallas y no se repiten en cada sección.</p>
+
+      <div class="module" id="g1">
+        <div class="module-head"><h3>1. Ver Slots de Token</h3><span class="module-num">TokenSlotsView</span></div>
+        <p class="desc">Muestra el contenido de cada entrada de un token PKCS#11: el número de slot que el resto de los módulos necesita como parámetro, y si hay un certificado presente, de quién es y su vigencia. Es la manera de distinguir, en tokens donde conviven un certificado vencido y su renovación en entradas distintas del mismo dispositivo —algo frecuente con las autoridades certificantes—, cuál es cuál antes de usarlo para firmar.</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/01_ver_slots_de_token.png" alt="Pantalla Ver Slots de Token">
+        </figure>
+        <p class="field-label">Campos</p>
+        <ul>
+          <li><strong>Biblioteca PKCS#11:</strong> el archivo del fabricante del token (<code>.dll</code> en Windows). El botón "Detectar automáticamente" y el selector de marca/modelo completan esta ruta por usted si reconocen el driver instalado.</li>
+          <li><strong>Contraseña del token:</strong> el PIN del dispositivo.</li>
+        </ul>
+        <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
+        <p class="oklist"><code>Éxito</code> — lista, por cada entrada del token, su tipo (clave privada o certificado), sujeto, emisor, fechas de validez y número de serie. Si el token está vacío, no es un error: se informa <em>"No se encontraron certificados ni claves en el token."</em></p>
+        <p class="errlist"><code>Error</code> — biblioteca inexistente, proveedor PKCS#11 no disponible, contraseña incorrecta, o error al leer el token.</p>
+        <div class="callout warn">
+          <span class="label">Cuidado con la contraseña</span>
+          <p>Un número elevado de intentos fallidos de PIN puede bloquear el token, según la política de seguridad de cada fabricante — a veces exige tramitar un certificado nuevo ante la autoridad certificante. No adivine la contraseña por prueba y error.</p>
+        </div>
+      </div>
+
+      <div class="module" id="g2">
+        <div class="module-head"><h3>2. Ver Certificado de Token</h3><span class="module-num">TokenCertificateExtractor</span></div>
+        <p class="desc">Extrae el certificado digital presente en un slot de un token PKCS#11: muestra en pantalla sus datos completos (sujeto, emisor, vigencia, número de serie) y además guarda una copia real en un archivo .PEM en disco — útil para conservarlo fuera del token, inspeccionarlo, o cargarlo en otra herramienta.</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/02_ver_certificado_de_token.png" alt="Pantalla Ver Certificado de Token">
+        </figure>
+        <p class="field-label">Campos</p>
+        <ul>
+          <li><strong>Biblioteca PKCS#11</strong> y <strong>Contraseña:</strong> igual que en "Ver Slots de Token".</li>
+          <li><strong>Número de Slot:</strong> el que mostró "Ver Slots de Token" para la entrada que le interesa — no es necesariamente el mismo número que muestre alguna herramienta del fabricante del token.</li>
+        </ul>
+        <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
+        <p class="oklist"><code>Éxito</code> — imprime Sujeto, Emisor, Número de Serie, Válido desde/hasta y Algoritmo de Firma, y guarda un archivo <code>.pem</code> nombrado según el certificado.</p>
+        <p class="errlist"><code>Error</code> — biblioteca inexistente, proveedor no disponible, error al cargar el almacén, número de slot inválido, no se encontró certificado en ese slot, o error al exportar.</p>
+        <div class="callout note">
+          <span class="label">Dónde queda el archivo .pem</span>
+          <p>El archivo se guarda en la carpeta donde está instalado S-FiDE (no junto a ningún otro archivo que haya elegido) — revísela ahí después de ejecutar.</p>
+        </div>
+      </div>
+
+      <div class="module" id="g3">
+        <div class="module-head"><h3>3. Ver Certificado de PKCS#12</h3><span class="module-num">PKCS12CertificateExtractor</span></div>
+        <p class="desc">Extrae el certificado digital de un archivo PKCS#12 (.p12 o .pfx): muestra en pantalla sus datos completos (sujeto, emisor, vigencia, número de serie) y además guarda una copia real en un archivo .PEM en disco. Misma utilidad que el extractor de tokens, pero para certificados que ya existen como archivo.</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/03_ver_certificado_de_pkcs_12.png" alt="Pantalla Ver Certificado de PKCS#12">
+        </figure>
+        <p class="field-label">Campos</p>
+        <ul>
+          <li><strong>Archivo PKCS#12:</strong> el archivo <code>.p12</code>/<code>.pfx</code> del certificado.</li>
+          <li><strong>Contraseña:</strong> la contraseña de ese archivo.</li>
+        </ul>
+        <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
+        <p class="oklist"><code>Éxito</code> — mismos datos que el extractor de token, más un archivo <code>.pem</code> (misma nota sobre dónde queda guardado que en el módulo anterior).</p>
+        <p class="errlist"><code>Error</code> — archivo inexistente, archivo no es un PKCS#12 válido o contraseña incorrecta, archivo sin certificados, o error al exportar.</p>
+      </div>
+
+      <div class="module" id="g4">
+        <div class="module-head"><h3>4. Firmar XML con Token</h3><span class="module-num">XMLSignerPKCS11</span></div>
+        <p class="desc">Firma digitalmente un documento XML con la clave privada de un token criptográfico, usando SHA-256. Puede firmar el documento completo, o solo un elemento/párrafo específico identificado por su atributo Id= —una posibilidad general, válida para cualquier XML— que además es la que usan los documentos de comercio exterior ALADI/MERCOSUR (Certificados de Origen Digital, Declaraciones Juradas de Origen), cuyas firmas van embebidas sobre elementos puntuales del documento y no sobre el XML completo.</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/04_firmar_xml_con_token.png" alt="Pantalla Firmar XML con Token">
+        </figure>
+        <p class="field-label">Campos</p>
+        <ul>
+          <li><strong>Biblioteca PKCS#11</strong>, <strong>Contraseña</strong>, <strong>Número de Slot:</strong> igual que en los módulos de token anteriores.</li>
+          <li><strong>Archivo XML:</strong> el documento a firmar.</li>
+          <li><strong>Elemento XML (ID) a Firmar:</strong> déjelo vacío para firmar el documento completo, o escriba el identificador del elemento puntual a firmar (por ejemplo <code>COD</code>, <code>CODEH</code>, <code>DJO</code>, <code>DJOEH</code> en documentos de comercio exterior — ver la solapa "Comercio Exterior" de la <a href="#s6">Ayuda</a>).</li>
+        </ul>
+        <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
+        <p class="oklist"><code>Éxito</code> — crea un archivo <code>&lt;nombre&gt;-signed.xml</code> junto al original.</p>
+        <p class="errlist"><code>Error</code> — biblioteca o archivo XML inexistente, contraseña incorrecta, el elemento indicado no existe en el documento, proveedor no disponible, el elemento ya tiene una firma aplicada, se intentó firmar <code>CODEH</code>/<code>DJOEH</code> sin una firma previa sobre <code>COD</code>/<code>DJO</code>, o (caso extremo) el token no admite ningún mecanismo de firma compatible.</p>
+      </div>
+
+      <div class="module" id="g5">
+        <div class="module-head"><h3>5. Firmar XML con PKCS#12</h3><span class="module-num">XMLSignerPKCS12</span></div>
+        <p class="desc">Firma digitalmente un documento XML con SHA-256, igual que la versión con token, pero usando un archivo de certificado PKCS#12 (.p12/.pfx) en lugar de hardware — ideal para pruebas, automatización de servidor, o certificados que no requieren token físico. Admite la misma firma por elemento vía Id= que la versión con token.</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/05_firmar_xml_con_pkcs_12.png" alt="Pantalla Firmar XML con PKCS#12">
+        </figure>
+        <p class="field-label">Campos</p>
+        <ul>
+          <li><strong>Archivo PKCS#12</strong> y <strong>Contraseña:</strong> el certificado a usar.</li>
+          <li><strong>Archivo XML</strong> y <strong>Elemento XML (ID) a Firmar:</strong> igual que en "Firmar XML con Token".</li>
+        </ul>
+        <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
+        <p class="oklist"><code>Éxito</code> — mismo resultado que "Firmar XML con Token": <code>&lt;nombre&gt;-signed.xml</code> junto al original.</p>
+        <p class="errlist"><code>Error</code> — archivo PKCS#12 o XML inexistente, PKCS#12 inválido o contraseña incorrecta, PKCS#12 sin certificado, elemento inexistente, o las mismas reglas de firma (elemento ya firmado, orden CODEH/DJOEH) que el módulo anterior.</p>
+      </div>
+
+      <div class="module" id="g6">
+        <div class="module-head"><h3>6. Verificar Firmas en XML</h3><span class="module-num">XMLVerifySignatures</span></div>
+        <p class="desc">Verifica la integridad criptográfica de las firmas de un XML y consulta el estado de revocación del certificado firmante (OCSP, con reintento por CRL) contra la fecha de firma — no la fecha actual, para no invalidar firmas antiguas hechas con un certificado hoy ya vencido. Admite firmas hechas con SHA-256 y también SHA-1 (compatibilidad con documentos antiguos).</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/06_verificar_firmas_en_xml.png" alt="Pantalla Verificar Firmas en XML">
+        </figure>
+        <p class="field-label">Campos</p>
+        <ul>
+          <li><strong>Archivo XML:</strong> el documento firmado a verificar.</li>
+          <li><strong>Salida simple:</strong> tildada por defecto, reduce el detalle de lo que se imprime.</li>
+        </ul>
+        <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
+        <p class="oklist"><code>Documento válido</code> — todas las firmas son íntegras y sus certificados no están revocados.</p>
+        <p class="errlist"><code>Documento inválido</code> — alguna firma no es íntegra, o su certificado fue revocado (en ese caso se explica en texto plano: "el certificado fue revocado por su autoridad certificante... esta firma se considera INVÁLIDA por ese motivo").</p>
+        <p class="errlist"><code>Error</code> — archivo inexistente, o el XML no contiene ninguna firma digital.</p>
+        <div class="callout note">
+          <span class="label">Requiere Internet</span>
+          <p>La consulta de revocación (OCSP/CRL) necesita conexión a Internet para dar un resultado completo.</p>
+        </div>
+      </div>
+
+      <div class="module" id="g7">
+        <div class="module-head"><h3>7. Verificar XML con XSD</h3><span class="module-num">XMLVerifyXSDStructure</span></div>
+        <p class="desc">Valida que un XML cumpla la estructura de su esquema XSD —externo o el indicado por el propio documento— y de paso verifica también sus firmas digitales. Para documentos ALADI/MERCOSUR usa el esquema oficial, con reintento automático por un dominio espejo si el sitio de ALADI no responde.</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/07_verificar_xml_con_xsd.png" alt="Pantalla Verificar XML con XSD">
+        </figure>
+        <p class="field-label">Campos</p>
+        <ul>
+          <li><strong>Archivo XML:</strong> el documento a validar.</li>
+          <li><strong>Archivo XSD (opcional):</strong> déjelo vacío para que S-FiDE busque y descargue automáticamente el esquema referenciado dentro del propio XML; indique uno local si prefiere validar sin depender de Internet.</li>
+        </ul>
+        <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
+        <p class="oklist"><code>Éxito</code> — confirma que la estructura cumple el esquema y muestra el resultado de verificar las firmas presentes.</p>
+        <p class="errlist"><code>Error</code> — XML o XSD inexistente, no se encontró referencia a ningún esquema y tampoco se indicó uno, error al descargar el esquema, el contenido descargado no es un XSD válido, o sin conexión a Internet cuando hacía falta descargar algo.</p>
+        <div class="callout warn">
+          <span class="label">No valida revocación</span>
+          <p>Este módulo <strong>no</strong> confirma si el certificado fue revocado — lo indica explícitamente al finalizar. Si eso importa, corra además "Verificar Firmas en XML" sobre el mismo archivo.</p>
+        </div>
+      </div>
+
+      <div class="module" id="g8">
+        <div class="module-head"><h3>8. Firmar PDF con Token</h3><span class="module-num">PDFSignerPKCS11</span></div>
+        <p class="desc">Firma digitalmente un documento PDF con la clave privada de un token criptográfico, usando SHA-256. La firma puede ser invisible o mostrarse en un recuadro con firmante, fecha y texto personalizado en coordenadas específicas de la primera página, y opcionalmente puede bloquear el documento contra modificaciones posteriores (certificación + cifrado).</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/08_firmar_pdf_con_token.png" alt="Pantalla Firmar PDF con Token">
+        </figure>
+        <p class="field-label">Campos</p>
+        <ul>
+          <li><strong>Biblioteca PKCS#11</strong>, <strong>Contraseña</strong>, <strong>Número de Slot:</strong> igual que en los módulos de token XML.</li>
+          <li><strong>Archivo PDF:</strong> el documento a firmar.</li>
+          <li><strong>Posición (X,Y):</strong> deje ambos en <code>0</code> para una firma invisible (igual de válida, pero no se dibuja nada); indique coordenadas para una firma visible. El origen <code>(0,0)</code> es la esquina <strong>inferior izquierda</strong> de la página, y esas coordenadas ubican la esquina inferior izquierda del recuadro de firma.</li>
+          <li><strong>Texto personalizado:</strong> se agrega debajo del nombre del firmante y la fecha; no tiene efecto si la firma es invisible.</li>
+          <li><strong>Bloquear documento después de firmar:</strong> certifica el PDF ("sin cambios permitidos") y lo cifra en AES-256. Solo puede haber una firma certificante por documento, y debe ser la primera — si planea agregar más firmas después, no la marque en la primera.</li>
+        </ul>
+        <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
+        <p class="oklist"><code>Éxito</code> — crea <code>&lt;nombre&gt;-signed.pdf</code> junto al original. Si el token necesitó un mecanismo de hash alternativo, se lo informa igual sin que tenga que hacer nada al respecto.</p>
+        <p class="errlist"><code>Error</code> — PDF o biblioteca inexistente, el PDF ya está encriptado, alguna firma preexistente del PDF no es válida, el token no tiene clave privada o cadena de certificados válida, o error al acceder a la clave.</p>
+      </div>
+
+      <div class="module" id="g9">
+        <div class="module-head"><h3>9. Firmar PDF con PKCS#12</h3><span class="module-num">PDFSignerPKCS12</span></div>
+        <p class="desc">Firma digitalmente un documento PDF con SHA-256, igual que la versión con token, pero usando un archivo de certificado PKCS#12 (.p12/.pfx) — ideal para pruebas, automatización de servidor, o certificados que no requieren hardware.</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/09_firmar_pdf_con_pkcs_12.png" alt="Pantalla Firmar PDF con PKCS#12">
+        </figure>
+        <p class="field-label">Campos</p>
+        <p>Los mismos que "Firmar PDF con Token", cambiando biblioteca/slot por <strong>Archivo PKCS#12</strong> y <strong>Contraseña</strong> del certificado.</p>
+        <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
+        <p class="oklist"><code>Éxito</code> — mismo resultado que "Firmar PDF con Token".</p>
+        <p class="errlist"><code>Error</code> — PDF o certificado inexistente, PDF ya encriptado, firma preexistente inválida, certificado sin clave privada o cadena válida.</p>
+      </div>
+
+      <div class="module" id="g10">
+        <div class="module-head"><h3>10. Verificar Firmas en PDF</h3><span class="module-num">PDFVerifySignatures</span></div>
+        <p class="desc">Verifica la integridad criptográfica de cada firma de un PDF, si cubre todo el documento o solo una versión anterior, si está bloqueado/cifrado, y el estado de revocación del certificado firmante (OCSP con reintento por CRL) contra la fecha de firma. Admite firmas hechas con SHA-256 y también SHA-1 (compatibilidad con documentos antiguos).</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/10_verificar_firmas_en_pdf.png" alt="Pantalla Verificar Firmas en PDF">
+        </figure>
+        <p class="field-label">Campos</p>
+        <p>Igual que "Verificar Firmas en XML": <strong>Archivo PDF</strong> y la casilla <strong>Salida simple</strong>.</p>
+        <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
+        <p class="oklist"><code>Éxito</code> — por cada firma: cobertura, integridad, fecha, revocación, firmante, organización, vigencia, emisor y algoritmo; al final, si el documento está bloqueado y/o encriptado.</p>
+        <p class="errlist"><code>Documento inválido</code> — alguna firma no es válida, el certificado estaba revocado al momento de firmar, es un certificado no confiable/autofirmado, o no se pudo obtener el certificado firmante.</p>
+        <p class="errlist"><code>Error</code> — el documento no contiene ninguna firma digital.</p>
+      </div>
+
+      <div class="module" id="g11">
+        <div class="module-head"><h3>11. Ver Certificados de Windows<span class="windows-only">Solo Windows</span></h3><span class="module-num">WindowsCertificateStoreView</span></div>
+        <p class="desc">Muestra el contenido del almacén "Personal" de certificados de Windows: alias, sujeto (CN), emisor, vigencia, número de serie y si tiene clave privada — el mismo rol que "Ver Slots de Token" cumple para un token PKCS#11, pero para el almacén de Windows. Úselo antes de firmar con "Firmar XML/PDF con Windows CSP/KSP" si no conoce con exactitud el alias o el nombre (CN) del certificado que necesita. No requiere contraseña ni configuración alguna.</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/11_ver_certificados_de_windows.png" alt="Pantalla Ver Certificados de Windows">
+        </figure>
+        <p>Es el único módulo sin ningún campo que completar — presione "Ejecutar" directamente. Así se ve un resultado real, ejecutado en esta misma máquina (que no tiene certificados en el almacén):</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/11b_ver_certificados_de_windows_ejecutado.png" alt="Ver Certificados de Windows ejecutado, mostrando el resultado real en el panel de salida y el diálogo de estado del proceso">
+          <figcaption>Captura real de una ejecución exitosa — el diálogo "Proceso finalizado correctamente" y el resultado en el panel de abajo</figcaption>
+        </figure>
+        <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
+        <p class="oklist"><code>Éxito</code> — lista alias, sujeto, emisor, vigencia, número de serie y si tiene clave privada de cada certificado; si el almacén está vacío, informa <em>"No se encontraron certificados en el almacén de Windows (Windows-MY)"</em> — no es un error, como muestra la captura de arriba.</p>
+      </div>
+
+      <div class="module" id="g12">
+        <div class="module-head"><h3>12. Firmar XML con Windows CSP/KSP<span class="windows-only">Solo Windows</span></h3><span class="module-num">XMLSignerWindowsCSP</span></div>
+        <p class="desc">Firma usando un certificado ya presente en el almacén de certificados de Windows (CSP/KSP), sin necesitar configurar una librería PKCS#11. Es más simple si el certificado ya aparece en el Administrador de certificados de Windows, pero queda atado a Windows (no es portable a Linux/macOS). Para la mayoría de los casos, PKCS#11 ("Firmar XML con Token") sigue siendo la opción recomendada por ser estándar y multiplataforma; use esta alternativa si prefiere la integración nativa de Windows.</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/12_firmar_xml_con_windows_csp_ksp.png" alt="Pantalla Firmar XML con Windows CSP/KSP">
+        </figure>
+        <p class="field-label">Campos</p>
+        <ul>
+          <li><strong>Alias / Nombre (CN):</strong> el alias exacto del certificado, o un fragmento de su nombre que identifique a uno solo. El botón "Ver certificados" abre el mismo listado que el módulo anterior si no lo conoce con exactitud.</li>
+          <li><strong>Archivo XML</strong> y <strong>Elemento XML (ID) a Firmar:</strong> igual que en los otros firmadores de XML.</li>
+        </ul>
+        <p>No pide contraseña — el acceso a la clave lo administra Windows, que puede mostrar un diálogo nativo del sistema pidiendo el PIN.</p>
+        <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
+        <p class="oklist"><code>Éxito</code> — mismo resultado que los demás firmadores de XML: <code>&lt;nombre&gt;-signed.xml</code>.</p>
+        <p class="errlist"><code>Error</code> — no se encontró ningún certificado que coincida con el alias indicado, el texto coincide con más de un certificado (sea más específico), el proveedor de Windows no está disponible, o las mismas reglas de firma (elemento ya firmado, orden CODEH/DJOEH) que los demás firmadores XML.</p>
+        <div class="callout warn">
+          <span class="label">No usar para firmar muchos documentos seguidos</span>
+          <p>Windows puede abrir un diálogo pidiendo el PIN en <strong>cada</strong> documento firmado, sin que S-FiDE pueda evitarlo — es una política de seguridad de Windows, no un defecto del programa. Para firmar muchos documentos sin intervención, use "Firmar XML con Token" o "Firmar XML con PKCS#12".</p>
+        </div>
+      </div>
+
+      <div class="module" id="g13">
+        <div class="module-head"><h3>13. Firmar PDF con Windows CSP/KSP<span class="windows-only">Solo Windows</span></h3><span class="module-num">PDFSignerWindowsCSP</span></div>
+        <p class="desc">El equivalente de "Firmar XML con Windows CSP/KSP" para documentos PDF — mismas opciones de posición, texto y bloqueo que "Firmar PDF con Token".</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/13_firmar_pdf_con_windows_csp_ksp.png" alt="Pantalla Firmar PDF con Windows CSP/KSP">
+        </figure>
+        <p class="field-label">Campos</p>
+        <p>Los mismos que "Firmar PDF con Token", cambiando biblioteca/contraseña/slot por el campo <strong>Alias / Nombre (CN)</strong> del módulo anterior.</p>
+        <p>Todos los campos son opcionales salvo el alias. Así se ve, en una captura real, el aviso que aparece si se presiona "Ejecutar" dejándolo vacío:</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/13b_firmar_pdf_windows_csp_error_validacion.png" alt="Aviso de error mostrando que el campo alias o nombre del certificado es requerido, con el diálogo de error y el mensaje en el panel de salida">
+          <figcaption>Captura real — S-FiDE valida los campos obligatorios antes de ejecutar nada</figcaption>
+        </figure>
+        <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
+        <p class="oklist"><code>Éxito</code> — mismo resultado que "Firmar PDF con Token".</p>
+        <p class="errlist"><code>Error</code> — el campo alias es requerido (validado antes de ejecutar nada, ver captura), no se encontró o hay más de un certificado que coincide, PDF ya encriptado, firma preexistente inválida, más los errores de acceso al almacén de Windows del módulo anterior.</p>
+        <div class="callout warn">
+          <span class="label">No usar para firmar muchos documentos seguidos</span>
+          <p>Mismo motivo que en la versión XML: Windows puede pedir el PIN por diálogo en cada documento. Para firmar muchos PDF sin intervención, use "Firmar PDF con Token" o "Firmar PDF con PKCS#12".</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="chapter" id="s5">
+      <span class="chapter-num">05</span>
+      <h2>Dónde quedan los archivos generados</h2>
+      <table>
+        <tr><th>Módulo</th><th>Archivo generado</th><th>Dónde queda</th></tr>
+        <tr><td>Firmadores de XML (3)</td><td><code>&lt;nombre&gt;-signed.xml</code></td><td>En la misma carpeta que el XML original</td></tr>
+        <tr><td>Firmadores de PDF (3)</td><td><code>&lt;nombre&gt;-signed.pdf</code></td><td>En la misma carpeta que el PDF original</td></tr>
+        <tr><td>Extractores de certificado (2)</td><td><code>&lt;nombre-del-certificado&gt;.pem</code></td><td><strong>En la carpeta donde está instalado S-FiDE</strong> — no en la carpeta del token ni la que haya elegido</td></tr>
+      </table>
+      <p>Los módulos de "ver"/"verificar" no generan ningún archivo: todo su resultado se muestra en el panel "Salida del Proceso".</p>
+    </section>
+
+    <section class="chapter" id="s6">
+      <span class="chapter-num">06</span>
+      <h2>La ventana de Ayuda</h2>
+      <p>El botón <strong>Ayuda</strong>, presente en cualquier pantalla, abre una ventana con cinco solapas — vale la pena conocerla, tiene contenido que esta guía no repite en detalle:</p>
+
+      <h3>Guía Rápida</h3>
+      <figure class="shot">
+        <img src="img/manual-usuario/01_ayuda_guia_rapida.png" alt="Ventana de Ayuda, solapa Guía Rápida">
+      </figure>
+
+      <h3>Preguntas Frecuentes</h3>
+      <figure class="shot">
+        <img src="img/manual-usuario/02_ayuda_preguntas_frecuentes.png" alt="Ventana de Ayuda, solapa Preguntas Frecuentes">
+      </figure>
+
+      <h3>Glosario</h3>
+      <figure class="shot">
+        <img src="img/manual-usuario/03_ayuda_glosario.png" alt="Ventana de Ayuda, solapa Glosario">
+      </figure>
+
+      <h3>Comercio Exterior</h3>
+      <p>Exclusiva para quien trabaja con Certificados de Origen Digital o Declaraciones Juradas de Origen (COD/CODEH/DJO/DJOEH) — qué escribir exactamente en "Elemento XML (ID) a Firmar" en cada etapa, y las reglas de orden obligatorias.</p>
+      <figure class="shot">
+        <img src="img/manual-usuario/04_ayuda_comercio_exterior.png" alt="Ventana de Ayuda, solapa Comercio Exterior">
+      </figure>
+
+      <h3>Contacto</h3>
+      <figure class="shot">
+        <img src="img/manual-usuario/05_ayuda_contacto.png" alt="Ventana de Ayuda, solapa Contacto">
+      </figure>
+    </section>
+
+    <section class="chapter" id="s7">
+      <span class="chapter-num">07</span>
+      <h2>Problemas comunes</h2>
+      <table>
+        <tr><th>Situación</th><th>Qué hacer</th></tr>
+        <tr><td>No sé qué número de slot usar</td><td>Corra primero "Ver Slots de Token" — el número que muestra ahí es el que hay que usar, no el que muestre alguna herramienta del fabricante.</td></tr>
+        <tr><td>No sé el alias/CN de mi certificado de Windows</td><td>Corra "Ver Certificados de Windows" primero, o use el botón "Ver certificados" en el propio formulario de firma.</td></tr>
+        <tr><td>Windows me pide el PIN en cada documento</td><td>Es esperable con los módulos CSP/KSP — no hay forma de evitarlo. Para firmar varios documentos sin interrupciones, use el módulo equivalente de Token o PKCS#12.</td></tr>
+        <tr><td>No encuentro el archivo firmado</td><td>Queda en la misma carpeta que el archivo original (ver la tabla de la sección anterior) — no en la carpeta de instalación de S-FiDE.</td></tr>
+        <tr><td>No encuentro el .pem que extraje</td><td>A diferencia de los firmadores, este sí queda en la carpeta de instalación de S-FiDE, no junto al token/archivo de origen.</td></tr>
+        <tr><td>El programa dice que un archivo "no existe"</td><td>Use siempre el botón "Examinar..." para elegir el archivo en vez de escribir la ruta a mano — evita errores de tipeo.</td></tr>
+      </table>
+    </section>
+
+    <section class="chapter" id="s8">
+      <span class="chapter-num">08</span>
+      <h2>Para integradores y más ayuda</h2>
+      <p>Si necesita invocar estos mismos programas desde otra aplicación por línea de comandos (sin la interfaz gráfica), o el detalle técnico completo de cada mecanismo de firma, revocación, y la especialización de comercio exterior ALADI/MERCOSUR, consulte el <a href="manual-tecnico-integracion.html"><strong>Manual Técnico de Integración</strong></a>.</p>
+      <p>Para soporte comercial: <strong>Grupo Sauken S.A.</strong> — <a href="https://www.sauken.com.ar/">www.sauken.com.ar</a>.</p>
+    </section>
+
+    <footer class="doc-footer">
+      S-FiDE es software libre bajo licencia GNU GPL v2 o posterior. Este documento acompaña la distribución de S-FiDE GUI y se actualiza junto con cada versión del producto.
+    </footer>
+  </main>
+</div>

@@ -52,7 +52,8 @@ S-FiDE v1.1.1 - Leeme primero:
 
 - En "test" tiene documentos de ejemplo para firmar y validar. En "xsd" tiene ejemplos de archivos XSD para
   validar. En "doc" encontrará el manual técnico de integración con el detalle de cada aplicación
-  ("manual-tecnico-integracion.md" / ".html")
+  ("manual-tecnico-integracion.md" / ".html") y la guía de usuario de la interfaz gráfica, con capturas de
+  pantalla reales ("manual-usuario-sfide-gui.html")
 
 - Para la validación de firmas digitales como para validación de esquema contra un archivo XSD, es conveniente
   disponer de una conexión a Internet para lograr una validación completa

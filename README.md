@@ -52,6 +52,7 @@ Los ZIP de las [releases](https://github.com/Grupo-Sauken-S-A/S-FIDE/releases) t
 
 ## Documentación
 
+- **[Guía de Usuario S-FiDE GUI](doc/manual-usuario-sfide-gui.html)** ([versión publicada](https://grupo-sauken-s-a.github.io/S-FIDE/manual-usuario-sfide-gui.html)) — cómo usar la interfaz gráfica pantalla por pantalla, con capturas reales, para quien firma y verifica haciendo clic en vez de por línea de comandos.
 - **[Manual Técnico de Integración](doc/manual-tecnico-integracion.md)** ([versión publicada](https://grupo-sauken-s-a.github.io/S-FIDE/manual-tecnico-integracion.html)) — referencia completa: arquitectura, cada módulo con sus parámetros y mensajes de error, mecanismos de firma (PKCS#11/PKCS#12/Windows CSP-KSP), validación de revocación OCSP/CRL, especialización ALADI/MERCOSUR, y guía de migración desde 1.0.0.
 - **[Leeme.txt](Leeme.txt)** — guía rápida para el usuario final de una distribución ya compilada.
 - **[CHANGELOG.md](CHANGELOG.md)** — historial de versiones.

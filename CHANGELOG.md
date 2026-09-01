@@ -4,6 +4,11 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), y el versionado sigue [SemVer](https://semver.org/lang/es/).
 
+## [Sin publicar]
+
+### Agregado
+- **Guía de Usuario S-FiDE GUI** (`doc/manual-usuario-sfide-gui.html`): recorrido completo de las 13 pantallas de la interfaz gráfica con capturas reales de la aplicación (formularios, un caso de ejecución exitosa real y un caso real de validación de campo obligatorio), explicando qué hace cada módulo, qué significa cada campo, dónde quedan los archivos generados, y los mensajes de éxito/error posibles en cada uno — pensada para el usuario final que opera la GUI, a diferencia del Manual Técnico de Integración (orientado a integradores por línea de comandos). Enlazada desde el README, `Leeme.txt` y la landing page de GitHub Pages.
+
 ## [1.1.1] — 2026-09-01
 
 ### Agregado

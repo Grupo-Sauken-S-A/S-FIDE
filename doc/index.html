@@ -144,6 +144,10 @@
   </p>
 
   <div class="cards">
+    <a class="card" href="manual-usuario-sfide-gui.html">
+      <div class="card-title">Guía de Usuario S-FiDE GUI <span class="arrow">→</span></div>
+      <div class="card-desc">Cómo usar la interfaz gráfica, pantalla por pantalla, con capturas reales de la aplicación — para quien firma y verifica documentos haciendo clic, no por línea de comandos.</div>
+    </a>
     <a class="card" href="manual-tecnico-integracion.html">
       <div class="card-title">Manual Técnico de Integración <span class="arrow">→</span></div>
       <div class="card-desc">Arquitectura, cada módulo con sus parámetros y errores, mecanismos de firma (PKCS#11/PKCS#12/Windows CSP-KSP), validación de revocación OCSP/CRL, especialización ALADI/MERCOSUR y guía de migración.</div>
@@ -154,7 +158,7 @@
     </a>
   </div>
 
-  <p style="color: var(--muted); font-size: 0.95rem;">Trece módulos independientes, cada uno invocable por línea de comandos como proceso propio, sin librerías para integrar:</p>
+  <p style="color: var(--muted); font-size: 0.95rem;">Trece módulos de línea de comandos, cada uno invocable como proceso propio sin librerías para integrar, más la interfaz gráfica S-FiDE GUI que los agrupa a todos:</p>
   <ul class="modules">
     <li>token_slots_view</li>
     <li>token_certificate_extractor</li>
@@ -168,6 +172,7 @@
     <li>pdf_signer_pkcs12</li>
     <li>pdf_signer_windows_csp</li>
     <li>pdf_verify_signatures</li>
+    <li>windows_certificate_store_view</li>
     <li>s_fide_gui</li>
   </ul>
 
