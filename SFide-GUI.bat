@@ -38,7 +38,7 @@ if not exist "%SFIDE%\SFide-GUI.jar" (
     exit /b 1
 )
 
-%JAVA_HOME%\bin\java --module-path %JAVA_FX%\lib --add-modules javafx.controls,javafx.fxml -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -jar SFide-GUI.jar
+"%JAVA_HOME%\bin\java" --module-path "%JAVA_FX%\lib" --add-modules javafx.controls,javafx.fxml -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -jar "%SFIDE%\SFide-GUI.jar"
 
 if errorlevel 1 (
     echo.
