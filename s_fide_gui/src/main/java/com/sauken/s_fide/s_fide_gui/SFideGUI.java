@@ -85,11 +85,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.Arrays;
 import java.util.List;
 
@@ -441,6 +443,104 @@ public class SFideGUI extends Application {
         configureStage(scene);
 
         System.out.println("Interfaz gráfica construida exitosamente");
+
+        executorService.submit(this::createDesktopShortcutIfNeeded);
+    }
+
+    /**
+     * Crea un acceso directo en el escritorio la primera vez que se ejecuta esta
+     * instalación de S-FiDE (Windows únicamente) — queda registrado en
+     * sfide-defaults.properties para no repetirlo en próximas ejecuciones, ni
+     * siquiera si el usuario borra el acceso directo después. Corre en el hilo
+     * de fondo existente (no bloquea la interfaz) y nunca interrumpe el arranque
+     * si falla: solo se informa por la salida estándar.
+     */
+    private void createDesktopShortcutIfNeeded() {
+        if (configManager.isDesktopShortcutCreated()) {
+            return;
+        }
+        if (!System.getProperty("os.name", "").toLowerCase().contains("win")) {
+            markDesktopShortcutCreated();
+            return;
+        }
+
+        try {
+            Path sfideDir = Paths.get(
+                    SFideGUI.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+            ).getParent();
+
+            if (sfideDir == null) {
+                markDesktopShortcutCreated();
+                return;
+            }
+
+            Path batPath = sfideDir.resolve("SFide-GUI.bat");
+            Path iconPath = sfideDir.resolve("S-FiDE.ico");
+
+            if (!Files.exists(batPath)) {
+                markDesktopShortcutCreated();
+                return;
+            }
+
+            String shortcutName = "S-FiDE " + VERSION_NUMBER + ".lnk";
+            String iconLine = Files.exists(iconPath)
+                    ? "$Shortcut.IconLocation = '" + psQuote(iconPath) + "'"
+                    : "";
+
+            // Ojo: nada de comillas dobles en este script. Se lo pasa entero como
+            // valor de "powershell -Command", y las comillas dobles internas no
+            // sobreviven ese paso (el parser de argumentos de Windows las consume
+            // al re-tokenizar la línea completa) — el propio $Shortcut.CreateShortcut
+            // terminaba recibiendo "$desktop\S-FiDE" como token suelto en vez de un
+            // string. Comillas simples y concatenación con "+" evitan el problema
+            // por completo. Confirmado reproduciendo el error exacto y su fix antes
+            // de aplicarlo acá.
+            String script = String.join("; ",
+                    "$desktop = [Environment]::GetFolderPath('Desktop')",
+                    "$WshShell = New-Object -ComObject WScript.Shell",
+                    "$Shortcut = $WshShell.CreateShortcut($desktop + '\\" + shortcutName + "')",
+                    "$Shortcut.TargetPath = '" + psQuote(batPath) + "'",
+                    "$Shortcut.WorkingDirectory = '" + psQuote(sfideDir) + "'",
+                    iconLine,
+                    "$Shortcut.Description = 'S-FiDE - Sistema de Firma Digital Extendido'",
+                    "$Shortcut.Save()"
+            );
+
+            ProcessBuilder pb = new ProcessBuilder(
+                    "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                    "-WindowStyle", "Hidden", "-Command", script
+            );
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            boolean finished = process.waitFor(10, TimeUnit.SECONDS);
+
+            if (finished && process.exitValue() == 0) {
+                System.out.println("Acceso directo creado en el escritorio: " + shortcutName);
+            } else {
+                System.out.println("No se pudo crear el acceso directo en el escritorio"
+                        + (output.isBlank() ? "" : ": " + output.trim()));
+            }
+        } catch (Exception e) {
+            System.out.println("No se pudo crear el acceso directo en el escritorio: " + e.getMessage());
+        } finally {
+            markDesktopShortcutCreated();
+        }
+    }
+
+    /**
+     * ConfigurationManager persiste sus cambios con un PauseTransition, que
+     * como toda Animation de JavaFX solo puede controlarse desde el hilo de
+     * la interfaz gráfica — llamarlo directamente desde este hilo de fondo
+     * lanza IllegalStateException (silenciosa, porque el Runnable se envía
+     * con executorService.submit() sin revisar el Future).
+     */
+    private void markDesktopShortcutCreated() {
+        Platform.runLater(() -> configManager.setDesktopShortcutCreated(true));
+    }
+
+    private static String psQuote(Path path) {
+        return path.toString().replace("'", "''");
     }
 
     private Scene createScene(VBox root) {

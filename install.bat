@@ -112,6 +112,7 @@ copy /y "%SOURCE%\SFide-GUI.sh"                   "%DEPLOY%\" >nul
 copy /y "%SOURCE%\sfide-defaults.demo.properties" "%DEPLOY%\" >nul
 copy /y "%SOURCE%\Leeme.txt"                      "%DEPLOY%\" >nul
 copy /y "%SOURCE%\LICENSE"                        "%DEPLOY%\" >nul
+copy /y "%SOURCE%\s_fide_gui\src\main\resources\images\sfide-icon.ico" "%DEPLOY%\S-FiDE.ico" >nul
 if exist "%SOURCE%\doc"  xcopy /y /e /i /q "%SOURCE%\doc"  "%DEPLOY%\doc\"  >nul
 
 REM --- Runtimes embebidos y ejemplos (no viven en el repo git; ver VENDOR arriba) ---

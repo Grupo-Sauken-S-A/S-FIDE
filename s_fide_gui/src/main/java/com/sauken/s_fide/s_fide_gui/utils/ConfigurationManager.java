@@ -227,4 +227,18 @@ public class ConfigurationManager {
             pkcs12FilePath.set(path);
         }
     }
+
+    /**
+     * Recuerda si ya se intentó crear el acceso directo al escritorio (Windows)
+     * en esta instalación de S-FiDE, para hacerlo una única vez — incluso si el
+     * usuario borra el acceso directo después, no se vuelve a crear solo.
+     */
+    public boolean isDesktopShortcutCreated() {
+        return Boolean.parseBoolean(properties.getProperty("desktop.shortcut.created", "false"));
+    }
+
+    public void setDesktopShortcutCreated(boolean created) {
+        properties.setProperty("desktop.shortcut.created", String.valueOf(created));
+        saveDebounce.playFromStart();
+    }
 }

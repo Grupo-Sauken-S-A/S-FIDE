@@ -6,6 +6,9 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 
 ## [Sin publicar]
 
+### Agregado
+- `s_fide_gui` (Windows): al ejecutar `SFide-GUI.bat` por primera vez en una instalación, se crea automáticamente un acceso directo en el escritorio ("S-FiDE 1.1.0.lnk") apuntando a ese `.bat`, con el ícono propio de S-FiDE. Solo se crea una vez (queda registrado en `sfide-defaults.properties`) — si el usuario lo borra después, no se vuelve a crear solo. La distribución ahora incluye `S-FiDE.ico` en su raíz (el mismo ícono ya usado por la ventana de la GUI) para este fin y para quien prefiera armar el acceso directo a mano.
+
 ### Cambiado
 - `s_fide_gui`: reescritas las 10 descripciones de módulo heredadas de 1.0.0 (mostradas en el encabezado de cada pestaña) — eran una sola oración genérica; ahora explican qué hace cada módulo, con qué particularidad relevante para el usuario y, donde aplica, cuándo conviene usarlo en vez de un módulo hermano. Las dos descripciones de `XMLSignerWindowsCSP`/`PDFSignerWindowsCSP` (agregadas en 1.1.0) no cambiaron, eran ya del nivel deseado.
 - `Leeme.txt`, el manual técnico (MD y HTML) y el README ahora explican, con un ejemplo concreto, que el ZIP de distribución debe descomprimirse dentro de una carpeta propia y no directamente en la raíz de una unidad, el Escritorio o Descargas. Los ZIP publicados en el Release de GitHub, además, ahora traen esa carpeta propia ya incluida (antes el contenido quedaba suelto en la raíz del ZIP).
