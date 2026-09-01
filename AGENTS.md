@@ -28,6 +28,7 @@ Módulos del repositorio (cada uno es un módulo Maven independiente, un `pom.xm
 | `pdf_signer_pkcs12` | Firma PDF con archivo PKCS#12 |
 | `pdf_signer_windows_csp` | Firma PDF con el almacén de certificados de Windows (solo Windows) |
 | `pdf_verify_signatures` | Verifica firmas digitales de un PDF |
+| `windows_certificate_store_view` | Lista los certificados del almacén de Windows (solo Windows) |
 | `s_fide_gui` | Interfaz gráfica JavaFX que invoca los módulos anteriores como procesos externos |
 
 ---

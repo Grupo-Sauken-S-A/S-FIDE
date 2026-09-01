@@ -1,0 +1,35 @@
+WindowsCertificateStoreView - Programa que visualiza el contenido del almacén de certificados de Windows
+
+Este módulo es EXCLUSIVO de Windows. Muestra los certificados disponibles en el
+almacén "Personal" (Windows-MY) del usuario actual, el mismo almacén que usan
+XMLSignerWindowsCSP y PDFSignerWindowsCSP (CSP/KSP, vía SunMSCAPI). Es el
+equivalente, para ese almacén, de lo que TokenSlotsView es para un token
+PKCS#11: no firma ni modifica nada, solo permite ver qué hay antes de firmar.
+
+Uso: java -jar WindowsCertificateStoreView.jar [OPCIÓN]
+
+Opciones:
+  -version, -v, --version                        Muestra la versión del programa
+  -ayuda, -h, --help                              Muestra este mensaje de ayuda
+  -licencia, --license                            Muestra la información de licencia
+  -listar-certificados, --listar-certificados     Lista los certificados disponibles (mismo efecto que sin argumentos)
+
+Para ver los certificados disponibles, ejecútelo sin argumentos:
+  java -jar WindowsCertificateStoreView.jar
+
+Por cada certificado del almacén muestra:
+    Alias             Identificador interno del certificado en el almacén de Windows
+    Sujeto            Nombre completo del titular (incluye el CN)
+    Emisor            Autoridad certificante que lo emitió
+    Válido desde/hasta  Período de vigencia
+    Número de serie   Número de serie del certificado, en hexadecimal
+    Tiene clave privada  Si es "true", ese certificado puede usarse para firmar
+
+Notas:
+- Solo las entradas con "Tiene clave privada: true" son utilizables por XMLSignerWindowsCSP/PDFSignerWindowsCSP
+- El alias exacto, o cualquier fragmento del Sujeto (CN) que identifique un único certificado, sirve como
+  parámetro "Alias / Nombre (CN)" en esos dos módulos
+- Es habitual que convivan en el mismo almacén un certificado vencido y su renovación posterior: revise
+  "Válido hasta" antes de elegir cuál usar
+- Este módulo no requiere contraseña ni configuración: el acceso al almacén "Personal" del usuario actual
+  lo administra Windows directamente

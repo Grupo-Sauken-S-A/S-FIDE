@@ -208,7 +208,8 @@ public class SFideGUI extends Application {
                             field.getText().equals(configManager.getDefaultPKCS12Path()) ||
                             field.getText().equals(configManager.getDefaultSlotNumber()) ||
                             field.getText().equals(configManager.signatureXProperty().get()) ||
-                            field.getText().equals(configManager.signatureYProperty().get())) {
+                            field.getText().equals(configManager.signatureYProperty().get()) ||
+                            field.getText().equals(configManager.windowsCertAliasProperty().get())) {
                         continue;
                     }
 
@@ -1376,6 +1377,7 @@ public class SFideGUI extends Application {
         ));
 
         if (isWindowsOS()) {
+            modules.add(createWindowsCertificateStoreViewTab());
             modules.add(createXMLSignerWindowsCSPTab());
             modules.add(createPDFSignerWindowsCSPTab());
         }
@@ -2151,11 +2153,54 @@ public class SFideGUI extends Application {
         return System.getProperty("os.name", "").toLowerCase().contains("win");
     }
 
+    private Tab createWindowsCertificateStoreViewTab() {
+        Tab tab = new Tab("Ver Certificados de Windows");
+        GridPane grid = createStandardGridPane();
+
+        Button execute = createExecuteButton();
+        execute.setOnAction(e -> Platform.runLater(this::executeWindowsCertificateStoreView));
+
+        // No usa addToGrid()/addExecuteButton(): esas dos trabajan juntas asumiendo
+        // que ya existe un campo con botón "Examinar..." en la fila 0 (ahí es donde
+        // addExecuteButton() en realidad agrega el botón "Ejecutar", sin importar
+        // qué número de fila se le pase). Esta pestaña no tiene ningún campo, así
+        // que se agrega el botón directo al grid.
+        grid.add(execute, 0, 0);
+
+        VBox content = createTabContent(
+                "Muestra el contenido del almacén \"Personal\" de certificados de Windows: alias, sujeto (CN), "
+                        + "emisor, vigencia, número de serie y si tiene clave privada — el mismo rol que "
+                        + "\"Ver Slots de Token\" cumple para un token PKCS#11, pero para el almacén de Windows. "
+                        + "Úselo antes de firmar con \"Firmar XML/PDF con Windows CSP/KSP\" si no conoce con "
+                        + "exactitud el alias o el nombre (CN) del certificado que necesita. No requiere "
+                        + "contraseña ni configuración alguna.",
+                grid
+        );
+
+        tab.setContent(content);
+        return tab;
+    }
+
+    private void executeWindowsCertificateStoreView() {
+        try {
+            ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("WindowsCertificateStoreView");
+            if (result.valid()) {
+                Platform.runLater(() -> sharedOutputArea.clear());
+                GUIUtils.executeCommand("WindowsCertificateStoreView", new String[0], sharedOutputArea);
+            } else {
+                Platform.runLater(() -> ModuleValidator.showValidationError(result));
+            }
+        } catch (Exception e) {
+            handleError("Error al listar el almacén de certificados de Windows", e);
+        }
+    }
+
     private Tab createXMLSignerWindowsCSPTab() {
         Tab tab = new Tab("Firmar XML con Windows CSP/KSP");
         GridPane grid = createStandardGridPane();
 
         TextField aliasField = createTextField("Alias exacto o fragmento del nombre (CN) del certificado");
+        aliasField.textProperty().bindBidirectional(configManager.windowsCertAliasProperty());
         TextField xmlPath = createTextField("Ruta del archivo XML");
         TextField uri = createTextField("Párrafo o elemento XML con ID (opcional)");
 
@@ -2197,6 +2242,7 @@ public class SFideGUI extends Application {
         GridPane grid = createStandardGridPane();
 
         TextField aliasField = createTextField("Alias exacto o fragmento del nombre (CN) del certificado");
+        aliasField.textProperty().bindBidirectional(configManager.windowsCertAliasProperty());
         TextField pdfPath = createTextField("Ruta del archivo PDF");
         TextField xPos = createNumericTextField("X");
         TextField yPos = createNumericTextField("Y");

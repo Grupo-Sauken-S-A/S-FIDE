@@ -19,7 +19,7 @@ cd S-FIDE
 ./mvnw clean install
 ```
 
-Cada uno de los 13 módulos (ver tabla en `AGENTS.md`) genera su propio jar en su carpeta `target/`. Para armar una carpeta de distribución lista para ejecutar, usá `install.bat` (ver `Leeme.txt`).
+Cada uno de los 14 módulos (ver tabla en `AGENTS.md`) genera su propio jar en su carpeta `target/`. Para armar una carpeta de distribución lista para ejecutar, usá `install.bat` (ver `Leeme.txt`).
 
 ## Estructura del repositorio
 

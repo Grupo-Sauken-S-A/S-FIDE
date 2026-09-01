@@ -80,6 +80,8 @@
 - **Importante para integración por lotes:** si necesita firmar muchos documentos sin
   intervención humana, esta opción **no** es adecuada - Windows puede pedir el PIN por
   diálogo en cada documento. Para eso, use PKCS#11 o PKCS#12
+- ¿No sabe qué alias o nombre (CN) escribir? Use primero "Ver Certificados de Windows"
+  (aplicación 11) - lista todo lo que hay en el almacén, sin pedirle nada
 
 ## 11. ¿Qué valores recuerda S-FiDE entre una sesión y otra?
 
@@ -91,4 +93,15 @@
 - El tamaño y la posición de la ventana
 - La casilla "Bloquear documento después de firmar" y la posición X/Y de firma visible,
   compartidas entre los tres firmadores de PDF
+- El alias o nombre (CN) del certificado del almacén de Windows, compartido y sincronizado en
+  vivo entre "Firmar XML con Windows CSP/KSP" y "Firmar PDF con Windows CSP/KSP"
 - **Nunca** se guarda ninguna contraseña
+
+## 12. (Windows) Me aparecieron accesos directos solos en el escritorio y el menú inicio, ¿por qué?
+
+- La primera vez que ejecuta SFide-GUI.bat en una instalación de S-FiDE, se crean
+  automáticamente accesos directos en el escritorio y en el menú inicio (carpeta "S-FiDE"),
+  con el ícono propio de S-FiDE, apuntando a ese mismo .bat
+- Solo se crean una vez: si los borra después, no se vuelven a crear solos
+- Es por instalación: si tiene varias copias de S-FiDE en carpetas distintas (por ejemplo,
+  una por cada versión), cada una crea el suyo la primera vez que la ejecute

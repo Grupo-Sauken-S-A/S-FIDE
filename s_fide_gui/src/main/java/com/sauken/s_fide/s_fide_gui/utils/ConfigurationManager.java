@@ -39,6 +39,7 @@ public class ConfigurationManager {
     private final StringProperty windowWidth = new SimpleStringProperty("");
     private final StringProperty windowHeight = new SimpleStringProperty("");
     private final BooleanProperty windowMaximized = new SimpleBooleanProperty(true);
+    private final StringProperty windowsCertAlias = new SimpleStringProperty("");
 
     private ConfigurationManager() {
         properties = new Properties();
@@ -59,6 +60,7 @@ public class ConfigurationManager {
         windowWidth.set(properties.getProperty("window.width", ""));
         windowHeight.set(properties.getProperty("window.height", ""));
         windowMaximized.set(Boolean.parseBoolean(properties.getProperty("window.maximized", "true")));
+        windowsCertAlias.set(properties.getProperty("windows.cert.alias", ""));
 
         bindPersistence(pkcs11LibraryPath, "pkcs11.library.path");
         bindPersistence(pkcs11SlotNumber, "pkcs11.slot.number");
@@ -72,6 +74,7 @@ public class ConfigurationManager {
         bindPersistence(windowWidth, "window.width");
         bindPersistence(windowHeight, "window.height");
         bindPersistence(windowMaximized, "window.maximized");
+        bindPersistence(windowsCertAlias, "windows.cert.alias");
     }
 
     public static ConfigurationManager getInstance() {
@@ -146,6 +149,16 @@ public class ConfigurationManager {
 
     public StringProperty signatureYProperty() {
         return signatureY;
+    }
+
+    /**
+     * Alias o fragmento del nombre (CN) del certificado del almacén de
+     * Windows, compartido entre XMLSignerWindowsCSP y PDFSignerWindowsCSP —
+     * mismo criterio que pkcs11LibraryPathProperty/pkcs12FilePathProperty:
+     * un solo valor recordado y sincronizado en vivo entre ambas pestañas.
+     */
+    public StringProperty windowsCertAliasProperty() {
+        return windowsCertAlias;
     }
 
     /**

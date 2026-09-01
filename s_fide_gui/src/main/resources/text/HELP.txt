@@ -59,7 +59,15 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 - Verifica la validez de firmas en documentos PDF
 - Requiere archivo PDF firmado
 
-## 11. Firmar XML con Windows CSP/KSP (XMLSignerWindowsCSP) - solo Windows
+## 11. Ver Certificados de Windows (WindowsCertificateStoreView) - solo Windows
+- Muestra los certificados disponibles en el almacén "Personal" de Windows: alias, sujeto
+  (CN), emisor, vigencia, número de serie y si tiene clave privada
+- No requiere ningún dato: se ejecuta con un solo clic en "Ejecutar"
+- **Úsela antes de firmar** con las dos opciones siguientes si no conoce con exactitud el
+  alias o el nombre (CN) del certificado que necesita — es el mismo rol que cumple
+  "Ver Slots de Token" para un token PKCS#11, pero para el almacén de Windows
+
+## 12. Firmar XML con Windows CSP/KSP (XMLSignerWindowsCSP) - solo Windows
 - Firma documentos XML usando un certificado ya presente en el almacén de certificados de
   Windows (CSP/KSP), sin necesitar configurar una biblioteca PKCS#11
 - Requiere el alias exacto o un fragmento del nombre (CN) del certificado, archivo XML y
@@ -68,7 +76,7 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
   Windows. Para la mayoría de los casos, PKCS#11 sigue siendo la opción recomendada por ser
   estándar y multiplataforma; esta es una alternativa a elección del usuario
 
-## 12. Firmar PDF con Windows CSP/KSP (PDFSignerWindowsCSP) - solo Windows
+## 13. Firmar PDF con Windows CSP/KSP (PDFSignerWindowsCSP) - solo Windows
 - Igual que el anterior, pero para documentos PDF. Admite las mismas opciones de posición,
   texto adicional y bloqueo del documento que "Firmar PDF con Token"
 
@@ -84,10 +92,12 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
   combinado habitual (por ejemplo, tokens tipo ePass2003), sin necesidad de configuración
   adicional de su parte
 - **Alternativa de firma con el almacén de certificados de Windows (CSP/KSP)**, ver
-  aplicaciones 11 y 12 arriba
-- La ruta de biblioteca PKCS#11/PKCS#12, el número de slot, el último módulo abierto, el
-  tamaño de la ventana y algunas preferencias de firma de PDF ahora se recuerdan entre
-  sesiones (ver "Preguntas Frecuentes")
+  aplicaciones 12 y 13 arriba, y su visor dedicado (aplicación 11)
+- La ruta de biblioteca PKCS#11/PKCS#12, el número de slot, el alias del almacén de Windows,
+  el último módulo abierto, el tamaño de la ventana y algunas preferencias de firma de PDF
+  ahora se recuerdan entre sesiones (ver "Preguntas Frecuentes")
+- (Windows) La primera vez que ejecuta SFide-GUI.bat en una instalación, se crean
+  automáticamente accesos directos en el escritorio y en el menú inicio, con ícono propio
 
 ## Requerimientos
 

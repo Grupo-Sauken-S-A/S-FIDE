@@ -78,6 +78,7 @@ public class ModuleValidator {
         JAR_MAPPINGS.put("PDFVerifySignatures", "PDFVerifySignatures.jar");
         JAR_MAPPINGS.put("XMLSignerWindowsCSP", "XMLSignerWindowsCSP.jar");
         JAR_MAPPINGS.put("PDFSignerWindowsCSP", "PDFSignerWindowsCSP.jar");
+        JAR_MAPPINGS.put("WindowsCertificateStoreView", "WindowsCertificateStoreView.jar");
     }
 
     public record ValidationResult(boolean valid, String errorMessage) {

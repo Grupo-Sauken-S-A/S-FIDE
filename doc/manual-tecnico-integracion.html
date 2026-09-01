@@ -390,7 +390,8 @@
             <li><a href="#m10">PDFVerifySignatures</a></li>
             <li><a href="#m11">XMLSignerWindowsCSP</a></li>
             <li><a href="#m12">PDFSignerWindowsCSP</a></li>
-            <li><a href="#m13">S-FiDE GUI</a></li>
+            <li><a href="#m13">WindowsCertificateStoreView</a></li>
+            <li><a href="#m14">S-FiDE GUI</a></li>
           </ol>
         </li>
         <li><a href="#s10">Especialización ALADI/MERCOSUR</a></li>
@@ -444,7 +445,7 @@
           <tr><th>Ítem</th><th>Detalle</th></tr>
           <tr><td>Lenguaje / runtime</td><td>Java 23 (OpenJDK 23.0.1)</td></tr>
           <tr><td>Interfaz gráfica</td><td>JavaFX 23.0.1 (solo <code>s_fide_gui</code>)</td></tr>
-          <tr><td>Sistema de build</td><td>Apache Maven, multi-módulo (13 módulos)</td></tr>
+          <tr><td>Sistema de build</td><td>Apache Maven, multi-módulo (14 módulos)</td></tr>
           <tr><td>Empaquetado</td><td>Jars autocontenidos ("fat jars") — sin classpath externo</td></tr>
           <tr><td>Sistemas operativos</td><td>Windows, GNU/Linux, macOS (64 bits) — CSP/KSP exclusivo de Windows</td></tr>
           <tr><td>Arquitectura de CPU</td><td>x86-64 (64 bits obligatorio)</td></tr>
@@ -505,7 +506,7 @@
       <h2>Código fuente y repositorio</h2>
       <ul>
         <li>Repositorio: <a href="https://github.com/Grupo-Sauken-S-A/S-FIDE">github.com/Grupo-Sauken-S-A/S-FIDE</a></li>
-        <li>Proyecto Maven multi-módulo (13 módulos), un <code>pom.xml</code> raíz agregador.</li>
+        <li>Proyecto Maven multi-módulo (14 módulos), un <code>pom.xml</code> raíz agregador.</li>
         <li>Versionado <a href="https://semver.org/">SemVer</a>. Tags publicados: <code>v1.0.0</code>, <code>v1.1.0</code> (actual).</li>
       </ul>
       <p>Compilar desde el código fuente:</p>
@@ -1020,8 +1021,22 @@ java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]<
       </div>
 
       <div class="module" id="m13">
-        <div class="module-head"><h3>9.13 — S-FiDE GUI</h3><span class="module-jar">SFide-GUI.jar</span></div>
-        <p>Interfaz JavaFX que expone las 12 aplicaciones como módulos elegibles desde un panel lateral de navegación, para uso manual sin línea de comandos. Invoca los mismos <code>.jar</code> vía <code>ProcessBuilder</code> — no reimplementa ninguna lógica de firma. El título de la ventana muestra la versión en ejecución.</p>
+        <div class="module-head"><h3>9.13 — WindowsCertificateStoreView<span class="windows-only">Solo Windows</span></h3><span class="module-jar">WindowsCertificateStoreView.jar</span></div>
+        <p>Visualiza los certificados del almacén "Personal" (Windows-MY) del usuario actual — el mismo almacén que usan <code>XMLSignerWindowsCSP</code>/<code>PDFSignerWindowsCSP</code>. Es el equivalente de <code>TokenSlotsView</code> (sección 9.1) para ese almacén: no firma ni modifica nada. Resuelve un problema práctico concreto: sin este módulo, la única forma de conocer el alias o el nombre (CN) exacto que piden los dos firmadores CSP/KSP era adivinarlo o recurrir a herramientas externas de Windows (<code>certmgr.msc</code>, <code>certutil -store -user My</code>).</p>
+        <div class="field-label">Sintaxis</div>
+        <pre><code>java -jar WindowsCertificateStoreView.jar
+java -jar WindowsCertificateStoreView.jar [-version | -ayuda | -licencia | -listar-certificados]</code></pre>
+        <p>No recibe parámetros obligatorios: ejecutado sin argumentos, lista directamente los certificados disponibles — no requiere contraseña ni configuración, a diferencia de <code>TokenSlotsView</code>.</p>
+        <div class="field-label">Salida</div>
+        <p>Por cada certificado: alias, sujeto (incluye el CN), emisor, período de validez, número de serie en hexadecimal, y si tiene clave privada asociada — solo esas entradas son utilizables para firmar. Es habitual que convivan un certificado vencido y su renovación posterior; conviene revisar "Válido hasta" antes de elegir cuál usar.</p>
+        <div class="callout note"><span class="label">Relación con <code>-listar-certificados</code></span><p><code>XMLSignerWindowsCSP</code>/<code>PDFSignerWindowsCSP</code> ya traían ese flag con el mismo propósito, como ayuda rápida dentro de esos mismos módulos. <code>WindowsCertificateStoreView</code> no lo reemplaza — es esa misma capacidad elevada a módulo propio de primera clase, con su propia pestaña en la GUI, igual que <code>TokenSlotsView</code> existe aparte de los firmadores PKCS#11.</p></div>
+        <div class="field-label">Ejemplo</div>
+        <pre><code>java -jar WindowsCertificateStoreView.jar</code></pre>
+      </div>
+
+      <div class="module" id="m14">
+        <div class="module-head"><h3>9.14 — S-FiDE GUI</h3><span class="module-jar">SFide-GUI.jar</span></div>
+        <p>Interfaz JavaFX que expone las 13 aplicaciones como módulos elegibles desde un panel lateral de navegación, para uso manual sin línea de comandos. Invoca los mismos <code>.jar</code> vía <code>ProcessBuilder</code> — no reimplementa ninguna lógica de firma. El título de la ventana muestra la versión en ejecución.</p>
         <div class="callout note"><span class="label">Navegación rediseñada en 1.1.0</span><p>Hasta la 1.1.0-beta.1 los módulos se mostraban como pestañas horizontales que, con 12-14 títulos, no entraban en el ancho de la ventana y quedaban con scroll horizontal. Se reemplazó por un panel lateral vertical con ícono por categoría (ver/firmar/verificar) — el espacio vertical disponible es mucho mayor, así que la lista entra sin scroll salvo en pantallas muy bajas. El formulario del módulo elegido tiene scroll vertical propio, y el panel "Salida del Proceso" ahora se puede colapsar (arranca colapsado, se expande solo al aparecer un resultado nuevo).</p></div>
         <div class="callout note"><span class="label">Qué recuerda entre sesiones (<code>sfide-defaults.properties</code>)</span><p>Ruta de biblioteca PKCS#11/PKCS#12 y número de slot (se guardan al escribirlos a mano, no solo con "Examinar..."/"Detectar automáticamente", y están sincronizados en vivo entre todos los módulos que los usan); una ruta particular por cada marca/modelo de token elegida en el selector; el último módulo abierto; tamaño/posición/maximizado de la ventana; la casilla "Bloquear documento después de firmar" y la posición X/Y de firma visible (compartidas entre los tres firmadores de PDF). <strong>Nunca se persiste ninguna contraseña.</strong></p></div>
         <div class="callout warn"><span class="label">No es para integración por proceso</span><p>No tiene un contrato de argumentos/exit-code pensado para ser invocada por otro programa. Un integrador debe usar los módulos CLI individuales de esta sección.</p></div>
@@ -1174,7 +1189,7 @@ exit $RESULT</code></pre>
       <pre><code>S-FiDE/
 ├── openjdk-23.0.1/          ← runtime de Java embebido (por plataforma)
 ├── javafx-sdk-23.0.1/       ← SDK de JavaFX embebido (por plataforma)
-├── *.jar                    ← los 13 módulos, nombre "amigable" sin versión
+├── *.jar                    ← los 14 módulos, nombre "amigable" sin versión
 ├── SFide-GUI.bat / .sh      ← launchers, se autodetectan solos
 ├── doc/  test/  xsd/        ← documentación y ejemplos</code></pre>
       <p><strong>No requiere instalación ni Java preinstalado</strong> — puede copiarse a cualquier ubicación, incluido un medio removible, y correr en un equipo "limpio", gracias al runtime embebido y a que los launchers se autodetectan (sin rutas ni letras de unidad hardcodeadas).</p>

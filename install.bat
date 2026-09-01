@@ -101,6 +101,10 @@ del /q "%DEPLOY%\PDFSignerWindowsCSP.jar" 2>nul
 for %%F in ("%SOURCE%\pdf_signer_windows_csp\target\pdf_signer_windows_csp-*-jar-with-dependencies.jar") do copy /y "%%F" "%DEPLOY%\PDFSignerWindowsCSP.jar" >nul
 if exist "%DEPLOY%\PDFSignerWindowsCSP.jar" (echo   OK  PDFSignerWindowsCSP.jar) else (echo   ADVERTENCIA: falta el jar de pdf_signer_windows_csp)
 
+del /q "%DEPLOY%\WindowsCertificateStoreView.jar" 2>nul
+for %%F in ("%SOURCE%\windows_certificate_store_view\target\windows_certificate_store_view-*-jar-with-dependencies.jar") do copy /y "%%F" "%DEPLOY%\WindowsCertificateStoreView.jar" >nul
+if exist "%DEPLOY%\WindowsCertificateStoreView.jar" (echo   OK  WindowsCertificateStoreView.jar) else (echo   ADVERTENCIA: falta el jar de windows_certificate_store_view)
+
 REM --- GUI: el artefacto shaded se llama s_fide_gui-<version>.jar (sin sufijo jar-with-dependencies) ---
 del /q "%DEPLOY%\SFide-GUI.jar" 2>nul
 for %%F in ("%SOURCE%\s_fide_gui\target\s_fide_gui-*.jar") do copy /y "%%F" "%DEPLOY%\SFide-GUI.jar" >nul

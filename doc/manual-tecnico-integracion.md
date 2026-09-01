@@ -29,7 +29,8 @@ Versión del documento: acompaña a S-FiDE v1.1.0 — 30/08/2026
    9.10. [PDFVerifySignatures](#910-pdfverifysignatures)
    9.11. [XMLSignerWindowsCSP](#911-xmlsignerwindowscsp)
    9.12. [PDFSignerWindowsCSP](#912-pdfsignerwindowscsp)
-   9.13. [S-FiDE GUI](#913-s-fide-gui)
+   9.13. [WindowsCertificateStoreView](#913-windowscertificatestoreview)
+   9.14. [S-FiDE GUI](#914-s-fide-gui)
 10. [Especialización de comercio exterior ALADI/MERCOSUR: COD, CODEH, DJO y DJOEH](#10-especialización-de-comercio-exterior-aladimercosur-cod-codeh-djo-y-djoeh)
 11. [Integración desde otras aplicaciones](#11-integración-desde-otras-aplicaciones)
 12. [Distribución y despliegue](#12-distribución-y-despliegue)
@@ -64,7 +65,7 @@ El diseño responde a un principio central: **cada capacidad es un programa inde
 |---|---|
 | Lenguaje / runtime | Java 23 (OpenJDK 23.0.1) |
 | Interfaz gráfica | JavaFX 23.0.1 (solo para el módulo `s_fide_gui`) |
-| Sistema de build | Apache Maven (multi-módulo, 13 módulos) |
+| Sistema de build | Apache Maven (multi-módulo, 14 módulos) |
 | Empaquetado de distribución | Jars autocontenidos ("fat jars", vía `maven-shade-plugin`/`maven-assembly-plugin`) — no requieren classpath externo |
 | Sistemas operativos soportados | Windows, GNU/Linux, macOS (64 bits) — CSP/KSP es exclusivo de Windows |
 | Arquitectura de CPU | x86-64 (64 bits obligatorio; OpenJDK 23 no soporta sistemas de 32 bits) |
@@ -112,7 +113,7 @@ S-FiDE se distribuye bajo la **Licencia Pública General GNU (GNU GPL), versión
 ## 5. Código fuente y repositorio
 
 - **Repositorio:** [github.com/Grupo-Sauken-S-A/S-FIDE](https://github.com/Grupo-Sauken-S-A/S-FIDE)
-- **Organización:** proyecto Maven multi-módulo (13 módulos) con un `pom.xml` raíz de tipo `pom` (agregador) y un módulo por capacidad.
+- **Organización:** proyecto Maven multi-módulo (14 módulos) con un `pom.xml` raíz de tipo `pom` (agregador) y un módulo por capacidad.
 - **Versionado:** [SemVer](https://semver.org/). Tags publicados: `v1.0.0` (primer release estable), `v1.1.0` (versión actual — QA de hardware y de código completa, validada contra los tres modelos de token más usados en Argentina).
 - **Compilar desde el código fuente:**
   ```bash
@@ -774,9 +775,34 @@ java -jar PDFSignerWindowsCSP.jar -i C:\docs\certificado.pdf -a "Juan Carlos Rí
 
 ---
 
-### 9.13 S-FiDE GUI
+### 9.13 WindowsCertificateStoreView
 
-**Qué hace:** interfaz gráfica JavaFX que expone las 12 aplicaciones anteriores como módulos elegibles desde un panel lateral de navegación, para usuarios que prefieren no operar por línea de comandos. Invoca los mismos `.jar` con `ProcessBuilder`, mostrando la salida combinada de `stdout`/`stderr` en un panel colapsable y el código de resultado en un diálogo. El título de la ventana muestra la versión de S-FiDE en ejecución.
+**Qué hace:** visualiza los certificados disponibles en el almacén "Personal" (Windows-MY) del usuario actual — el mismo almacén que usan `XMLSignerWindowsCSP` y `PDFSignerWindowsCSP`. Es el equivalente de `TokenSlotsView` (sección 9.1) para ese almacén: no firma ni modifica nada, solo permite ver qué hay antes de firmar. Agregado para resolver un problema práctico concreto: sin este módulo, la única forma de conocer el alias o el nombre (CN) exacto que piden `XMLSignerWindowsCSP`/`PDFSignerWindowsCSP` era adivinarlo o recurrir a herramientas externas de Windows (`certmgr.msc`, `certutil -store -user My`). **Exclusivo de Windows.**
+
+**Uso recomendado:** antes de firmar con `XMLSignerWindowsCSP`/`PDFSignerWindowsCSP`, si no se conoce con exactitud el alias o el nombre (CN) del certificado a usar.
+
+**Sintaxis:**
+```
+java -jar WindowsCertificateStoreView.jar
+java -jar WindowsCertificateStoreView.jar [-version | -ayuda | -licencia | -listar-certificados]
+```
+
+No recibe parámetros obligatorios: ejecutado sin argumentos, lista directamente los certificados disponibles (no requiere contraseña ni configuración, a diferencia de `TokenSlotsView`, ya que el acceso al almacén "Personal" del usuario actual lo administra Windows).
+
+**Salida:** por cada certificado del almacén, alias, sujeto (incluye el CN), emisor, período de validez, número de serie en hexadecimal, y si tiene clave privada asociada (`KeyStore.isKeyEntry`) — solo esas entradas son utilizables para firmar. Es habitual que convivan en el mismo almacén un certificado vencido y su renovación posterior; conviene revisar "Válido hasta" antes de elegir cuál usar, igual que con `TokenSlotsView` y los tokens PKCS#11 (sección 9.1).
+
+**Relación con `-listar-certificados` en los firmadores:** `XMLSignerWindowsCSP`/`PDFSignerWindowsCSP` ya traían (desde la 1.1.0 original) un flag `-listar-certificados` con el mismo propósito, pensado como ayuda rápida dentro de esos mismos módulos. `WindowsCertificateStoreView` no lo reemplaza — es, en cambio, el mismo tipo de capacidad elevada a módulo propio de primera clase (con su propia pestaña en la GUI), consistente con cómo `TokenSlotsView` existe aparte de los firmadores PKCS#11 en lugar de que cada uno duplique su propia función de listado.
+
+**Ejemplo:**
+```
+java -jar WindowsCertificateStoreView.jar
+```
+
+---
+
+### 9.14 S-FiDE GUI
+
+**Qué hace:** interfaz gráfica JavaFX que expone las 13 aplicaciones anteriores como módulos elegibles desde un panel lateral de navegación, para usuarios que prefieren no operar por línea de comandos. Invoca los mismos `.jar` con `ProcessBuilder`, mostrando la salida combinada de `stdout`/`stderr` en un panel colapsable y el código de resultado en un diálogo. El título de la ventana muestra la versión de S-FiDE en ejecución.
 
 **No es una aplicación para integración por proceso** (no tiene un contrato de argumentos/exit-code pensado para ser invocada por otro programa) — se documenta acá por completitud del producto. Un integrador debe usar los módulos CLI individuales.
 
@@ -786,7 +812,7 @@ java -jar PDFSignerWindowsCSP.jar -i C:\docs\certificado.pdf -a "Juan Carlos Rí
 - Recuerda entre sesiones, en `sfide-defaults.properties`: la ruta de biblioteca PKCS#11 / archivo PKCS#12 / número de slot (se guardan tanto al usar "Examinar..."/"Detectar automáticamente" como al escribirlos a mano), una ruta de biblioteca particular por cada marca/modelo de token elegida en el selector (en vez de una sola ruta global), el último módulo abierto (se reabre ahí directamente al iniciar), el tamaño/posición/maximizado de la ventana, la casilla "Bloquear documento después de firmar" y la posición X/Y de firma visible (estas dos últimas compartidas entre los tres firmadores de PDF). **Nunca se persiste ninguna contraseña.**
 - La ruta de biblioteca PKCS#11 y el número de slot están sincronizados en vivo entre todos los módulos que los usan: cambiarlos en un módulo los actualiza inmediatamente en los demás, sin necesidad de reiniciar la aplicación.
 - Detección automática de driver PKCS#11 por marca/modelo (ver [sección 8](#8-catálogo-de-tokens-y-drivers-soportados)).
-- Los módulos de CSP/KSP (`XMLSignerWindowsCSP`/`PDFSignerWindowsCSP`) solo aparecen en el panel lateral si la GUI corre en Windows.
+- Los módulos de CSP/KSP (`WindowsCertificateStoreView`/`XMLSignerWindowsCSP`/`PDFSignerWindowsCSP`) solo aparecen en el panel lateral si la GUI corre en Windows.
 - Validación de que todos los `.jar` necesarios estén presentes junto a `SFide-GUI.jar` antes de permitir su uso.
 
 ---
@@ -965,7 +991,7 @@ Una distribución de S-FiDE lista para usar es una carpeta autocontenida con est
 S-FiDE/
 ├── openjdk-23.0.1/          ← runtime de Java embebido (por plataforma)
 ├── javafx-sdk-23.0.1/       ← SDK de JavaFX embebido (por plataforma)
-├── *.jar                    ← los 13 módulos, con nombre "amigable" sin versión (ver más abajo)
+├── *.jar                    ← los 14 módulos, con nombre "amigable" sin versión (ver más abajo)
 ├── SFide-GUI.bat / .sh      ← launchers, se autodetectan solos (no dependen de una letra de unidad fija)
 ├── sfide-defaults.demo.properties
 ├── Leeme.txt

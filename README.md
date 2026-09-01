@@ -27,6 +27,7 @@ Detalle completo de esta filosofía y de cada módulo: **[Manual Técnico de Int
 | `pdf_signer_pkcs12` | Firma PDF con archivo PKCS#12 |
 | `pdf_signer_windows_csp` | Firma PDF con el almacén de certificados de Windows (solo Windows) |
 | `pdf_verify_signatures` | Verifica firmas digitales de un PDF |
+| `windows_certificate_store_view` | Lista los certificados del almacén de Windows (solo Windows) |
 | `s_fide_gui` | Interfaz gráfica JavaFX que invoca los módulos anteriores |
 
 S-FiDE también incluye soporte especializado para comercio exterior ALADI/MERCOSUR (Certificados de Origen Digital y Declaraciones Juradas de Origen) — ver la [sección 10 del manual técnico](doc/manual-tecnico-integracion.md#10-especialización-de-comercio-exterior-aladimercosur-cod-codeh-djo-y-djoeh).
@@ -41,7 +42,7 @@ cd S-FIDE
 ./mvnw clean install
 ```
 
-Cada uno de los 13 módulos genera su jar en su propia carpeta `target/`.
+Cada uno de los 14 módulos genera su jar en su propia carpeta `target/`.
 
 ## Distribución portable
 
