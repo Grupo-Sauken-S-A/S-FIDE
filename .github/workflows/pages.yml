@@ -1,4 +1,4 @@
-name: Publicar manual técnico en GitHub Pages
+name: Publicar documentación en GitHub Pages
 
 on:
   push:

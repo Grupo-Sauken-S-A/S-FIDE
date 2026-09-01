@@ -423,6 +423,10 @@
         <span class="label">¿Ya integraste S-FiDE 1.0.0?</span>
         <p>Casi todo lo agregado en 1.1.1 es aditivo y no requiere ningún cambio de tu lado — pero hay un puñado de casos puntuales donde cambió el comportamiento de un jar que ya usabas. Antes de actualizar, revisá la <a href="#migracion-100">Guía de migración desde 1.0.0</a> al final de la sección 13.</p>
       </div>
+      <div class="callout note">
+        <span class="label">¿Buscás usar la interfaz gráfica?</span>
+        <p>Este manual está pensado para integradores por línea de comandos. Para operar S-FiDE GUI haciendo clic, con capturas reales de cada pantalla, ver la <a href="manual-usuario-sfide-gui.html">Guía de Usuario S-FiDE GUI</a>.</p>
+      </div>
       <p>S-FiDE (<strong>Si</strong>stema de <strong>F</strong>irma D<strong>i</strong>gital Extendido) es una suite de programas Java independientes para firmar y verificar firmas digitales en documentos XML y PDF, y para extraer o inspeccionar certificados digitales desde tokens criptográficos (PKCS#11), archivos PKCS#12 o el almacén de certificados de Windows.</p>
       <p>El diseño responde a un principio central: <strong>cada capacidad es un programa independiente</strong>, invocable por línea de comandos, que cualquier aplicación externa puede ejecutar como proceso hijo sin integrar ninguna librería Java. No existe una "librería S-FiDE" para enlazar — se distribuye como un conjunto de archivos <code>.jar</code> ejecutables, más una interfaz gráfica opcional que orquesta esos mismos programas.</p>
 
@@ -699,7 +703,7 @@ cd S-FIDE
     <section class="chapter" id="s9">
       <span class="chapter-num">09</span>
       <h2>Catálogo de aplicaciones</h2>
-      <p>Convenciones comunes: código de salida <code>0</code> éxito / <code>1</code> error (salvo aclaración); todas leen y escriben en UTF-8; los comandos <code>-version</code>/<code>-v</code>/<code>--version</code>, <code>-ayuda</code>/<code>-h</code>/<code>--help</code> y <code>-licencia</code>/<code>--license</code> son idénticos en los 12 módulos de línea de comandos desde 1.1.1.</p>
+      <p>Convenciones comunes: código de salida <code>0</code> éxito / <code>1</code> error (salvo aclaración); todas leen y escriben en UTF-8; los comandos <code>-version</code>/<code>-v</code>/<code>--version</code>, <code>-ayuda</code>/<code>-h</code>/<code>--help</code> y <code>-licencia</code>/<code>--license</code> son idénticos en los 13 módulos de línea de comandos desde 1.1.1.</p>
 
       <div class="callout note">
         <span class="label">Qué significa exactamente el "número de slot"</span>
@@ -1166,7 +1170,7 @@ exit /b %RESULT%</code></pre>
         <li><code>1&gt;archivo</code> / <code>2&gt;archivo</code> redirigen stdout/stderr por separado.</li>
         <li><code>%ERRORLEVEL%</code> es el código de salida del proceso, sin transformación.</li>
       </ul>
-      <p>Este patrón sirve para <strong>cualquiera</strong> de los 12 módulos — solo cambia el jar y sus argumentos.</p>
+      <p>Este patrón sirve para <strong>cualquiera</strong> de los 13 módulos — solo cambia el jar y sus argumentos.</p>
       <h3>Linux/macOS (shell)</h3>
       <pre><code>#!/bin/sh
 SFIDE=/opt/S-FiDE

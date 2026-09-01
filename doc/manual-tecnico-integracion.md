@@ -43,6 +43,8 @@ Versión del documento: acompaña a S-FiDE v1.1.1 — 01/09/2026
 ## 1. Introducción y filosofía
 
 > **¿Ya tenías una integración funcionando contra S-FiDE 1.0.0?** Casi todo lo agregado en 1.1.1 es aditivo y no requiere ningún cambio de tu lado — pero hay un puñado de casos puntuales donde cambió el comportamiento de un jar que ya usabas. Antes de actualizar, revisá la **[Guía de migración desde 1.0.0](#guía-de-migración-desde-100)** al final de la [sección 13](#13-historial-de-versiones).
+>
+> **¿Buscás cómo usar la interfaz gráfica en vez de integrar por línea de comandos?** Este manual está pensado para integradores. Para operar S-FiDE GUI haciendo clic, con capturas reales de cada pantalla, ver la **[Guía de Usuario S-FiDE GUI](manual-usuario-sfide-gui.html)**.
 
 S-FiDE (**Si**stema de **F**irma D**i**gital Extendido) es una suite de programas Java independientes para firmar y verificar firmas digitales en documentos XML y PDF, y para extraer/inspeccionar certificados digitales desde tokens criptográficos (PKCS#11), archivos PKCS#12 o el almacén de certificados de Windows.
 
@@ -962,7 +964,7 @@ exit /b %RESULT%
 - `%ERRORLEVEL%` es el código de salida del proceso de Java, sin transformación: `0` éxito, `1` error.
 - Los archivos de salida quedan en UTF-8 — hay que leerlos como tales desde la aplicación integradora, o los acentos se van a ver incorrectos.
 
-Este mismo patrón sirve para **cualquiera** de los 12 módulos — solo cambia el nombre del `.jar` y sus argumentos.
+Este mismo patrón sirve para **cualquiera** de los 13 módulos — solo cambia el nombre del `.jar` y sus argumentos.
 
 ### Ejemplo equivalente en Linux/macOS (shell)
 

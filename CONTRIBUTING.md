@@ -59,7 +59,7 @@ Abrí un issue en el repositorio describiendo el problema, los pasos para reprod
 
 ## Licencia
 
-Al contribuir, aceptás que tu contribución se distribuya bajo los mismos términos que el resto del proyecto: **GNU GPL v2 o cualquier versión posterior**. El texto completo está en `LICENSE.txt`.
+Al contribuir, aceptás que tu contribución se distribuya bajo los mismos términos que el resto del proyecto: **GNU GPL v2 o cualquier versión posterior**. El texto completo está en [`LICENSE`](LICENSE).
 
 ## Soporte
 
