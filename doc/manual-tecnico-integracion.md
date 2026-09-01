@@ -2,7 +2,7 @@
 
 **Sistema de Firma Digital Extendido**
 Grupo Sauken S.A. — Córdoba, Argentina
-Versión del documento: acompaña a S-FiDE v1.1.0 — 30/08/2026
+Versión del documento: acompaña a S-FiDE v1.1.1 — 01/09/2026
 
 ---
 
@@ -42,7 +42,7 @@ Versión del documento: acompaña a S-FiDE v1.1.0 — 30/08/2026
 
 ## 1. Introducción y filosofía
 
-> **¿Ya tenías una integración funcionando contra S-FiDE 1.0.0?** Casi todo lo agregado en 1.1.0 es aditivo y no requiere ningún cambio de tu lado — pero hay un puñado de casos puntuales donde cambió el comportamiento de un jar que ya usabas. Antes de actualizar, revisá la **[Guía de migración desde 1.0.0](#guía-de-migración-desde-100)** al final de la [sección 13](#13-historial-de-versiones).
+> **¿Ya tenías una integración funcionando contra S-FiDE 1.0.0?** Casi todo lo agregado en 1.1.1 es aditivo y no requiere ningún cambio de tu lado — pero hay un puñado de casos puntuales donde cambió el comportamiento de un jar que ya usabas. Antes de actualizar, revisá la **[Guía de migración desde 1.0.0](#guía-de-migración-desde-100)** al final de la [sección 13](#13-historial-de-versiones).
 
 S-FiDE (**Si**stema de **F**irma D**i**gital Extendido) es una suite de programas Java independientes para firmar y verificar firmas digitales en documentos XML y PDF, y para extraer/inspeccionar certificados digitales desde tokens criptográficos (PKCS#11), archivos PKCS#12 o el almacén de certificados de Windows.
 
@@ -55,7 +55,7 @@ El diseño responde a un principio central: **cada capacidad es un programa inde
 - **UTF-8 de punta a punta.** Toda entrada y salida de todos los programas está codificada en UTF-8, en cualquier sistema operativo. Un integrador que lea `stdout`/`stderr` con otra codificación va a ver caracteres incorrectos en nombres, rutas o mensajes con acentos.
 - **Multiplataforma.** Los programas compilan y corren igual en Windows, GNU/Linux y macOS (con la única excepción de los dos módulos que usan el almacén de certificados de Windows, ver [sección 9.11](#911-xmlsignerwindowscsp) y [9.12](#912-pdfsignerwindowscsp), que son exclusivos de Windows por diseño).
 - **La GUI no es un atajo privilegiado.** S-FiDE GUI invoca exactamente los mismos `.jar` con los mismos argumentos que usaría un integrador externo — no reimplementa ninguna lógica de firma por su cuenta. Cualquier cosa que la GUI pueda hacer, un integrador puede reproducirla por línea de comandos.
-- **Vocabulario de comandos especiales unificado.** Todos los módulos aceptan las mismas tres familias de alias para las funciones de diagnóstico, sin importar el "dialecto" histórico de cada uno: `-version` / `-v` / `--version` (versión), `-ayuda` / `-h` / `--help` (ayuda) y `-licencia` / `--license` (licencia). Los módulos que exponen catálogos adicionales (`-listar-drivers`, `-listar-certificados`) aceptan tanto la forma de un guion como la de dos. Esto se unificó en la versión 1.1.0 — ver [sección 13](#13-historial-de-versiones).
+- **Vocabulario de comandos especiales unificado.** Todos los módulos aceptan las mismas tres familias de alias para las funciones de diagnóstico, sin importar el "dialecto" histórico de cada uno: `-version` / `-v` / `--version` (versión), `-ayuda` / `-h` / `--help` (ayuda) y `-licencia` / `--license` (licencia). Los módulos que exponen catálogos adicionales (`-listar-drivers`, `-listar-certificados`) aceptan tanto la forma de un guion como la de dos. Esto se unificó en la versión 1.1.1 — ver [sección 13](#13-historial-de-versiones).
 
 ---
 
@@ -84,7 +84,7 @@ La distribución final embebe su propio runtime de Java y su propio SDK de JavaF
 
 ## 3. Software de terceros y dependencias
 
-| Componente | Versión (1.1.0) | Uso | Licencia |
+| Componente | Versión (1.1.1) | Uso | Licencia |
 |---|---|---|---|
 | BouncyCastle (`bcprov`/`bcpkix`/`bcutil`-jdk18on) | 1.85 | Primitivos criptográficos, ASN.1, construcción de `DigestInfo` | MIT (Bouncy Castle License) |
 | iText (`kernel`/`io`/`commons`/`sign`/`bouncy-castle-adapter`) | 8.0.5 | Firma y verificación de documentos PDF | AGPL v3 / comercial (Apryse) |
@@ -114,7 +114,7 @@ S-FiDE se distribuye bajo la **Licencia Pública General GNU (GNU GPL), versión
 
 - **Repositorio:** [github.com/Grupo-Sauken-S-A/S-FIDE](https://github.com/Grupo-Sauken-S-A/S-FIDE)
 - **Organización:** proyecto Maven multi-módulo (14 módulos) con un `pom.xml` raíz de tipo `pom` (agregador) y un módulo por capacidad.
-- **Versionado:** [SemVer](https://semver.org/). Tags publicados: `v1.0.0` (primer release estable), `v1.1.0` (versión actual — QA de hardware y de código completa, validada contra los tres modelos de token más usados en Argentina).
+- **Versionado:** [SemVer](https://semver.org/). Tags publicados: `v1.0.0` (primer release estable), `v1.1.1` (versión actual — QA de hardware y de código completa, validada contra los tres modelos de token más usados en Argentina).
 - **Compilar desde el código fuente:**
   ```bash
   git clone https://github.com/Grupo-Sauken-S-A/S-FIDE.git
@@ -155,14 +155,14 @@ S-FiDE soporta tres formas distintas de acceder a una clave privada para firmar.
 
 En Java, esto se hace a través del proveedor `SunPKCS11`, que viene incluido en el JDK: se le indica la ruta de la biblioteca del fabricante y expone la clave privada del token como un objeto `PrivateKey` estándar de Java, utilizable con las APIs criptográficas normales (`Signature`, `KeyStore`) sin que el código de la aplicación necesite saber que la clave nunca sale del hardware.
 
-**El detalle técnico que todo integrador de S-FiDE 1.1.0 debe conocer — mecanismos de hash interno vs. externo:**
+**El detalle técnico que todo integrador de S-FiDE 1.1.1 debe conocer — mecanismos de hash interno vs. externo:**
 
 Un token PKCS#11 firma un bloque de datos mediante un "mecanismo" (`CK_MECHANISM`). Para RSA-SHA256 existen dos mecanismos posibles:
 
 - **`CKM_SHA256_RSA_PKCS`** (mecanismo combinado): el propio token calcula el hash SHA-256 del documento internamente y luego lo firma. Un solo llamado, más simple. Los tokens SafeNet/Thales lo soportan.
 - **`CKM_RSA_PKCS`** (mecanismo puro): el token **solo** aplica el padding PKCS#1 v1.5 y la operación RSA — el hash SHA-256 debe calcularlo la aplicación *antes*, y envolverlo en una estructura ASN.1 llamada `DigestInfo` (que incluye el identificador del algoritmo de hash usado) antes de pasárselo al token. En teoría, tokens en modo FIPS 140-2 Nivel 3 como el Feitian ePass2003 solo exponen este mecanismo a bajo nivel.
 
-Desde la versión 1.1.0, `XMLSignerPKCS11` y `PDFSignerPKCS11` prueban automáticamente el mecanismo combinado primero y, si el token lo rechaza, calculan el hash por software, arman el `DigestInfo` y reintentan con el mecanismo puro — de forma completamente transparente para el integrador. No hay ningún parámetro para elegir el mecanismo: la detección es automática y ocurre en cada operación de firma.
+Desde la versión 1.1.1, `XMLSignerPKCS11` y `PDFSignerPKCS11` prueban automáticamente el mecanismo combinado primero y, si el token lo rechaza, calculan el hash por software, arman el `DigestInfo` y reintentan con el mecanismo puro — de forma completamente transparente para el integrador. No hay ningún parámetro para elegir el mecanismo: la detección es automática y ocurre en cada operación de firma.
 
 > **Hallazgo con hardware real (2026-08-30):** contra un Feitian ePass2003 físico, el primer intento (`Signature.getInstance("SHA256withRSA", provider)`) **nunca falló** — el fallback externo de S-FiDE nunca llegó a activarse. Esto no necesariamente contradice que el token exponga solo `CKM_RSA_PKCS` a nivel de hardware: el propio proveedor `SunPKCS11` del JDK puede componer el mecanismo combinado de forma transparente sobre `CKM_RSA_PKCS` (calculando el hash por software él mismo, antes de que el código de S-FiDE tenga oportunidad de intervenir), sin que eso sea visible desde afuera. Para efectos prácticos — qué camino de código se ejecuta al firmar con S-FiDE — el resultado observado es el mismo que un mecanismo interno nativo, por lo que se documenta como tal en la [sección 8](#8-catálogo-de-tokens-y-drivers-soportados). El fallback externo sigue existiendo en el código para el caso en que algún token o versión de middleware sí lo necesite.
 
@@ -182,7 +182,7 @@ Desde la versión 1.1.0, `XMLSignerPKCS11` y `PDFSignerPKCS11` prueban automáti
 
 **Cómo funciona, en detalle:** además de PKCS#11, Windows ofrece un mecanismo **nativo del sistema operativo**: CryptoAPI (CAPI, interfaz legada) y su sucesor CNG (Cryptography API: Next Generation), a través de **CSP** (Cryptographic Service Provider) o **KSP** (Key Storage Provider) respectivamente. Los fabricantes de tokens suelen instalar, además del módulo PKCS#11, un *minidriver* CSP/KSP certificado por Microsoft — esto hace que el certificado del token aparezca automáticamente en el almacén de certificados de Windows, sin que ninguna aplicación deba configurar una ruta de biblioteca.
 
-S-FiDE 1.1.0 incorpora esta alternativa a través de `XMLSignerWindowsCSP` y `PDFSignerWindowsCSP`, que usan el proveedor `SunMSCAPI` del JDK para acceder al almacén `Windows-MY` (Personal del usuario actual). En vez de indicar una biblioteca `.dll` y un número de slot, estos dos módulos piden un **alias o fragmento del nombre del titular del certificado** (ver `-listar-certificados` en cada uno para ver qué hay disponible en el almacén). **No se pasa contraseña**: el acceso a la clave privada lo administra el propio Windows (según el token, puede aparecer un diálogo nativo del sistema operativo pidiendo el PIN al momento de firmar) — a diferencia de los módulos PKCS#11, donde el PIN se pasa como argumento del programa.
+S-FiDE 1.1.1 incorpora esta alternativa a través de `XMLSignerWindowsCSP` y `PDFSignerWindowsCSP`, que usan el proveedor `SunMSCAPI` del JDK para acceder al almacén `Windows-MY` (Personal del usuario actual). En vez de indicar una biblioteca `.dll` y un número de slot, estos dos módulos piden un **alias o fragmento del nombre del titular del certificado** (ver `-listar-certificados` en cada uno para ver qué hay disponible en el almacén). **No se pasa contraseña**: el acceso a la clave privada lo administra el propio Windows (según el token, puede aparecer un diálogo nativo del sistema operativo pidiendo el PIN al momento de firmar) — a diferencia de los módulos PKCS#11, donde el PIN se pasa como argumento del programa.
 
 #### ⚠️ Limitación crítica — CSP/KSP no sirve para firma desatendida por lotes
 
@@ -298,7 +298,7 @@ Esta detección es **solo una ayuda de UX** — nunca la única fuente de verdad
 
 Convenciones comunes a todas las aplicaciones de esta sección:
 
-- Los comandos de diagnóstico son **idénticos en todos los módulos** desde la 1.1.0: `-version` / `-v` / `--version` (versión), `-ayuda` / `-h` / `--help` (ayuda), `-licencia` / `--license` (licencia). Cualquiera de las tres formas funciona en cualquier módulo.
+- Los comandos de diagnóstico son **idénticos en todos los módulos** desde la 1.1.1: `-version` / `-v` / `--version` (versión), `-ayuda` / `-h` / `--help` (ayuda), `-licencia` / `--license` (licencia). Cualquiera de las tres formas funciona en cualquier módulo.
 - El código de salida es `0` en éxito y `1` en error, salvo aclaración en contrario (los verificadores usan el exit code para indicar además el *resultado* de la validación — ver cada módulo).
 - Todas leen y escriben en UTF-8.
 - Ningún módulo expone un stack trace de Java al usuario — todo error se traduce a un mensaje breve en español antes de imprimirse.
@@ -595,21 +595,21 @@ java -jar XMLVerifyXSDStructure.jar C:\docs\certificado-origen.xml C:\xsd\esquem
 - **Firma visible vs. invisible.** Si no se indican `-x`/`-y` (o ambos quedan en `0`), la firma es criptográficamente válida pero no se dibuja nada en el documento — es una firma "invisible", tan válida como cualquier otra. Si se indican coordenadas, se dibuja un recuadro con el nombre del firmante y la fecha (más el texto de `-t`, si se indicó).
 - **Sistema de coordenadas.** PDF usa el sistema estándar de PostScript: el origen `(0,0)` es la **esquina inferior izquierda** de la página, el eje X crece hacia la derecha y el eje Y crece **hacia arriba**. `-x`/`-y` ubican la esquina **inferior izquierda** del recuadro de firma (que mide 160×70 puntos, tamaño fijo) — no es "de abajo a la derecha hacia arriba", es de abajo a la **izquierda**. Un punto PDF equivale a 1/72 de pulgada. La firma siempre se coloca en la página 1.
 - **Texto personalizado (`-t`).** Se agrega debajo del nombre del firmante y la fecha, dentro del mismo recuadro visible — útil para el cargo del firmante o el motivo de la firma. No tiene efecto si la firma es invisible.
-- **Bloquear el documento (`-k`/`-l true`, según el módulo).** Hace dos cosas, siempre acopladas entre sí en los tres firmadores desde la 1.1.0 (ver nota de corrección más abajo):
+- **Bloquear el documento (`-k`/`-l true`, según el módulo).** Hace dos cosas, siempre acopladas entre sí en los tres firmadores desde la 1.1.1 (ver nota de corrección más abajo):
   1. Marca la firma como **firma certificante** (permiso PDF `DocMDP` = "no se permite ningún cambio"), no una firma de aprobación común — el documento queda declarado como no modificable ante cualquier lector conforme (Acrobat, etc.). Solo puede haber **una** firma certificante por documento, y debe ser la primera.
   2. Aplica cifrado estándar AES-256 al PDF resultante, restringiendo los permisos a solo impresión y uso con lectores de pantalla — no se permite copiar texto, editar, ni rellenar formularios.
 
   **Si se planea agregar más firmas al mismo documento más adelante, no usar el bloqueo en la primera.**
 
-  > **Corrección de consistencia (1.1.0):** hasta antes de esta corrección, `PDFSignerPKCS12` aplicaba la certificación DocMDP solo cuando además se pedía una firma visible (`-x`/`-y` distintos de `0`); si se pedía bloqueo con firma invisible, el documento quedaba cifrado pero sin la certificación "sin cambios permitidos". Se corrigió para que los tres firmadores de PDF (`PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`) apliquen siempre los dos efectos juntos, sin importar si la firma es visible o invisible.
+  > **Corrección de consistencia (1.1.1):** hasta antes de esta corrección, `PDFSignerPKCS12` aplicaba la certificación DocMDP solo cuando además se pedía una firma visible (`-x`/`-y` distintos de `0`); si se pedía bloqueo con firma invisible, el documento quedaba cifrado pero sin la certificación "sin cambios permitidos". Se corrigió para que los tres firmadores de PDF (`PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`) apliquen siempre los dos efectos juntos, sin importar si la firma es visible o invisible.
 
-  > **⚠ Corrección crítica (1.1.0) — firma corrupta al combinar certificación y cifrado:** hasta antes de esta corrección, los tres firmadores de PDF firmaban el documento sin cifrar y **después** volvían a serializar todo el archivo a través de un `PdfWriter` cifrado en una segunda pasada — esa segunda pasada no sabe que el campo `/Contents` de la firma debe quedar exento de cifrado, y lo corrompía. El resultado era un PDF que parecía firmado correctamente pero cuya firma era ilegible para cualquier verificador (`PDFVerifySignatures` fallaba con `Unknown PdfException` / "Cannot decode PKCS#7 SignedData object"). Se corrigió invirtiendo el orden: ahora se cifra primero el documento original y se firma después, en modo *append*, directamente sobre ese archivo ya cifrado.
+  > **⚠ Corrección crítica (1.1.1) — firma corrupta al combinar certificación y cifrado:** hasta antes de esta corrección, los tres firmadores de PDF firmaban el documento sin cifrar y **después** volvían a serializar todo el archivo a través de un `PdfWriter` cifrado en una segunda pasada — esa segunda pasada no sabe que el campo `/Contents` de la firma debe quedar exento de cifrado, y lo corrompía. El resultado era un PDF que parecía firmado correctamente pero cuya firma era ilegible para cualquier verificador (`PDFVerifySignatures` fallaba con `Unknown PdfException` / "Cannot decode PKCS#7 SignedData object"). Se corrigió invirtiendo el orden: ahora se cifra primero el documento original y se firma después, en modo *append*, directamente sobre ese archivo ya cifrado.
   >
-  > **Este defecto no es nuevo de 1.1.0.** El mismo patrón ya estaba presente desde **v1.0.0** en `PDFSignerPKCS12` (siempre que el bloqueo se combinara con firma visible, único caso en que 1.0.0 aplicaba certificación DocMDP) y en `PDFSignerPKCS11` (cada vez que se pedía bloqueo, visible o no). `PDFSignerWindowsCSP` es nuevo en 1.1.0, así que en ese módulo el defecto solo pudo darse dentro de este mismo ciclo de versión.
+  > **Este defecto no es nuevo de 1.1.1.** El mismo patrón ya estaba presente desde **v1.0.0** en `PDFSignerPKCS12` (siempre que el bloqueo se combinara con firma visible, único caso en que 1.0.0 aplicaba certificación DocMDP) y en `PDFSignerPKCS11` (cada vez que se pedía bloqueo, visible o no). `PDFSignerWindowsCSP` es nuevo en 1.1.1, así que en ese módulo el defecto solo pudo darse dentro de este mismo ciclo de versión.
   >
   > **Si firmó documentos con bloqueo activado (`-l true`/`-k true`) antes de esta corrección, verifíquelos con `PDFVerifySignatures`.** Si informa `Unknown PdfException` o "DOCUMENTO INVÁLIDO", la firma quedó corrupta y el documento debe volver a firmarse con esta versión corregida.
 
-- **Validación de firmas preexistentes antes de firmar.** Los tres firmadores de PDF verifican, antes de agregar una nueva firma, que cualquier firma ya presente en el documento sea íntegra — si alguna no lo es, el proceso se detiene sin modificar el archivo. Esta validación se agregó a `PDFSignerWindowsCSP` en la 1.1.0 para igualarlo con `PDFSignerPKCS11`/`PDFSignerPKCS12` (antes solo estos dos la hacían).
+- **Validación de firmas preexistentes antes de firmar.** Los tres firmadores de PDF verifican, antes de agregar una nueva firma, que cualquier firma ya presente en el documento sea íntegra — si alguna no lo es, el proceso se detiene sin modificar el archivo. Esta validación se agregó a `PDFSignerWindowsCSP` en la 1.1.1 para igualarlo con `PDFSignerPKCS11`/`PDFSignerPKCS12` (antes solo estos dos la hacían).
 
 **Errores comunes a los tres firmadores de PDF:** "El archivo PDF no existe o no es accesible", "El PDF está encriptado y no puede ser firmado" (no se puede firmar un PDF que ya tiene una restricción de cifrado previa), "La firma existente '[nombre]' no es válida" (si el PDF ya tenía una firma corrupta, se rechaza antes de agregar una nueva).
 
@@ -744,7 +744,7 @@ java -jar XMLSignerWindowsCSP.jar "Juan Carlos Ríos" C:\docs\certificado-origen
 
 ### 9.12 PDFSignerWindowsCSP
 
-**Qué hace:** el equivalente de `XMLSignerWindowsCSP` para documentos PDF (ver [sección 7.3](#73-windows-cspksp-almacén-de-certificados-de-windows) para la explicación completa y cuándo conviene elegir esta opción antes que PKCS#11) — mismas opciones de posición, texto y bloqueo que `PDFSignerPKCS11`, incluida la validación de firmas preexistentes (agregada en la 1.1.0 para igualarlo con los otros dos firmadores de PDF). **Exclusivo de Windows.**
+**Qué hace:** el equivalente de `XMLSignerWindowsCSP` para documentos PDF (ver [sección 7.3](#73-windows-cspksp-almacén-de-certificados-de-windows) para la explicación completa y cuándo conviene elegir esta opción antes que PKCS#11) — mismas opciones de posición, texto y bloqueo que `PDFSignerPKCS11`, incluida la validación de firmas preexistentes (agregada en la 1.1.1 para igualarlo con los otros dos firmadores de PDF). **Exclusivo de Windows.**
 
 > ⚠️ **No usar para firma desatendida por lotes** — mismo motivo que en `XMLSignerWindowsCSP`: ver la [sección 7.3](#73-windows-cspksp-almacén-de-certificados-de-windows). Para firmar muchos PDF por CLI sin intervención humana, usar `PDFSignerPKCS11` o `PDFSignerPKCS12`.
 
@@ -766,7 +766,7 @@ java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]
 
 Tampoco pide contraseña — el acceso a la clave lo administra Windows.
 
-**Mensajes de error posibles:** los mismos de acceso al almacén que `XMLSignerWindowsCSP`, más "El PDF está encriptado y no puede ser firmado" y "La firma existente '[nombre]' no es válida" (agregados en la 1.1.0), más los propios de firma PDF ya listados en `PDFSignerPKCS11`.
+**Mensajes de error posibles:** los mismos de acceso al almacén que `XMLSignerWindowsCSP`, más "El PDF está encriptado y no puede ser firmado" y "La firma existente '[nombre]' no es válida" (agregados en la 1.1.1), más los propios de firma PDF ya listados en `PDFSignerPKCS11`.
 
 **Ejemplo:**
 ```
@@ -791,7 +791,7 @@ No recibe parámetros obligatorios: ejecutado sin argumentos, lista directamente
 
 **Salida:** por cada certificado del almacén, alias, sujeto (incluye el CN), emisor, período de validez, número de serie en hexadecimal, y si tiene clave privada asociada (`KeyStore.isKeyEntry`) — solo esas entradas son utilizables para firmar. Es habitual que convivan en el mismo almacén un certificado vencido y su renovación posterior; conviene revisar "Válido hasta" antes de elegir cuál usar, igual que con `TokenSlotsView` y los tokens PKCS#11 (sección 9.1).
 
-**Relación con `-listar-certificados` en los firmadores:** `XMLSignerWindowsCSP`/`PDFSignerWindowsCSP` ya traían (desde la 1.1.0 original) un flag `-listar-certificados` con el mismo propósito, pensado como ayuda rápida dentro de esos mismos módulos. `WindowsCertificateStoreView` no lo reemplaza — es, en cambio, el mismo tipo de capacidad elevada a módulo propio de primera clase (con su propia pestaña en la GUI), consistente con cómo `TokenSlotsView` existe aparte de los firmadores PKCS#11 en lugar de que cada uno duplique su propia función de listado.
+**Relación con `-listar-certificados` en los firmadores:** `XMLSignerWindowsCSP`/`PDFSignerWindowsCSP` ya traían (desde la 1.1.1 original) un flag `-listar-certificados` con el mismo propósito, pensado como ayuda rápida dentro de esos mismos módulos. `WindowsCertificateStoreView` no lo reemplaza — es, en cambio, el mismo tipo de capacidad elevada a módulo propio de primera clase (con su propia pestaña en la GUI), consistente con cómo `TokenSlotsView` existe aparte de los firmadores PKCS#11 en lugar de que cada uno duplique su propia función de listado.
 
 **Ejemplo:**
 ```
@@ -806,7 +806,7 @@ java -jar WindowsCertificateStoreView.jar
 
 **No es una aplicación para integración por proceso** (no tiene un contrato de argumentos/exit-code pensado para ser invocada por otro programa) — se documenta acá por completitud del producto. Un integrador debe usar los módulos CLI individuales.
 
-**Navegación (rediseñada en 1.1.0):** hasta la 1.1.0-beta.1, los 12-14 módulos se mostraban como pestañas horizontales en la parte superior — con esa cantidad de títulos, no entraban en el ancho de la ventana y quedaban con scroll horizontal. Se reemplazó por un panel lateral vertical (cada módulo con un ícono según su categoría: ver, firmar o verificar) — el espacio vertical disponible es mucho mayor que el horizontal, así que la lista completa entra sin necesidad de scroll salvo en pantallas muy bajas. El formulario del módulo elegido se muestra en un panel con scroll vertical propio, para que ningún campo quede inaccesible en pantallas chicas, y el panel "Salida del Proceso" ahora se puede colapsar (arranca colapsado y se expande solo cuando aparece un resultado nuevo), liberando espacio para el formulario mientras no se ejecutó nada.
+**Navegación (rediseñada en 1.1.1):** hasta la 1.1.1-beta.1, los 12-14 módulos se mostraban como pestañas horizontales en la parte superior — con esa cantidad de títulos, no entraban en el ancho de la ventana y quedaban con scroll horizontal. Se reemplazó por un panel lateral vertical (cada módulo con un ícono según su categoría: ver, firmar o verificar) — el espacio vertical disponible es mucho mayor que el horizontal, así que la lista completa entra sin necesidad de scroll salvo en pantallas muy bajas. El formulario del módulo elegido se muestra en un panel con scroll vertical propio, para que ningún campo quede inaccesible en pantallas chicas, y el panel "Salida del Proceso" ahora se puede colapsar (arranca colapsado y se expande solo cuando aparece un resultado nuevo), liberando espacio para el formulario mientras no se ejecutó nada.
 
 **Funciones adicionales relevantes para quien la use manualmente:**
 - Recuerda entre sesiones, en `sfide-defaults.properties`: la ruta de biblioteca PKCS#11 / archivo PKCS#12 / número de slot (se guardan tanto al usar "Examinar..."/"Detectar automáticamente" como al escribirlos a mano), una ruta de biblioteca particular por cada marca/modelo de token elegida en el selector (en vez de una sola ruta global), el último módulo abierto (se reabre ahí directamente al iniciar), el tamaño/posición/maximizado de la ventana, la casilla "Bloquear documento después de firmar" y la posición X/Y de firma visible (estas dos últimas compartidas entre los tres firmadores de PDF). **Nunca se persiste ninguna contraseña.**
@@ -1004,7 +1004,7 @@ S-FiDE/
 
 > **Cómo descomprimir el ZIP de distribución.** Cree primero una carpeta propia (por ejemplo `C:\S-FiDE` en Windows, o `~/S-FiDE` en Linux/macOS) y descomprima el contenido del ZIP **dentro** de esa carpeta — no directamente en la raíz de una unidad, en el Escritorio ni en la carpeta de descargas. La distribución trae más de una decena de archivos `.jar` sueltos y dos carpetas de varios cientos de MB (los runtimes embebidos de Java y JavaFX): si se descomprime sin crear antes una carpeta contenedora, todo eso termina mezclado entre los demás archivos de esa ubicación. Esto pasó en la práctica con el ZIP de Windows: algunos usuarios lo descomprimieron directo en `C:\`, entendiendo que el ZIP mismo ya "era" la carpeta de instalación. A partir de esta versión, `SFide-GUI.bat` detecta ese caso puntual (raíz de unidad) y muestra un aviso recomendando moverlo — no es un error, el programa funciona igual, pero una carpeta propia es la forma correcta de instalarlo.
 
-**Convención de nombres de jar — importante para integradores:** el nombre del `.jar` de distribución (`XMLSignerPKCS11.jar`) **nunca** incluye el número de versión, a diferencia del artefacto crudo que genera Maven en `target/` (`xml_signer_pkcs11-1.1.0-jar-with-dependencies.jar`). Esto es deliberado: un integrador que ya tiene el nombre del jar hardcodeado en su propio código no debe romperse cuando S-FiDE actualiza de versión.
+**Convención de nombres de jar — importante para integradores:** el nombre del `.jar` de distribución (`XMLSignerPKCS11.jar`) **nunca** incluye el número de versión, a diferencia del artefacto crudo que genera Maven en `target/` (`xml_signer_pkcs11-1.1.1-jar-with-dependencies.jar`). Esto es deliberado: un integrador que ya tiene el nombre del jar hardcodeado en su propio código no debe romperse cuando S-FiDE actualiza de versión.
 
 El script `install.bat` (incluido en el repositorio) automatiza la generación de una carpeta de distribución completa a partir del código fuente compilado, incluyendo opcionalmente los runtimes embebidos si se le indica una carpeta "vendor" de referencia.
 
@@ -1012,11 +1012,11 @@ El script `install.bat` (incluido en el repositorio) automatiza la generación d
 
 ## 13. Historial de versiones
 
-### v1.1.0 (2026-08-30)
+### v1.1.1 (2026-09-01)
 
 - Compatibilidad ampliada de tokens PKCS#11: soporte de mecanismo de hash externo (`CKM_RSA_PKCS`) para tokens que no exponen el mecanismo combinado (ver [sección 7.1](#71-pkcs11-tokens-criptográficos-y-hsm)).
 - Autodetección de marca/modelo de token y ayuda de selección de driver (GUI y `-listar-drivers`).
-- Dos módulos nuevos: `XMLSignerWindowsCSP` y `PDFSignerWindowsCSP` (firma vía almacén de certificados de Windows).
+- Dos módulos nuevos: `XMLSignerWindowsCSP` y `PDFSignerWindowsCSP` (firma vía almacén de certificados de Windows), más un tercero, `WindowsCertificateStoreView`, dedicado exclusivamente a listar ese almacén (el equivalente de `TokenSlotsView` para PKCS#11) — antes solo se podía ver vía el flag `-listar-certificados` "escondido" en los dos firmadores.
 - Actualización de dependencias criptográficas (BouncyCastle, iText, Apache Santuario) por alertas de seguridad.
 - Corrección de dos errores encontrados durante la QA con hardware real (SafeNet 5110+ L3): fallo de firma XML con tokens reales (`Mechanism DOM not available`) y una recursión infinita relacionada.
 - **Auditoría completa de código y corrección de inconsistencias entre módulos hermanos** (revisión posterior a la QA de hardware):
@@ -1034,6 +1034,12 @@ El script `install.bat` (incluido en el repositorio) automatiza la generación d
   - `XMLVerifyXSDStructure` ahora reintenta automáticamente contra un dominio espejo (`cod.certificadoorigen.com.ar`) cuando el esquema referenciado es del dominio oficial de ALADI (`codaladi.org`, habitualmente inoperativo) y la descarga falla — incluyendo el caso de una redirección HTTP→HTTPS entre protocolos que Java no sigue automáticamente y que antes se descargaba como si fuera el XSD (produciendo un error de parseo confuso en vez de reintentar). Ver [sección 9.7](#97-xmlverifyxsdstructure).
   - Los tres firmadores XML ahora prohíben firmar el documento completo (elemento vacío `""`) cuando detectan un XML de comercio exterior (contiene un elemento `COD` o `DJO`) — debe indicarse explícitamente qué elemento firmar. Al firmar sobre uno de estos documentos, se informa además en consola de qué tipo de documento se trata ("sin verificación de contenido") y qué elemento recibió la firma. Ver [sección 10.5](#105-reglas-de-firma-obligatorias).
 - **Validado de punta a punta con hardware real**: SafeNet 5110+ L3, mToken CryptoID nueva y Feitian ePass2003, además de PKCS#12 (ver [sección 8, "Hardware validado end-to-end"](#hardware-validado-end-to-end)).
+- **`s_fide_gui`: reescritas las 10 descripciones de módulo heredadas de 1.0.0** (mostradas en el encabezado de cada pestaña) con contenido específico de cada módulo en vez de una sola oración genérica.
+- **Corregido un problema real de extracción del ZIP de distribución**: algunos usuarios lo descomprimieron directo en la raíz de una unidad (`C:\`) sin crear antes una carpeta contenedora. Se corrigió tanto el empaquetado (los ZIP del Release ahora traen una carpeta propia) como un bug latente real en `SFide-GUI.bat` que, en ese caso puntual, podía hacer que el programa arrancara con el directorio de trabajo equivocado (ver [sección 12](#12-distribución-y-despliegue)). El mismo `.bat` también se corrigió para funcionar desde una carpeta cuyo nombre contiene espacios.
+- **`s_fide_gui` (Windows): accesos directos automáticos al escritorio y al menú inicio** en el primer arranque, con el ícono propio de S-FiDE, blindados para nunca fallar visiblemente ni bloquear el arranque bajo políticas de seguridad corporativas restrictivas (PowerShell bloqueado o colgado, sin permisos de escritura).
+- **`s_fide_gui`: el alias/CN del certificado del almacén de Windows ahora se recuerda** y se sincroniza en vivo entre los dos firmadores CSP/KSP.
+- **`s_fide_gui`: `GUIUtils.executeCommand` (ejecución de cualquier módulo desde la interfaz) ganó un límite de tiempo de 10 minutos** con cancelación automática del proceso, para no quedar colgado indefinidamente ante un módulo que no responde — generoso a propósito para no interrumpir un diálogo nativo de PIN de Windows CSP/KSP ni una consulta de revocación por red.
+- **`LICENSE` simplificado al texto canónico exacto de la GPLv2** (sin encabezado propio) para que el detector automático de licencias de GitHub reconozca correctamente el proyecto como GPL-2.0.
 
 ### v1.0.0 (2024-12) — primer release estable
 
@@ -1041,9 +1047,9 @@ Suite inicial de 10 módulos (extracción de certificados, firma y verificación
 
 ### Guía de migración desde 1.0.0
 
-Si ya tenías una integración funcionando contra los jars de S-FiDE 1.0.0, la gran mayoría de los cambios de 1.1.0 son **aditivos** (flags opcionales nuevos, módulos nuevos) y no requieren ningún cambio de tu lado. Esta guía identifica puntualmente los pocos casos donde cambió el **comportamiento** de un jar que ya usabas en 1.0.0, para que sepas exactamente qué revisar antes de actualizar. No aplica a `XMLSignerWindowsCSP.jar`/`PDFSignerWindowsCSP.jar`: son módulos nuevos, no existían en 1.0.0, así que no hay nada que "migrar" ahí.
+Si ya tenías una integración funcionando contra los jars de S-FiDE 1.0.0, la gran mayoría de los cambios de 1.1.1 son **aditivos** (flags opcionales nuevos, módulos nuevos) y no requieren ningún cambio de tu lado. Esta guía identifica puntualmente los pocos casos donde cambió el **comportamiento** de un jar que ya usabas en 1.0.0, para que sepas exactamente qué revisar antes de actualizar. No aplica a `XMLSignerWindowsCSP.jar`/`PDFSignerWindowsCSP.jar`: son módulos nuevos, no existían en 1.0.0, así que no hay nada que "migrar" ahí.
 
-| Jar (ya existía en 1.0.0) | Qué cambió en 1.1.0 | ¿Puede romper una integración existente? | Qué revisar |
+| Jar (ya existía en 1.0.0) | Qué cambió en 1.1.1 | ¿Puede romper una integración existente? | Qué revisar |
 |---|---|---|---|
 | `XMLSignerPKCS11.jar`, `XMLSignerPKCS12.jar` | Tres reglas de firma nuevas (secciones ["reglas de firma comunes"](#reglas-de-firma-comunes-a-los-tres-firmadores-xml) y [10.5](#105-reglas-de-firma-obligatorias)): (1) ya no se puede volver a firmar un elemento que ya tiene una firma digital aplicada; (2) no se puede firmar `CODEH`/`DJOEH` sin una firma previa sobre `COD`/`DJO`; (3) si el XML contiene un elemento `COD` o `DJO`, ya no se admite `""` (documento completo) como elemento a firmar. | **Sí, pero solo si tu integración alguna vez firmaba dos veces el mismo elemento, firmaba `CODEH`/`DJOEH` fuera de orden, o firmaba con elemento vacío un XML que contiene `COD`/`DJO`.** Antes esas llamadas terminaban con éxito (código `0`), aunque el resultado no fuera el esperado; ahora terminan con código `1` y un mensaje de error explícito. | Si tu flujo siempre firmó el elemento correcto, una sola vez, en el orden correcto, no hay nada que cambiar — es exactamente lo que ya hacías. Si tenías alguna lógica de reintento que pudiera volver a invocar el firmador sobre el mismo archivo/elemento, revisala. |
 | `PDFSignerPKCS12.jar` | Al usar `-l true` (bloquear) con una firma invisible (sin `-x`/`-y`), antes solo se aplicaba el cifrado AES-256; ahora también se aplica la certificación DocMDP ("sin cambios permitidos"), igual que ya hacía `PDFSignerPKCS11`. | **Sí, si tu flujo agrega más de una firma al mismo PDF y alguna de las que no era la última usaba `-l true` de forma invisible.** Una firma certificante (DocMDP) debe ser siempre la primera y única de su tipo — si tu proceso agregaba firmas posteriores a un PDF "bloqueado invisible" con `PDFSignerPKCS12`, eso ahora falla al llegar a la firma siguiente. | Si usás `-l true` únicamente en la **última** firma que aplicás a cada documento, no hay nada que cambiar. Si lo usabas antes esperando "solo cifrar, sin certificar, para poder seguir firmando después", movelo a la última firma del flujo. |
@@ -1052,7 +1058,7 @@ Si ya tenías una integración funcionando contra los jars de S-FiDE 1.0.0, la g
 | `TokenSlotsView.jar`, `TokenCertificateExtractor.jar`, `PKCS12CertificateExtractor.jar`, `XMLVerifyXSDStructure.jar`, `PDFSignerPKCS11.jar`, `PDFVerifySignatures.jar` | Sin cambios de comportamiento frente a 1.0.0, más allá de la unificación de vocabulario de comandos especiales (ver abajo). | No. | Ninguna acción necesaria. |
 
 **Tres cosas que explícitamente NO cambiaron y no requieren ninguna acción — verificado con `git diff` completo contra el tag `v1.0.0` en los 10 módulos preexistentes, no solo revisado de memoria:**
-- **Los nombres de los jars** siguen siendo los mismos, sin versión en el nombre (`XMLSignerPKCS11.jar`, no `XMLSignerPKCS11-1.1.0.jar`) — ver [sección 12](#12-distribución-y-despliegue). Un integrador con el nombre hardcodeado no tiene nada que tocar.
+- **Los nombres de los jars** siguen siendo los mismos, sin versión en el nombre (`XMLSignerPKCS11.jar`, no `XMLSignerPKCS11-1.1.1.jar`) — ver [sección 12](#12-distribución-y-despliegue). Un integrador con el nombre hardcodeado no tiene nada que tocar.
 - **Ningún flag funcional cambió de nombre ni de forma.** Se revisó específicamente `-i`/`--input`, `-l`/`--library`, `-p`/`--password`, `-s`/`--slot`, `-k`/`--lock`, `-x`/`--xpos`, `-y`/`--ypos`, `-t`/`--text`, `-c`/`--certificate` (los tres firmadores de PDF) y `-simple` (los dos verificadores): ninguno aparece tocado en el historial de git desde v1.0.0. Tampoco cambió el **orden ni la cantidad de argumentos posicionales** en los módulos que no usan flags con nombre (`XMLSignerPKCS11`, `XMLSignerPKCS12`, `TokenSlotsView`, `TokenCertificateExtractor`, `PKCS12CertificateExtractor`) — ninguna línea que lea `args[N]` o valide `args.length` fue modificada desde 1.0.0.
 - **Los comandos especiales que ya usabas siguen funcionando exactamente igual.** La unificación de vocabulario (ver [sección 9](#9-catálogo-de-aplicaciones)) fue puramente aditiva: se agregaron alias nuevos (`-v`, `-h`, `--version`, `--help`, `--license` a los módulos que antes solo aceptaban `-version`/`-ayuda`/`-licencia`, y viceversa) — ningún alias que existía en 1.0.0 se quitó ni cambió de significado.
 

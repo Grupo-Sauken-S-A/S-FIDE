@@ -9,7 +9,7 @@
   el dispositivo tenga homologación FIPS 140-2 Nivel 2 o superior con certificación NIST
   vigente - eso es un requisito regulatorio del trámite ante la autoridad certificante, no una
   limitación de este software
-- Desde la versión 1.1.0, S-FiDE reconoce automáticamente varias marcas/modelos conocidos por
+- Desde la versión 1.1.1, S-FiDE reconoce automáticamente varias marcas/modelos conocidos por
   el nombre de archivo de su driver (ver pregunta 9) y admite tanto tokens con mecanismo de
   firma combinado (hash calculado por el propio token, ej. SafeNet) como los que requieren
   calcularlo externamente (ej. ePass2003)
@@ -59,7 +59,7 @@
 
 ## 9. ¿Qué es la detección automática de drivers?
 
-- Desde la versión 1.1.0, los módulos que piden una biblioteca PKCS#11 muestran una lista
+- Desde la versión 1.1.1, los módulos que piden una biblioteca PKCS#11 muestran una lista
   desplegable de marca/modelo conocido (con su estado de recomendación según normativa
   AC-ONTI/AIF) y un botón "Detectar automáticamente" que revisa cuál de las rutas típicas
   existe realmente en su equipo

@@ -80,7 +80,7 @@ import javax.security.auth.x500.X500Principal;
  */
 public class PDFSignerWindowsCSP {
     private static final String OUTPUT_SUFFIX = "-signed";
-    private static final String VERSION = "S-FIDE PDFSignerWindowsCSP v1.1.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE PDFSignerWindowsCSP v1.1.1 - Grupo Sauken S.A.";
     private static PrintStream errorStream;
 
     static {

@@ -1,4 +1,4 @@
-S-FiDE v1.1.0 - Leeme primero:
+S-FiDE v1.1.1 - Leeme primero:
 
 - IMPORTANTE - Cómo instalar: cree primero una carpeta propia con el nombre que prefiera (por ejemplo
   "C:\S-FiDE") y descomprima el contenido del ZIP DENTRO de esa carpeta. No lo descomprima directamente
@@ -34,7 +34,7 @@ S-FiDE v1.1.0 - Leeme primero:
   "doc/manual-tecnico-integracion.md" hay una sección específica ("Integración desde otras aplicaciones") con
   ejemplos de invocación por línea de comandos, redirección de salida y captura de código de resultado
 
-- Novedades de la versión 1.1.0:
+- Novedades de la versión 1.1.1:
   - Los módulos que trabajan con tokens PKCS#11 ahora reconocen la marca/modelo según el driver
     seleccionado y sugieren la ruta típica por marca/modelo y sistema operativo. En la GUI use el botón
     "Detectar automáticamente"; por línea de comandos use el parámetro "-listar-drivers" (en
@@ -46,6 +46,9 @@ S-FiDE v1.1.0 - Leeme primero:
     usando el almacén de certificados de Windows (CSP/KSP) en vez de PKCS#11 - útil si su certificado ya
     aparece en el Administrador de certificados de Windows. Son opcionales y exclusivos de Windows; en la
     GUI aparecen como pestañas adicionales solo cuando corre en ese sistema operativo
+  - También en Windows, el nuevo módulo WindowsCertificateStoreView lista los certificados de ese almacén
+    (alias, sujeto, emisor, vigencia) - útil si no conoce con exactitud el alias o el nombre (CN) que debe
+    escribir al firmar con XMLSignerWindowsCSP/PDFSignerWindowsCSP
 
 - En "test" tiene documentos de ejemplo para firmar y validar. En "xsd" tiene ejemplos de archivos XSD para
   validar. En "doc" encontrará el manual técnico de integración con el detalle de cada aplicación

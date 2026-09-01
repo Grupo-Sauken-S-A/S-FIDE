@@ -73,7 +73,7 @@ import javax.xml.crypto.dsig.spec.*;
 import javax.xml.xpath.*;
 
 public class XMLSignerPKCS11 {
-    private static final String VERSION = "S-FIDE XMLSignerPKCS11 v1.1.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE XMLSignerPKCS11 v1.1.1 - Grupo Sauken S.A.";
     private static PrintStream errorStream;
     private static PrintStream outputStream;
 

@@ -71,7 +71,7 @@ import com.sauken.s_fide.xml_verify_signatures.timestamp.SignatureTimeExtractor.
 import java.text.SimpleDateFormat;
 
 public class XMLVerifySignatures {
-    private static final String VERSION = "S-FIDE XMLVerifySignatures v1.1.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE XMLVerifySignatures v1.1.1 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT;
     private static final String HELP_TEXT;
     private static final String TRUST_STORE_PATH = System.getProperty("java.home") +

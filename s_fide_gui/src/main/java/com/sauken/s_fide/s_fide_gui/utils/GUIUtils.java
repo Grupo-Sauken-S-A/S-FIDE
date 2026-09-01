@@ -62,10 +62,21 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class GUIUtils {
+    // Generoso a propósito: XMLSignerWindowsCSP/PDFSignerWindowsCSP pueden quedar
+    // esperando un diálogo nativo de PIN/token (interacción real del usuario), y
+    // la verificación de revocación hace consultas OCSP/CRL por red. Solo debe
+    // dispararse ante un colgado genuino, no ante una operación lenta pero normal.
+    private static final int EXECUTION_TIMEOUT_MINUTES = 10;
+
     private static final ExecutorService executorService;
+    private static final ScheduledExecutorService watchdogExecutor;
     private static final String JAVA_HOME = System.getProperty("java.home");
     private static final String JAVA_EXECUTABLE = JAVA_HOME + File.separator + "bin" + File.separator + "java";
 
@@ -76,6 +87,7 @@ public final class GUIUtils {
             return thread;
         };
         executorService = Executors.newCachedThreadPool(threadFactory);
+        watchdogExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
     }
 
     private GUIUtils() {
@@ -153,8 +165,20 @@ public final class GUIUtils {
             processBuilder.environment().put("LANG", "es_ES.UTF-8");
             processBuilder.environment().put("LC_ALL", "es_ES.UTF-8");
 
+            Process process = null;
+            ScheduledFuture<?> watchdog = null;
             try {
-                Process process = processBuilder.start();
+                process = processBuilder.start();
+                final Process finalProcess = process;
+                AtomicBoolean timedOut = new AtomicBoolean(false);
+
+                watchdog = watchdogExecutor.schedule(() -> {
+                    if (finalProcess.isAlive()) {
+                        timedOut.set(true);
+                        finalProcess.destroyForcibly();
+                    }
+                }, EXECUTION_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+
                 StringBuilder output = new StringBuilder();
 
                 try (BufferedReader reader = new BufferedReader(
@@ -168,20 +192,36 @@ public final class GUIUtils {
                 }
 
                 int exitStatus = process.waitFor();
+                watchdog.cancel(false);
 
-                Platform.runLater(() -> {
-                    if (output.isEmpty()) {
-                        outputTextArea.appendText("El proceso no generó salida\n");
-                    }
-                    showCommandResult(exitStatus);
-                });
+                if (timedOut.get()) {
+                    Platform.runLater(() -> {
+                        outputTextArea.appendText("Error: la operación fue cancelada por superar el tiempo "
+                                + "máximo de espera (" + EXECUTION_TIMEOUT_MINUTES + " minutos)\n");
+                        showCommandResult(1);
+                    });
+                } else {
+                    Platform.runLater(() -> {
+                        if (output.isEmpty()) {
+                            outputTextArea.appendText("El proceso no generó salida\n");
+                        }
+                        showCommandResult(exitStatus);
+                    });
+                }
 
             } catch (Exception e) {
+                if (watchdog != null) {
+                    watchdog.cancel(false);
+                }
                 final String errorMsg = "Error ejecutando " + jarPath + ": " + e.getMessage() + "\n";
                 Platform.runLater(() -> {
                     outputTextArea.appendText(errorMsg);
                     showCommandResult(1);
                 });
+            } finally {
+                if (process != null && process.isAlive()) {
+                    process.destroyForcibly();
+                }
             }
         }, executorService);
     }
@@ -189,6 +229,9 @@ public final class GUIUtils {
     public static void shutdown() {
         if (!executorService.isShutdown()) {
             executorService.shutdownNow();
+        }
+        if (!watchdogExecutor.isShutdown()) {
+            watchdogExecutor.shutdownNow();
         }
     }
 }

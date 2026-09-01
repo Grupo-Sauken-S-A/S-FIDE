@@ -1,6 +1,6 @@
 # S-FiDE - Guía Rápida
 
-Sistema de Firma Digital Extendida - Versión 1.1.0 - Grupo Sauken S.A.
+Sistema de Firma Digital Extendida - Versión 1.1.1 - Grupo Sauken S.A.
 
 SFide-GUI proporciona una interfaz gráfica de usuario para asignar los parámetros adecuados a
 cada una de las aplicaciones de la plataforma S-FiDE. Las aplicaciones se muestran de manera
@@ -80,7 +80,7 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 - Igual que el anterior, pero para documentos PDF. Admite las mismas opciones de posición,
   texto adicional y bloqueo del documento que "Firmar PDF con Token"
 
-## Novedades en la versión 1.1.0
+## Novedades en la versión 1.1.1
 
 - **Panel lateral de navegación**, en reemplazo de la antigua barra de pestañas horizontal
 - **Detección de driver PKCS#11**: en los módulos que usan una biblioteca PKCS#11, un botón
