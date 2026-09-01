@@ -40,6 +40,7 @@
         <module>pdf_signer_windows_csp</module>
         <module>windows_certificate_store_view</module>
         <module>s_fide_gui</module>
+        <module>integration_tests</module>
     </modules>
 
     <dependencyManagement>

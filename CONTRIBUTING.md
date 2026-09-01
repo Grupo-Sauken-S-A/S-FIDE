@@ -42,7 +42,8 @@ Si tu cambio afecta el comportamiento de un módulo (flags, mensajes de error, m
 ## Probar tus cambios
 
 No alcanza con que compile. Si tocaste código de firma o verificación:
-- Corré `./mvnw clean install` del reactor completo.
+- Corré `./mvnw clean install` del reactor completo — esto ya incluye correr `integration_tests`, que firma y verifica un XML y un PDF reales de punta a punta usando un certificado PKCS#12 autofirmado generado al vuelo (sin ningún token ni contraseña guardada en el repo). Es la única cobertura automatizada del proyecto por ahora — cúbrela si tu cambio toca `XMLSignerPKCS12`, `XMLVerifySignatures`, `PDFSignerPKCS12` o `PDFVerifySignatures`.
+- Si tocaste un módulo que depende de un token PKCS#11 real o del almacén de certificados de Windows, no hay forma de automatizar esa parte (ver `integration_tests/pom.xml` para el porqué) — probalo a mano con hardware real, como siempre.
 - Probá el módulo con un archivo real (XML o PDF de prueba, certificado PKCS#12 de prueba si hace falta) — varios bugs reales de este proyecto solo aparecieron contra archivos/hardware reales, nunca en una prueba puramente teórica.
 
 ## Enviar un cambio

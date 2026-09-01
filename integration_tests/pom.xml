@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.sauken.s_fide</groupId>
+        <artifactId>s_fide_parent</artifactId>
+        <version>1.1.1</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>integration_tests</artifactId>
+    <name>S-FIDE Integration Tests</name>
+    <description>
+        Pruebas automatizadas de extremo a extremo: firman y verifican XML/PDF
+        reales invocando los .jar de otros módulos como procesos separados,
+        igual que lo haría un integrador real. No genera ningún artefacto de
+        distribución — es un módulo interno, no aparece en el catálogo de
+        aplicaciones de S-FiDE ni se copia a la carpeta de distribución.
+        Usa PKCS#12 exclusivamente: el certificado de prueba se genera al
+        vuelo con "keytool" (autofirmado, contraseña aleatoria, nunca se
+        persiste ni se commitea) — no depende de ningún token físico ni de
+        ningún archivo de certificado guardado en el repositorio, así que
+        corre igual en cualquier máquina, incluido un runner de CI sin
+        hardware. Los módulos que sí requieren un token PKCS#11 real o el
+        almacén de certificados de Windows quedan, como siempre, a cargo de
+        la QA manual con hardware real — no se pueden automatizar acá.
+    </description>
+
+    <properties>
+        <maven.compiler.source>23</maven.compiler.source>
+        <maven.compiler.target>23</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.version>5.10.1</junit.version>
+    </properties>
+
+    <dependencies>
+        <!-- Módulos que este suite ejercita de punta a punta (solo en scope
+             test: nunca se agregan como dependencia real de ningún jar
+             distribuido, ninguno de los 14 módulos de producción cambia). -->
+        <dependency>
+            <groupId>com.sauken.s_fide</groupId>
+            <artifactId>xml_signer_pkcs12</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sauken.s_fide</groupId>
+            <artifactId>xml_verify_signatures</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sauken.s_fide</groupId>
+            <artifactId>pdf_signer_pkcs12</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sauken.s_fide</groupId>
+            <artifactId>pdf_verify_signatures</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.12.1</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.2</version>
+            </plugin>
+
+            <!-- Este módulo es interno (solo tests) — nunca produce ni
+                 instala un jar que otro módulo pueda llegar a depender. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
