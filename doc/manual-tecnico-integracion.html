@@ -657,6 +657,10 @@ cd S-FIDE
         <li><strong>PDF</strong> (<code>PDFVerifySignatures</code>): verifica vía <code>PdfPKCS7.verifySignatureIntegrityAndAuthenticity()</code> de iText, sin restricción de algoritmo — el algoritmo se informa de manera descriptiva pero nunca se usa como criterio de rechazo.</li>
       </ul>
       <div class="callout note">
+        <span class="label">Corrección (1.1.1)</span>
+        <p>El campo "Algoritmo de firma" de <code>PDFVerifySignatures</code> informaba antes el algoritmo con el que la CA firmó el <em>certificado</em> del firmante, no el de la <em>firma del documento</em> en sí — dos datos que solo coinciden cuando la CA usa el mismo algoritmo que la firma. Ahora se calcula a partir de la firma real leída del PDF. Es un campo puramente informativo: nunca afectó el resultado <code>DOCUMENTO VÁLIDO</code>/<code>INVÁLIDO</code>.</p>
+      </div>
+      <div class="callout note">
         <span class="label">Propiedad intencional, a preservar</span>
         <p>Esta capacidad de verificar SHA-1 es independiente de qué algoritmos usan los propios firmadores de S-FiDE para producir firmas nuevas. El rol de S-FiDE como verificador es validar lo que ya fue firmado, sin importar antigüedad ni herramienta de origen.</p>
       </div>
@@ -1226,6 +1230,10 @@ exit $RESULT</code></pre>
         <li><strong>Accesos directos automáticos (Windows):</strong> al primer arranque, <code>s_fide_gui</code> crea accesos directos en el escritorio y el menú inicio con ícono propio, blindados para nunca fallar visiblemente ni bloquear el arranque bajo políticas de seguridad corporativas restrictivas. El alias/CN del almacén de Windows también se recuerda y sincroniza en vivo entre los dos firmadores CSP/KSP.</li>
         <li><code>GUIUtils.executeCommand</code> (ejecución de módulos desde la GUI) ganó un límite de tiempo de 10 minutos con cancelación automática, para no quedar colgado ante un proceso que no responde.</li>
         <li><code>LICENSE</code> simplificado al texto canónico exacto de la GPLv2 para que GitHub reconozca correctamente la licencia del proyecto.</li>
+        <li><strong>Guía de Usuario S-FiDE GUI nueva</strong> (<code>doc/manual-usuario-sfide-gui.html</code>): recorrido de las 13 pantallas de la interfaz gráfica con capturas reales, para quien opera la GUI en vez de integrar por línea de comandos.</li>
+        <li><strong><code>s_fide_gui</code> (Windows): dos accesos directos más al primer arranque</strong>, además del de la aplicación — abren en el navegador la Guía de Usuario y este mismo Manual Técnico (ver <a href="#m14">sección 9.14</a>).</li>
+        <li><strong>Corregido un error real en <code>PDFVerifySignatures</code></strong>: el campo "Algoritmo de firma" informaba el algoritmo con que la CA firmó el certificado del firmante, no el de la firma del documento — ver <a href="#s7">sección 7.6</a>. Puramente informativo, no afecta el resultado de la verificación.</li>
+        <li><strong>Migración de los tres firmadores de PDF a la API vigente de iText 8</strong> (<code>SignerProperties</code>/<code>SignatureFieldAppearance</code> en vez de <code>PdfSignatureAppearance</code>, deprecado) — sin cambio de comportamiento observable, verificado firmando y verificando documentos reales.</li>
       </ul>
       <h3>v1.0.0 (2024-12) — primer release estable</h3>
       <p>Suite inicial de 10 módulos más la GUI JavaFX.</p>
