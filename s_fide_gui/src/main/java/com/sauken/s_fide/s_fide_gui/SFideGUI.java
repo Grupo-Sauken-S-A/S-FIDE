@@ -92,6 +92,7 @@ import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -448,12 +449,13 @@ public class SFideGUI extends Application {
     }
 
     /**
-     * Crea un acceso directo en el escritorio la primera vez que se ejecuta esta
-     * instalación de S-FiDE (Windows únicamente) — queda registrado en
-     * sfide-defaults.properties para no repetirlo en próximas ejecuciones, ni
-     * siquiera si el usuario borra el acceso directo después. Corre en el hilo
-     * de fondo existente (no bloquea la interfaz) y nunca interrumpe el arranque
-     * si falla: solo se informa por la salida estándar.
+     * Crea accesos directos en el escritorio y en el menú inicio (carpeta
+     * "S-FiDE") la primera vez que se ejecuta esta instalación de S-FiDE
+     * (Windows únicamente) — queda registrado en sfide-defaults.properties
+     * para no repetirlo en próximas ejecuciones, ni siquiera si el usuario los
+     * borra después. Corre en el hilo de fondo existente (no bloquea la
+     * interfaz); si falla, no interrumpe el arranque y solo se informa por
+     * consola en ese caso — nada se imprime cuando sale bien.
      */
     private void createDesktopShortcutIfNeeded() {
         if (configManager.isDesktopShortcutCreated()) {
@@ -482,10 +484,8 @@ public class SFideGUI extends Application {
                 return;
             }
 
-            String shortcutName = "S-FiDE " + VERSION_NUMBER + ".lnk";
-            String iconLine = Files.exists(iconPath)
-                    ? "$Shortcut.IconLocation = '" + psQuote(iconPath) + "'"
-                    : "";
+            String shortcutFile = "S-FiDE " + VERSION_NUMBER + ".lnk";
+            String iconPathQuoted = Files.exists(iconPath) ? psQuote(iconPath) : null;
 
             // Ojo: nada de comillas dobles en este script. Se lo pasa entero como
             // valor de "powershell -Command", y las comillas dobles internas no
@@ -495,16 +495,15 @@ public class SFideGUI extends Application {
             // string. Comillas simples y concatenación con "+" evitan el problema
             // por completo. Confirmado reproduciendo el error exacto y su fix antes
             // de aplicarlo acá.
-            String script = String.join("; ",
-                    "$desktop = [Environment]::GetFolderPath('Desktop')",
-                    "$WshShell = New-Object -ComObject WScript.Shell",
-                    "$Shortcut = $WshShell.CreateShortcut($desktop + '\\" + shortcutName + "')",
-                    "$Shortcut.TargetPath = '" + psQuote(batPath) + "'",
-                    "$Shortcut.WorkingDirectory = '" + psQuote(sfideDir) + "'",
-                    iconLine,
-                    "$Shortcut.Description = 'S-FiDE - Sistema de Firma Digital Extendido'",
-                    "$Shortcut.Save()"
-            );
+            List<String> lines = new ArrayList<>();
+            lines.add("$WshShell = New-Object -ComObject WScript.Shell");
+            lines.add("$startMenuDir = [Environment]::GetFolderPath('Programs') + '\\S-FiDE'");
+            lines.add("New-Item -ItemType Directory -Force -Path $startMenuDir | Out-Null");
+            lines.addAll(shortcutScript("Desktop", "[Environment]::GetFolderPath('Desktop')",
+                    shortcutFile, batPath, sfideDir, iconPathQuoted));
+            lines.addAll(shortcutScript("StartMenu", "$startMenuDir",
+                    shortcutFile, batPath, sfideDir, iconPathQuoted));
+            String script = String.join("; ", lines);
 
             ProcessBuilder pb = new ProcessBuilder(
                     "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
@@ -515,17 +514,36 @@ public class SFideGUI extends Application {
             String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             boolean finished = process.waitFor(10, TimeUnit.SECONDS);
 
-            if (finished && process.exitValue() == 0) {
-                System.out.println("Acceso directo creado en el escritorio: " + shortcutName);
-            } else {
-                System.out.println("No se pudo crear el acceso directo en el escritorio"
+            if (!finished || process.exitValue() != 0) {
+                System.out.println("No se pudieron crear los accesos directos (escritorio/menú inicio)"
                         + (output.isBlank() ? "" : ": " + output.trim()));
             }
         } catch (Exception e) {
-            System.out.println("No se pudo crear el acceso directo en el escritorio: " + e.getMessage());
+            System.out.println("No se pudieron crear los accesos directos (escritorio/menú inicio): " + e.getMessage());
         } finally {
             markDesktopShortcutCreated();
         }
+    }
+
+    /**
+     * Arma las líneas de PowerShell para un acceso directo en una carpeta dada
+     * (escritorio o menú inicio) — reutilizado dos veces desde
+     * createDesktopShortcutIfNeeded(). Igual que el resto del script generado,
+     * usa solo comillas simples y concatenación, nunca comillas dobles.
+     */
+    private static List<String> shortcutScript(String varSuffix, String folderExpr, String fileName,
+                                                Path batPath, Path sfideDir, String iconPathQuotedOrNull) {
+        String var = "$Shortcut" + varSuffix;
+        List<String> lines = new ArrayList<>();
+        lines.add(var + " = $WshShell.CreateShortcut(" + folderExpr + " + '\\" + fileName + "')");
+        lines.add(var + ".TargetPath = '" + psQuote(batPath) + "'");
+        lines.add(var + ".WorkingDirectory = '" + psQuote(sfideDir) + "'");
+        if (iconPathQuotedOrNull != null) {
+            lines.add(var + ".IconLocation = '" + iconPathQuotedOrNull + "'");
+        }
+        lines.add(var + ".Description = 'S-FiDE - Sistema de Firma Digital Extendido'");
+        lines.add(var + ".Save()");
+        return lines;
     }
 
     /**

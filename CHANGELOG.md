@@ -7,7 +7,7 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 ## [Sin publicar]
 
 ### Agregado
-- `s_fide_gui` (Windows): al ejecutar `SFide-GUI.bat` por primera vez en una instalación, se crea automáticamente un acceso directo en el escritorio ("S-FiDE 1.1.0.lnk") apuntando a ese `.bat`, con el ícono propio de S-FiDE. Solo se crea una vez (queda registrado en `sfide-defaults.properties`) — si el usuario lo borra después, no se vuelve a crear solo. La distribución ahora incluye `S-FiDE.ico` en su raíz (el mismo ícono ya usado por la ventana de la GUI) para este fin y para quien prefiera armar el acceso directo a mano.
+- `s_fide_gui` (Windows): al ejecutar `SFide-GUI.bat` por primera vez en una instalación, se crean automáticamente accesos directos en el escritorio y en el menú inicio (carpeta "S-FiDE") — "S-FiDE 1.1.0.lnk" apuntando a ese `.bat`, con el ícono propio de S-FiDE. Solo se crean una vez (queda registrado en `sfide-defaults.properties`) — si el usuario los borra después, no se vuelven a crear solos. La distribución ahora incluye `S-FiDE.ico` en su raíz (el mismo ícono ya usado por la ventana de la GUI) para este fin y para quien prefiera armar el acceso directo a mano.
 
 ### Cambiado
 - `s_fide_gui`: reescritas las 10 descripciones de módulo heredadas de 1.0.0 (mostradas en el encabezado de cada pestaña) — eran una sola oración genérica; ahora explican qué hace cada módulo, con qué particularidad relevante para el usuario y, donde aplica, cuándo conviene usarlo en vez de un módulo hermano. Las dos descripciones de `XMLSignerWindowsCSP`/`PDFSignerWindowsCSP` (agregadas en 1.1.0) no cambiaron, eran ya del nivel deseado.
