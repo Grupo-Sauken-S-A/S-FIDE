@@ -47,6 +47,8 @@ Cada uno de los 13 módulos genera su jar en su propia carpeta `target/`.
 
 `install.bat` arma una carpeta de distribución autocontenida (jars con nombre sin versión, runtime de Java y JavaFX embebidos si se indica una carpeta "vendor") que puede ejecutarse desde cualquier ubicación, incluido un medio removible, en un equipo sin Java preinstalado — ver `Leeme.txt` y la [sección 12 del manual técnico](doc/manual-tecnico-integracion.md#12-distribución-y-despliegue).
 
+Los ZIP de las [releases](https://github.com/Grupo-Sauken-S-A/S-FIDE/releases) traen esa misma distribución ya armada. **Antes de descomprimir, cree una carpeta propia** (por ejemplo `C:\S-FiDE`) y descomprima el contenido del ZIP dentro de esa carpeta — no directamente en la raíz de una unidad, el Escritorio o Descargas.
+
 ## Documentación
 
 - **[Manual Técnico de Integración](doc/manual-tecnico-integracion.md)** ([versión publicada](https://grupo-sauken-s-a.github.io/S-FIDE/manual-tecnico-integracion.html)) — referencia completa: arquitectura, cada módulo con sus parámetros y mensajes de error, mecanismos de firma (PKCS#11/PKCS#12/Windows CSP-KSP), validación de revocación OCSP/CRL, especialización ALADI/MERCOSUR, y guía de migración desde 1.0.0.

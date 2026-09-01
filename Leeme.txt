@@ -1,5 +1,12 @@
 S-FiDE v1.1.0 - Leeme primero:
 
+- IMPORTANTE - Cómo instalar: cree primero una carpeta propia con el nombre que prefiera (por ejemplo
+  "C:\S-FiDE") y descomprima el contenido del ZIP DENTRO de esa carpeta. No lo descomprima directamente
+  en la raíz de una unidad (por ejemplo "C:\"), en el Escritorio ni en "Descargas": S-FiDE trae más de
+  una decena de archivos .jar y dos carpetas de varios cientos de MB (el runtime de Java y JavaFX), y
+  todo eso quedaría mezclado con sus otros archivos. Esta versión ya detecta y avisa si igual lo ejecuta
+  desde la raíz de una unidad, pero es una carpeta propia lo recomendado
+
 - "SFide-GUI.bat" y "SFide-GUI.sh" detectan solos la carpeta y la unidad/punto de montaje donde están
   instalados (no hace falta editarlos) - puede copiar la carpeta completa de S-FiDE a cualquier ubicación,
   incluyendo un pendrive u otro medio removible, y ejecutarla desde ahí en cualquier PC sin instalar nada

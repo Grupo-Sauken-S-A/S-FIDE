@@ -8,9 +8,11 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 
 ### Cambiado
 - `s_fide_gui`: reescritas las 10 descripciones de módulo heredadas de 1.0.0 (mostradas en el encabezado de cada pestaña) — eran una sola oración genérica; ahora explican qué hace cada módulo, con qué particularidad relevante para el usuario y, donde aplica, cuándo conviene usarlo en vez de un módulo hermano. Las dos descripciones de `XMLSignerWindowsCSP`/`PDFSignerWindowsCSP` (agregadas en 1.1.0) no cambiaron, eran ya del nivel deseado.
+- `Leeme.txt`, el manual técnico (MD y HTML) y el README ahora explican, con un ejemplo concreto, que el ZIP de distribución debe descomprimirse dentro de una carpeta propia y no directamente en la raíz de una unidad, el Escritorio o Descargas. Los ZIP publicados en el Release de GitHub, además, ahora traen esa carpeta propia ya incluida (antes el contenido quedaba suelto en la raíz del ZIP).
 
 ### Corregido
 - `SFide-GUI.bat` fallaba al ejecutarse desde una carpeta cuyo nombre contiene espacios (p. ej. `C:\S-FiDE versión 1.1.0\`): la línea que invoca `java` no citaba las rutas de `%JAVA_HOME%`/`%JAVA_FX%`, por lo que `cmd.exe` cortaba la línea en el espacio y fallaba con "no se reconoce como un comando interno o externo". `SFide-GUI.sh` no tenía este problema (ya citaba correctamente todas sus variables).
+- `SFide-GUI.bat` recortaba la barra final de su propia carpeta incluso cuando esa carpeta era la raíz de una unidad (`C:\` → `C:`), lo que puede hacer que `cd /d` no llegue realmente a la raíz (en Windows, `cd /d C:` no es lo mismo que `cd /d C:\`) y que el programa arranque con el directorio de trabajo equivocado — leyendo o guardando `sfide-defaults.properties` en un lugar distinto al de la instalación. Se dejó de recortar esa barra y se ajustaron las rutas para no duplicarla. Además, el launcher ahora detecta si se está ejecutando directo desde la raíz de una unidad y muestra un aviso (no bloqueante) recomendando moverlo a una carpeta propia — varios usuarios del ZIP de distribución de Windows lo habían descomprimido directamente en `C:\`.
 
 ## [1.1.0] — 2026-08-30
 

@@ -1179,6 +1179,10 @@ exit $RESULT</code></pre>
 ├── doc/  test/  xsd/        ← documentación y ejemplos</code></pre>
       <p><strong>No requiere instalación ni Java preinstalado</strong> — puede copiarse a cualquier ubicación, incluido un medio removible, y correr en un equipo "limpio", gracias al runtime embebido y a que los launchers se autodetectan (sin rutas ni letras de unidad hardcodeadas).</p>
       <div class="callout note">
+        <span class="label">Cómo descomprimir el ZIP de distribución</span>
+        <p>Cree primero una carpeta propia (por ejemplo <code>C:\S-FiDE</code> en Windows, o <code>~/S-FiDE</code> en Linux/macOS) y descomprima el contenido del ZIP <strong>dentro</strong> de esa carpeta — no directamente en la raíz de una unidad, en el Escritorio ni en la carpeta de descargas. La distribución trae más de una decena de <code>.jar</code> sueltos y dos carpetas de varios cientos de MB (los runtimes embebidos); sin una carpeta contenedora, todo eso queda mezclado entre los demás archivos de esa ubicación — pasó en la práctica con el ZIP de Windows. Desde esta versión, <code>SFide-GUI.bat</code> detecta el caso de raíz de unidad y avisa recomendando moverlo; no es un error, funciona igual, pero una carpeta propia es lo correcto.</p>
+      </div>
+      <div class="callout note">
         <span class="label">Convención de nombres — importante para integradores</span>
         <p>El jar de distribución (<code>XMLSignerPKCS11.jar</code>) <strong>nunca</strong> incluye la versión, a diferencia del artefacto crudo de Maven (<code>xml_signer_pkcs11-1.1.0-jar-with-dependencies.jar</code>). Es deliberado: un integrador con el nombre ya hardcodeado no debe romperse cuando S-FiDE actualiza de versión.</p>
       </div>
