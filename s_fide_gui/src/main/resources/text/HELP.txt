@@ -85,10 +85,12 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 - **Validación de revocación antes de firmar**: los seis módulos que firman (aplicaciones 4, 5,
   8, 9, 12 y 13 de este listado) ahora consultan si el certificado está revocado ANTES de
   firmar, no solo al verificar una firma ya hecha. Si el certificado está confirmado como
-  revocado, no se firma; si no se puede determinar (por ejemplo, sin conexión a Internet), se
-  avisa por el panel de salida y se firma igual. Por línea de comandos existe el parámetro
-  "-omitir-revocacion true" para forzar la firma; la interfaz gráfica todavía no ofrece esta
-  opción de forzado
+  revocado, no se firma - la interfaz gráfica nunca ofrece forma de forzarlo
+- **Si no se puede determinar el estado** (por ejemplo, sin conexión a Internet): en Firmar
+  XML/PDF con PKCS#12 y con Windows CSP/KSP (aplicaciones 5, 9, 12 y 13), aparece un diálogo
+  preguntando si desea firmar de todas formas. En Firmar XML/PDF con Token (aplicaciones 4 y 8)
+  no aparece ningún diálogo, se avisa por el panel de salida y se firma igual - para no arriesgar
+  un segundo ingreso de PIN al token físico
 
 ## Novedades en la versión 1.1.1
 

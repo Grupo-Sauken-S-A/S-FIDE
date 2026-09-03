@@ -39,10 +39,15 @@ S-FiDE v1.2.0 - Leeme primero:
   - Los seis módulos que firman (XMLSignerPKCS11, XMLSignerPKCS12, XMLSignerWindowsCSP, PDFSignerPKCS11,
     PDFSignerPKCS12, PDFSignerWindowsCSP) ahora validan el estado de revocación del certificado ANTES de
     firmar (antes solo se validaba al verificar una firma ya hecha). Si el certificado está confirmado
-    como revocado, no se firma; si no se puede determinar (sin Internet, por ejemplo), se avisa por
-    consola y se firma igual. Por línea de comandos existe el parámetro "-omitir-revocacion true" para
-    forzar la firma aunque el certificado esté revocado; la interfaz gráfica no ofrece, por ahora, esta
-    opción de forzado
+    como revocado, no se firma. Por línea de comandos existe además el parámetro "-omitir-revocacion true"
+    para forzar la firma aunque el certificado esté revocado
+  - Si no se puede determinar el estado (sin Internet, o el certificado no publica esa información), el
+    comportamiento depende de cómo se use S-FiDE: por línea de comandos se avisa y se firma igual (pensado
+    para uso desatendido); en la interfaz gráfica, en Firmar XML/PDF con PKCS#12 y con Windows CSP/KSP,
+    aparece un diálogo preguntando si desea firmar de todas formas. Firmar XML/PDF con Token (PKCS#11)
+    queda fuera de este diálogo y mantiene el aviso silencioso, para no arriesgar un segundo ingreso de
+    PIN al token físico. La interfaz gráfica nunca ofrece forma de forzar la firma de un certificado
+    confirmado como revocado
 
 - Novedades de la versión 1.1.1:
   - Los módulos que trabajan con tokens PKCS#11 ahora reconocen la marca/modelo según el driver
