@@ -54,16 +54,23 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.helpers.DefaultHandler;
+import javax.net.ssl.SSLException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
+import java.security.GeneralSecurityException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class XSDDownloader {
     // Dominio ALADI para esquemas de comercio exterior (COD/DJO). Suele estar
@@ -149,6 +156,7 @@ public class XSDDownloader {
         }
 
         IOException lastException = null;
+        Set<String> advertenciasImpresas = new HashSet<>();
 
         // Lista de URLs a intentar
         String[] urlsToTry = new String[]{normalizedUrl};
@@ -174,7 +182,7 @@ public class XSDDownloader {
                 return downloadFromUrl(urlStr);
             } catch (IOException e) {
                 lastException = e;
-                errorStream.println("Advertencia: No se pudo descargar de " + urlStr + ": " + e.getMessage());
+                advertirDescarga(advertenciasImpresas, urlStr, e);
                 // Continuar con la siguiente URL si hay alguna
             }
         }
@@ -194,13 +202,50 @@ public class XSDDownloader {
                     return downloadFromUrl(fallbackUrl);
                 } catch (IOException e) {
                     lastException = e;
-                    errorStream.println("Advertencia: No se pudo descargar de " + fallbackUrl + ": " + e.getMessage());
+                    advertirDescarga(advertenciasImpresas, fallbackUrl, e);
                 }
             }
         }
 
         // Si llegamos aquí, ninguna URL funcionó
         throw new IOException("No se pudo descargar el archivo XSD de ninguna URL", lastException);
+    }
+
+    // Nunca imprime e.getMessage() crudo: para fallas de bajo nivel (SSL/TLS,
+    // DNS, timeout) ese texto expone nombres de clases internas de la JVM
+    // (ej. "sun.security.provider.certpath.SunCertPathBuilderException"), que
+    // rompe la regla del proyecto de no mostrar detalle técnico crudo. También
+    // evita imprimir la misma advertencia dos veces en una misma corrida.
+    private static void advertirDescarga(Set<String> yaImpresas, String urlStr, IOException e) {
+        String advertencia = "Advertencia: No se pudo descargar de " + urlStr + ": " + mensajeAmigable(e);
+        if (yaImpresas.add(advertencia)) {
+            errorStream.println(advertencia);
+        }
+    }
+
+    private static String mensajeAmigable(IOException e) {
+        Throwable causa = e;
+        while (causa != null) {
+            if (causa instanceof SSLException || causa instanceof GeneralSecurityException) {
+                return "no se pudo verificar el certificado SSL del servidor";
+            }
+            if (causa instanceof UnknownHostException) {
+                return "no se pudo resolver el nombre del servidor";
+            }
+            if (causa instanceof ConnectException) {
+                return "no se pudo establecer conexión con el servidor";
+            }
+            if (causa instanceof SocketTimeoutException) {
+                return "se agotó el tiempo de espera al conectar con el servidor";
+            }
+            causa = causa.getCause();
+        }
+        // No coincide con ninguna falla de bajo nivel conocida: es un mensaje
+        // propio de este módulo (ej. "El contenido descargado no es un esquema
+        // XSD válido..."), no una excepción técnica cruda, así que es seguro
+        // mostrarlo tal cual.
+        String mensaje = e.getMessage();
+        return (mensaje != null && !mensaje.isEmpty()) ? mensaje : "no se pudo completar la descarga";
     }
 
     private static boolean isCodAladiUrl(String urlStr) {
