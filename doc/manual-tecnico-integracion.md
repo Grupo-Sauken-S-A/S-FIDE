@@ -2,7 +2,7 @@
 
 **Sistema de Firma Digital Extendido**
 Grupo Sauken S.A. — Córdoba, Argentina
-Versión del documento: acompaña a S-FiDE v1.1.1 — 01/09/2026
+Versión del documento: acompaña a S-FiDE v1.1.1 — 03/09/2026
 
 ---
 
@@ -1049,6 +1049,7 @@ El script `install.bat` (incluido en el repositorio) automatiza la generación d
 - **`s_fide_gui` (Windows): dos accesos directos más al primer arranque**, además del de la aplicación — abren en el navegador la Guía de Usuario y este mismo Manual Técnico (ver [sección 9.14](#914-s-fide-gui)).
 - **Corregido un error real en `PDFVerifySignatures`**: el campo "Algoritmo de firma" informaba el algoritmo con que la CA firmó el certificado del firmante, no el de la firma del documento — ver [sección 7.6](#76-compatibilidad-con-firmas-sha-1-de-aplicaciones-de-terceros). Puramente informativo, no afecta el resultado de la verificación.
 - **Migración de los tres firmadores de PDF a la API vigente de iText 8** (`SignerProperties`/`SignatureFieldAppearance` en vez de `PdfSignatureAppearance`, deprecado) — sin cambio de comportamiento observable para un integrador, verificado firmando y verificando documentos reales.
+- **Corregido en `XMLVerifyXSDStructure`**: si la descarga del esquema XSD fallaba por un problema de certificado SSL, DNS o conexión, la advertencia mostrada mostraba el mensaje interno de la excepción de Java tal cual, incluyendo nombres de clases internas de la JVM — ver [sección 9.7](#97-xmlverifyxsdstructure). Ahora se traduce a un mensaje simple según el tipo de falla; puramente cosmético, no cambia si la validación termina en éxito o error.
 
 ### v1.0.0 (2024-12) — primer release estable
 

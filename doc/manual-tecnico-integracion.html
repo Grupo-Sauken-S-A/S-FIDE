@@ -411,7 +411,7 @@
       <p>Sistema de Firma Digital Extendido — todo lo que un integrador necesita: qué hace cada programa, cómo invocarlo, los tres mecanismos de firma disponibles y cuándo usar cada uno, la especialización de comercio exterior ALADI/MERCOSUR, y las especificaciones completas del producto.</p>
       <div class="meta">
         <span>Versión del producto: <strong>1.1.1</strong></span>
-        <span>Documento: <strong>01/09/2026</strong></span>
+        <span>Documento: <strong>03/09/2026</strong></span>
         <span>Licencia: <strong>GNU GPL v2+</strong></span>
       </div>
     </div>
@@ -1234,6 +1234,7 @@ exit $RESULT</code></pre>
         <li><strong><code>s_fide_gui</code> (Windows): dos accesos directos más al primer arranque</strong>, además del de la aplicación — abren en el navegador la Guía de Usuario y este mismo Manual Técnico (ver <a href="#m14">sección 9.14</a>).</li>
         <li><strong>Corregido un error real en <code>PDFVerifySignatures</code></strong>: el campo "Algoritmo de firma" informaba el algoritmo con que la CA firmó el certificado del firmante, no el de la firma del documento — ver <a href="#s7">sección 7.6</a>. Puramente informativo, no afecta el resultado de la verificación.</li>
         <li><strong>Migración de los tres firmadores de PDF a la API vigente de iText 8</strong> (<code>SignerProperties</code>/<code>SignatureFieldAppearance</code> en vez de <code>PdfSignatureAppearance</code>, deprecado) — sin cambio de comportamiento observable, verificado firmando y verificando documentos reales.</li>
+        <li><strong>Corregido en <code>XMLVerifyXSDStructure</code></strong>: si la descarga del esquema XSD fallaba por un problema de certificado SSL, DNS o conexión, la advertencia mostrada exponía el mensaje interno de la excepción de Java tal cual, incluyendo nombres de clases internas de la JVM — ver <a href="#m7">sección 9.7</a>. Ahora se traduce a un mensaje simple según el tipo de falla; puramente cosmético, no cambia si la validación termina en éxito o error.</li>
       </ul>
       <h3>v1.0.0 (2024-12) — primer release estable</h3>
       <p>Suite inicial de 10 módulos más la GUI JavaFX.</p>
