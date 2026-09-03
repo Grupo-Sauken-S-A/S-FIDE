@@ -12,6 +12,9 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 - **Nuevo ítem de menú "Herramientas → Recrear accesos directos"** (Windows): recrea a pedido los accesos directos del escritorio y el menú inicio apuntando a la instalación actual — útil después de actualizar S-FiDE a una carpeta nueva, o si se borró alguno sin querer.
 - El acceso directo a la aplicación ya no incluye el número de versión en el nombre (antes `S-FiDE <versión>.lnk`, ahora `S-FiDE.lnk`): al actualizar de versión, el primer arranque de la versión nueva reemplaza directamente el ícono de la anterior en vez de sumar uno más al lado — antes quedaban acumulados, y si se borraba la carpeta vieja a mano, apuntando a una ubicación inexistente.
 
+### Corregido
+- **Validación de revocación antes de firmar: siempre caía a "no se pudo determinar" con certificados reales de AC-ONTI.** Confirmado con hardware real (token ePass2004): algunos certificados publican la URL de OCSP/CRL con un prefijo `[CONTEXT N]` pegado (una particularidad de cómo BouncyCastle expone ciertas extensiones ASN.1), que `XMLVerifySignatures`/`PDFVerifySignatures` ya sabían quitar pero que se había perdido al portar esa misma lógica a los seis módulos firmadores. El síntoma era firmar siempre con el aviso de "no se pudo determinar" aunque el certificado no estuviera revocado. Corregido restaurando ese saneo en los seis módulos.
+
 ## [1.1.1] — 2026-09-01
 
 ### Agregado
