@@ -245,6 +245,20 @@ public class RevocationValidator {
         return null;
     }
 
+    // Algunos certificados reales (confirmado con AC-ONTI/ePass2004 contra
+    // hardware real) traen la URL de OCSP/CRL con un prefijo "[CONTEXT N]"
+    // que queda pegado al extraer el GeneralName vía ASN1OctetString (una
+    // particularidad de cómo BouncyCastle expone ciertas codificaciones
+    // ASN.1 con tag implícito) — sin este saneo, URI.create()/HttpRequest
+    // fallan con "Illegal character in scheme name" y la consulta cae
+    // siempre a UNKNOWN, aunque el servidor de OCSP/CRL esté perfectamente
+    // operativo. XMLVerifySignatures/PDFVerifySignatures ya lo hacían así;
+    // se había perdido al portar esta clase para la validación antes de
+    // firmar.
+    private static String cleanUrl(String url) {
+        return url.replaceAll("\\[CONTEXT \\d+\\]", "");
+    }
+
     private static Resultado checkOCSP(X509Certificate cert, X509Certificate issuerCert, String ocspUrl) {
         if (issuerCert == null) {
             return new Resultado(RevocationStatus.UNKNOWN, "OCSP", "no se pudo obtener el certificado emisor");
@@ -261,7 +275,7 @@ public class RevocationValidator {
 
             HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(ocspUrl))
+                    .uri(URI.create(cleanUrl(ocspUrl)))
                     .header("Content-Type", "application/ocsp-request")
                     .header("Accept", "application/ocsp-response")
                     .POST(HttpRequest.BodyPublishers.ofByteArray(ocspReq.getEncoded()))
@@ -294,7 +308,7 @@ public class RevocationValidator {
     private static Resultado checkCRL(X509Certificate cert, String crlUrl) {
         try {
             HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
-            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(crlUrl)).GET().build();
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(cleanUrl(crlUrl))).GET().build();
             HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
 
             try (InputStream in = response.body()) {
