@@ -111,6 +111,12 @@ public class PDFSignerPKCS11 {
                 return;
             }
 
+            if (args.length == 4 && isFlagVerificarRevocacion(args[0])) {
+                verificarRevocacion(args[1], args[2], args[3]);
+                System.exit(0);
+                return;
+            }
+
             SignatureParameters params = parseArguments(args);
             if (params == null) {
                 showHelp();
@@ -228,6 +234,48 @@ public class PDFSignerPKCS11 {
         }
 
         return new SignatureParameters(pdfPath, libraryPath, password, slotNumber, lock, xPos, yPos, customText, omitirRevocacion);
+    }
+
+    private static boolean isFlagVerificarRevocacion(String arg) {
+        return "-verificar-revocacion".equalsIgnoreCase(arg) || "--verificar-revocacion".equalsIgnoreCase(arg);
+    }
+
+    /**
+     * Consulta el estado de revocación del certificado sin firmar nada — pensado
+     * para que la GUI decida, antes de invocar la firma real, si debe pedir
+     * confirmación al usuario. Imprime "ESTADO_REVOCACION: GOOD|UNKNOWN|REVOKED"
+     * (y "DETALLE: ..." si corresponde) en un formato estable pensado para ser
+     * parseado por otro programa, no solo leído por una persona.
+     */
+    private static void verificarRevocacion(String libraryPath, String password, String slotArg) throws Exception {
+        File library = new File(libraryPath);
+        if (!library.exists()) {
+            throw new IllegalArgumentException("La biblioteca PKCS#11 no existe o no es accesible: " + libraryPath);
+        }
+
+        int slotNumber;
+        try {
+            slotNumber = Integer.parseInt(slotArg);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Error: El número de slot debe ser un valor numérico.");
+        }
+
+        Provider provider = configurePKCS11Provider(libraryPath, slotNumber);
+        Security.addProvider(provider);
+        try {
+            KeyStore keyStore = loadKeyStore(password);
+            String alias = keyStore.aliases().nextElement();
+            Certificate[] chain = keyStore.getCertificateChain(alias);
+            X509Certificate cert = (X509Certificate) chain[0];
+
+            RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
+            System.out.println("ESTADO_REVOCACION: " + resultado.getEstado());
+            if (resultado.getDetalle() != null) {
+                System.out.println("DETALLE: " + resultado.getDetalle());
+            }
+        } finally {
+            Security.removeProvider(provider.getName());
+        }
     }
 
     private static void validarRevocacionAntesDeFirmar(X509Certificate cert, boolean omitirRevocacion) {

@@ -162,6 +162,11 @@ public class XMLSignerWindowsCSP {
             }
         }
 
+        if (args.length == 2 && isFlagVerificarRevocacion(args[0])) {
+            verificarRevocacion(args[1]);
+            return;
+        }
+
         boolean omitirRevocacion = false;
         if (args.length == 5) {
             if (!isFlagOmitirRevocacion(args[3])) {
@@ -177,6 +182,29 @@ public class XMLSignerWindowsCSP {
 
     private static boolean isFlagOmitirRevocacion(String arg) {
         return "-omitir-revocacion".equalsIgnoreCase(arg) || "--omitir-revocacion".equalsIgnoreCase(arg);
+    }
+
+    private static boolean isFlagVerificarRevocacion(String arg) {
+        return "-verificar-revocacion".equalsIgnoreCase(arg) || "--verificar-revocacion".equalsIgnoreCase(arg);
+    }
+
+    /**
+     * Consulta el estado de revocación del certificado sin firmar nada — pensado
+     * para que la GUI decida, antes de invocar la firma real, si debe pedir
+     * confirmación al usuario. Imprime "ESTADO_REVOCACION: GOOD|UNKNOWN|REVOKED"
+     * (y "DETALLE: ..." si corresponde) en un formato estable pensado para ser
+     * parseado por otro programa, no solo leído por una persona.
+     */
+    private static void verificarRevocacion(String aliasOrFragment) throws Exception {
+        KeyStore keyStore = loadWindowsKeyStore();
+        String alias = resolveAlias(keyStore, aliasOrFragment);
+        X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+
+        RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
+        outputStream.println("ESTADO_REVOCACION: " + resultado.getEstado());
+        if (resultado.getDetalle() != null) {
+            outputStream.println("DETALLE: " + resultado.getDetalle());
+        }
     }
 
     private static void showHelp() throws IOException {

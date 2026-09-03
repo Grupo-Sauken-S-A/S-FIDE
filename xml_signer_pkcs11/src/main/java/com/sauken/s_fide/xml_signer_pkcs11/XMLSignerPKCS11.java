@@ -135,6 +135,11 @@ public class XMLSignerPKCS11 {
             }
         }
 
+        if (args.length == 4 && isFlagVerificarRevocacion(args[0])) {
+            verificarRevocacion(args[1], args[2], args[3]);
+            return;
+        }
+
         boolean omitirRevocacion = false;
         if (args.length == 7) {
             if (!isFlagOmitirRevocacion(args[5])) {
@@ -150,6 +155,44 @@ public class XMLSignerPKCS11 {
 
     private static boolean isFlagOmitirRevocacion(String arg) {
         return "-omitir-revocacion".equalsIgnoreCase(arg) || "--omitir-revocacion".equalsIgnoreCase(arg);
+    }
+
+    private static boolean isFlagVerificarRevocacion(String arg) {
+        return "-verificar-revocacion".equalsIgnoreCase(arg) || "--verificar-revocacion".equalsIgnoreCase(arg);
+    }
+
+    /**
+     * Consulta el estado de revocación del certificado sin firmar nada — pensado
+     * para que la GUI decida, antes de invocar la firma real, si debe pedir
+     * confirmación al usuario. Imprime "ESTADO_REVOCACION: GOOD|UNKNOWN|REVOKED"
+     * (y "DETALLE: ..." si corresponde) en un formato estable pensado para ser
+     * parseado por otro programa, no solo leído por una persona.
+     */
+    private static void verificarRevocacion(String pkcs11LibraryPath, String password, String slotArg) throws Exception {
+        File pkcs11Library = new File(pkcs11LibraryPath);
+        if (!pkcs11Library.exists()) {
+            throw new IllegalArgumentException("El archivo de la biblioteca PKCS#11 no existe: " + pkcs11LibraryPath);
+        }
+
+        int slotNumber;
+        try {
+            slotNumber = Integer.parseInt(slotArg);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Error: El número de slot debe ser un valor numérico.");
+        }
+
+        Provider provider = configurePKCS11Provider(pkcs11LibraryPath, slotNumber);
+        Security.addProvider(provider);
+
+        KeyStore keyStore = loadKeyStore(password);
+        String alias = keyStore.aliases().nextElement();
+        X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+
+        RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
+        outputStream.println("ESTADO_REVOCACION: " + resultado.getEstado());
+        if (resultado.getDetalle() != null) {
+            outputStream.println("DETALLE: " + resultado.getDetalle());
+        }
     }
 
     private static void validateAndProcessStandardArguments(String[] args, boolean omitirRevocacion) throws Exception {

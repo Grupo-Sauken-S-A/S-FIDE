@@ -4,6 +4,11 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), y el versionado sigue [SemVer](https://semver.org/lang/es/).
 
+## [Sin publicar]
+
+### Agregado
+- **Diálogo de confirmación en la GUI cuando no se puede determinar el estado de revocación**, en las pestañas de `XMLSignerPKCS12`, `PDFSignerPKCS12`, `XMLSignerWindowsCSP` y `PDFSignerWindowsCSP`: a diferencia de la línea de comandos (que siempre firma en silencio ante "no se pudo determinar", pensada para uso desatendido), la GUI ahora consulta el estado antes de firmar (nuevo modo `-verificar-revocacion` de solo lectura, sin tocar el documento) y, si no se pudo determinar, pregunta explícitamente "¿Desea firmar de todas formas?" antes de continuar. Si el certificado está confirmado como revocado, sigue sin ofrecer ninguna forma de forzarlo desde la GUI. Los módulos de token (`XMLSignerPKCS11`/`PDFSignerPKCS11`) quedan deliberadamente fuera de este cambio y mantienen el comportamiento silencioso, para no arriesgar un segundo ingreso de PIN al token por cada firma. Ver [sección 7.5.1](doc/manual-tecnico-integracion.md#751-validación-de-revocación-antes-de-firmar) del manual técnico.
+
 ## [1.2.0] — 2026-09-03
 
 ### Agregado

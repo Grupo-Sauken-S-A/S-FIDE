@@ -128,6 +128,12 @@ public class PDFSignerPKCS12 {
                 return;
             }
 
+            if (args.length == 3 && isFlagVerificarRevocacion(args[0])) {
+                verificarRevocacion(args[1], args[2]);
+                System.exit(0);
+                return;
+            }
+
             SignatureParameters params = parseArguments(args);
             if (params == null) {
                 showHelp();
@@ -322,6 +328,39 @@ public class PDFSignerPKCS12 {
         } catch (IOException | GeneralSecurityException e) {
             logger.log(Level.SEVERE, "Error al validar los archivos");
             return false;
+        }
+    }
+
+    private static boolean isFlagVerificarRevocacion(String arg) {
+        return "-verificar-revocacion".equalsIgnoreCase(arg) || "--verificar-revocacion".equalsIgnoreCase(arg);
+    }
+
+    /**
+     * Consulta el estado de revocación del certificado sin firmar nada — pensado
+     * para que la GUI decida, antes de invocar la firma real, si debe pedir
+     * confirmación al usuario. Imprime "ESTADO_REVOCACION: GOOD|UNKNOWN|REVOKED"
+     * (y "DETALLE: ..." si corresponde) en un formato estable pensado para ser
+     * parseado por otro programa, no solo leído por una persona.
+     */
+    private static void verificarRevocacion(String certPath, String password) throws Exception {
+        Path path = Paths.get(certPath);
+        if (!Files.exists(path) || !Files.isRegularFile(path)) {
+            throw new IllegalArgumentException("El archivo de certificado no existe o no es accesible: " + certPath);
+        }
+
+        try (InputStream certStream = Files.newInputStream(path)) {
+            KeyStore ks = KeyStore.getInstance("PKCS12");
+            ks.load(certStream, password.toCharArray());
+
+            String alias = ks.aliases().nextElement();
+            Certificate[] chain = ks.getCertificateChain(alias);
+            X509Certificate cert = (X509Certificate) chain[0];
+
+            RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
+            System.out.println("ESTADO_REVOCACION: " + resultado.getEstado());
+            if (resultado.getDetalle() != null) {
+                System.out.println("DETALLE: " + resultado.getDetalle());
+            }
         }
     }
 

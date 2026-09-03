@@ -40,3 +40,8 @@ Revocación:
 - Si el certificado está confirmado como revocado, no se firma (a menos que use -omitir-revocacion true).
 - Si no se puede determinar el estado (sin Internet, o el certificado no publica OCSP/CRL), se informa por
   consola y se firma igual — esto nunca bloquea la firma.
+- Para consultar el estado de revocación sin firmar nada:
+    java -jar XMLSignerPKCS11.jar -verificar-revocacion <Biblioteca PKCS#11> <Contraseña> <Número de slot>
+  Imprime "ESTADO_REVOCACION: GOOD|UNKNOWN|REVOKED" (y "DETALLE: ..." si corresponde) y termina.
+  ATENCIÓN: esto ingresa el PIN al token igual que al firmar — cuenta como un intento de acceso más a
+  los efectos del límite de intentos fallidos del token.

@@ -388,8 +388,8 @@
         <p class="oklist"><code>Éxito</code> — crea un archivo <code>&lt;nombre&gt;-signed.xml</code> junto al original. Antes de firmar, valida por Internet que el certificado no esté revocado (ver recuadro abajo); si eso no se puede confirmar, avisa por el panel de salida y firma igual.</p>
         <p class="errlist"><code>Error</code> — biblioteca o archivo XML inexistente, contraseña incorrecta, el elemento indicado no existe en el documento, proveedor no disponible, el elemento ya tiene una firma aplicada, se intentó firmar <code>CODEH</code>/<code>DJOEH</code> sin una firma previa sobre <code>COD</code>/<code>DJO</code>, el certificado está revocado, o (caso extremo) el token no admite ningún mecanismo de firma compatible.</p>
         <div class="callout note">
-          <span class="label">Validación de revocación antes de firmar</span>
-          <p>Desde la versión 1.2.0, antes de firmar se consulta si el certificado fue revocado (mismo mecanismo OCSP/CRL que "Verificar Firmas en XML"). Si está confirmado como revocado, no se firma. Si no se puede determinar (sin Internet, por ejemplo), se firma igual y se avisa por el panel de salida — la interfaz gráfica no ofrece, por ahora, una forma de forzar la firma de un certificado confirmado como revocado.</p>
+          <span class="label">Validación de revocación antes de firmar (tokens: sin diálogo)</span>
+          <p>Desde la versión 1.2.0, antes de firmar se consulta si el certificado fue revocado (mismo mecanismo OCSP/CRL que "Verificar Firmas en XML"). Si está confirmado como revocado, no se firma. Si no se puede determinar (sin Internet, por ejemplo), se firma igual y se avisa por el panel de salida, sin preguntar nada — a diferencia de los módulos PKCS#12 y Windows CSP/KSP (ver "Firmar XML con PKCS#12"), acá no se pide confirmación porque la consulta necesitaría ingresar el PIN al token una vez más, con el riesgo de inhabilitarlo si se hace de más. La interfaz gráfica no ofrece, en ningún módulo, una forma de forzar la firma de un certificado confirmado como revocado.</p>
         </div>
       </div>
 
@@ -405,8 +405,12 @@
           <li><strong>Archivo XML</strong> y <strong>Elemento XML (ID) a Firmar:</strong> igual que en "Firmar XML con Token".</li>
         </ul>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
-        <p class="oklist"><code>Éxito</code> — mismo resultado que "Firmar XML con Token": <code>&lt;nombre&gt;-signed.xml</code> junto al original. Misma validación de revocación antes de firmar que el módulo anterior.</p>
+        <p class="oklist"><code>Éxito</code> — mismo resultado que "Firmar XML con Token": <code>&lt;nombre&gt;-signed.xml</code> junto al original.</p>
         <p class="errlist"><code>Error</code> — archivo PKCS#12 o XML inexistente, PKCS#12 inválido o contraseña incorrecta, PKCS#12 sin certificado, elemento inexistente, certificado revocado, o las mismas reglas de firma (elemento ya firmado, orden CODEH/DJOEH) que el módulo anterior.</p>
+        <div class="callout note">
+          <span class="label">Validación de revocación antes de firmar (con diálogo de confirmación)</span>
+          <p>Antes de firmar, la GUI consulta el estado de revocación del certificado. Si no está revocado, firma directo, sin interrumpir. Si <strong>no se pudo determinar</strong> (sin Internet, o el certificado no publica OCSP/CRL), aparece un diálogo: <em>"No se pudo confirmar que el certificado no esté revocado. ¿Desea firmar de todas formas?"</em> — "Aceptar" firma igual, "Cancelar" no firma nada. Si el certificado está <strong>confirmado como revocado</strong>, no se firma y no hay ningún diálogo ni forma de forzarlo desde la GUI. Este mismo comportamiento (con diálogo) también aplica a "Firmar PDF con PKCS#12" y a los dos módulos de Windows CSP/KSP — los módulos de token (PKCS#11) son la única excepción, ver la nota en "Firmar XML con Token".</p>
+        </div>
       </div>
 
       <div class="module" id="g6">
@@ -478,7 +482,7 @@
         <p class="field-label">Campos</p>
         <p>Los mismos que "Firmar PDF con Token", cambiando biblioteca/slot por <strong>Archivo PKCS#12</strong> y <strong>Contraseña</strong> del certificado.</p>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
-        <p class="oklist"><code>Éxito</code> — mismo resultado que "Firmar PDF con Token", incluida la validación de revocación antes de firmar.</p>
+        <p class="oklist"><code>Éxito</code> — mismo resultado que "Firmar PDF con Token". Antes de firmar, valida revocación con diálogo de confirmación si no se puede determinar — ver el recuadro en "Firmar XML con PKCS#12".</p>
         <p class="errlist"><code>Error</code> — PDF o certificado inexistente, PDF ya encriptado, firma preexistente inválida, certificado sin clave privada o cadena válida, o certificado revocado.</p>
       </div>
 
@@ -524,7 +528,7 @@
         </ul>
         <p>No pide contraseña — el acceso a la clave lo administra Windows, que puede mostrar un diálogo nativo del sistema pidiendo el PIN.</p>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
-        <p class="oklist"><code>Éxito</code> — mismo resultado que los demás firmadores de XML: <code>&lt;nombre&gt;-signed.xml</code>, incluida la validación de revocación antes de firmar (ver "Firmar XML con Token").</p>
+        <p class="oklist"><code>Éxito</code> — mismo resultado que los demás firmadores de XML: <code>&lt;nombre&gt;-signed.xml</code>. Antes de firmar, valida revocación con diálogo de confirmación si no se puede determinar — ver el recuadro en "Firmar XML con PKCS#12".</p>
         <p class="errlist"><code>Error</code> — no se encontró ningún certificado que coincida con el alias indicado, el texto coincide con más de un certificado (sea más específico), el proveedor de Windows no está disponible, el certificado está revocado, o las mismas reglas de firma (elemento ya firmado, orden CODEH/DJOEH) que los demás firmadores XML.</p>
         <div class="callout warn">
           <span class="label">No usar para firmar muchos documentos seguidos</span>
@@ -546,7 +550,7 @@
           <figcaption>Captura real — S-FiDE valida los campos obligatorios antes de ejecutar nada</figcaption>
         </figure>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
-        <p class="oklist"><code>Éxito</code> — mismo resultado que "Firmar PDF con Token", incluida la validación de revocación antes de firmar.</p>
+        <p class="oklist"><code>Éxito</code> — mismo resultado que "Firmar PDF con Token". Antes de firmar, valida revocación con diálogo de confirmación si no se puede determinar — ver el recuadro en "Firmar XML con PKCS#12".</p>
         <p class="errlist"><code>Error</code> — el campo alias es requerido (validado antes de ejecutar nada, ver captura), no se encontró o hay más de un certificado que coincide, PDF ya encriptado, firma preexistente inválida, certificado revocado, más los errores de acceso al almacén de Windows del módulo anterior.</p>
         <div class="callout warn">
           <span class="label">No usar para firmar muchos documentos seguidos</span>

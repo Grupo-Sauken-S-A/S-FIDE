@@ -35,6 +35,11 @@ REVOCACIÓN:
     - Si el certificado está confirmado como revocado, no se firma (a menos que use -omitir-revocacion true)
     - Si no se puede determinar el estado (sin Internet, o el certificado no publica OCSP/CRL), se informa
       por consola y se firma igual — esto nunca bloquea la firma
+    - Para consultar el estado de revocación sin firmar nada:
+        java -jar PDFSignerPKCS11.jar -verificar-revocacion <biblioteca> <password> <slot>
+      Imprime "ESTADO_REVOCACION: GOOD|UNKNOWN|REVOKED" (y "DETALLE: ...") y termina.
+      ATENCIÓN: esto ingresa el PIN al token igual que al firmar — cuenta como un intento de acceso más
+      a los efectos del límite de intentos fallidos del token
 
 CERTIFICADOS DE ORIGEN:
     - Para aplicar firmas digitales a Certificado de Origen No-Preferenciales en documentos PDF debe usar:

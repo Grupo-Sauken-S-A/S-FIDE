@@ -2150,8 +2150,9 @@ public class SFideGUI extends Application {
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("XMLSignerPKCS12");
             if (result.valid()) {
                 Platform.runLater(() -> sharedOutputArea.clear());
-                String[] args = {pkcs12Path, password, xmlPath, uri};
-                GUIUtils.executeCommand("XMLSignerPKCS12", args, sharedOutputArea);
+                String[] checkArgs = {"-verificar-revocacion", pkcs12Path, password};
+                String[] signArgs = {pkcs12Path, password, xmlPath, uri};
+                GUIUtils.executeSignCommandWithRevocationCheck("XMLSignerPKCS12", checkArgs, signArgs, sharedOutputArea);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
@@ -2286,7 +2287,8 @@ public class SFideGUI extends Application {
                     args[args.length - 1] = customText;
                 }
 
-                GUIUtils.executeCommand("PDFSignerPKCS12", args, sharedOutputArea);
+                String[] checkArgs = {"-verificar-revocacion", pkcs12Path, password};
+                GUIUtils.executeSignCommandWithRevocationCheck("PDFSignerPKCS12", checkArgs, args, sharedOutputArea);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
@@ -2491,8 +2493,9 @@ public class SFideGUI extends Application {
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("XMLSignerWindowsCSP");
             if (result.valid()) {
                 Platform.runLater(() -> sharedOutputArea.clear());
-                String[] args = {alias, xmlPath, uri};
-                GUIUtils.executeCommand("XMLSignerWindowsCSP", args, sharedOutputArea);
+                String[] checkArgs = {"-verificar-revocacion", alias};
+                String[] signArgs = {alias, xmlPath, uri};
+                GUIUtils.executeSignCommandWithRevocationCheck("XMLSignerWindowsCSP", checkArgs, signArgs, sharedOutputArea);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
@@ -2532,7 +2535,8 @@ public class SFideGUI extends Application {
                     args[args.length - 1] = customText;
                 }
 
-                GUIUtils.executeCommand("PDFSignerWindowsCSP", args, sharedOutputArea);
+                String[] checkArgs = {"-verificar-revocacion", alias};
+                GUIUtils.executeSignCommandWithRevocationCheck("PDFSignerWindowsCSP", checkArgs, args, sharedOutputArea);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }

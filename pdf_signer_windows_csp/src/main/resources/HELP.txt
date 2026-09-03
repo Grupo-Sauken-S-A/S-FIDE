@@ -37,3 +37,6 @@ Revocación:
 - Si el certificado está confirmado como revocado, no se firma (a menos que use -omitir-revocacion true).
 - Si no se puede determinar el estado (sin Internet, o el certificado no publica OCSP/CRL), se informa por
   consola y se firma igual — esto nunca bloquea la firma.
+- Para consultar el estado de revocación sin firmar nada:
+    java -jar PDFSignerWindowsCSP.jar -verificar-revocacion <Alias o fragmento del Subject CN>
+  Imprime "ESTADO_REVOCACION: GOOD|UNKNOWN|REVOKED" (y "DETALLE: ..." si corresponde) y termina.

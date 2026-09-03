@@ -127,6 +127,11 @@ public class XMLSignerPKCS12 {
             }
         }
 
+        if (args.length == 3 && isFlagVerificarRevocacion(args[0])) {
+            verificarRevocacion(args[1], args[2]);
+            return;
+        }
+
         boolean omitirRevocacion = false;
         if (args.length == 6) {
             if (!isFlagOmitirRevocacion(args[4])) {
@@ -138,6 +143,40 @@ public class XMLSignerPKCS12 {
         }
 
         validateAndProcessStandardArguments(args, omitirRevocacion);
+    }
+
+    private static boolean isFlagVerificarRevocacion(String arg) {
+        return "-verificar-revocacion".equalsIgnoreCase(arg) || "--verificar-revocacion".equalsIgnoreCase(arg);
+    }
+
+    /**
+     * Consulta el estado de revocación del certificado sin firmar nada — pensado
+     * para que la GUI decida, antes de invocar la firma real, si debe pedir
+     * confirmación al usuario. Imprime "ESTADO_REVOCACION: GOOD|UNKNOWN|REVOKED"
+     * (y "DETALLE: ..." si corresponde) en un formato estable pensado para ser
+     * parseado por otro programa, no solo leído por una persona.
+     */
+    private static void verificarRevocacion(String pkcs12File, String password) throws Exception {
+        File p12File = new File(pkcs12File);
+        if (!p12File.exists()) {
+            throw new IllegalArgumentException("El archivo PKCS#12 no existe: " + pkcs12File);
+        }
+
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        try (FileInputStream fis = new FileInputStream(pkcs12File)) {
+            keyStore.load(fis, password.toCharArray());
+        } catch (IOException e) {
+            throw new IllegalArgumentException("El archivo no es un PKCS#12 válido o la contraseña es incorrecta");
+        }
+
+        String alias = keyStore.aliases().nextElement();
+        X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+
+        RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
+        outputStream.println("ESTADO_REVOCACION: " + resultado.getEstado());
+        if (resultado.getDetalle() != null) {
+            outputStream.println("DETALLE: " + resultado.getDetalle());
+        }
     }
 
     private static boolean isFlagOmitirRevocacion(String arg) {
