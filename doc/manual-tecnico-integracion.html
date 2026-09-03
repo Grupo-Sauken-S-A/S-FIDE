@@ -410,7 +410,7 @@
       <h1>Manual de Integración S-FiDE</h1>
       <p>Sistema de Firma Digital Extendido — todo lo que un integrador necesita: qué hace cada programa, cómo invocarlo, los tres mecanismos de firma disponibles y cuándo usar cada uno, la especialización de comercio exterior ALADI/MERCOSUR, y las especificaciones completas del producto.</p>
       <div class="meta">
-        <span>Versión del producto: <strong>1.1.1</strong></span>
+        <span>Versión del producto: <strong>1.2.0</strong></span>
         <span>Documento: <strong>03/09/2026</strong></span>
         <span>Licencia: <strong>GNU GPL v2+</strong></span>
       </div>
@@ -511,7 +511,7 @@
       <ul>
         <li>Repositorio: <a href="https://github.com/Grupo-Sauken-S-A/S-FIDE">github.com/Grupo-Sauken-S-A/S-FIDE</a></li>
         <li>Proyecto Maven multi-módulo (14 módulos), un <code>pom.xml</code> raíz agregador.</li>
-        <li>Versionado <a href="https://semver.org/">SemVer</a>. Tags publicados: <code>v1.0.0</code>, <code>v1.1.1</code> (actual).</li>
+        <li>Versionado <a href="https://semver.org/">SemVer</a>. Tags publicados: <code>v1.0.0</code>, <code>v1.1.1</code>, <code>v1.2.0</code> (actual).</li>
       </ul>
       <p>Compilar desde el código fuente:</p>
       <pre><code>git clone https://github.com/Grupo-Sauken-S-A/S-FIDE.git
@@ -1235,6 +1235,11 @@ exit $RESULT</code></pre>
     <section class="chapter" id="s13">
       <span class="chapter-num">13</span>
       <h2>Historial de versiones</h2>
+      <h3>v1.2.0 (2026-09-03)</h3>
+      <ul>
+        <li><strong>Validación de revocación antes de firmar</strong>, en los seis módulos que aplican firma digital (<code>XMLSignerPKCS11</code>, <code>XMLSignerPKCS12</code>, <code>XMLSignerWindowsCSP</code>, <code>PDFSignerPKCS11</code>, <code>PDFSignerPKCS12</code>, <code>PDFSignerWindowsCSP</code>) — ver sección 7.5.1 para el detalle completo (política, flag <code>-omitir-revocacion</code>, y la limitación conocida heredada del mecanismo de los verificadores).</li>
+      </ul>
+
       <h3>v1.1.1 (2026-09-01)</h3>
       <ul>
         <li>Compatibilidad ampliada de tokens PKCS#11 (hash externo, sección 7.1).</li>
@@ -1294,6 +1299,12 @@ exit $RESULT</code></pre>
             <td>No.</td>
             <td>Ninguna acción necesaria.</td>
           </tr>
+          <tr>
+            <td><code>XMLSignerPKCS11.jar</code>, <code>XMLSignerPKCS12.jar</code>, <code>XMLSignerWindowsCSP.jar</code>, <code>PDFSignerPKCS11.jar</code>, <code>PDFSignerPKCS12.jar</code>, <code>PDFSignerWindowsCSP.jar</code> <strong>(1.2.0)</strong></td>
+            <td>Ahora validan el estado de revocación del certificado antes de firmar — ver sección 7.5.1.</td>
+            <td><strong>Sí</strong>, pero solo si alguna vez firmabas con un certificado ya revocado. Antes esa llamada terminaba en éxito (código <code>0</code>) igual; ahora termina en <code>1</code> y no se genera el archivo firmado, salvo que agregues <code>-omitir-revocacion true</code>.</td>
+            <td>Si tu flujo firma siempre con certificados vigentes, no hay nada que cambiar. Si necesitás poder firmar igual aunque el certificado esté revocado, agregá <code>-omitir-revocacion true</code> a la invocación.</td>
+          </tr>
         </table>
       </div>
       <div class="callout note">
@@ -1336,7 +1347,7 @@ exit $RESULT</code></pre>
     </section>
 
     <footer class="doc-footer">
-      Manual de Integración S-FiDE · Grupo Sauken S.A. · Versión del documento acompaña a S-FiDE v1.1.1
+      Manual de Integración S-FiDE · Grupo Sauken S.A. · Versión del documento acompaña a S-FiDE v1.2.0
     </footer>
   </main>
 </div>

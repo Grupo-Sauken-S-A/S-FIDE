@@ -1,4 +1,4 @@
-S-FiDE v1.1.1 - Leeme primero:
+S-FiDE v1.2.0 - Leeme primero:
 
 - IMPORTANTE - Cómo instalar: cree primero una carpeta propia con el nombre que prefiera (por ejemplo
   "C:\S-FiDE") y descomprima el contenido del ZIP DENTRO de esa carpeta. No lo descomprima directamente

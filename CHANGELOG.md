@@ -4,10 +4,10 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), y el versionado sigue [SemVer](https://semver.org/lang/es/).
 
-## [Sin publicar]
+## [1.2.0] — 2026-09-03
 
 ### Agregado
-- **Validación de revocación antes de firmar**, en los seis módulos que aplican firma digital (`XMLSignerPKCS11`, `XMLSignerPKCS12`, `XMLSignerWindowsCSP`, `PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`): antes de firmar, se valida el estado de revocación del certificado con el mismo mecanismo y orden ya usados por `XMLVerifySignatures`/`PDFVerifySignatures` (OCSP primero, CRL como respaldo). Si el certificado está confirmado como revocado, no se firma (código de salida `1`); si no se puede determinar (sin Internet, o el certificado no publica OCSP/CRL), se informa por consola y se firma igual, sin bloquear. Nuevo flag `-omitir-revocacion true|false` (default `false`) en los seis módulos para forzar la firma aunque el certificado esté confirmado como revocado. Ver [sección 7.5.1](doc/manual-tecnico-integracion.md#751-validación-de-revocación-antes-de-firmar) del manual técnico.
+- **Validación de revocación antes de firmar**, en los seis módulos que aplican firma digital (`XMLSignerPKCS11`, `XMLSignerPKCS12`, `XMLSignerWindowsCSP`, `PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`): antes de firmar, se valida el estado de revocación del certificado con el mismo mecanismo y orden ya usados por `XMLVerifySignatures`/`PDFVerifySignatures` (OCSP primero, CRL como respaldo). Si el certificado está confirmado como revocado, no se firma (código de salida `1`); si no se puede determinar (sin Internet, o el certificado no publica OCSP/CRL), se informa por consola y se firma igual, sin bloquear. Nuevo flag `-omitir-revocacion true|false` (default `false`) en los seis módulos para forzar la firma aunque el certificado esté confirmado como revocado. Ver [sección 7.5.1](doc/manual-tecnico-integracion.md#751-validación-de-revocación-antes-de-firmar) del manual técnico. La interfaz gráfica no ofrece todavía una forma de forzar la firma de un certificado revocado; solo está disponible por línea de comandos.
 
 ## [1.1.1] — 2026-09-01
 
@@ -83,5 +83,6 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 ### Agregado
 - Primer release estable: 10 módulos (extracción de certificados desde token o PKCS#12, firma y verificación de XML/PDF vía PKCS#11 y PKCS#12, validación de estructura XSD) más la interfaz gráfica JavaFX.
 
+[1.2.0]: https://github.com/Grupo-Sauken-S-A/S-FIDE/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Grupo-Sauken-S-A/S-FIDE/compare/v1.0.0...v1.1.1
 [1.0.0]: https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/tag/v1.0.0

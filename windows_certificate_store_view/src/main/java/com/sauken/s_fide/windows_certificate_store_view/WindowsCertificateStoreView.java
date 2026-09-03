@@ -71,7 +71,7 @@ import java.util.Locale;
  * Windows.
  */
 public class WindowsCertificateStoreView {
-    private static final String VERSION = "S-FIDE WindowsCertificateStoreView v1.1.1 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE WindowsCertificateStoreView v1.2.0 - Grupo Sauken S.A.";
     private static PrintStream outputStream;
     private static PrintStream errorStream;
 

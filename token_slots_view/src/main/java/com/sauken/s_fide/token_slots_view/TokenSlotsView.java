@@ -63,7 +63,7 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class TokenSlotsView {
-    private static final String VERSION = "S-FIDE TokenSlotsView v1.1.1 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE TokenSlotsView v1.2.0 - Grupo Sauken S.A.";
     private static String LICENSE_TEXT;
     private static String HELP_TEXT;
     private static PrintStream errorOutput;

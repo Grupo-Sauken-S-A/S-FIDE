@@ -67,7 +67,7 @@ import java.nio.charset.StandardCharsets;
 
 public class PDFVerifySignatures {
     private static final Logger LOGGER = Logger.getLogger(PDFVerifySignatures.class.getName());
-    private static final String VERSION = "S-FIDE PDFVerifySignatures v1.1.1 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE PDFVerifySignatures v1.2.0 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT;
     private static final String HELP_TEXT;
     private static final String SEPARATOR = "\n----------------------------------------\n";

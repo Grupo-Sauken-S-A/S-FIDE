@@ -2,7 +2,7 @@
 
 **Sistema de Firma Digital Extendido**
 Grupo Sauken S.A. — Córdoba, Argentina
-Versión del documento: acompaña a S-FiDE v1.1.1 — 03/09/2026
+Versión del documento: acompaña a S-FiDE v1.2.0 — 03/09/2026
 
 ---
 
@@ -86,7 +86,7 @@ La distribución final embebe su propio runtime de Java y su propio SDK de JavaF
 
 ## 3. Software de terceros y dependencias
 
-| Componente | Versión (1.1.1) | Uso | Licencia |
+| Componente | Versión (1.2.0) | Uso | Licencia |
 |---|---|---|---|
 | BouncyCastle (`bcprov`/`bcpkix`/`bcutil`-jdk18on) | 1.85 | Primitivos criptográficos, ASN.1, construcción de `DigestInfo` | MIT (Bouncy Castle License) |
 | iText (`kernel`/`io`/`commons`/`sign`/`bouncy-castle-adapter`) | 8.0.5 | Firma y verificación de documentos PDF | AGPL v3 / comercial (Apryse) |
@@ -116,7 +116,7 @@ S-FiDE se distribuye bajo la **Licencia Pública General GNU (GNU GPL), versión
 
 - **Repositorio:** [github.com/Grupo-Sauken-S-A/S-FIDE](https://github.com/Grupo-Sauken-S-A/S-FIDE)
 - **Organización:** proyecto Maven multi-módulo (14 módulos) con un `pom.xml` raíz de tipo `pom` (agregador) y un módulo por capacidad.
-- **Versionado:** [SemVer](https://semver.org/). Tags publicados: `v1.0.0` (primer release estable), `v1.1.1` (versión actual — QA de hardware y de código completa, validada contra los tres modelos de token más usados en Argentina).
+- **Versionado:** [SemVer](https://semver.org/). Tags publicados: `v1.0.0` (primer release estable), `v1.1.1` (QA de hardware y de código completa, validada contra los tres modelos de token más usados en Argentina), `v1.2.0` (versión actual).
 - **Compilar desde el código fuente:**
   ```bash
   git clone https://github.com/Grupo-Sauken-S-A/S-FIDE.git
@@ -1045,6 +1045,10 @@ El script `install.bat` (incluido en el repositorio) automatiza la generación d
 
 ## 13. Historial de versiones
 
+### v1.2.0 (2026-09-03)
+
+- **Validación de revocación antes de firmar**, en los seis módulos que aplican firma digital (`XMLSignerPKCS11`, `XMLSignerPKCS12`, `XMLSignerWindowsCSP`, `PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`) — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar) para el detalle completo (política, flag `-omitir-revocacion`, y la limitación conocida heredada del mecanismo de los verificadores).
+
 ### v1.1.1 (2026-09-01)
 
 - Compatibilidad ampliada de tokens PKCS#11: soporte de mecanismo de hash externo (`CKM_RSA_PKCS`) para tokens que no exponen el mecanismo combinado (ver [sección 7.1](#71-pkcs11-tokens-criptográficos-y-hsm)).
@@ -1094,6 +1098,7 @@ Si ya tenías una integración funcionando contra los jars de S-FiDE 1.0.0, la g
 | `XMLVerifySignatures.jar` | Al verificar una firma sobre el elemento `CODEH` para revocación, antes se usaba el país del exportador (`ExporterCountry`) para convertir la fecha a UTC; ahora se usa correctamente el país de la Entidad Habilitada (`EHCountry`) — ver [sección 10.4](#104-validación-de-revocación-por-elemento--la-regla-completa-y-verificada). | **Solo si alguno de tus documentos COD tiene al exportador y a la Entidad Habilitada en países distintos**, y el certificado del funcionario tiene una revocación cerca de la fecha de certificación. En ese caso puntual, el resultado `VÁLIDO`/`REVOCADO` de esa firma puede diferir del que obtenías en 1.0.0 (que usaba el país incorrecto). | Si en tus documentos el exportador y la Entidad Habilitada están siempre en el mismo país, no hay diferencia observable. Si no, volvé a verificar los `CODEH` cercanos a una fecha de revocación conocida. |
 | `XMLVerifySignatures.jar`, `PDFVerifySignatures.jar` | Cambió el texto exacto de algunas líneas de salida: la etiqueta "Estado: VÁLIDA/INVÁLIDA" ahora es "Estado (integridad criptográfica, sin considerar revocación): ..." y se agregó una línea nueva "Estado final de la firma #N: ...". **El código de salida (`0`/`1`) no cambió.** | **Solo si tu integración lee y compara texto de `stdout` en vez de usar el código de salida del proceso** — algo que este manual siempre desaconsejó (ver [sección 6](#6-arquitectura-de-integración): el exit code es lo único que hace falta chequear). | Si tu integración ya usaba el exit code como corresponde, no te afecta nada de esto. Si estabas buscando el texto literal "Estado: VÁLIDA" en la salida, actualizá esa búsqueda o —mejor— pasá a usar el exit code. |
 | `TokenSlotsView.jar`, `TokenCertificateExtractor.jar`, `PKCS12CertificateExtractor.jar`, `XMLVerifyXSDStructure.jar`, `PDFSignerPKCS11.jar`, `PDFVerifySignatures.jar` | Sin cambios de comportamiento frente a 1.0.0, más allá de la unificación de vocabulario de comandos especiales (ver abajo). | No. | Ninguna acción necesaria. |
+| `XMLSignerPKCS11.jar`, `XMLSignerPKCS12.jar`, `XMLSignerWindowsCSP.jar`, `PDFSignerPKCS11.jar`, `PDFSignerPKCS12.jar`, `PDFSignerWindowsCSP.jar` **(1.2.0)** | Ahora validan el estado de revocación del certificado antes de firmar — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). | **Sí, pero solo si alguna vez firmabas con un certificado que ya estaba revocado.** Antes esa llamada terminaba con éxito (código `0`) igual; ahora termina con código `1` y no se genera el archivo firmado, salvo que agregues `-omitir-revocacion true`. Si nunca firmaste con un certificado revocado, no hay ninguna diferencia observable. | Si tu flujo firma siempre con certificados vigentes, no hay nada que cambiar. Si tenés una automatización que debe poder firmar igual aunque el certificado esté revocado (caso poco común, pero legítimo), agregá `-omitir-revocacion true` a la invocación. |
 
 **Tres cosas que explícitamente NO cambiaron y no requieren ninguna acción — verificado con `git diff` completo contra el tag `v1.0.0` en los 10 módulos preexistentes, no solo revisado de memoria:**
 - **Los nombres de los jars** siguen siendo los mismos, sin versión en el nombre (`XMLSignerPKCS11.jar`, no `XMLSignerPKCS11-1.1.1.jar`) — ver [sección 12](#12-distribución-y-despliegue). Un integrador con el nombre hardcodeado no tiene nada que tocar.
