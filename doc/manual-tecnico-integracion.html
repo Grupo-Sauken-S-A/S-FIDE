@@ -650,6 +650,20 @@ cd S-FIDE
       </div>
       <p><strong>Por qué un certificado revocado invalida la firma, en términos simples:</strong> la revocación significa que la autoridad certificante retiró la confianza en ese certificado — por ejemplo, porque la clave privada se filtró o el titular dejó de estar habilitado — <strong>después</strong> de haberlo emitido. Que la firma sea criptográficamente correcta solo demuestra que el documento no fue alterado y que fue producido con esa clave privada; no demuestra que esa clave siga siendo confiable. Por eso <code>XMLVerifySignatures</code> marca como INVÁLIDA cualquier firma cuyo certificado figure como revocado en el momento correspondiente, y lo informa explícitamente: <em>"El certificado fue revocado por su autoridad certificante. Aunque la firma es criptográficamente correcta, esta firma se considera INVÁLIDA por ese motivo."</em></p>
 
+      <h3>7.5.1 — Validación de revocación antes de firmar</h3>
+      <p>Desde la versión 1.2.0, los seis módulos que aplican una firma digital (<code>XMLSignerPKCS11</code>, <code>XMLSignerPKCS12</code>, <code>XMLSignerWindowsCSP</code>, <code>PDFSignerPKCS11</code>, <code>PDFSignerPKCS12</code>, <code>PDFSignerWindowsCSP</code>) validan el estado de revocación del certificado <strong>antes</strong> de firmar, no solo después. Usa exactamente el mismo mecanismo y el mismo orden de la sección 7.5 — OCSP primero, CRL como respaldo — con una sola diferencia: la fecha de referencia es siempre el instante actual, ya que todavía no existe ningún documento firmado del cual extraer una fecha.</p>
+      <table>
+        <tr><th>Resultado</th><th>Comportamiento</th></tr>
+        <tr><td>No revocado</td><td>Se informa por consola y se firma con normalidad.</td></tr>
+        <tr><td>No se pudo determinar (sin Internet, sin URL de OCSP/CRL, o falló la consulta)</td><td>Se informa una advertencia y <strong>se firma igual</strong> — nunca bloquea por falta de conectividad, mismo criterio que la verificación.</td></tr>
+        <tr><td>Revocado</td><td><strong>No se firma.</strong> Se informa el motivo y el programa termina con código de salida 1, sin generar ningún archivo firmado.</td></tr>
+      </table>
+      <p><strong>Flag <code>-omitir-revocacion true</code>:</strong> disponible en los seis módulos, por defecto <code>false</code>. Si se indica <code>true</code>, fuerza la firma incluso si el certificado está confirmado como revocado — pensado para un caso de uso legítimo puntual o para no romper una automatización existente. Su uso queda registrado en la propia línea de comando ejecutada; el mensaje de advertencia siempre deja explícito que se forzó.</p>
+      <div class="callout warn">
+        <span class="label">Limitación conocida, heredada del mismo mecanismo de los verificadores</span>
+        <p>La búsqueda del certificado emisor (necesaria para armar la consulta OCSP) solo revisa el truststore estándar del JDK (<code>cacerts</code>), que normalmente contiene certificados raíz, no los intermedios que en la práctica firman la mayoría de los certificados de usuario final. Si el emisor directo no está en <code>cacerts</code>, la consulta OCSP no puede armarse y el resultado cae en "no se pudo determinar" (se firma igual). Es la misma limitación que ya tienen <code>XMLVerifySignatures</code>/<code>PDFVerifySignatures</code> desde siempre — no es un defecto nuevo, es un límite del mecanismo reutilizado tal cual estaba definido.</p>
+      </div>
+
       <h3>7.6 — Compatibilidad con firmas SHA-1 de aplicaciones de terceros</h3>
       <p>S-FiDE <strong>firma</strong> exclusivamente con SHA-256 — es una decisión deliberada, SHA-1 se considera criptográficamente débil para firmar documentos nuevos. Sus <strong>verificadores</strong>, en cambio, están diseñados para validar cualquier firma conforme al estándar, sin importar qué aplicación la generó ni con qué algoritmo de hash — incluyendo firmas <strong>SHA-1</strong> de software de terceros ya discontinuado.</p>
       <ul>
@@ -797,8 +811,9 @@ java -jar PKCS12CertificateExtractor.jar [-version | -ayuda | -licencia]</code><
         <div class="module-head"><h3>9.4 — XMLSignerPKCS11</h3><span class="module-jar">XMLSignerPKCS11.jar</span></div>
         <p>Firma un XML (completo o un elemento por su atributo <code>Id</code>) con un token PKCS#11. XML-DSig con canonicalización inclusiva y RSA-SHA256, con resolución automática del mecanismo de hash (sección 7.1).</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar XMLSignerPKCS11.jar &lt;biblioteca&gt; &lt;contraseña&gt; &lt;slot&gt; &lt;archivo.xml&gt; &lt;elemento&gt;
+        <pre><code>java -jar XMLSignerPKCS11.jar &lt;biblioteca&gt; &lt;contraseña&gt; &lt;slot&gt; &lt;archivo.xml&gt; &lt;elemento&gt; [-omitir-revocacion true|false]
 java -jar XMLSignerPKCS11.jar [-version | -ayuda | -licencia | -listar-drivers]</code></pre>
+        <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
           <table>
             <tr><th>Parámetro</th><th>Obligatorio</th><th>Descripción</th></tr>
@@ -821,8 +836,9 @@ java -jar XMLSignerPKCS11.jar [-version | -ayuda | -licencia | -listar-drivers]<
         <div class="module-head"><h3>9.5 — XMLSignerPKCS12</h3><span class="module-jar">XMLSignerPKCS12.jar</span></div>
         <p>Idéntico al anterior en funcionalidad y configuración criptográfica, usando un archivo PKCS#12. No aplica <code>-listar-drivers</code>.</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar XMLSignerPKCS12.jar &lt;certificado.p12&gt; &lt;password&gt; &lt;archivo.xml&gt; &lt;elemento&gt;
+        <pre><code>java -jar XMLSignerPKCS12.jar &lt;certificado.p12&gt; &lt;password&gt; &lt;archivo.xml&gt; &lt;elemento&gt; [-omitir-revocacion true|false]
 java -jar XMLSignerPKCS12.jar [-version | -ayuda | -licencia]</code></pre>
+        <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
           <table>
             <tr><th>Parámetro</th><th>Obligatorio</th><th>Descripción</th></tr>
@@ -920,8 +936,9 @@ java -jar XMLVerifyXSDStructure.jar C:\docs\certificado-origen.xml C:\xsd\esquem
         <div class="module-head"><h3>9.8 — PDFSignerPKCS11</h3><span class="module-jar">PDFSignerPKCS11.jar</span></div>
         <p>Firma un PDF con un token PKCS#11 (ver opciones arriba). Firma detached CMS/PKCS#7, con validación previa de firmas existentes.</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar PDFSignerPKCS11.jar -i &lt;pdf&gt; -l &lt;biblioteca&gt; -p &lt;password&gt; -s &lt;slot&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"]
+        <pre><code>java -jar PDFSignerPKCS11.jar -i &lt;pdf&gt; -l &lt;biblioteca&gt; -p &lt;password&gt; -s &lt;slot&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"] [-omitir-revocacion true|false]
 java -jar PDFSignerPKCS11.jar [-v | -h | --license | --listar-drivers]</code></pre>
+        <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
           <table>
             <tr><th>Flag</th><th>Obligatorio</th><th>Descripción</th></tr>
@@ -945,8 +962,9 @@ java -jar PDFSignerPKCS11.jar [-v | -h | --license | --listar-drivers]</code></p
         <div class="module-head"><h3>9.9 — PDFSignerPKCS12</h3><span class="module-jar">PDFSignerPKCS12.jar</span></div>
         <p>Idéntico al anterior, con archivo PKCS#12 (<code>-c</code>) en vez de <code>-l</code>/<code>-s</code>.</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar PDFSignerPKCS12.jar -i &lt;pdf&gt; -c &lt;certificado.p12&gt; -p &lt;password&gt; [-l true|false] [-x pos] [-y pos] [-t "texto"]
+        <pre><code>java -jar PDFSignerPKCS12.jar -i &lt;pdf&gt; -c &lt;certificado.p12&gt; -p &lt;password&gt; [-l true|false] [-x pos] [-y pos] [-t "texto"] [-omitir-revocacion true|false]
 java -jar PDFSignerPKCS12.jar [-v | -h | --license]</code></pre>
+        <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
           <table>
             <tr><th>Flag</th><th>Obligatorio</th><th>Descripción</th></tr>
@@ -989,8 +1007,9 @@ java -jar PDFVerifySignatures.jar C:\docs\certificado-signed.pdf -simple</code><
         <p>Firma XML usando un certificado ya presente en el almacén de Windows, tal como lo hace Adobe Acrobat/Reader por defecto — sin ruta de biblioteca ni número de slot (sección 7.3). Es el punto de partida recomendado para firma ocasional si no se conoce con exactitud la biblioteca PKCS#11 o la marca/modelo del token. Alternativa a <code>XMLSignerPKCS11</code>. Misma configuración criptográfica (XML-DSig, RSA-SHA256).</p>
         <div class="callout warn"><span class="label">⚠️ No usar para firma desatendida por lotes</span><p>Windows puede abrir un diálogo pidiendo el PIN en cada documento firmado, sin que este módulo (ni ningún otro) pueda evitarlo — es una política de seguridad del propio certificado/token, no un defecto de S-FiDE. Para firmar muchos documentos por CLI sin intervención humana, usar <code>XMLSignerPKCS11</code> o <code>XMLSignerPKCS12</code>. Ver la explicación completa en la sección 7.3.</p></div>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar XMLSignerWindowsCSP.jar &lt;alias o fragmento del CN&gt; &lt;archivo.xml&gt; &lt;elemento&gt;
+        <pre><code>java -jar XMLSignerWindowsCSP.jar &lt;alias o fragmento del CN&gt; &lt;archivo.xml&gt; &lt;elemento&gt; [-omitir-revocacion true|false]
 java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certificados]</code></pre>
+        <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
           <table>
             <tr><th>Parámetro</th><th>Obligatorio</th><th>Descripción</th></tr>
@@ -1011,8 +1030,9 @@ java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certi
         <p>Equivalente al anterior para PDF (sección 7.3 explica en detalle cuándo conviene esta opción antes que PKCS#11), con las mismas opciones de posición/texto/bloqueo que <code>PDFSignerPKCS11</code>, incluida la validación de firmas preexistentes (agregada en 1.1.1).</p>
         <div class="callout warn"><span class="label">⚠️ No usar para firma desatendida por lotes</span><p>Mismo motivo que en <code>XMLSignerWindowsCSP</code> — ver sección 7.3. Para firmar muchos PDF por CLI sin intervención humana, usar <code>PDFSignerPKCS11</code> o <code>PDFSignerPKCS12</code>.</p></div>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar PDFSignerWindowsCSP.jar -i &lt;pdf&gt; -a &lt;alias o fragmento CN&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"]
+        <pre><code>java -jar PDFSignerWindowsCSP.jar -i &lt;pdf&gt; -a &lt;alias o fragmento CN&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"] [-omitir-revocacion true|false]
 java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]</code></pre>
+        <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
           <table>
             <tr><th>Flag</th><th>Obligatorio</th><th>Descripción</th></tr>

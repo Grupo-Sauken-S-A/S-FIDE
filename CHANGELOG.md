@@ -4,6 +4,11 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), y el versionado sigue [SemVer](https://semver.org/lang/es/).
 
+## [Sin publicar]
+
+### Agregado
+- **Validación de revocación antes de firmar**, en los seis módulos que aplican firma digital (`XMLSignerPKCS11`, `XMLSignerPKCS12`, `XMLSignerWindowsCSP`, `PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`): antes de firmar, se valida el estado de revocación del certificado con el mismo mecanismo y orden ya usados por `XMLVerifySignatures`/`PDFVerifySignatures` (OCSP primero, CRL como respaldo). Si el certificado está confirmado como revocado, no se firma (código de salida `1`); si no se puede determinar (sin Internet, o el certificado no publica OCSP/CRL), se informa por consola y se firma igual, sin bloquear. Nuevo flag `-omitir-revocacion true|false` (default `false`) en los seis módulos para forzar la firma aunque el certificado esté confirmado como revocado. Ver [sección 7.5.1](doc/manual-tecnico-integracion.md#751-validación-de-revocación-antes-de-firmar) del manual técnico.
+
 ## [1.1.1] — 2026-09-01
 
 ### Agregado

@@ -61,6 +61,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import com.sauken.s_fide.xml_signer_windows_csp.validation.RevocationValidator;
 import javax.xml.crypto.dsig.*;
 import javax.xml.crypto.dsig.dom.DOMSignContext;
 import javax.xml.crypto.dsig.keyinfo.KeyInfo;
@@ -161,11 +162,21 @@ public class XMLSignerWindowsCSP {
             }
         }
 
-        if (args.length != 3) {
+        boolean omitirRevocacion = false;
+        if (args.length == 5) {
+            if (!isFlagOmitirRevocacion(args[3])) {
+                throw new IllegalArgumentException("Argumento no reconocido: " + args[3]);
+            }
+            omitirRevocacion = Boolean.parseBoolean(args[4]);
+        } else if (args.length != 3) {
             throw new IllegalArgumentException("Número incorrecto de argumentos.\n\n" + loadResourceFile("/HELP.txt"));
         }
 
-        signXML(args[0], args[1], args[2]);
+        signXML(args[0], args[1], args[2], omitirRevocacion);
+    }
+
+    private static boolean isFlagOmitirRevocacion(String arg) {
+        return "-omitir-revocacion".equalsIgnoreCase(arg) || "--omitir-revocacion".equalsIgnoreCase(arg);
     }
 
     private static void showHelp() throws IOException {
@@ -236,7 +247,7 @@ public class XMLSignerWindowsCSP {
         return matches.get(0);
     }
 
-    private static void signXML(String aliasOrFragment, String xmlFile, String uri) throws Exception {
+    private static void signXML(String aliasOrFragment, String xmlFile, String uri, boolean omitirRevocacion) throws Exception {
         File xmlFileObj = new File(xmlFile);
         if (!xmlFileObj.exists()) {
             throw new IllegalArgumentException("El archivo XML no existe: " + xmlFile);
@@ -247,7 +258,28 @@ public class XMLSignerWindowsCSP {
         PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, null);
         X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
 
+        validarRevocacionAntesDeFirmar(cert, omitirRevocacion);
+
         processAndSignDocument(xmlFile, uri, privateKey, cert);
+    }
+
+    private static void validarRevocacionAntesDeFirmar(X509Certificate cert, boolean omitirRevocacion) {
+        RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
+
+        switch (resultado.getEstado()) {
+            case REVOKED -> {
+                if (!omitirRevocacion) {
+                    throw new IllegalArgumentException("El certificado de firma está revocado. No se puede firmar. "
+                            + "Si necesita forzar la firma de todas formas, use -omitir-revocacion true.");
+                }
+                outputStream.println("ADVERTENCIA: el certificado de firma está revocado, pero se continúa "
+                        + "de todas formas porque se indicó -omitir-revocacion true.");
+            }
+            case UNKNOWN -> outputStream.println("ADVERTENCIA: no se pudo verificar el estado de revocación del "
+                    + "certificado de firma (" + resultado.getDetalle() + "). Se continúa con la firma.");
+            case GOOD -> outputStream.println("Certificado de firma verificado: no está revocado"
+                    + (resultado.getMetodo() != null ? " (" + resultado.getMetodo() + ")" : "") + ".");
+        }
     }
 
     private static DocumentBuilderFactory createSecureDocumentBuilderFactory() throws Exception {

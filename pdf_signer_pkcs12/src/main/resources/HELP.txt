@@ -10,6 +10,8 @@ Opciones:
   -x, --xpos <número>          Coordenada X para el campo de firma (opcional, default: 0)
   -y, --ypos <número>          Coordenada Y para el campo de firma (opcional, default: 0)
   -t, --text <texto>           Texto adicional para el campo de firma (opcional)
+  -omitir-revocacion <true|false>  Fuerza la firma aunque el certificado esté confirmado como revocado
+                                    (opcional, default: false). Ver "REVOCACIÓN" más abajo.
 
 Opciones Adicionales
   -v, --version, -version      Muestra la versión del programa
@@ -37,3 +39,9 @@ NOTAS:
     - El programa verificará y validará todas las firmas existentes antes de agregar una nueva
     - Se firmará siempre el documento PDF de manera completa y la firma se aplicará en la primer página
     - El documento resultante incluirá metadatos sobre la firma aplicada
+
+REVOCACIÓN:
+    - Antes de firmar, se valida el estado de revocación del certificado (OCSP primero, CRL como respaldo)
+    - Si el certificado está confirmado como revocado, no se firma (a menos que use -omitir-revocacion true)
+    - Si no se puede determinar el estado (sin Internet, o el certificado no publica OCSP/CRL), se informa
+      por consola y se firma igual — esto nunca bloquea la firma

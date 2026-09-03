@@ -71,6 +71,7 @@ import javax.xml.crypto.dsig.dom.*;
 import javax.xml.crypto.dsig.keyinfo.*;
 import javax.xml.crypto.dsig.spec.*;
 import javax.xml.xpath.*;
+import com.sauken.s_fide.xml_signer_pkcs11.validation.RevocationValidator;
 
 public class XMLSignerPKCS11 {
     private static final String VERSION = "S-FIDE XMLSignerPKCS11 v1.1.1 - Grupo Sauken S.A.";
@@ -134,14 +135,24 @@ public class XMLSignerPKCS11 {
             }
         }
 
-        if (args.length != 5) {
+        boolean omitirRevocacion = false;
+        if (args.length == 7) {
+            if (!isFlagOmitirRevocacion(args[5])) {
+                throw new IllegalArgumentException("Argumento no reconocido: " + args[5]);
+            }
+            omitirRevocacion = Boolean.parseBoolean(args[6]);
+        } else if (args.length != 5) {
             throw new IllegalArgumentException("Número incorrecto de argumentos.\n\n" + loadResourceFile("/HELP.txt"));
         }
 
-        validateAndProcessStandardArguments(args);
+        validateAndProcessStandardArguments(args, omitirRevocacion);
     }
 
-    private static void validateAndProcessStandardArguments(String[] args) throws Exception {
+    private static boolean isFlagOmitirRevocacion(String arg) {
+        return "-omitir-revocacion".equalsIgnoreCase(arg) || "--omitir-revocacion".equalsIgnoreCase(arg);
+    }
+
+    private static void validateAndProcessStandardArguments(String[] args, boolean omitirRevocacion) throws Exception {
         String pkcs11LibraryPath = args[0];
         String password = args[1];
         int slotNumber;
@@ -155,7 +166,7 @@ public class XMLSignerPKCS11 {
         }
 
         validateFiles(pkcs11LibraryPath, xmlFile);
-        signXML(pkcs11LibraryPath, password, slotNumber, xmlFile, uri);
+        signXML(pkcs11LibraryPath, password, slotNumber, xmlFile, uri, omitirRevocacion);
     }
 
     private static void validateFiles(String pkcs11LibraryPath, String xmlFile) throws IllegalArgumentException {
@@ -167,6 +178,25 @@ public class XMLSignerPKCS11 {
         File xmlFileObj = new File(xmlFile);
         if (!xmlFileObj.exists()) {
             throw new IllegalArgumentException("El archivo XML no existe: " + xmlFile);
+        }
+    }
+
+    private static void validarRevocacionAntesDeFirmar(X509Certificate cert, boolean omitirRevocacion) {
+        RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
+
+        switch (resultado.getEstado()) {
+            case REVOKED -> {
+                if (!omitirRevocacion) {
+                    throw new IllegalArgumentException("El certificado de firma está revocado. No se puede firmar. "
+                            + "Si necesita forzar la firma de todas formas, use -omitir-revocacion true.");
+                }
+                outputStream.println("ADVERTENCIA: el certificado de firma está revocado, pero se continúa "
+                        + "de todas formas porque se indicó -omitir-revocacion true.");
+            }
+            case UNKNOWN -> outputStream.println("ADVERTENCIA: no se pudo verificar el estado de revocación del "
+                    + "certificado de firma (" + resultado.getDetalle() + "). Se continúa con la firma.");
+            case GOOD -> outputStream.println("Certificado de firma verificado: no está revocado"
+                    + (resultado.getMetodo() != null ? " (" + resultado.getMetodo() + ")" : "") + ".");
         }
     }
 
@@ -264,7 +294,8 @@ public class XMLSignerPKCS11 {
         return dbf;
     }
 
-    private static void signXML(String pkcs11LibraryPath, String password, int slotNumber, String xmlFile, String uri) {
+    private static void signXML(String pkcs11LibraryPath, String password, int slotNumber, String xmlFile, String uri,
+                                 boolean omitirRevocacion) {
         Provider provider = null;
         try {
             provider = configurePKCS11Provider(pkcs11LibraryPath, slotNumber);
@@ -274,6 +305,8 @@ public class XMLSignerPKCS11 {
             String alias = keyStore.aliases().nextElement();
             PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
             X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+
+            validarRevocacionAntesDeFirmar(cert, omitirRevocacion);
 
             processAndSignDocument(xmlFile, uri, privateKey, cert, provider);
 

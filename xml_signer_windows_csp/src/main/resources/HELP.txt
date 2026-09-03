@@ -15,13 +15,15 @@ Opciones:
   -listar-certificados, --listar-certificados     Lista los certificados disponibles en el almacén de Windows (alias y Subject)
 
 Para firmar un documento XML:
-  java -jar XMLSignerWindowsCSP.jar <Alias o fragmento del Subject CN> <Archivo XML> <Elemento XML a firmar>
+  java -jar XMLSignerWindowsCSP.jar <Alias o fragmento del Subject CN> <Archivo XML> <Elemento XML a firmar> [-omitir-revocacion true|false]
 donde:
     <Alias o fragmento del Subject CN>   Alias exacto del certificado, o un fragmento del nombre (CN) del
                                           titular que identifique un único certificado. Use
                                           "-listar-certificados" para ver los disponibles.
     <Archivo XML>                        Archivo XML a firmar
     <Elemento XML a firmar>              Párrafo o elemento a firmar (vacío "" para firmar todo el documento)
+    -omitir-revocacion true|false        Opcional (por defecto false). Fuerza la firma aunque el certificado
+                                          esté confirmado como revocado. Ver "Revocación" más abajo.
 
 Ejemplo:
   java -jar XMLSignerWindowsCSP.jar "Juan Carlos Rios" documento.xml ""
@@ -33,3 +35,9 @@ Notas:
 - El archivo firmado se guardará con el sufijo "-signed" antes de la extensión
 - Este módulo no reemplaza a XMLSignerPKCS11: es una alternativa a elección del usuario cuando el certificado
   ya aparece en el almacén de Windows
+
+Revocación:
+- Antes de firmar, se valida el estado de revocación del certificado (OCSP primero, CRL como respaldo).
+- Si el certificado está confirmado como revocado, no se firma (a menos que use -omitir-revocacion true).
+- Si no se puede determinar el estado (sin Internet, o el certificado no publica OCSP/CRL), se informa por
+  consola y se firma igual — esto nunca bloquea la firma.

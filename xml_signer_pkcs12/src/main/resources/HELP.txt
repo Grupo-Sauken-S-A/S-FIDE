@@ -8,12 +8,14 @@ Opciones:
   -licencia, --license         Muestra la información de licencia
 
 Para firmar un documento XML:
-  java -jar XMLSignerPKCS12.jar [OPCIÓN] | <Archivo PKCS#12> <Contraseña> <Archivo XML> <Elemento XML a firmar>
+  java -jar XMLSignerPKCS12.jar [OPCIÓN] | <Archivo PKCS#12> <Contraseña> <Archivo XML> <Elemento XML a firmar> [-omitir-revocacion true|false]
 donde:
     <Archivo PKCS#12>           Ruta al archivo PKCS#12 con el certificado digital X.509
     <Contraseña>                Contraseña del archivo PKCS#12 que contiene el certificado
     <Archivo XML>               Archivo XML a firmar
     <Elemento XML a firmar>     Párrafo o elemento a firmar (vacío "" para firmar todo el documento)
+    -omitir-revocacion true|false  Opcional (por defecto false). Fuerza la firma aunque el certificado
+                                    esté confirmado como revocado. Ver "Revocación" más abajo.
 
 Notas:
 - El párrafo o elemento XML a firmar es opcional. Si se deja vacío (""), se firmará todo el documento, de lo contrario se firmará el párrafo con el elemento XML especificado
@@ -24,3 +26,9 @@ Notas:
 - El nombre del elemento XML a firmar es sensitivo a mayúsculas y minúsculas, en caso de Certificados de Origen Digitales, siempre use mayúsculas
 - El archivo firmado se guardará con el sufijo "-signed" antes de la extensión.
 - Asegúrese de tener los permisos necesarios para acceder al archivo PKCS#12.
+
+Revocación:
+- Antes de firmar, se valida el estado de revocación del certificado (OCSP primero, CRL como respaldo).
+- Si el certificado está confirmado como revocado, no se firma (a menos que use -omitir-revocacion true).
+- Si no se puede determinar el estado (sin Internet, o el certificado no publica OCSP/CRL), se informa por
+  consola y se firma igual — esto nunca bloquea la firma.

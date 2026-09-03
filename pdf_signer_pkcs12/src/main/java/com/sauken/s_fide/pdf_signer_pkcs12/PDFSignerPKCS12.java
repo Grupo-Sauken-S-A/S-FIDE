@@ -55,6 +55,7 @@ import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.signatures.*;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import com.sauken.s_fide.pdf_signer_pkcs12.validation.RevocationValidator;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -115,7 +116,8 @@ public class PDFSignerPKCS12 {
             boolean lock,
             float xPos,
             float yPos,
-            String customText
+            String customText,
+            boolean omitirRevocacion
     ) {}
 
     public static void main(String[] args) {
@@ -196,6 +198,7 @@ public class PDFSignerPKCS12 {
         float xPos = 0;
         float yPos = 0;
         String customText = null;
+        boolean omitirRevocacion = false;
 
         try {
             for (int i = 0; i < args.length; i++) {
@@ -221,6 +224,9 @@ public class PDFSignerPKCS12 {
                     case "-t", "--text" -> {
                         if (i + 1 < args.length) customText = args[++i];
                     }
+                    case "-omitir-revocacion", "--omitir-revocacion" -> {
+                        if (i + 1 < args.length) omitirRevocacion = Boolean.parseBoolean(args[++i]);
+                    }
                     case "-h", "--help" -> {
                         return null;
                     }
@@ -236,7 +242,7 @@ public class PDFSignerPKCS12 {
             return null;
         }
 
-        return new SignatureParameters(pdfPath, certPath, password, lock, xPos, yPos, customText);
+        return new SignatureParameters(pdfPath, certPath, password, lock, xPos, yPos, customText, omitirRevocacion);
     }
 
     private static boolean validateInputs(SignatureParameters params) {
@@ -319,6 +325,25 @@ public class PDFSignerPKCS12 {
         }
     }
 
+    private static void validarRevocacionAntesDeFirmar(X509Certificate cert, boolean omitirRevocacion) {
+        RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
+
+        switch (resultado.getEstado()) {
+            case REVOKED -> {
+                if (!omitirRevocacion) {
+                    throw new IllegalArgumentException("El certificado de firma está revocado. No se puede firmar. "
+                            + "Si necesita forzar la firma de todas formas, use -omitir-revocacion true.");
+                }
+                logger.log(Level.WARNING, "El certificado de firma está revocado, pero se continúa de todas "
+                        + "formas porque se indicó -omitir-revocacion true.");
+            }
+            case UNKNOWN -> logger.log(Level.WARNING, "No se pudo verificar el estado de revocación del "
+                    + "certificado de firma (" + resultado.getDetalle() + "). Se continúa con la firma.");
+            case GOOD -> logger.log(Level.INFO, "Certificado de firma verificado: no está revocado"
+                    + (resultado.getMetodo() != null ? " (" + resultado.getMetodo() + ")" : "") + ".");
+        }
+    }
+
     private static String createOutputPath(String inputPath) {
         Path path = Paths.get(inputPath);
         String fileName = path.getFileName().toString();
@@ -351,6 +376,8 @@ public class PDFSignerPKCS12 {
 
             X509Certificate cert = (X509Certificate) chain[0];
             subjectDN = cert.getSubjectX500Principal();
+
+            validarRevocacionAntesDeFirmar(cert, params.omitirRevocacion());
         }
 
         Path finalOutputPath = Paths.get(createOutputPath(params.pdfPath()));

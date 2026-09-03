@@ -25,6 +25,19 @@
         <main.class>com.sauken.s_fide.xml_signer_pkcs12.XMLSignerPKCS12</main.class>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>${bouncycastle.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <version>${bouncycastle.version}</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
         <resources>
