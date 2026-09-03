@@ -1057,6 +1057,8 @@ El script `install.bat` (incluido en el repositorio) automatiza la generación d
 ### v1.2.0 (2026-09-03)
 
 - **Validación de revocación antes de firmar**, en los seis módulos que aplican firma digital (`XMLSignerPKCS11`, `XMLSignerPKCS12`, `XMLSignerWindowsCSP`, `PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`) — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar) para el detalle completo (política, flag `-omitir-revocacion`, y la limitación conocida heredada del mecanismo de los verificadores).
+- **Diálogo de confirmación en la GUI** cuando no se puede determinar el estado de revocación, en las pestañas PKCS#12 y Windows CSP/KSP (no en las de token, por el riesgo de un segundo ingreso de PIN) — ver el mismo [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar), apartado "Comportamiento distinto en la interfaz gráfica".
+- **El acceso directo a la aplicación ya no lleva el número de versión en el nombre** (`S-FiDE.lnk`, antes `S-FiDE <versión>.lnk`): al actualizar de versión, el primer arranque reemplaza el ícono anterior en vez de sumar uno más al lado. Nuevo ítem de menú **Herramientas → Recrear accesos directos** (Windows) para recrearlos a pedido — ver [sección 9](#9-catálogo-de-aplicaciones), nota "(Windows) Accesos directos automáticos".
 
 ### v1.1.1 (2026-09-01)
 

@@ -1244,6 +1244,8 @@ exit $RESULT</code></pre>
       <h3>v1.2.0 (2026-09-03)</h3>
       <ul>
         <li><strong>Validación de revocación antes de firmar</strong>, en los seis módulos que aplican firma digital (<code>XMLSignerPKCS11</code>, <code>XMLSignerPKCS12</code>, <code>XMLSignerWindowsCSP</code>, <code>PDFSignerPKCS11</code>, <code>PDFSignerPKCS12</code>, <code>PDFSignerWindowsCSP</code>) — ver sección 7.5.1 para el detalle completo (política, flag <code>-omitir-revocacion</code>, y la limitación conocida heredada del mecanismo de los verificadores).</li>
+        <li><strong>Diálogo de confirmación en la GUI</strong> cuando no se puede determinar el estado de revocación, en las pestañas PKCS#12 y Windows CSP/KSP (no en las de token, por el riesgo de un segundo ingreso de PIN) — ver sección 7.5.1, apartado "Comportamiento distinto en la interfaz gráfica".</li>
+        <li><strong>El acceso directo a la aplicación ya no lleva el número de versión en el nombre</strong> (<code>S-FiDE.lnk</code>, antes <code>S-FiDE &lt;versión&gt;.lnk</code>): al actualizar de versión, el primer arranque reemplaza el ícono anterior en vez de sumar uno más al lado. Nuevo ítem de menú <strong>Herramientas → Recrear accesos directos</strong> (Windows) para recrearlos a pedido — ver sección 9, nota "(Windows) Accesos directos automáticos".</li>
       </ul>
 
       <h3>v1.1.1 (2026-09-01)</h3>
