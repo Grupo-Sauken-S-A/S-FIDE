@@ -48,6 +48,12 @@ S-FiDE v1.2.0 - Leeme primero:
     queda fuera de este diálogo y mantiene el aviso silencioso, para no arriesgar un segundo ingreso de
     PIN al token físico. La interfaz gráfica nunca ofrece forma de forzar la firma de un certificado
     confirmado como revocado
+  - (Windows) Nuevo menú "Herramientas > Recrear accesos directos": recrea a pedido los accesos
+    directos del escritorio y el menú inicio apuntando a esta instalación - útil después de actualizar
+    S-FiDE a una carpeta nueva, o si se borró alguno sin querer. Además, el acceso directo a la
+    aplicación ya no incluye el número de versión en el nombre (antes sí); así, al actualizar de
+    versión, el primer arranque de la versión nueva reemplaza directamente el ícono de la versión
+    anterior en vez de dejarlo acumulado al lado
 
 - Novedades de la versión 1.1.1:
   - Los módulos que trabajan con tokens PKCS#11 ahora reconocen la marca/modelo según el driver

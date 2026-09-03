@@ -463,9 +463,56 @@ public class SFideGUI extends Application {
         if (configManager.isDesktopShortcutCreated()) {
             return;
         }
+        createDesktopShortcut();
+    }
+
+    /**
+     * Handler del ítem de menú "Herramientas &gt; Recrear accesos directos".
+     * A diferencia de la creación automática al primer arranque, esto lo pide
+     * el usuario explícitamente — pensado sobre todo para después de
+     * actualizar S-FiDE a una carpeta nueva (el acceso directo, sin versión
+     * en el nombre desde esta función, queda apuntando a la instalación
+     * vieja hasta que algo lo sobrescriba) o para recrear uno que se borró
+     * sin querer. Por eso, a diferencia de las versiones automáticas, sí
+     * informa el resultado al usuario. Corre en el hilo de fondo existente
+     * (ya se invoca vía executorService.submit desde el menú).
+     */
+    private void recreateShortcuts() {
+        boolean appOk = createDesktopShortcut();
+        boolean docsOk = createDocShortcuts();
+        boolean allOk = appOk && docsOk;
+
+        Platform.runLater(() -> {
+            Alert alert = new Alert(allOk ? Alert.AlertType.INFORMATION : Alert.AlertType.WARNING);
+            alert.setTitle("Accesos directos");
+            if (allOk) {
+                alert.setHeaderText(null);
+                alert.setContentText("Se recrearon los accesos directos en el escritorio y el menú inicio, "
+                        + "apuntando a esta instalación.");
+            } else {
+                alert.setHeaderText("No se pudieron recrear todos los accesos directos");
+                alert.setContentText("Revise la consola para más detalle. Esto no afecta el funcionamiento "
+                        + "normal de S-FiDE.");
+            }
+            alert.showAndWait();
+        });
+    }
+
+    /**
+     * La acción en sí, sin el chequeo de "primera vez" — reutilizada por
+     * createDesktopShortcutIfNeeded() (arranque automático) y por el ítem de
+     * menú "Recrear accesos directos" (disparado a mano por el usuario, por
+     * ejemplo después de actualizar de versión a una carpeta nueva, para que
+     * el acceso directo apunte a esta instalación). Devuelve true si terminó
+     * sin errores conocidos (o directamente no aplica, ej. no-Windows), false
+     * si algo falló — el ítem de menú usa esto para informar el resultado; el
+     * arranque automático lo ignora a propósito, nunca debe interrumpir ni
+     * informar nada por su cuenta.
+     */
+    private boolean createDesktopShortcut() {
         if (!System.getProperty("os.name", "").toLowerCase().contains("win")) {
             markDesktopShortcutCreated();
-            return;
+            return true;
         }
 
         try {
@@ -475,7 +522,7 @@ public class SFideGUI extends Application {
 
             if (sfideDir == null) {
                 markDesktopShortcutCreated();
-                return;
+                return false;
             }
 
             Path batPath = sfideDir.resolve("SFide-GUI.bat");
@@ -483,10 +530,17 @@ public class SFideGUI extends Application {
 
             if (!Files.exists(batPath)) {
                 markDesktopShortcutCreated();
-                return;
+                return false;
             }
 
-            String shortcutFile = "S-FiDE " + VERSION_NUMBER + ".lnk";
+            // Sin número de versión a propósito: así, al actualizar S-FiDE a una
+            // carpeta nueva, el primer arranque de la versión nueva sobrescribe
+            // este mismo acceso directo (mismo nombre, mismo path en Escritorio y
+            // Menú Inicio) en vez de sumar un ícono más al lado del de la versión
+            // vieja. Antes incluía la versión en el nombre — se sacó porque dejaba
+            // íconos viejos acumulados y, si el usuario borraba la carpeta
+            // anterior a mano, quedaban apuntando a una ubicación inexistente.
+            String shortcutFile = "S-FiDE.lnk";
             String iconPathQuoted = Files.exists(iconPath) ? psQuote(iconPath) : null;
 
             // Ojo: nada de comillas dobles en este script. Se lo pasa entero como
@@ -530,16 +584,19 @@ public class SFideGUI extends Application {
                 process.destroyForcibly();
                 System.out.println("No se pudieron crear los accesos directos (escritorio/menú inicio): "
                         + "tiempo de espera agotado.");
-                return;
+                return false;
             }
 
             if (process.exitValue() != 0) {
                 String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
                 System.out.println("No se pudieron crear los accesos directos (escritorio/menú inicio)"
                         + (output.isBlank() ? "" : ": " + output.trim()));
+                return false;
             }
+            return true;
         } catch (Exception e) {
             System.out.println("No se pudieron crear los accesos directos (escritorio/menú inicio): " + e.getMessage());
+            return false;
         } finally {
             // Se marca como "creado" pase lo que pase en el bloque de arriba —
             // falta de permisos, políticas de seguridad corporativas que bloqueen
@@ -593,9 +650,19 @@ public class SFideGUI extends Application {
         if (configManager.isDocShortcutsCreated()) {
             return;
         }
+        createDocShortcuts();
+    }
+
+    /**
+     * La acción en sí, sin el chequeo de "primera vez" — mismo motivo que
+     * createDesktopShortcut() de arriba: reutilizada por
+     * createDocShortcutsIfNeeded() y por el ítem de menú manual. Devuelve
+     * true si terminó sin errores conocidos.
+     */
+    private boolean createDocShortcuts() {
         if (!System.getProperty("os.name", "").toLowerCase().contains("win")) {
             markDocShortcutsCreated();
-            return;
+            return true;
         }
 
         try {
@@ -605,7 +672,7 @@ public class SFideGUI extends Application {
 
             if (sfideDir == null) {
                 markDocShortcutsCreated();
-                return;
+                return false;
             }
 
             Path userGuidePath = sfideDir.resolve("doc").resolve("manual-usuario-sfide-gui.html");
@@ -630,7 +697,7 @@ public class SFideGUI extends Application {
 
             if (!anyDoc) {
                 markDocShortcutsCreated();
-                return;
+                return false;
             }
 
             String script = String.join("; ", lines);
@@ -650,16 +717,19 @@ public class SFideGUI extends Application {
                 process.destroyForcibly();
                 System.out.println("No se pudieron crear los accesos directos a la documentación: "
                         + "tiempo de espera agotado.");
-                return;
+                return false;
             }
 
             if (process.exitValue() != 0) {
                 String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
                 System.out.println("No se pudieron crear los accesos directos a la documentación"
                         + (output.isBlank() ? "" : ": " + output.trim()));
+                return false;
             }
+            return true;
         } catch (Exception e) {
             System.out.println("No se pudieron crear los accesos directos a la documentación: " + e.getMessage());
+            return false;
         } finally {
             markDocShortcutsCreated();
         }
@@ -1125,6 +1195,12 @@ public class SFideGUI extends Application {
         MenuItem validateMenuItem = new MenuItem("Validar Módulos");
         validateMenuItem.setOnAction(e -> Platform.runLater(() -> validateModules(true)));
         toolsMenu.getItems().addAll(clearLogsMenuItem, validateMenuItem);
+
+        if (isWindowsOS()) {
+            MenuItem recreateShortcutsMenuItem = new MenuItem("Recrear accesos directos");
+            recreateShortcutsMenuItem.setOnAction(e -> executorService.submit(this::recreateShortcuts));
+            toolsMenu.getItems().addAll(new SeparatorMenuItem(), recreateShortcutsMenuItem);
+        }
 
         Menu helpMenu = new Menu("Ayuda");
         MenuItem versionMenuItem = new MenuItem("Versión");
