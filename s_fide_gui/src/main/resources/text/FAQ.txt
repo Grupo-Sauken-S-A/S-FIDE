@@ -21,6 +21,10 @@
 ## 3. ¿Cómo verifico si mi firma es válida?
 
 - Use la función "Verificar Firmas en XML/PDF" después de firmar
+- Desde la versión 1.2.0, el estado de revocación del certificado también se consulta ANTES de
+  firmar (no solo al verificar después) - si está confirmado como revocado, directamente no se
+  firma. Igual conviene verificar después: confirma la firma en sí, y el estado de revocación
+  puede haber cambiado desde el momento de firmar
 
 ## 4. ¿Qué hago si mi token no es reconocido?
 

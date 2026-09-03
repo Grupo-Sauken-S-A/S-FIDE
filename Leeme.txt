@@ -35,6 +35,15 @@ S-FiDE v1.1.1 - Leeme primero:
   "doc/manual-tecnico-integracion.md" hay una sección específica ("Integración desde otras aplicaciones") con
   ejemplos de invocación por línea de comandos, redirección de salida y captura de código de resultado
 
+- Novedades de la versión 1.2.0:
+  - Los seis módulos que firman (XMLSignerPKCS11, XMLSignerPKCS12, XMLSignerWindowsCSP, PDFSignerPKCS11,
+    PDFSignerPKCS12, PDFSignerWindowsCSP) ahora validan el estado de revocación del certificado ANTES de
+    firmar (antes solo se validaba al verificar una firma ya hecha). Si el certificado está confirmado
+    como revocado, no se firma; si no se puede determinar (sin Internet, por ejemplo), se avisa por
+    consola y se firma igual. Por línea de comandos existe el parámetro "-omitir-revocacion true" para
+    forzar la firma aunque el certificado esté revocado; la interfaz gráfica no ofrece, por ahora, esta
+    opción de forzado
+
 - Novedades de la versión 1.1.1:
   - Los módulos que trabajan con tokens PKCS#11 ahora reconocen la marca/modelo según el driver
     seleccionado y sugieren la ruta típica por marca/modelo y sistema operativo. En la GUI use el botón

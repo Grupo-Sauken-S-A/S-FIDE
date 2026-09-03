@@ -80,6 +80,16 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 - Igual que el anterior, pero para documentos PDF. Admite las mismas opciones de posición,
   texto adicional y bloqueo del documento que "Firmar PDF con Token"
 
+## Novedades en la versión 1.2.0
+
+- **Validación de revocación antes de firmar**: los seis módulos que firman (aplicaciones 4, 5,
+  8, 9, 12 y 13 de este listado) ahora consultan si el certificado está revocado ANTES de
+  firmar, no solo al verificar una firma ya hecha. Si el certificado está confirmado como
+  revocado, no se firma; si no se puede determinar (por ejemplo, sin conexión a Internet), se
+  avisa por el panel de salida y se firma igual. Por línea de comandos existe el parámetro
+  "-omitir-revocacion true" para forzar la firma; la interfaz gráfica todavía no ofrece esta
+  opción de forzado
+
 ## Novedades en la versión 1.1.1
 
 - **Panel lateral de navegación**, en reemplazo de la antigua barra de pestañas horizontal
