@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Configurar Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Subir el contenido de doc/ como artefacto de Pages
         uses: actions/upload-pages-artifact@v5
