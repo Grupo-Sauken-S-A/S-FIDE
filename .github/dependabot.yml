@@ -1,0 +1,45 @@
+version: 2
+
+updates:
+  # Dependencias Maven del reactor completo (pom.xml raíz + los 15 módulos).
+  # Dependabot entiende la estructura multi-módulo apuntando a la raíz.
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    groups:
+      # Agrupa BouncyCastle/iText/xmlsec/slf4j/logback en una sola PR
+      # en vez de una por artefacto, ya que en este proyecto siempre se
+      # actualizan y regresionan juntos (ver AGENTS.md / manual técnico:
+      # ningún bump de estas librerías se mergea sin recompilar el
+      # reactor completo y volver a firmar/verificar XML y PDF a mano).
+      dependencias-criptograficas:
+        patterns:
+          - "org.bouncycastle:*"
+          - "com.itextpdf:*"
+          - "org.apache.santuario:*"
+          - "org.slf4j:*"
+          - "ch.qos.logback:*"
+      otras-dependencias-menores:
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "deps"
+    labels:
+      - "dependencies"
+
+  # Acciones usadas en los workflows de CI y GitHub Pages.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"
