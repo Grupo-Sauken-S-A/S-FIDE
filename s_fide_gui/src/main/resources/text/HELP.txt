@@ -1,6 +1,6 @@
 # S-FiDE - Guía Rápida
 
-Sistema de Firma Digital Extendida - Versión 1.2.0 - Grupo Sauken S.A.
+Sistema de Firma Digital Extendida - Versión 1.3.0 - Grupo Sauken S.A.
 
 SFide-GUI proporciona una interfaz gráfica de usuario para asignar los parámetros adecuados a
 cada una de las aplicaciones de la plataforma S-FiDE. Las aplicaciones se muestran de manera
@@ -80,23 +80,8 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 - Igual que el anterior, pero para documentos PDF. Admite las mismas opciones de posición,
   texto adicional y bloqueo del documento que "Firmar PDF con Token"
 
-## Novedades en la versión 1.2.0
+## Novedades en la versión 1.3.0
 
-- **Validación de revocación antes de firmar**: los seis módulos que firman (aplicaciones 4, 5,
-  8, 9, 12 y 13 de este listado) ahora consultan si el certificado está revocado ANTES de
-  firmar, no solo al verificar una firma ya hecha. Si el certificado está confirmado como
-  revocado, no se firma - la interfaz gráfica nunca ofrece forma de forzarlo
-- **Si no se puede determinar el estado** (por ejemplo, sin conexión a Internet): en Firmar
-  XML/PDF con PKCS#12 y con Windows CSP/KSP (aplicaciones 5, 9, 12 y 13), aparece un diálogo
-  preguntando si desea firmar de todas formas. En Firmar XML/PDF con Token (aplicaciones 4 y 8)
-  no aparece ningún diálogo, se avisa por el panel de salida y se firma igual - para no arriesgar
-  un segundo ingreso de PIN al token físico
-- **Nuevo ítem de menú "Herramientas > Recrear accesos directos"** (Windows): recrea a pedido
-  los accesos directos del escritorio y el menú inicio, apuntando a esta instalación. Útil
-  después de actualizar S-FiDE a una carpeta nueva, o si borró alguno sin querer. El acceso
-  directo a la aplicación ya no lleva el número de versión en el nombre (antes sí) - así, al
-  actualizar de versión, el primer arranque de la versión nueva reemplaza directamente el ícono
-  de la versión anterior en vez de sumar uno más al lado
 - **Nueva pestaña "Documentación" en esta ventana de Ayuda**: abre, con un clic, la Guía de
   Usuario y el Manual Técnico en el navegador predeterminado, y además incluye enlaces a los
   visualizadores externos de ALADI para Certificados de Origen (COD/CODEH) y Declaraciones
@@ -115,6 +100,24 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 - **"Salida simple"** de los verificadores ahora se recuerda entre sesiones. La posición X/Y
   de firma en PDF y "Bloquear documento después de firmar" dejaron de recordarse y de
   compartirse entre pestañas - siempre hay que indicarlas de nuevo en cada firma
+
+## Novedades en la versión 1.2.0
+
+- **Validación de revocación antes de firmar**: los seis módulos que firman (aplicaciones 4, 5,
+  8, 9, 12 y 13 de este listado) ahora consultan si el certificado está revocado ANTES de
+  firmar, no solo al verificar una firma ya hecha. Si el certificado está confirmado como
+  revocado, no se firma - la interfaz gráfica nunca ofrece forma de forzarlo
+- **Si no se puede determinar el estado** (por ejemplo, sin conexión a Internet): en Firmar
+  XML/PDF con PKCS#12 y con Windows CSP/KSP (aplicaciones 5, 9, 12 y 13), aparece un diálogo
+  preguntando si desea firmar de todas formas. En Firmar XML/PDF con Token (aplicaciones 4 y 8)
+  no aparece ningún diálogo, se avisa por el panel de salida y se firma igual - para no arriesgar
+  un segundo ingreso de PIN al token físico
+- **Nuevo ítem de menú "Herramientas > Recrear accesos directos"** (Windows): recrea a pedido
+  los accesos directos del escritorio y el menú inicio, apuntando a esta instalación. Útil
+  después de actualizar S-FiDE a una carpeta nueva, o si borró alguno sin querer. El acceso
+  directo a la aplicación ya no lleva el número de versión en el nombre (antes sí) - así, al
+  actualizar de versión, el primer arranque de la versión nueva reemplaza directamente el ícono
+  de la versión anterior en vez de sumar uno más al lado
 
 ## Novedades en la versión 1.1.1
 

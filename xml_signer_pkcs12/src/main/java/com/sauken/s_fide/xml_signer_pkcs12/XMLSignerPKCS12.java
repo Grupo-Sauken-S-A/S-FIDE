@@ -74,7 +74,7 @@ import javax.xml.xpath.*;
 import com.sauken.s_fide.xml_signer_pkcs12.validation.RevocationValidator;
 
 public class XMLSignerPKCS12 {
-    private static final String VERSION = "S-FIDE XMLSignerPKCS12 v1.2.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE XMLSignerPKCS12 v1.3.0 - Grupo Sauken S.A.";
     private static PrintStream errorStream;
     private static PrintStream outputStream;
 

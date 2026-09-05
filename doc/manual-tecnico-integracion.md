@@ -2,7 +2,7 @@
 
 **Sistema de Firma Digital Extendido**
 Grupo Sauken S.A. — Córdoba, Argentina
-Versión del documento: acompaña a S-FiDE v1.2.0 — 05/09/2026
+Versión del documento: acompaña a S-FiDE v1.3.0 — 05/09/2026
 
 ---
 
@@ -86,7 +86,7 @@ La distribución final embebe su propio runtime de Java y su propio SDK de JavaF
 
 ## 3. Software de terceros y dependencias
 
-| Componente | Versión (1.2.0) | Uso | Licencia |
+| Componente | Versión (1.3.0) | Uso | Licencia |
 |---|---|---|---|
 | BouncyCastle (`bcprov`/`bcpkix`/`bcutil`-jdk18on) | 1.85 | Primitivos criptográficos, ASN.1, construcción de `DigestInfo` | MIT (Bouncy Castle License) |
 | iText (`kernel`/`io`/`commons`/`sign`/`bouncy-castle-adapter`) | 8.0.5 | Firma y verificación de documentos PDF | AGPL v3 / comercial (Apryse) |
@@ -116,7 +116,7 @@ S-FiDE se distribuye bajo la **Licencia Pública General GNU (GNU GPL), versión
 
 - **Repositorio:** [github.com/Grupo-Sauken-S-A/S-FIDE](https://github.com/Grupo-Sauken-S-A/S-FIDE)
 - **Organización:** proyecto Maven multi-módulo (14 módulos) con un `pom.xml` raíz de tipo `pom` (agregador) y un módulo por capacidad.
-- **Versionado:** [SemVer](https://semver.org/). Tags publicados: `v1.0.0` (primer release estable), `v1.1.1` (QA de hardware y de código completa, validada contra los tres modelos de token más usados en Argentina), `v1.2.0` (versión actual).
+- **Versionado:** [SemVer](https://semver.org/). Tags publicados: `v1.0.0` (primer release estable), `v1.1.1` (QA de hardware y de código completa, validada contra los tres modelos de token más usados en Argentina), `v1.2.0` (validación de revocación antes de firmar, diálogo de confirmación en la GUI), `v1.3.0` (versión actual).
 - **Compilar desde el código fuente:**
   ```bash
   git clone https://github.com/Grupo-Sauken-S-A/S-FIDE.git
@@ -1060,6 +1060,14 @@ El script `install.bat` (incluido en el repositorio) automatiza la generación d
 ---
 
 ## 13. Historial de versiones
+
+### v1.3.0 (2026-09-05)
+
+- **Verificación de instancia única por carpeta de instalación**: `FileLock` exclusivo sobre `sfide-gui.lock`, no un flag persistido — el sistema operativo libera el lock automáticamente al terminar el proceso, sea un cierre normal o una caída. Ver [sección 9.14](#914-s-fide-gui).
+- **Nueva pestaña "Documentación" en la ventana de Ayuda**, con enlaces a la Guía de Usuario y el Manual Técnico (URL `file://`) y a los visualizadores externos de ALADI para COD/CODEH y DJO/DJOEH. La pestaña "Contacto" suma un enlace a GitHub. Ver [sección 9.14](#914-s-fide-gui).
+- **Botón "Abrir documento generado"** junto al documento de entrada en las seis pestañas de firma — habilitado solo cuando la firma termina con éxito **y** el archivo `-signed` existe realmente en disco.
+- **Botones de ayuda contextual ("?")** junto a "Elemento XML (ID) a Firmar" (las tres pestañas de firma XML) y junto a la posición X/Y (las tres pestañas de firma PDF), y **placeholders reales** en todo campo de entrada vacío.
+- **Revisión completa de qué se recuerda entre sesiones**: "Salida simple" (verificadores) ahora se recuerda; la posición X/Y de firma visible en PDF y "Bloquear documento después de firmar" dejaron de recordarse y de compartirse entre pestañas — el usuario siempre debe indicarlas de nuevo, igual que el elemento/ID de un XML a firmar. De paso, `sfide-defaults.properties` pasó a resolverse junto al jar en ejecución, no al directorio de trabajo del proceso.
 
 ### v1.2.0 (2026-09-03)
 

@@ -74,7 +74,7 @@ import java.util.logging.Logger;
 public class PDFSignerPKCS11 {
     private static final Logger logger = Logger.getLogger(PDFSignerPKCS11.class.getName());
     private static final String OUTPUT_SUFFIX = "-signed";
-    private static final String VERSION = "S-FIDE PDFSignerPKCS11 v1.2.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE PDFSignerPKCS11 v1.3.0 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT = readResourceFile("/LICENSE.txt");
     private static final String HELP_TEXT = readResourceFile("/HELP.txt");
     private static PrintStream errorStream;

@@ -99,7 +99,7 @@ import java.util.List;
 import java.util.function.IntConsumer;
 
 public class SFideGUI extends Application {
-    private static final String VERSION_NUMBER = "1.2.0";
+    private static final String VERSION_NUMBER = "1.3.0";
     private static final String VERSION = "S-FIDE GUI v" + VERSION_NUMBER + " - Grupo Sauken S.A.";
     private static final String CSS_FILE = "css/styles.css";
     private static final String HELP_FILE = "text/HELP.txt";

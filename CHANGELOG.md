@@ -4,7 +4,7 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), y el versionado sigue [SemVer](https://semver.org/lang/es/).
 
-## [Sin publicar]
+## [1.3.0] — 2026-09-05
 
 ### Agregado
 - **`s_fide_gui`: nueva pestaña "Documentación" en la ventana de Ayuda.** Enlaces para abrir, con un clic, en el navegador web predeterminado del sistema (Windows, Linux o macOS), los documentos HTML de la carpeta `doc` de esta instalación (Guía de Usuario y Manual Técnico de Integración), cada uno con una breve descripción de su contenido. Abre una URL `file://` calculada a partir de la ubicación de la propia instalación — funciona igual estando en la carpeta fuente que en una distribución ya desplegada. También incluye enlaces a los visualizadores externos de ALADI para Certificados de Origen Digital (`viewcod.certificadoorigen.com.ar`) y Declaraciones Juradas de Origen (`viewdjo.certificadoorigen.com.ar`).
@@ -110,6 +110,7 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 ### Agregado
 - Primer release estable: 10 módulos (extracción de certificados desde token o PKCS#12, firma y verificación de XML/PDF vía PKCS#11 y PKCS#12, validación de estructura XSD) más la interfaz gráfica JavaFX.
 
+[1.3.0]: https://github.com/Grupo-Sauken-S-A/S-FIDE/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Grupo-Sauken-S-A/S-FIDE/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Grupo-Sauken-S-A/S-FIDE/compare/v1.0.0...v1.1.1
 [1.0.0]: https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/tag/v1.0.0

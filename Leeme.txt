@@ -1,4 +1,4 @@
-S-FiDE v1.2.0 - Leeme primero:
+S-FiDE v1.3.0 - Leeme primero:
 
 - IMPORTANTE - Cómo instalar: cree primero una carpeta propia con el nombre que prefiera (por ejemplo
   "C:\S-FiDE") y descomprima el contenido del ZIP DENTRO de esa carpeta. No lo descomprima directamente
@@ -35,25 +35,7 @@ S-FiDE v1.2.0 - Leeme primero:
   "doc/manual-tecnico-integracion.md" hay una sección específica ("Integración desde otras aplicaciones") con
   ejemplos de invocación por línea de comandos, redirección de salida y captura de código de resultado
 
-- Novedades de la versión 1.2.0:
-  - Los seis módulos que firman (XMLSignerPKCS11, XMLSignerPKCS12, XMLSignerWindowsCSP, PDFSignerPKCS11,
-    PDFSignerPKCS12, PDFSignerWindowsCSP) ahora validan el estado de revocación del certificado ANTES de
-    firmar (antes solo se validaba al verificar una firma ya hecha). Si el certificado está confirmado
-    como revocado, no se firma. Por línea de comandos existe además el parámetro "-omitir-revocacion true"
-    para forzar la firma aunque el certificado esté revocado
-  - Si no se puede determinar el estado (sin Internet, o el certificado no publica esa información), el
-    comportamiento depende de cómo se use S-FiDE: por línea de comandos se avisa y se firma igual (pensado
-    para uso desatendido); en la interfaz gráfica, en Firmar XML/PDF con PKCS#12 y con Windows CSP/KSP,
-    aparece un diálogo preguntando si desea firmar de todas formas. Firmar XML/PDF con Token (PKCS#11)
-    queda fuera de este diálogo y mantiene el aviso silencioso, para no arriesgar un segundo ingreso de
-    PIN al token físico. La interfaz gráfica nunca ofrece forma de forzar la firma de un certificado
-    confirmado como revocado
-  - (Windows) Nuevo menú "Herramientas > Recrear accesos directos": recrea a pedido los accesos
-    directos del escritorio y el menú inicio apuntando a esta instalación - útil después de actualizar
-    S-FiDE a una carpeta nueva, o si se borró alguno sin querer. Además, el acceso directo a la
-    aplicación ya no incluye el número de versión en el nombre (antes sí); así, al actualizar de
-    versión, el primer arranque de la versión nueva reemplaza directamente el ícono de la versión
-    anterior en vez de dejarlo acumulado al lado
+- Novedades de la versión 1.3.0:
   - Nueva pestaña "Documentación" en la ventana de Ayuda de la GUI: abre, con un clic, la Guía de
     Usuario y el Manual Técnico en el navegador predeterminado, y además incluye enlaces a los
     visualizadores externos de ALADI para Certificados de Origen (COD/CODEH) y Declaraciones
@@ -76,6 +58,26 @@ S-FiDE v1.2.0 - Leeme primero:
     posición X/Y de firma visible en PDF y la casilla "Bloquear documento después de firmar" dejaron
     de recordarse y de compartirse entre pestañas - siempre hay que indicarlas de nuevo en cada firma,
     igual que el elemento/ID de un XML a firmar
+
+- Novedades de la versión 1.2.0:
+  - Los seis módulos que firman (XMLSignerPKCS11, XMLSignerPKCS12, XMLSignerWindowsCSP, PDFSignerPKCS11,
+    PDFSignerPKCS12, PDFSignerWindowsCSP) ahora validan el estado de revocación del certificado ANTES de
+    firmar (antes solo se validaba al verificar una firma ya hecha). Si el certificado está confirmado
+    como revocado, no se firma. Por línea de comandos existe además el parámetro "-omitir-revocacion true"
+    para forzar la firma aunque el certificado esté revocado
+  - Si no se puede determinar el estado (sin Internet, o el certificado no publica esa información), el
+    comportamiento depende de cómo se use S-FiDE: por línea de comandos se avisa y se firma igual (pensado
+    para uso desatendido); en la interfaz gráfica, en Firmar XML/PDF con PKCS#12 y con Windows CSP/KSP,
+    aparece un diálogo preguntando si desea firmar de todas formas. Firmar XML/PDF con Token (PKCS#11)
+    queda fuera de este diálogo y mantiene el aviso silencioso, para no arriesgar un segundo ingreso de
+    PIN al token físico. La interfaz gráfica nunca ofrece forma de forzar la firma de un certificado
+    confirmado como revocado
+  - (Windows) Nuevo menú "Herramientas > Recrear accesos directos": recrea a pedido los accesos
+    directos del escritorio y el menú inicio apuntando a esta instalación - útil después de actualizar
+    S-FiDE a una carpeta nueva, o si se borró alguno sin querer. Además, el acceso directo a la
+    aplicación ya no incluye el número de versión en el nombre (antes sí); así, al actualizar de
+    versión, el primer arranque de la versión nueva reemplaza directamente el ícono de la versión
+    anterior en vez de dejarlo acumulado al lado
 
 - Novedades de la versión 1.1.1:
   - Los módulos que trabajan con tokens PKCS#11 ahora reconocen la marca/modelo según el driver

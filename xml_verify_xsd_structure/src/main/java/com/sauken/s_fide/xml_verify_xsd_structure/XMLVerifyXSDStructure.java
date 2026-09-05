@@ -73,7 +73,7 @@ import java.util.List;
 import javax.xml.crypto.dsig.SignatureMethod;
 
 public class XMLVerifyXSDStructure {
-    private static final String VERSION = "S-FIDE XMLVerifyXSDStructure v1.2.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE XMLVerifyXSDStructure v1.3.0 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT;
     private static final String HELP_TEXT;
     private static PrintStream errorStream;
