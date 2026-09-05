@@ -1288,19 +1288,63 @@ public class SFideGUI extends Application {
         }
     }
 
-    private void openWebsite() {
+    /**
+     * Abre una URL en el navegador web predeterminado del sistema operativo
+     * (Windows, Linux o macOS) vía la API estándar de Java (java.awt.Desktop) —
+     * funciona igual para una URL http(s) que para una URL file:// de un
+     * documento local.
+     */
+    private void openInBrowser(String url) {
         try {
-            Desktop.getDesktop().browse(new URI("https://www.sauken.com.ar/"));
-            System.out.println("Sitio web abierto en el navegador");
+            Desktop.getDesktop().browse(new URI(url));
+            System.out.println("Enlace abierto en el navegador: " + url);
         } catch (Exception e) {
-            handleError("Error al abrir el sitio web", e);
+            handleError("Error al abrir el enlace en el navegador", e);
         }
+    }
+
+    private void openWebsite() {
+        openInBrowser("https://www.sauken.com.ar/");
     }
 
     private Hyperlink createWebsiteLink() {
         Hyperlink link = new Hyperlink("https://www.sauken.com.ar");
         link.setOnAction(e -> Platform.runLater(this::openWebsite));
         return link;
+    }
+
+    private Hyperlink createGithubLink() {
+        Hyperlink link = new Hyperlink("https://github.com/Grupo-Sauken-S-A/S-FIDE");
+        link.setOnAction(e -> Platform.runLater(
+                () -> openInBrowser("https://github.com/Grupo-Sauken-S-A/S-FIDE")));
+        return link;
+    }
+
+    /**
+     * Abre en el navegador predeterminado un documento HTML de la carpeta
+     * "doc" de esta instalación, como URL file:// — misma resolución de la
+     * carpeta de instalación (a partir de la ubicación del propio jar en
+     * ejecución) ya usada por createDocShortcuts().
+     */
+    private void openDocFile(String fileName) {
+        try {
+            Path sfideDir = Paths.get(
+                    SFideGUI.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+            ).getParent();
+
+            if (sfideDir == null) {
+                throw new IllegalStateException("No se pudo determinar la carpeta de instalación");
+            }
+
+            Path docPath = sfideDir.resolve("doc").resolve(fileName);
+            if (!Files.exists(docPath)) {
+                throw new IllegalStateException("No se encontró el archivo de documentación: " + docPath);
+            }
+
+            openInBrowser(docPath.toUri().toString());
+        } catch (Exception e) {
+            handleError("Error al abrir la documentación", e);
+        }
     }
 
     private void configureInfoTextArea(TextArea textArea, int rows) {
@@ -1423,6 +1467,59 @@ public class SFideGUI extends Application {
         return flow;
     }
 
+    /**
+     * Contenido de la pestaña "Documentación" de la ventana de Ayuda: enlaces
+     * para abrir, en el navegador web predeterminado del sistema, los
+     * documentos HTML de la carpeta "doc" de esta instalación — los mismos
+     * dos documentos para los que ya se ofrecen accesos directos de
+     * escritorio/menú inicio en Windows (ver createDocShortcuts()), pero acá
+     * disponibles con un clic y en cualquier sistema operativo.
+     */
+    private VBox createDocumentationContent() {
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+
+        Label introLabel = new Label(
+                "Documentación HTML incluida en la carpeta \"doc\" de esta instalación. "
+                        + "Se abre en el navegador web predeterminado del sistema "
+                        + "(Windows, Linux o macOS)."
+        );
+        introLabel.setWrapText(true);
+
+        content.getChildren().addAll(
+                introLabel,
+                new Separator(),
+                createDocLinkEntry(
+                        "Guía de Usuario S-FiDE GUI",
+                        "manual-usuario-sfide-gui.html",
+                        "Recorrido completo de las pantallas de la interfaz gráfica, pensado "
+                                + "para quien firma y verifica documentos haciendo clic, no por "
+                                + "línea de comandos."
+                ),
+                createDocLinkEntry(
+                        "Manual Técnico de Integración",
+                        "manual-tecnico-integracion.html",
+                        "Arquitectura, catálogo de todos los módulos con sus parámetros, "
+                                + "mecanismos de firma (PKCS#11/PKCS#12/Windows CSP-KSP) y "
+                                + "especialización de comercio exterior ALADI/MERCOSUR — para "
+                                + "integradores por línea de comandos."
+                )
+        );
+
+        return content;
+    }
+
+    private VBox createDocLinkEntry(String title, String fileName, String description) {
+        Hyperlink link = new Hyperlink(title);
+        link.setOnAction(e -> Platform.runLater(() -> openDocFile(fileName)));
+
+        Label descLabel = new Label(description);
+        descLabel.setWrapText(true);
+        descLabel.setStyle("-fx-text-fill: #52607a;");
+
+        return new VBox(3, link, descLabel);
+    }
+
     private VBox createContactContent() {
         VBox content = new VBox(15);
         content.setPadding(new Insets(20));
@@ -1445,7 +1542,8 @@ public class SFideGUI extends Application {
         companyInfo.getChildren().addAll(
                 new Label("Grupo Sauken S.A."),
                 new Label("Córdoba, Argentina"),
-                createWebsiteLink()
+                createWebsiteLink(),
+                createGithubLink()
         );
 
         content.getChildren().addAll(
@@ -1551,10 +1649,13 @@ public class SFideGUI extends Application {
             Tab comexTab = new Tab("Comercio Exterior");
             comexTab.setContent(createRichTextView(comexText));
 
+            Tab docsTab = new Tab("Documentación");
+            docsTab.setContent(createDocumentationContent());
+
             Tab contactTab = new Tab("Contacto");
             contactTab.setContent(createContactContent());
 
-            tabPane.getTabs().addAll(quickGuideTab, faqTab, glosarioTab, comexTab, contactTab);
+            tabPane.getTabs().addAll(quickGuideTab, faqTab, glosarioTab, comexTab, docsTab, contactTab);
 
             alert.getDialogPane().setContent(tabPane);
             alert.getDialogPane().setPrefWidth(760);

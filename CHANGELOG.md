@@ -4,6 +4,12 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), y el versionado sigue [SemVer](https://semver.org/lang/es/).
 
+## [Sin publicar]
+
+### Agregado
+- **`s_fide_gui`: nueva pestaña "Documentación" en la ventana de Ayuda.** Enlaces para abrir, con un clic, en el navegador web predeterminado del sistema (Windows, Linux o macOS), los documentos HTML de la carpeta `doc` de esta instalación (Guía de Usuario y Manual Técnico de Integración), cada uno con una breve descripción de su contenido. Abre una URL `file://` calculada a partir de la ubicación de la propia instalación — funciona igual estando en la carpeta fuente que en una distribución ya desplegada.
+- **`s_fide_gui`: la pestaña "Contacto" de la ventana de Ayuda ahora incluye un enlace a la página del proyecto en GitHub** (`https://github.com/Grupo-Sauken-S-A/S-FIDE`), junto al ya existente al sitio web de Grupo Sauken.
+
 ## [1.2.0] — 2026-09-03
 
 ### Agregado
