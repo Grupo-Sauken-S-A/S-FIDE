@@ -68,6 +68,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.IntConsumer;
 
 public final class GUIUtils {
     // Generoso a propósito: XMLSignerWindowsCSP/PDFSignerWindowsCSP pueden quedar
@@ -137,6 +138,18 @@ public final class GUIUtils {
     }
 
     public static void executeCommand(String jarName, String[] args, TextArea outputTextArea) {
+        executeCommand(jarName, args, outputTextArea, null);
+    }
+
+    /**
+     * Igual que {@link #executeCommand(String, String[], TextArea)}, pero
+     * además notifica el código de salida real una vez terminado (0 =
+     * éxito), en el hilo de la interfaz — usado por las pestañas de firma
+     * para habilitar el botón "Abrir documento generado" solo ante un éxito
+     * real, nunca ante un timeout, un error de arranque, o una validación de
+     * revocación fallida.
+     */
+    public static void executeCommand(String jarName, String[] args, TextArea outputTextArea, IntConsumer onExit) {
         if (jarName == null || args == null || outputTextArea == null) {
             throw new IllegalArgumentException("Parámetros no válidos para la ejecución del comando");
         }
@@ -148,6 +161,7 @@ public final class GUIUtils {
                 Platform.runLater(() -> {
                     outputTextArea.appendText("Error: No se encuentra el archivo " + jarPath + "\n");
                     showCommandResult(1);
+                    if (onExit != null) onExit.accept(1);
                 });
                 return;
             }
@@ -200,6 +214,7 @@ public final class GUIUtils {
                         outputTextArea.appendText("Error: la operación fue cancelada por superar el tiempo "
                                 + "máximo de espera (" + EXECUTION_TIMEOUT_MINUTES + " minutos)\n");
                         showCommandResult(1);
+                        if (onExit != null) onExit.accept(1);
                     });
                 } else {
                     Platform.runLater(() -> {
@@ -207,6 +222,7 @@ public final class GUIUtils {
                             outputTextArea.appendText("El proceso no generó salida\n");
                         }
                         showCommandResult(exitStatus);
+                        if (onExit != null) onExit.accept(exitStatus);
                     });
                 }
 
@@ -218,6 +234,7 @@ public final class GUIUtils {
                 Platform.runLater(() -> {
                     outputTextArea.appendText(errorMsg);
                     showCommandResult(1);
+                    if (onExit != null) onExit.accept(1);
                 });
             } finally {
                 if (process != null && process.isAlive()) {
@@ -255,6 +272,20 @@ public final class GUIUtils {
      */
     public static void executeSignCommandWithRevocationCheck(
             String jarName, String[] checkArgs, String[] signArgs, TextArea outputTextArea) {
+        executeSignCommandWithRevocationCheck(jarName, checkArgs, signArgs, outputTextArea, null);
+    }
+
+    /**
+     * Igual que {@link #executeSignCommandWithRevocationCheck(String, String[], String[], TextArea)},
+     * pero además notifica el código de salida real una vez terminado (0 =
+     * éxito) — ver {@link #executeCommand(String, String[], TextArea, IntConsumer)}.
+     * Se notifica en los cuatro desenlaces posibles: verificación de
+     * revocación fallida, certificado revocado, revocación cancelada por el
+     * usuario, y el resultado real de la firma (GOOD o "UNKNOWN" con
+     * confirmación aceptada).
+     */
+    public static void executeSignCommandWithRevocationCheck(
+            String jarName, String[] checkArgs, String[] signArgs, TextArea outputTextArea, IntConsumer onExit) {
         if (jarName == null || checkArgs == null || signArgs == null || outputTextArea == null) {
             throw new IllegalArgumentException("Parámetros no válidos para la ejecución del comando");
         }
@@ -267,6 +298,7 @@ public final class GUIUtils {
                     outputTextArea.clear();
                     outputTextArea.appendText(outcome.rawOutput() + "\n");
                     showCommandResult(1);
+                    if (onExit != null) onExit.accept(1);
                 });
                 return;
             }
@@ -277,6 +309,7 @@ public final class GUIUtils {
                     outputTextArea.appendText("El certificado de firma está revocado. No se firmó el documento.\n");
                     showAlert(Alert.AlertType.ERROR, "Certificado revocado",
                             "El certificado de firma está revocado. No se puede firmar desde la interfaz gráfica.");
+                    if (onExit != null) onExit.accept(1);
                 });
                 case "UNKNOWN" -> Platform.runLater(() -> {
                     String detalle = outcome.detalle();
@@ -286,14 +319,15 @@ public final class GUIUtils {
                                     + (detalle != null ? " (" + detalle + ")" : "") + ".\n\n"
                                     + "¿Desea firmar de todas formas?");
                     if (continuar) {
-                        executeCommand(jarName, signArgs, outputTextArea);
+                        executeCommand(jarName, signArgs, outputTextArea, onExit);
                     } else {
                         outputTextArea.clear();
                         outputTextArea.appendText("Firma cancelada: no se pudo confirmar el estado de revocación "
                                 + "del certificado.\n");
+                        if (onExit != null) onExit.accept(1);
                     }
                 });
-                default -> executeCommand(jarName, signArgs, outputTextArea);
+                default -> executeCommand(jarName, signArgs, outputTextArea, onExit);
             }
         }, executorService);
     }

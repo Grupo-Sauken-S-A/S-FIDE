@@ -96,6 +96,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.IntConsumer;
 
 public class SFideGUI extends Application {
     private static final String VERSION_NUMBER = "1.2.0";
@@ -1098,6 +1099,90 @@ public class SFideGUI extends Application {
         }
     }
 
+    /**
+     * Suma un botón extra a la caja de botones ya existente en la columna 2
+     * de una fila (la misma que arma addToGrid() para "Examinar..."), o crea
+     * una si esa fila todavía no tenía ninguno — usado para agregar "Abrir
+     * documento generado" junto al campo del documento de entrada sin
+     * duplicar la fila completa.
+     */
+    private void addButtonToRow(GridPane grid, int row, Button button) {
+        Node buttonBox = grid.getChildren().stream()
+                .filter(node -> GridPane.getRowIndex(node) == row && GridPane.getColumnIndex(node) == 2)
+                .findFirst()
+                .orElse(null);
+
+        if (buttonBox instanceof HBox) {
+            ((HBox) buttonBox).getChildren().add(button);
+        } else {
+            grid.add(new HBox(10, button), 2, row);
+        }
+    }
+
+    /**
+     * Replica exactamente la convención de nombre de archivo de salida que
+     * usan los seis módulos de firma (createOutputPath()/getOutputFileName()
+     * en cada uno): mismo nombre + "-signed" + misma extensión, en la misma
+     * carpeta del documento de entrada. No hay forma de que el módulo CLI
+     * informe esta ruta de vuelta (cada uno corre en su propio proceso), así
+     * que se recalcula acá con la misma lógica.
+     */
+    private static Path computeSignedOutputPath(String inputPath) {
+        Path path = Paths.get(inputPath);
+        String fileName = path.getFileName().toString();
+        int dotIndex = fileName.lastIndexOf('.');
+        String outputName = (dotIndex < 0)
+                ? fileName + "-signed"
+                : fileName.substring(0, dotIndex) + "-signed" + fileName.substring(dotIndex);
+        return path.resolveSibling(outputName);
+    }
+
+    /**
+     * Botón "Abrir documento generado", junto al campo del documento de
+     * entrada en las seis pestañas de firma (XML/PDF × PKCS#11/PKCS#12/
+     * Windows CSP-KSP). Arranca deshabilitado; se habilita solo cuando
+     * onExecutionResult() recibe un código de salida 0 Y el archivo
+     * "-signed" correspondiente realmente existe en disco — un código 0
+     * nunca se da por sentado a ciegas. Se deshabilita solo si el usuario
+     * edita el campo del documento de entrada después: el resultado ya no
+     * corresponde necesariamente a lo que se ve en pantalla.
+     */
+    private final class OpenGeneratedDocumentButton {
+        final Button button = new Button("Abrir documento generado");
+        private Path generatedPath;
+
+        OpenGeneratedDocumentButton(TextField inputPathField) {
+            button.setDisable(true);
+            button.setTooltip(new Tooltip(
+                    "Abre el documento firmado (-signed) en el navegador predeterminado del sistema"));
+            button.setOnAction(e -> Platform.runLater(() -> {
+                if (generatedPath != null) {
+                    openInBrowser(generatedPath.toUri().toString());
+                }
+            }));
+            inputPathField.textProperty().addListener((obs, oldValue, newValue) -> disable());
+        }
+
+        private void disable() {
+            generatedPath = null;
+            button.setDisable(true);
+        }
+
+        void onExecutionResult(String inputPathAtExecution, int exitCode) {
+            Platform.runLater(() -> {
+                if (exitCode == 0) {
+                    Path candidate = computeSignedOutputPath(inputPathAtExecution);
+                    if (Files.exists(candidate)) {
+                        generatedPath = candidate;
+                        button.setDisable(false);
+                        return;
+                    }
+                }
+                disable();
+            });
+        }
+    }
+
     private void addExecuteButton(GridPane grid, Button execute, int row) {
         Node buttonBox = grid.getChildren().stream()
                 .filter(node -> GridPane.getRowIndex(node) == 0 && GridPane.getColumnIndex(node) == 2)
@@ -1948,6 +2033,7 @@ public class SFideGUI extends Application {
         slotNumber.textProperty().bindBidirectional(configManager.pkcs11SlotNumberProperty());
         TextField xmlPath = createTextField("Ruta del archivo XML");
         TextField uri = createTextField("Párrafo o elemento XML con ID (opcional)");
+        OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(xmlPath);
 
         Button browseLib = createBrowseButton();
         browseLib.setOnAction(e -> Platform.runLater(() -> selectLibraryFile(pkcs11LibPath)));
@@ -1960,7 +2046,9 @@ public class SFideGUI extends Application {
             String pass = password.getText();
             configManager.setDefaultSlotNumber(slotNumber.getText());
             String uriValue = uri.getText() != null ? uri.getText().trim() : "";
-            executeXMLSignerPKCS11(pkcs11LibPath.getText(), pass, slotNumber.getText(), xmlPath.getText(), uriValue);
+            String xmlPathValue = xmlPath.getText();
+            executeXMLSignerPKCS11(pkcs11LibPath.getText(), pass, slotNumber.getText(), xmlPathValue, uriValue,
+                    exitCode -> opener.onExecutionResult(xmlPathValue, exitCode));
             clearInputFields(password, xmlPath, uri);
         }));
 
@@ -1969,6 +2057,7 @@ public class SFideGUI extends Application {
         addToGrid(grid, 2, "Contraseña:", password, null);
         addToGrid(grid, 3, "Número de Slot:", slotNumber, null);
         addToGrid(grid, 4, "Archivo XML:", xmlPath, browseXML);
+        addButtonToRow(grid, 4, opener.button);
         addToGrid(grid, 5, "Elemento XML (ID) a Firmar:", uri, null);
         addExecuteButton(grid, execute, 6);
 
@@ -1995,6 +2084,7 @@ public class SFideGUI extends Application {
         PasswordField password = createPasswordField("Contraseña del archivo");
         TextField xmlPath = createTextField("Ruta del archivo XML");
         TextField uri = createTextField("Párrafo o elemento XML con ID (opcional)");
+        OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(xmlPath);
 
         Button browsePKCS12 = createBrowseButton();
         browsePKCS12.setOnAction(e -> Platform.runLater(() -> selectPKCS12File(pkcs12Path)));
@@ -2006,13 +2096,16 @@ public class SFideGUI extends Application {
         execute.setOnAction(e -> Platform.runLater(() -> {
             String pass = password.getText();
             String uriValue = uri.getText() != null ? uri.getText().trim() : "";
-            executeXMLSignerPKCS12(pkcs12Path.getText(), pass, xmlPath.getText(), uriValue);
+            String xmlPathValue = xmlPath.getText();
+            executeXMLSignerPKCS12(pkcs12Path.getText(), pass, xmlPathValue, uriValue,
+                    exitCode -> opener.onExecutionResult(xmlPathValue, exitCode));
             clearInputFields(password, xmlPath, uri);
         }));
 
         addToGrid(grid, 0, "Archivo PKCS#12:", pkcs12Path, browsePKCS12);
         addToGrid(grid, 1, "Contraseña:", password, null);
         addToGrid(grid, 2, "Archivo XML:", xmlPath, browseXML);
+        addButtonToRow(grid, 2, opener.button);
         addToGrid(grid, 3, "Elemento XML (ID) a Firmar:", uri, null);
         addExecuteButton(grid, execute, 4);
 
@@ -2116,6 +2209,7 @@ public class SFideGUI extends Application {
         positionBox.getChildren().addAll(xPos, yPos);
         TextField customText = createTextField("Texto personalizado (opcional)");
         CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
+        OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(pdfPath);
 
         Button browseLib = createBrowseButton();
         browseLib.setOnAction(e -> Platform.runLater(() -> selectLibraryFile(pkcs11LibPath)));
@@ -2126,15 +2220,17 @@ public class SFideGUI extends Application {
         Button execute = createExecuteButton();
         execute.setOnAction(e -> Platform.runLater(() -> {
             String pass = password.getText();
+            String pdfPathValue = pdfPath.getText();
             executePDFSignerPKCS11(
                     pkcs11LibPath.getText(),
                     pass,
                     slotNumber.getText(),
-                    pdfPath.getText(),
+                    pdfPathValue,
                     xPos.getText(),
                     yPos.getText(),
                     customText.getText(),
-                    lockDocument.isSelected()
+                    lockDocument.isSelected(),
+                    exitCode -> opener.onExecutionResult(pdfPathValue, exitCode)
             );
             clearInputFields(password, pdfPath, xPos, yPos, customText);
             lockDocument.setSelected(false);
@@ -2145,6 +2241,7 @@ public class SFideGUI extends Application {
         addToGrid(grid, 2, "Contraseña:", password, null);
         addToGrid(grid, 3, "Número de Slot:", slotNumber, null);
         addToGrid(grid, 4, "Archivo PDF:", pdfPath, browsePDF);
+        addButtonToRow(grid, 4, opener.button);
         addToGrid(grid, 5, "Posición (X,Y):", positionBox, null);
         addToGrid(grid, 6, "Texto personalizado:", customText, null);
         grid.add(lockDocument, 1, 7);
@@ -2178,6 +2275,7 @@ public class SFideGUI extends Application {
         positionBox.getChildren().addAll(xPos, yPos);
         TextField customText = createTextField("Texto personalizado (opcional)");
         CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
+        OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(pdfPath);
 
         Button browsePKCS12 = createBrowseButton();
         browsePKCS12.setOnAction(e -> Platform.runLater(() -> selectPKCS12File(pkcs12Path)));
@@ -2188,14 +2286,16 @@ public class SFideGUI extends Application {
         Button execute = createExecuteButton();
         execute.setOnAction(e -> Platform.runLater(() -> {
             String pass = password.getText();
+            String pdfPathValue = pdfPath.getText();
             executePDFSignerPKCS12(
                     pkcs12Path.getText(),
                     pass,
-                    pdfPath.getText(),
+                    pdfPathValue,
                     xPos.getText(),
                     yPos.getText(),
                     customText.getText(),
-                    lockDocument.isSelected()
+                    lockDocument.isSelected(),
+                    exitCode -> opener.onExecutionResult(pdfPathValue, exitCode)
             );
             clearInputFields(password, pdfPath, xPos, yPos, customText);
             lockDocument.setSelected(false);
@@ -2204,6 +2304,7 @@ public class SFideGUI extends Application {
         addToGrid(grid, 0, "Archivo PKCS#12:", pkcs12Path, browsePKCS12);
         addToGrid(grid, 1, "Contraseña:", password, null);
         addToGrid(grid, 2, "Archivo PDF:", pdfPath, browsePDF);
+        addButtonToRow(grid, 2, opener.button);
         addToGrid(grid, 3, "Posición (X,Y):", positionBox, null);
         addToGrid(grid, 4, "Texto personalizado:", customText, null);
         grid.add(lockDocument, 1, 5);
@@ -2316,7 +2417,8 @@ public class SFideGUI extends Application {
     }
 
     private void executeXMLSignerPKCS11(String libPath, String password,
-                                        String slotNumber, String xmlPath, String uri) {
+                                        String slotNumber, String xmlPath, String uri,
+                                        IntConsumer onExit) {
         try {
             validateRequiredField("biblioteca PKCS#11", libPath);
             validateRequiredField("número de slot", slotNumber);
@@ -2326,7 +2428,7 @@ public class SFideGUI extends Application {
             if (result.valid()) {
                 Platform.runLater(() -> sharedOutputArea.clear());
                 String[] args = {libPath, password, slotNumber, xmlPath, uri};
-                GUIUtils.executeCommand("XMLSignerPKCS11", args, sharedOutputArea);
+                GUIUtils.executeCommand("XMLSignerPKCS11", args, sharedOutputArea, onExit);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
@@ -2338,7 +2440,8 @@ public class SFideGUI extends Application {
         }
     }
 
-    private void executeXMLSignerPKCS12(String pkcs12Path, String password, String xmlPath, String uri) {
+    private void executeXMLSignerPKCS12(String pkcs12Path, String password, String xmlPath, String uri,
+                                         IntConsumer onExit) {
         try {
             validateRequiredField("archivo PKCS#12", pkcs12Path);
             validateRequiredField("archivo XML", xmlPath);
@@ -2348,7 +2451,7 @@ public class SFideGUI extends Application {
                 Platform.runLater(() -> sharedOutputArea.clear());
                 String[] checkArgs = {"-verificar-revocacion", pkcs12Path, password};
                 String[] signArgs = {pkcs12Path, password, xmlPath, uri};
-                GUIUtils.executeSignCommandWithRevocationCheck("XMLSignerPKCS12", checkArgs, signArgs, sharedOutputArea);
+                GUIUtils.executeSignCommandWithRevocationCheck("XMLSignerPKCS12", checkArgs, signArgs, sharedOutputArea, onExit);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
@@ -2415,7 +2518,8 @@ public class SFideGUI extends Application {
             String xPos,
             String yPos,
             String customText,
-            boolean lock) {
+            boolean lock,
+            IntConsumer onExit) {
         try {
             validateRequiredField("biblioteca PKCS#11", libPath);
             validateRequiredField("número de slot", slotNumber);
@@ -2440,7 +2544,7 @@ public class SFideGUI extends Application {
                     args[args.length - 1] = customText;
                 }
 
-                GUIUtils.executeCommand("PDFSignerPKCS11", args, sharedOutputArea);
+                GUIUtils.executeCommand("PDFSignerPKCS11", args, sharedOutputArea, onExit);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
@@ -2459,7 +2563,8 @@ public class SFideGUI extends Application {
             String xPos,
             String yPos,
             String customText,
-            boolean lock) {
+            boolean lock,
+            IntConsumer onExit) {
         try {
             validateRequiredField("archivo PKCS#12", pkcs12Path);
             validateRequiredField("archivo PDF", pdfPath);
@@ -2484,7 +2589,7 @@ public class SFideGUI extends Application {
                 }
 
                 String[] checkArgs = {"-verificar-revocacion", pkcs12Path, password};
-                GUIUtils.executeSignCommandWithRevocationCheck("PDFSignerPKCS12", checkArgs, args, sharedOutputArea);
+                GUIUtils.executeSignCommandWithRevocationCheck("PDFSignerPKCS12", checkArgs, args, sharedOutputArea, onExit);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
@@ -2572,6 +2677,7 @@ public class SFideGUI extends Application {
         aliasField.textProperty().bindBidirectional(configManager.windowsCertAliasProperty());
         TextField xmlPath = createTextField("Ruta del archivo XML");
         TextField uri = createTextField("Párrafo o elemento XML con ID (opcional)");
+        OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(xmlPath);
 
         Button listCerts = new Button("Ver certificados");
         listCerts.setTooltip(new Tooltip("Lista los certificados disponibles en el almacén de Windows"));
@@ -2583,12 +2689,15 @@ public class SFideGUI extends Application {
         Button execute = createExecuteButton();
         execute.setOnAction(e -> Platform.runLater(() -> {
             String uriValue = uri.getText() != null ? uri.getText().trim() : "";
-            executeXMLSignerWindowsCSP(aliasField.getText(), xmlPath.getText(), uriValue);
+            String xmlPathValue = xmlPath.getText();
+            executeXMLSignerWindowsCSP(aliasField.getText(), xmlPathValue, uriValue,
+                    exitCode -> opener.onExecutionResult(xmlPathValue, exitCode));
             clearInputFields(xmlPath, uri);
         }));
 
         addToGrid(grid, 0, "Alias / Nombre (CN):", aliasField, listCerts);
         addToGrid(grid, 1, "Archivo XML:", xmlPath, browseXML);
+        addButtonToRow(grid, 1, opener.button);
         addToGrid(grid, 2, "Elemento XML (ID) a Firmar:", uri, null);
         addExecuteButton(grid, execute, 3);
 
@@ -2621,6 +2730,7 @@ public class SFideGUI extends Application {
         positionBox.getChildren().addAll(xPos, yPos);
         TextField customText = createTextField("Texto personalizado (opcional)");
         CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
+        OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(pdfPath);
 
         Button listCerts = new Button("Ver certificados");
         listCerts.setTooltip(new Tooltip("Lista los certificados disponibles en el almacén de Windows"));
@@ -2631,13 +2741,15 @@ public class SFideGUI extends Application {
 
         Button execute = createExecuteButton();
         execute.setOnAction(e -> Platform.runLater(() -> {
+            String pdfPathValue = pdfPath.getText();
             executePDFSignerWindowsCSP(
                     aliasField.getText(),
-                    pdfPath.getText(),
+                    pdfPathValue,
                     xPos.getText(),
                     yPos.getText(),
                     customText.getText(),
-                    lockDocument.isSelected()
+                    lockDocument.isSelected(),
+                    exitCode -> opener.onExecutionResult(pdfPathValue, exitCode)
             );
             clearInputFields(pdfPath, xPos, yPos, customText);
             lockDocument.setSelected(false);
@@ -2645,6 +2757,7 @@ public class SFideGUI extends Application {
 
         addToGrid(grid, 0, "Alias / Nombre (CN):", aliasField, listCerts);
         addToGrid(grid, 1, "Archivo PDF:", pdfPath, browsePDF);
+        addButtonToRow(grid, 1, opener.button);
         addToGrid(grid, 2, "Posición (X,Y):", positionBox, null);
         addToGrid(grid, 3, "Texto personalizado:", customText, null);
         grid.add(lockDocument, 1, 4);
@@ -2679,7 +2792,7 @@ public class SFideGUI extends Application {
         }
     }
 
-    private void executeXMLSignerWindowsCSP(String alias, String xmlPath, String uri) {
+    private void executeXMLSignerWindowsCSP(String alias, String xmlPath, String uri, IntConsumer onExit) {
         try {
             validateRequiredField("alias o nombre del certificado", alias);
             validateRequiredField("archivo XML", xmlPath);
@@ -2689,7 +2802,7 @@ public class SFideGUI extends Application {
                 Platform.runLater(() -> sharedOutputArea.clear());
                 String[] checkArgs = {"-verificar-revocacion", alias};
                 String[] signArgs = {alias, xmlPath, uri};
-                GUIUtils.executeSignCommandWithRevocationCheck("XMLSignerWindowsCSP", checkArgs, signArgs, sharedOutputArea);
+                GUIUtils.executeSignCommandWithRevocationCheck("XMLSignerWindowsCSP", checkArgs, signArgs, sharedOutputArea, onExit);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
@@ -2707,7 +2820,8 @@ public class SFideGUI extends Application {
             String xPos,
             String yPos,
             String customText,
-            boolean lock) {
+            boolean lock,
+            IntConsumer onExit) {
         try {
             validateRequiredField("alias o nombre del certificado", alias);
             validateRequiredField("archivo PDF", pdfPath);
@@ -2730,7 +2844,7 @@ public class SFideGUI extends Application {
                 }
 
                 String[] checkArgs = {"-verificar-revocacion", alias};
-                GUIUtils.executeSignCommandWithRevocationCheck("PDFSignerWindowsCSP", checkArgs, args, sharedOutputArea);
+                GUIUtils.executeSignCommandWithRevocationCheck("PDFSignerWindowsCSP", checkArgs, args, sharedOutputArea, onExit);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
