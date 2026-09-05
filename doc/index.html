@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>S-FiDE — Sistema de Firma Digital Extendido</title>
-<meta name="description" content="S-FiDE es una suite Java de código abierto para firmar y verificar digitalmente documentos XML y PDF en Argentina: tokens PKCS#11, certificados PKCS#12, almacén de Windows, y especialización de comercio exterior ALADI/MERCOSUR.">
+<meta name="description" content="S-FiDE es una suite Java de código abierto y multiplataforma (Windows, Linux, macOS) para firmar y verificar digitalmente documentos XML y PDF mediante tokens PKCS#11, certificados PKCS#12 o el almacén de Windows, implementando los estándares XML-DSig y PAdES-equivalente (CMS/PKCS#7). Incluye además una especialización completa para comercio exterior ALADI/MERCOSUR.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
@@ -136,11 +136,23 @@
   <h1>S-FiDE<br>Sistema de Firma Digital Extendido</h1>
   <p class="lead">
     Suite Java de código abierto, de Grupo Sauken S.A., para firmar y verificar
-    digitalmente documentos XML y PDF en Argentina bajo la Ley 25.506 de Firma
-    Digital — con tokens criptográficos PKCS#11, certificados PKCS#12, el
-    almacén de certificados de Windows, y especialización completa de comercio
-    exterior ALADI/MERCOSUR (Certificado de Origen Digital y Declaración
-    Jurada de Origen).
+    digitalmente documentos XML y PDF por distintos medios y vías, sin atarse
+    a un único fabricante ni mecanismo: tokens criptográficos vía
+    <strong>PKCS#11</strong>, certificados de archivo <strong>PKCS#12</strong>,
+    o el <strong>almacén de certificados de Windows</strong> (CSP/KSP) — a
+    elección de quien firma. Es <strong>multiplataforma</strong>: los mismos
+    programas compilan y corren en Windows, GNU/Linux y macOS. Implementa
+    estándares abiertos de firma — <strong>XML-DSig</strong> (W3C) para XML, y
+    firma <strong>CMS/PKCS#7</strong> detached equivalente a PAdES (ETSI EN
+    319&nbsp;142) para PDF — conforme a la Ley 25.506 de Firma Digital de
+    Argentina.
+  </p>
+  <p class="lead" style="margin-top: 1rem;">
+    Como capacidad adicional, S-FiDE incorpora una especialización completa
+    para <strong>comercio exterior ALADI/MERCOSUR</strong>: firma en dos
+    etapas de Certificados de Origen Digital (COD/CODEH) y Declaraciones
+    Juradas de Origen (DJO/DJOEH), con validación de revocación por elemento
+    y verificación contra el esquema oficial de ALADI.
   </p>
 
   <div class="cards">
@@ -154,7 +166,11 @@
     </a>
     <a class="card" href="https://github.com/Grupo-Sauken-S-A/S-FIDE">
       <div class="card-title">Código fuente en GitHub <span class="arrow">→</span></div>
-      <div class="card-desc">Repositorio completo, releases con distribución lista para usar (Windows/Linux), y CHANGELOG detallado de cada versión.</div>
+      <div class="card-desc">Repositorio completo, con todos los módulos, la documentación fuente y el CHANGELOG detallado de cada versión.</div>
+    </a>
+    <a class="card" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/latest">
+      <div class="card-title">Descargar la última versión <span class="arrow">→</span></div>
+      <div class="card-desc">Distribución portable lista para usar, sin instalación ni Java preinstalado — ZIP para Windows y para Linux (x64).</div>
     </a>
   </div>
 
