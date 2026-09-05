@@ -1,0 +1,20 @@
+# Posición de la firma visible (X, Y)
+
+## Si deja ambos campos en 0 (o vacíos)
+
+La firma es igual de válida, pero no se dibuja nada en el documento - es una firma "invisible". Sirve para firmar sin marcar visualmente el PDF.
+
+## Cómo funciona el sistema de coordenadas de PDF
+
+PDF usa el sistema estándar de PostScript: el origen (0,0) es la **esquina inferior izquierda** de la página. El eje X crece hacia la derecha, el eje Y crece **hacia arriba** (no hacia abajo, como en pantalla). Un punto PDF equivale a 1/72 de pulgada - una hoja A4 mide aproximadamente 595×842 puntos, y una carta US 612×792.
+
+X e Y ubican la esquina **inferior izquierda** del recuadro de firma, que mide 160×70 puntos (tamaño fijo). El recuadro se dibuja siempre en la **página 1** del documento, con el nombre del firmante, la fecha, y el texto personalizado si indicó uno.
+
+## Comercio exterior ALADI/MERCOSUR: posiciones recomendadas
+
+Convención de Grupo Sauken para Certificados de Origen no preferenciales, pensada para que ambas firmas queden una al lado de la otra en la parte inferior de la página, sin superponerse:
+
+- **Firma del Exportador:** X = 40, Y = 55
+- **Firma del Funcionario Habilitado:** X = 310, Y = 55
+
+Puede usar estas mismas posiciones para Declaraciones Juradas de Origen (DJO/DJOEH) si quiere mantener el mismo criterio visual.

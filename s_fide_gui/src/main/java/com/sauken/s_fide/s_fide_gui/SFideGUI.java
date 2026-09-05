@@ -107,6 +107,8 @@ public class SFideGUI extends Application {
     private static final String FAQ_FILE = "text/FAQ.txt";
     private static final String GLOSARIO_FILE = "text/GLOSARIO.txt";
     private static final String COMEX_FILE = "text/COMEX.txt";
+    private static final String XML_ELEMENT_HELP_FILE = "text/AYUDA_ELEMENTO_XML.txt";
+    private static final String PDF_POSITION_HELP_FILE = "text/AYUDA_POSICION_PDF.txt";
     private static final int WINDOW_WIDTH = 900;
     private static final int WINDOW_HEIGHT = 700;
     private static final String[] ICON_FILES = {
@@ -127,6 +129,8 @@ public class SFideGUI extends Application {
     private String faqText;
     private String glosarioText;
     private String comexText;
+    private String xmlElementHelpText;
+    private String pdfPositionHelpText;
     private ConfigurationManager configManager;
 
     @Override
@@ -148,6 +152,8 @@ public class SFideGUI extends Application {
             licenseText = loadTextResource(LICENSE_FILE, "Archivo de licencia");
             glosarioText = loadTextResource(GLOSARIO_FILE, "Archivo de glosario");
             comexText = loadTextResource(COMEX_FILE, "Archivo de comercio exterior");
+            xmlElementHelpText = loadTextResource(XML_ELEMENT_HELP_FILE, "Archivo de ayuda de elemento XML");
+            pdfPositionHelpText = loadTextResource(PDF_POSITION_HELP_FILE, "Archivo de ayuda de posición PDF");
 
             System.out.println("Inicialización completada correctamente");
         } catch (Exception e) {
@@ -979,6 +985,32 @@ public class SFideGUI extends Application {
         passwordField.setPromptText(promptText);
         passwordField.setPrefWidth(400);
         return passwordField;
+    }
+
+    /**
+     * Botón de ayuda contextual ("?") para un campo puntual — junto a
+     * "Elemento XML (ID) a Firmar" en las tres pestañas de firma XML, y
+     * junto a la posición X/Y en las tres pestañas de firma PDF. Muestra el
+     * mismo tipo de diálogo con formato enriquecido que Guía Rápida/FAQ/
+     * Glosario/Comercio Exterior en la ventana de Ayuda (createRichTextView()),
+     * no un simple texto corrido.
+     */
+    private Button createFieldHelpButton(String dialogTitle, String helpText) {
+        Button helpButton = new Button("?");
+        helpButton.getStyleClass().add("field-help");
+        helpButton.setTooltip(new Tooltip("Ayuda sobre este campo"));
+        helpButton.setOnAction(e -> Platform.runLater(() -> showFieldHelpDialog(dialogTitle, helpText)));
+        return helpButton;
+    }
+
+    private void showFieldHelpDialog(String dialogTitle, String helpText) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Ayuda");
+        alert.setHeaderText(dialogTitle);
+        alert.getDialogPane().setContent(createRichTextView(helpText));
+        alert.getDialogPane().setPrefWidth(620);
+        alert.getDialogPane().setPrefHeight(480);
+        alert.showAndWait();
     }
 
     private Button createBrowseButton() {
@@ -1917,7 +1949,7 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Ver Slots de Token");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs11LibPath = createTextField("Ruta de la biblioteca PKCS#11");
+        TextField pkcs11LibPath = createTextField("C:\\Windows\\System32\\eTPKCS11.dll");
         pkcs11LibPath.textProperty().bindBidirectional(configManager.pkcs11LibraryPathProperty());
         PasswordField password = createPasswordField("Contraseña del token");
 
@@ -1953,10 +1985,10 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Ver Certificado de Token");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs11LibPath = createTextField("Ruta de la biblioteca PKCS#11");
+        TextField pkcs11LibPath = createTextField("C:\\Windows\\System32\\eTPKCS11.dll");
         pkcs11LibPath.textProperty().bindBidirectional(configManager.pkcs11LibraryPathProperty());
         PasswordField password = createPasswordField("Contraseña del token");
-        TextField slotNumber = createNumericTextField("Número de slot");
+        TextField slotNumber = createNumericTextField("0");
         slotNumber.textProperty().bindBidirectional(configManager.pkcs11SlotNumberProperty());
 
         Button browseLib = createBrowseButton();
@@ -1992,7 +2024,7 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Ver Certificado de PKCS#12");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs12Path = createTextField("Ruta del archivo PKCS#12");
+        TextField pkcs12Path = createTextField("C:\\Certificados\\certificado.pfx");
         pkcs12Path.textProperty().bindBidirectional(configManager.pkcs12FilePathProperty());
         PasswordField password = createPasswordField("Contraseña del archivo");
 
@@ -2026,13 +2058,13 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Firmar XML con Token");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs11LibPath = createTextField("Ruta de la biblioteca PKCS#11");
+        TextField pkcs11LibPath = createTextField("C:\\Windows\\System32\\eTPKCS11.dll");
         pkcs11LibPath.textProperty().bindBidirectional(configManager.pkcs11LibraryPathProperty());
         PasswordField password = createPasswordField("Contraseña del token");
-        TextField slotNumber = createNumericTextField("Número de slot");
+        TextField slotNumber = createNumericTextField("0");
         slotNumber.textProperty().bindBidirectional(configManager.pkcs11SlotNumberProperty());
-        TextField xmlPath = createTextField("Ruta del archivo XML");
-        TextField uri = createTextField("Párrafo o elemento XML con ID (opcional)");
+        TextField xmlPath = createTextField("C:\\Documentos\\factura.xml");
+        TextField uri = createTextField("Opcional, por ejemplo: COD");
         OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(xmlPath);
 
         Button browseLib = createBrowseButton();
@@ -2059,6 +2091,7 @@ public class SFideGUI extends Application {
         addToGrid(grid, 4, "Archivo XML:", xmlPath, browseXML);
         addButtonToRow(grid, 4, opener.button);
         addToGrid(grid, 5, "Elemento XML (ID) a Firmar:", uri, null);
+        addButtonToRow(grid, 5, createFieldHelpButton("Elemento XML (ID) a Firmar", xmlElementHelpText));
         addExecuteButton(grid, execute, 6);
 
         VBox content = createTabContent(
@@ -2079,11 +2112,11 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Firmar XML con PKCS#12");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs12Path = createTextField("Ruta del archivo PKCS#12");
+        TextField pkcs12Path = createTextField("C:\\Certificados\\certificado.pfx");
         pkcs12Path.textProperty().bindBidirectional(configManager.pkcs12FilePathProperty());
         PasswordField password = createPasswordField("Contraseña del archivo");
-        TextField xmlPath = createTextField("Ruta del archivo XML");
-        TextField uri = createTextField("Párrafo o elemento XML con ID (opcional)");
+        TextField xmlPath = createTextField("C:\\Documentos\\factura.xml");
+        TextField uri = createTextField("Opcional, por ejemplo: COD");
         OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(xmlPath);
 
         Button browsePKCS12 = createBrowseButton();
@@ -2107,6 +2140,7 @@ public class SFideGUI extends Application {
         addToGrid(grid, 2, "Archivo XML:", xmlPath, browseXML);
         addButtonToRow(grid, 2, opener.button);
         addToGrid(grid, 3, "Elemento XML (ID) a Firmar:", uri, null);
+        addButtonToRow(grid, 3, createFieldHelpButton("Elemento XML (ID) a Firmar", xmlElementHelpText));
         addExecuteButton(grid, execute, 4);
 
         VBox content = createTabContent(
@@ -2125,7 +2159,7 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Verificar Firmas en XML");
         GridPane grid = createStandardGridPane();
 
-        TextField xmlPath = createTextField("Ruta del archivo XML");
+        TextField xmlPath = createTextField("C:\\Documentos\\factura.xml");
         CheckBox simpleOutput = new CheckBox("Salida simple");
         simpleOutput.selectedProperty().bindBidirectional(configManager.simpleOutputProperty());
         simpleOutput.setTooltip(new Tooltip("Mostrar salida simplificada del proceso de verificación"));
@@ -2160,8 +2194,8 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Verificar XML con XSD");
         GridPane grid = createStandardGridPane();
 
-        TextField xmlPath = createTextField("Ruta del archivo XML");
-        TextField xsdPath = createTextField("Ruta del archivo XSD (opcional)");
+        TextField xmlPath = createTextField("C:\\Documentos\\factura.xml");
+        TextField xsdPath = createTextField("Opcional: C:\\Esquemas\\esquema.xsd");
 
         Button browseXML = createBrowseButton();
         browseXML.setOnAction(e -> Platform.runLater(() -> selectXMLFile(xmlPath)));
@@ -2195,19 +2229,19 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Firmar PDF con Token");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs11LibPath = createTextField("Ruta de la biblioteca PKCS#11");
+        TextField pkcs11LibPath = createTextField("C:\\Windows\\System32\\eTPKCS11.dll");
         pkcs11LibPath.textProperty().bindBidirectional(configManager.pkcs11LibraryPathProperty());
         PasswordField password = createPasswordField("Contraseña del token");
-        TextField slotNumber = createNumericTextField("Número de slot");
+        TextField slotNumber = createNumericTextField("0");
         slotNumber.textProperty().bindBidirectional(configManager.pkcs11SlotNumberProperty());
-        TextField pdfPath = createTextField("Ruta del archivo PDF");
-        TextField xPos = createNumericTextField("X");
-        TextField yPos = createNumericTextField("Y");
+        TextField pdfPath = createTextField("C:\\Documentos\\factura.pdf");
+        TextField xPos = createNumericTextField("40");
+        TextField yPos = createNumericTextField("55");
         xPos.setPrefWidth(190);
         yPos.setPrefWidth(190);
         HBox positionBox = new HBox(20);
         positionBox.getChildren().addAll(xPos, yPos);
-        TextField customText = createTextField("Texto personalizado (opcional)");
+        TextField customText = createTextField("Certificado de Origen");
         CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
         OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(pdfPath);
 
@@ -2243,6 +2277,7 @@ public class SFideGUI extends Application {
         addToGrid(grid, 4, "Archivo PDF:", pdfPath, browsePDF);
         addButtonToRow(grid, 4, opener.button);
         addToGrid(grid, 5, "Posición (X,Y):", positionBox, null);
+        addButtonToRow(grid, 5, createFieldHelpButton("Posición de la firma visible (X, Y)", pdfPositionHelpText));
         addToGrid(grid, 6, "Texto personalizado:", customText, null);
         grid.add(lockDocument, 1, 7);
         addExecuteButton(grid, execute, 8);
@@ -2263,17 +2298,17 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Firmar PDF con PKCS#12");
         GridPane grid = createStandardGridPane();
 
-        TextField pkcs12Path = createTextField("Ruta del archivo PKCS#12");
+        TextField pkcs12Path = createTextField("C:\\Certificados\\certificado.pfx");
         pkcs12Path.textProperty().bindBidirectional(configManager.pkcs12FilePathProperty());
         PasswordField password = createPasswordField("Contraseña del archivo");
-        TextField pdfPath = createTextField("Ruta del archivo PDF");
-        TextField xPos = createNumericTextField("X");
-        TextField yPos = createNumericTextField("Y");
+        TextField pdfPath = createTextField("C:\\Documentos\\factura.pdf");
+        TextField xPos = createNumericTextField("40");
+        TextField yPos = createNumericTextField("55");
         xPos.setPrefWidth(190);
         yPos.setPrefWidth(190);
         HBox positionBox = new HBox(20);
         positionBox.getChildren().addAll(xPos, yPos);
-        TextField customText = createTextField("Texto personalizado (opcional)");
+        TextField customText = createTextField("Certificado de Origen");
         CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
         OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(pdfPath);
 
@@ -2306,6 +2341,7 @@ public class SFideGUI extends Application {
         addToGrid(grid, 2, "Archivo PDF:", pdfPath, browsePDF);
         addButtonToRow(grid, 2, opener.button);
         addToGrid(grid, 3, "Posición (X,Y):", positionBox, null);
+        addButtonToRow(grid, 3, createFieldHelpButton("Posición de la firma visible (X, Y)", pdfPositionHelpText));
         addToGrid(grid, 4, "Texto personalizado:", customText, null);
         grid.add(lockDocument, 1, 5);
         addExecuteButton(grid, execute, 6);
@@ -2325,7 +2361,7 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Verificar Firmas en PDF");
         GridPane grid = createStandardGridPane();
 
-        TextField pdfPath = createTextField("Ruta del archivo PDF");
+        TextField pdfPath = createTextField("C:\\Documentos\\factura.pdf");
         CheckBox simpleOutput = new CheckBox("Salida simple");
         simpleOutput.selectedProperty().bindBidirectional(configManager.simpleOutputProperty());
         simpleOutput.setTooltip(new Tooltip("Mostrar salida simplificada del proceso de verificación"));
@@ -2673,10 +2709,10 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Firmar XML con Windows CSP/KSP");
         GridPane grid = createStandardGridPane();
 
-        TextField aliasField = createTextField("Alias exacto o fragmento del nombre (CN) del certificado");
+        TextField aliasField = createTextField("Juan Pérez");
         aliasField.textProperty().bindBidirectional(configManager.windowsCertAliasProperty());
-        TextField xmlPath = createTextField("Ruta del archivo XML");
-        TextField uri = createTextField("Párrafo o elemento XML con ID (opcional)");
+        TextField xmlPath = createTextField("C:\\Documentos\\factura.xml");
+        TextField uri = createTextField("Opcional, por ejemplo: COD");
         OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(xmlPath);
 
         Button listCerts = new Button("Ver certificados");
@@ -2699,6 +2735,7 @@ public class SFideGUI extends Application {
         addToGrid(grid, 1, "Archivo XML:", xmlPath, browseXML);
         addButtonToRow(grid, 1, opener.button);
         addToGrid(grid, 2, "Elemento XML (ID) a Firmar:", uri, null);
+        addButtonToRow(grid, 2, createFieldHelpButton("Elemento XML (ID) a Firmar", xmlElementHelpText));
         addExecuteButton(grid, execute, 3);
 
         VBox content = createTabContent(
@@ -2719,16 +2756,16 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Firmar PDF con Windows CSP/KSP");
         GridPane grid = createStandardGridPane();
 
-        TextField aliasField = createTextField("Alias exacto o fragmento del nombre (CN) del certificado");
+        TextField aliasField = createTextField("Juan Pérez");
         aliasField.textProperty().bindBidirectional(configManager.windowsCertAliasProperty());
-        TextField pdfPath = createTextField("Ruta del archivo PDF");
-        TextField xPos = createNumericTextField("X");
-        TextField yPos = createNumericTextField("Y");
+        TextField pdfPath = createTextField("C:\\Documentos\\factura.pdf");
+        TextField xPos = createNumericTextField("40");
+        TextField yPos = createNumericTextField("55");
         xPos.setPrefWidth(190);
         yPos.setPrefWidth(190);
         HBox positionBox = new HBox(20);
         positionBox.getChildren().addAll(xPos, yPos);
-        TextField customText = createTextField("Texto personalizado (opcional)");
+        TextField customText = createTextField("Certificado de Origen");
         CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
         OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(pdfPath);
 
@@ -2759,6 +2796,7 @@ public class SFideGUI extends Application {
         addToGrid(grid, 1, "Archivo PDF:", pdfPath, browsePDF);
         addButtonToRow(grid, 1, opener.button);
         addToGrid(grid, 2, "Posición (X,Y):", positionBox, null);
+        addButtonToRow(grid, 2, createFieldHelpButton("Posición de la firma visible (X, Y)", pdfPositionHelpText));
         addToGrid(grid, 3, "Texto personalizado:", customText, null);
         grid.add(lockDocument, 1, 4);
         addExecuteButton(grid, execute, 5);

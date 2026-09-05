@@ -1,0 +1,31 @@
+# Elemento XML (ID) a Firmar
+
+## Si lo deja vacío
+
+Se firma el documento XML completo. Es el caso más común y sirve para cualquier XML estándar.
+
+## Si escribe un valor
+
+Debe ser el valor exacto del atributo Id= de un elemento que ya existe en el XML. La firma se aplica solo sobre ese elemento y su contenido, no sobre el documento entero. Si el elemento con ese Id= no existe en el archivo, la firma falla.
+
+## Comercio exterior ALADI/MERCOSUR: COD, CODEH, DJO, DJOEH
+
+Un Certificado de Origen Digital o una Declaración Jurada de Origen se firman en dos etapas, por dos personas distintas, sobre dos elementos distintos del mismo XML. Acá debe escribir exactamente uno de estos cuatro identificadores, **en MAYÚSCULAS**:
+
+- **COD** - lo firma el Exportador, primera etapa de un Certificado de Origen
+- **CODEH** - lo firma el Funcionario Habilitado, segunda etapa (solo después de que el sistema de gestión agregó los datos de certificación del organismo)
+- **DJO** - lo firma el Exportador, primera etapa de una Declaración Jurada de Origen
+- **DJOEH** - lo firma el Funcionario Habilitado, segunda etapa (solo después de que el sistema de gestión agregó los datos de aprobación del organismo)
+
+## Orden obligatorio entre las dos firmas
+
+- El XML se crea con COD (o DJO) completo, sin firmar
+- El Exportador firma COD (o DJO)
+- El sistema de gestión agrega los datos del organismo (certificación o aprobación)
+- Recién ahí el Funcionario Habilitado firma CODEH (o DJOEH)
+
+S-FiDE no deja firmar CODEH si COD todavía no tiene una firma digital previa, ni DJOEH si DJO todavía no la tiene.
+
+## Importante
+
+En un XML de comercio exterior, **nunca** debe dejar este campo vacío - eso firmaría el documento completo, que no es lo que exige la normativa ALADI/MERCOSUR. Escriba siempre uno de los cuatro identificadores de arriba.

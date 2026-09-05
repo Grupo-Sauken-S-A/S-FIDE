@@ -42,6 +42,30 @@
     -fx-background-color: #B9D8D5;
 }
 
+/* Botón de ayuda contextual ("?"): circular, chico, discreto — no debe competir
+   visualmente con "Examinar..."/"Ejecutar" ni con el botón "Abrir documento generado". */
+.button.field-help {
+    -fx-padding: 0;
+    -fx-min-width: 26px;
+    -fx-max-width: 26px;
+    -fx-min-height: 26px;
+    -fx-max-height: 26px;
+    -fx-background-radius: 13px;
+    -fx-border-radius: 13px;
+    -fx-background-color: #E4F0EF;
+    -fx-border-color: #5A8C8C;
+    -fx-text-fill: #063C3C;
+    -fx-font-weight: bold;
+}
+
+.button.field-help:hover {
+    -fx-background-color: #CFE4E2;
+}
+
+.button.field-help:pressed {
+    -fx-background-color: #B9D8D5;
+}
+
 /* Execute button style */
 .button.execute {
     -fx-background-color: #2F7774;
@@ -65,7 +89,8 @@
     -fx-border-radius: 6px;
     -fx-background-radius: 6px;
     -fx-padding: 8px 12px;
-    -fx-prompt-text-fill: #2F7774;
+    -fx-text-fill: #1A1A1A;
+    -fx-prompt-text-fill: #9A9A9A;
 }
 
 .text-field:focused, .password-field:focused {

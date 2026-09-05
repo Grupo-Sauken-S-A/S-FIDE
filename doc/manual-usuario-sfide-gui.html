@@ -383,7 +383,7 @@
         <ul>
           <li><strong>Biblioteca PKCS#11</strong>, <strong>Contraseña</strong>, <strong>Número de Slot:</strong> igual que en los módulos de token anteriores.</li>
           <li><strong>Archivo XML:</strong> el documento a firmar.</li>
-          <li><strong>Elemento XML (ID) a Firmar:</strong> déjelo vacío para firmar el documento completo, o escriba el identificador del elemento puntual a firmar (por ejemplo <code>COD</code>, <code>CODEH</code>, <code>DJO</code>, <code>DJOEH</code> en documentos de comercio exterior — ver la solapa "Comercio Exterior" de la <a href="#s6">Ayuda</a>).</li>
+          <li><strong>Elemento XML (ID) a Firmar:</strong> déjelo vacío para firmar el documento completo, o escriba el identificador del elemento puntual a firmar (por ejemplo <code>COD</code>, <code>CODEH</code>, <code>DJO</code>, <code>DJOEH</code> en documentos de comercio exterior — ver la solapa "Comercio Exterior" de la <a href="#s6">Ayuda</a>). El botón <strong>"?"</strong> junto al campo abre esta misma explicación sin salir de la pantalla.</li>
         </ul>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
         <p class="oklist"><code>Éxito</code> — crea un archivo <code>&lt;nombre&gt;-signed.xml</code> junto al original. Antes de firmar, valida por Internet que el certificado no esté revocado (ver recuadro abajo); si eso no se puede confirmar, avisa por el panel de salida y firma igual.</p>
@@ -465,7 +465,7 @@
         <ul>
           <li><strong>Biblioteca PKCS#11</strong>, <strong>Contraseña</strong>, <strong>Número de Slot:</strong> igual que en los módulos de token XML.</li>
           <li><strong>Archivo PDF:</strong> el documento a firmar.</li>
-          <li><strong>Posición (X,Y):</strong> deje ambos en <code>0</code> para una firma invisible (igual de válida, pero no se dibuja nada); indique coordenadas para una firma visible. El origen <code>(0,0)</code> es la esquina <strong>inferior izquierda</strong> de la página, y esas coordenadas ubican la esquina inferior izquierda del recuadro de firma.</li>
+          <li><strong>Posición (X,Y):</strong> deje ambos en <code>0</code> para una firma invisible (igual de válida, pero no se dibuja nada); indique coordenadas para una firma visible. El origen <code>(0,0)</code> es la esquina <strong>inferior izquierda</strong> de la página, y esas coordenadas ubican la esquina inferior izquierda del recuadro de firma. El botón <strong>"?"</strong> junto al campo explica el sistema de coordenadas en detalle, con las posiciones recomendadas para comercio exterior (Exportador y Funcionario Habilitado).</li>
           <li><strong>Texto personalizado:</strong> se agrega debajo del nombre del firmante y la fecha; no tiene efecto si la firma es invisible.</li>
           <li><strong>Bloquear documento después de firmar:</strong> certifica el PDF ("sin cambios permitidos") y lo cifra en AES-256. Solo puede haber una firma certificante por documento, y debe ser la primera — si planea agregar más firmas después, no la marque en la primera.</li>
         </ul>
