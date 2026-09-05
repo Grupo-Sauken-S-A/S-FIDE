@@ -1460,6 +1460,13 @@ public class SFideGUI extends Application {
         return link;
     }
 
+    private Hyperlink createGithubPagesLink() {
+        Hyperlink link = new Hyperlink("https://grupo-sauken-s-a.github.io/S-FIDE/");
+        link.setOnAction(e -> Platform.runLater(
+                () -> openInBrowser("https://grupo-sauken-s-a.github.io/S-FIDE/")));
+        return link;
+    }
+
     /**
      * Abre en el navegador predeterminado un documento HTML de la carpeta
      * "doc" de esta instalación, como URL file:// — misma resolución de la
@@ -1853,10 +1860,23 @@ public class SFideGUI extends Application {
             versionLabel.setStyle("-fx-font-size: 14px;");
 
             Label descriptionLabel = new Label(
-                    "S-FIDE es una herramienta profesional para la gestión de firmas " +
-                            "digitales en entornos empresariales, desarrollada por Grupo Sauken S.A."
+                    "Suite de código abierto para firmar y verificar digitalmente documentos XML y PDF, "
+                            + "mediante tokens criptográficos PKCS#11, certificados de archivo PKCS#12, o el "
+                            + "almacén de certificados de Windows — multiplataforma (Windows, Linux, macOS), con "
+                            + "especialización de comercio exterior ALADI/MERCOSUR (Certificados de Origen "
+                            + "Digital y Declaraciones Juradas de Origen)."
             );
             descriptionLabel.setWrapText(true);
+
+            Label companyLabel = new Label("Grupo Sauken S.A. — Córdoba, Argentina");
+            companyLabel.setStyle("-fx-font-weight: bold;");
+
+            Label licenseLabel = new Label(
+                    "Software libre — GNU General Public License, versión 2 o posterior. "
+                            + "Ver Ayuda → Licencia para el texto completo."
+            );
+            licenseLabel.setWrapText(true);
+            licenseLabel.setStyle("-fx-text-fill: #52607a; -fx-font-size: 12px;");
 
             content.getChildren().addAll(
                     titleLabel,
@@ -1864,10 +1884,16 @@ public class SFideGUI extends Application {
                     new Separator(),
                     descriptionLabel,
                     new Separator(),
-                    createWebsiteLink()
+                    companyLabel,
+                    createWebsiteLink(),
+                    createGithubLink(),
+                    createGithubPagesLink(),
+                    new Separator(),
+                    licenseLabel
             );
 
             alert.getDialogPane().setContent(content);
+            alert.getDialogPane().setPrefWidth(460);
             alert.showAndWait();
 
             System.out.println("Diálogo Acerca de mostrado");
