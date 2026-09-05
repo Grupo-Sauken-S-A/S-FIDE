@@ -53,6 +53,7 @@ package com.sauken.s_fide.s_fide_gui;
 import com.sauken.s_fide.s_fide_gui.utils.GUIUtils;
 import com.sauken.s_fide.s_fide_gui.validators.ModuleValidator;
 import com.sauken.s_fide.s_fide_gui.utils.ConfigurationManager;
+import com.sauken.s_fide.s_fide_gui.utils.SingleInstanceGuard;
 import com.sauken.s_fide.s_fide_gui.utils.TokenProfileCatalog;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -160,6 +161,15 @@ public class SFideGUI extends Application {
             System.err.println("Error no capturado en el thread: " + thread.getName());
             throwable.printStackTrace(System.err);
         });
+
+        if (!SingleInstanceGuard.tryAcquire()) {
+            SingleInstanceGuard.showAlreadyRunningMessage();
+            // Salida explícita: el diálogo se muestra con Swing, cuyo hilo
+            // del toolkit AWT no es daemon — sin este System.exit(), nada
+            // garantiza que el proceso termine solo después de cerrar el
+            // diálogo, y quedaría un java.exe zombie sin ninguna ventana.
+            System.exit(0);
+        }
 
         launch(args);
     }

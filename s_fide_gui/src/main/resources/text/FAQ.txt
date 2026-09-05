@@ -113,3 +113,10 @@
 - Solo se crean una vez: si los borra después, no se vuelven a crear solos
 - Es por instalación: si tiene varias copias de S-FiDE en carpetas distintas (por ejemplo,
   una por cada versión), cada una crea los suyos la primera vez que la ejecute
+
+## 13. ¿Puedo tener S-FiDE GUI abierto dos veces al mismo tiempo?
+
+- No, desde la misma carpeta de instalación: si ya hay una ventana abierta y intenta abrir otra,
+  se le avisa y esa segunda ventana se cierra sola, sin afectar en nada a la que ya tenía abierta
+- Sí puede tener abiertas al mismo tiempo instancias de carpetas de instalación distintas (por
+  ejemplo, dos versiones de S-FiDE en carpetas separadas) - cada carpeta es independiente
