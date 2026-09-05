@@ -95,11 +95,13 @@
 - Una ruta de biblioteca particular para cada marca/modelo de token que elija en el selector
 - El último módulo que tenía abierto, para reabrirlo directamente la próxima vez
 - El tamaño y la posición de la ventana
-- La casilla "Bloquear documento después de firmar" y la posición X/Y de firma visible,
-  compartidas entre los tres firmadores de PDF
+- La casilla "Salida simple" de los verificadores de XML y PDF
 - El alias o nombre (CN) del certificado del almacén de Windows, compartido y sincronizado en
   vivo entre "Firmar XML con Windows CSP/KSP" y "Firmar PDF con Windows CSP/KSP"
 - **Nunca** se guarda ninguna contraseña
+- **Tampoco** se recuerdan la posición X/Y de firma visible ni la casilla "Bloquear documento
+  después de firmar" - a propósito, siempre hay que indicarlas de nuevo en cada firma, igual
+  que el elemento/ID de un XML a firmar
 
 ## 12. (Windows) Me aparecieron accesos directos solos en el escritorio y el menú inicio, ¿por qué?
 

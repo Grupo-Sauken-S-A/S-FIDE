@@ -187,6 +187,17 @@ public class SFideGUI extends Application {
     public void stop() {
         try {
             System.out.println("Cerrando aplicación...");
+            // Red de seguridad: handleApplicationClose() ya fuerza un guardado
+            // (vía saveWindowBounds()) en los tres caminos normales de salida
+            // (botón X, menú Salir, botón Salir), pero un cierre por error
+            // fatal (handleFatalError(), o el diálogo de módulos faltantes)
+            // llama a Platform.exit() directo sin pasar por ahí. Este guardado
+            // incondicional asegura que cualquier cambio pendiente en memoria
+            // (ya escrito en el Properties interno, solo con el volcado a
+            // disco demorado por el debounce) no se pierda pase lo que pase.
+            if (configManager != null) {
+                configManager.saveConfiguration();
+            }
             if (executorService != null) {
                 executorService.shutdown();
             }
@@ -198,21 +209,23 @@ public class SFideGUI extends Application {
         }
     }
 
+    /**
+     * Limpia los campos pasados después de ejecutar un módulo. Los campos
+     * ligados a un valor por defecto recordado (bindBidirectional con una
+     * Property de ConfigurationManager) nunca deben pasarse acá — que no se
+     * limpien es consecuencia de no incluirlos en la llamada, no de un chequeo
+     * de valor acá adentro (antes se comparaba el texto contra cada default
+     * conocido uno por uno, lo que además de requerir acordarse de sumar cada
+     * Property nueva a esa lista, corría el riesgo remoto de que un campo NO
+     * ligado que coincidiera por casualidad con el valor de un default se
+     * saltara la limpieza).
+     */
     private void clearInputFields(TextField... fields) {
         if (fields == null) return;
 
         Platform.runLater(() -> {
             for (TextField field : fields) {
                 if (field != null) {
-                    if (field.getText().equals(configManager.getDefaultPKCS11LibPath()) ||
-                            field.getText().equals(configManager.getDefaultPKCS12Path()) ||
-                            field.getText().equals(configManager.getDefaultSlotNumber()) ||
-                            field.getText().equals(configManager.signatureXProperty().get()) ||
-                            field.getText().equals(configManager.signatureYProperty().get()) ||
-                            field.getText().equals(configManager.windowsCertAliasProperty().get())) {
-                        continue;
-                    }
-
                     if (field instanceof PasswordField) {
                         field.setText("");
                         System.gc();
@@ -1820,7 +1833,7 @@ public class SFideGUI extends Application {
         execute.setOnAction(e -> Platform.runLater(() -> {
             String pass = password.getText();
             executeTokenSlotsView(pkcs11LibPath.getText(), pass);
-            clearInputFields(pkcs11LibPath, password);
+            clearInputFields(password);
         }));
 
         addToGrid(grid, 0, "Biblioteca PKCS#11:", pkcs11LibPath, browseLib);
@@ -1859,7 +1872,7 @@ public class SFideGUI extends Application {
             String pass = password.getText();
             configManager.setDefaultSlotNumber(slotNumber.getText());
             executeTokenCertExtractor(pkcs11LibPath.getText(), pass, slotNumber.getText());
-            clearInputFields(pkcs11LibPath, password, slotNumber);
+            clearInputFields(password);
         }));
 
         addToGrid(grid, 0, "Biblioteca PKCS#11:", pkcs11LibPath, browseLib);
@@ -1895,7 +1908,7 @@ public class SFideGUI extends Application {
         execute.setOnAction(e -> Platform.runLater(() -> {
             String pass = password.getText();
             executePKCS12CertExtractor(pkcs12Path.getText(), pass);
-            clearInputFields(pkcs12Path, password);
+            clearInputFields(password);
         }));
 
         addToGrid(grid, 0, "Archivo PKCS#12:", pkcs12Path, browsePKCS12);
@@ -1938,7 +1951,7 @@ public class SFideGUI extends Application {
             configManager.setDefaultSlotNumber(slotNumber.getText());
             String uriValue = uri.getText() != null ? uri.getText().trim() : "";
             executeXMLSignerPKCS11(pkcs11LibPath.getText(), pass, slotNumber.getText(), xmlPath.getText(), uriValue);
-            clearInputFields(pkcs11LibPath, password, slotNumber, xmlPath, uri);
+            clearInputFields(password, xmlPath, uri);
         }));
 
         addToGrid(grid, 0, "Biblioteca PKCS#11:", pkcs11LibPath, browseLib);
@@ -1984,7 +1997,7 @@ public class SFideGUI extends Application {
             String pass = password.getText();
             String uriValue = uri.getText() != null ? uri.getText().trim() : "";
             executeXMLSignerPKCS12(pkcs12Path.getText(), pass, xmlPath.getText(), uriValue);
-            clearInputFields(pkcs12Path, password, xmlPath, uri);
+            clearInputFields(password, xmlPath, uri);
         }));
 
         addToGrid(grid, 0, "Archivo PKCS#12:", pkcs12Path, browsePKCS12);
@@ -2011,7 +2024,7 @@ public class SFideGUI extends Application {
 
         TextField xmlPath = createTextField("Ruta del archivo XML");
         CheckBox simpleOutput = new CheckBox("Salida simple");
-        simpleOutput.setSelected(true);
+        simpleOutput.selectedProperty().bindBidirectional(configManager.simpleOutputProperty());
         simpleOutput.setTooltip(new Tooltip("Mostrar salida simplificada del proceso de verificación"));
 
         Button browseXML = createBrowseButton();
@@ -2087,15 +2100,12 @@ public class SFideGUI extends Application {
         TextField pdfPath = createTextField("Ruta del archivo PDF");
         TextField xPos = createNumericTextField("X");
         TextField yPos = createNumericTextField("Y");
-        xPos.textProperty().bindBidirectional(configManager.signatureXProperty());
-        yPos.textProperty().bindBidirectional(configManager.signatureYProperty());
         xPos.setPrefWidth(190);
         yPos.setPrefWidth(190);
         HBox positionBox = new HBox(20);
         positionBox.getChildren().addAll(xPos, yPos);
         TextField customText = createTextField("Texto personalizado (opcional)");
         CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
-        lockDocument.selectedProperty().bindBidirectional(configManager.lockDocumentProperty());
 
         Button browseLib = createBrowseButton();
         browseLib.setOnAction(e -> Platform.runLater(() -> selectLibraryFile(pkcs11LibPath)));
@@ -2116,7 +2126,8 @@ public class SFideGUI extends Application {
                     customText.getText(),
                     lockDocument.isSelected()
             );
-            clearInputFields(pkcs11LibPath, password, slotNumber, pdfPath, xPos, yPos, customText);
+            clearInputFields(password, pdfPath, xPos, yPos, customText);
+            lockDocument.setSelected(false);
         }));
 
         addToGrid(grid, 0, "Biblioteca PKCS#11:", pkcs11LibPath, browseLib);
@@ -2151,15 +2162,12 @@ public class SFideGUI extends Application {
         TextField pdfPath = createTextField("Ruta del archivo PDF");
         TextField xPos = createNumericTextField("X");
         TextField yPos = createNumericTextField("Y");
-        xPos.textProperty().bindBidirectional(configManager.signatureXProperty());
-        yPos.textProperty().bindBidirectional(configManager.signatureYProperty());
         xPos.setPrefWidth(190);
         yPos.setPrefWidth(190);
         HBox positionBox = new HBox(20);
         positionBox.getChildren().addAll(xPos, yPos);
         TextField customText = createTextField("Texto personalizado (opcional)");
         CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
-        lockDocument.selectedProperty().bindBidirectional(configManager.lockDocumentProperty());
 
         Button browsePKCS12 = createBrowseButton();
         browsePKCS12.setOnAction(e -> Platform.runLater(() -> selectPKCS12File(pkcs12Path)));
@@ -2179,7 +2187,8 @@ public class SFideGUI extends Application {
                     customText.getText(),
                     lockDocument.isSelected()
             );
-            clearInputFields(pkcs12Path, password, pdfPath, xPos, yPos, customText);
+            clearInputFields(password, pdfPath, xPos, yPos, customText);
+            lockDocument.setSelected(false);
         }));
 
         addToGrid(grid, 0, "Archivo PKCS#12:", pkcs12Path, browsePKCS12);
@@ -2207,7 +2216,7 @@ public class SFideGUI extends Application {
 
         TextField pdfPath = createTextField("Ruta del archivo PDF");
         CheckBox simpleOutput = new CheckBox("Salida simple");
-        simpleOutput.setSelected(true);
+        simpleOutput.selectedProperty().bindBidirectional(configManager.simpleOutputProperty());
         simpleOutput.setTooltip(new Tooltip("Mostrar salida simplificada del proceso de verificación"));
 
         Button browsePDF = createBrowseButton();
@@ -2596,15 +2605,12 @@ public class SFideGUI extends Application {
         TextField pdfPath = createTextField("Ruta del archivo PDF");
         TextField xPos = createNumericTextField("X");
         TextField yPos = createNumericTextField("Y");
-        xPos.textProperty().bindBidirectional(configManager.signatureXProperty());
-        yPos.textProperty().bindBidirectional(configManager.signatureYProperty());
         xPos.setPrefWidth(190);
         yPos.setPrefWidth(190);
         HBox positionBox = new HBox(20);
         positionBox.getChildren().addAll(xPos, yPos);
         TextField customText = createTextField("Texto personalizado (opcional)");
         CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
-        lockDocument.selectedProperty().bindBidirectional(configManager.lockDocumentProperty());
 
         Button listCerts = new Button("Ver certificados");
         listCerts.setTooltip(new Tooltip("Lista los certificados disponibles en el almacén de Windows"));
@@ -2623,7 +2629,8 @@ public class SFideGUI extends Application {
                     customText.getText(),
                     lockDocument.isSelected()
             );
-            clearInputFields(aliasField, pdfPath, xPos, yPos, customText);
+            clearInputFields(pdfPath, xPos, yPos, customText);
+            lockDocument.setSelected(false);
         }));
 
         addToGrid(grid, 0, "Alias / Nombre (CN):", aliasField, listCerts);

@@ -9,6 +9,15 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 ### Agregado
 - **`s_fide_gui`: nueva pestaña "Documentación" en la ventana de Ayuda.** Enlaces para abrir, con un clic, en el navegador web predeterminado del sistema (Windows, Linux o macOS), los documentos HTML de la carpeta `doc` de esta instalación (Guía de Usuario y Manual Técnico de Integración), cada uno con una breve descripción de su contenido. Abre una URL `file://` calculada a partir de la ubicación de la propia instalación — funciona igual estando en la carpeta fuente que en una distribución ya desplegada.
 - **`s_fide_gui`: la pestaña "Contacto" de la ventana de Ayuda ahora incluye un enlace a la página del proyecto en GitHub** (`https://github.com/Grupo-Sauken-S-A/S-FIDE`), junto al ya existente al sitio web de Grupo Sauken.
+- **`s_fide_gui`: la casilla "Salida simple" de los verificadores de XML y PDF ahora se recuerda entre sesiones** (`simple.output` en `sfide-defaults.properties`), sincronizada en vivo entre ambas pestañas — antes siempre arrancaba tildada.
+
+### Cambiado
+- **`s_fide_gui`: la posición X/Y de firma visible en PDF y la casilla "Bloquear documento después de firmar" ya no se recuerdan entre sesiones ni se comparten entre pestañas.** Antes eran un único valor compartido entre `PDFSignerPKCS11`/`PDFSignerPKCS12`/`PDFSignerWindowsCSP`, persistido en disco. Ahora cada pestaña tiene su propio valor independiente, que además se reinicia después de cada firma — igual que el elemento/ID de un XML a firmar, el usuario siempre debe indicarlos de nuevo.
+- **`s_fide_gui`: `sfide-defaults.properties` ahora se ubica junto al jar en ejecución**, no en el directorio de trabajo del proceso — mismo criterio ya usado para resolver `doc/` y los accesos directos. Sin cambio de comportamiento al lanzar por `SFide-GUI.bat`/`.sh` o el acceso directo del escritorio (ambos ya fijan el directorio de trabajo correcto); corrige el caso de lanzar el jar de otra forma.
+
+### Corregido
+- **`s_fide_gui`: un cierre por error fatal podía perder cambios de configuración pendientes.** Los caminos normales de salida (botón X, menú "Salir", botón "Salir") ya forzaban un guardado; un cierre por error fatal durante el arranque llamaba a `Platform.exit()` directo, sin pasar por ahí. Se agregó un guardado incondicional en `stop()` como red de seguridad para cualquier camino de salida, presente o futuro.
+- **`s_fide_gui`: `clearInputFields()` decidía qué campo no limpiar comparando su texto contra los valores por defecto conocidos, en vez de simplemente no recibir los campos que no debían limpiarse.** Además de requerir acordarse de sumar cada nuevo valor compartido a esa lista a mano, existía un riesgo remoto de que un campo no ligado a ningún default coincidiera por casualidad con el valor de uno que sí lo estaba, y se saltara la limpieza por error. Simplificado: los campos ligados a un valor recordado ya no se pasan a `clearInputFields()`.
 
 ## [1.2.0] — 2026-09-03
 

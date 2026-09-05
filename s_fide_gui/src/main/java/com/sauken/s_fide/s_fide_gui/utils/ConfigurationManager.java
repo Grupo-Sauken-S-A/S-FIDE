@@ -22,8 +22,9 @@ import java.util.Properties;
  * Deliberadamente NUNCA se persiste ninguna contraseña.
  */
 public class ConfigurationManager {
-    private static final String CONFIG_FILE = "sfide-defaults.properties";
+    private static final String CONFIG_FILE_NAME = "sfide-defaults.properties";
     private static ConfigurationManager instance;
+    private final Path configFilePath;
     private final Properties properties;
     private final PauseTransition saveDebounce;
 
@@ -31,17 +32,16 @@ public class ConfigurationManager {
     private final StringProperty pkcs11SlotNumber = new SimpleStringProperty("");
     private final StringProperty pkcs12FilePath = new SimpleStringProperty("");
     private final StringProperty lastModule = new SimpleStringProperty("");
-    private final BooleanProperty lockDocument = new SimpleBooleanProperty(false);
-    private final StringProperty signatureX = new SimpleStringProperty("");
-    private final StringProperty signatureY = new SimpleStringProperty("");
     private final StringProperty windowX = new SimpleStringProperty("");
     private final StringProperty windowY = new SimpleStringProperty("");
     private final StringProperty windowWidth = new SimpleStringProperty("");
     private final StringProperty windowHeight = new SimpleStringProperty("");
     private final BooleanProperty windowMaximized = new SimpleBooleanProperty(true);
     private final StringProperty windowsCertAlias = new SimpleStringProperty("");
+    private final BooleanProperty simpleOutput = new SimpleBooleanProperty(true);
 
     private ConfigurationManager() {
+        configFilePath = resolveConfigFilePath();
         properties = new Properties();
         saveDebounce = new PauseTransition(Duration.millis(400));
         saveDebounce.setOnFinished(e -> saveConfiguration());
@@ -52,29 +52,52 @@ public class ConfigurationManager {
         pkcs11SlotNumber.set(properties.getProperty("pkcs11.slot.number", ""));
         pkcs12FilePath.set(properties.getProperty("pkcs12.file.path", ""));
         lastModule.set(properties.getProperty("last.module", ""));
-        lockDocument.set(Boolean.parseBoolean(properties.getProperty("lock.document", "false")));
-        signatureX.set(properties.getProperty("signature.x", ""));
-        signatureY.set(properties.getProperty("signature.y", ""));
         windowX.set(properties.getProperty("window.x", ""));
         windowY.set(properties.getProperty("window.y", ""));
         windowWidth.set(properties.getProperty("window.width", ""));
         windowHeight.set(properties.getProperty("window.height", ""));
         windowMaximized.set(Boolean.parseBoolean(properties.getProperty("window.maximized", "true")));
         windowsCertAlias.set(properties.getProperty("windows.cert.alias", ""));
+        simpleOutput.set(Boolean.parseBoolean(properties.getProperty("simple.output", "true")));
 
         bindPersistence(pkcs11LibraryPath, "pkcs11.library.path");
         bindPersistence(pkcs11SlotNumber, "pkcs11.slot.number");
         bindPersistence(pkcs12FilePath, "pkcs12.file.path");
         bindPersistence(lastModule, "last.module");
-        bindPersistence(lockDocument, "lock.document");
-        bindPersistence(signatureX, "signature.x");
-        bindPersistence(signatureY, "signature.y");
         bindPersistence(windowX, "window.x");
         bindPersistence(windowY, "window.y");
         bindPersistence(windowWidth, "window.width");
         bindPersistence(windowHeight, "window.height");
         bindPersistence(windowMaximized, "window.maximized");
         bindPersistence(windowsCertAlias, "windows.cert.alias");
+        bindPersistence(simpleOutput, "simple.output");
+    }
+
+    /**
+     * Resuelve sfide-defaults.properties relativo a la carpeta de instalación
+     * (la que contiene el jar en ejecución) — misma resolución ya usada por
+     * los accesos directos y la apertura de documentación (ver SFideGUI:
+     * createDocShortcuts()/openDocFile()) — en vez de relativo al directorio
+     * de trabajo del proceso. SFide-GUI.bat/.sh y el acceso directo de
+     * escritorio ya fijan el directorio de trabajo correcto, así que esto no
+     * cambia el comportamiento en un uso normal; lo que corrige es el caso en
+     * que la GUI se lance de otra forma (doble clic directo al jar, un acceso
+     * directo mal armado, etc.), donde antes se leía/escribía el archivo en
+     * el lugar equivocado en silencio.
+     */
+    private static Path resolveConfigFilePath() {
+        try {
+            Path installDir = Paths.get(
+                    ConfigurationManager.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+            ).getParent();
+            if (installDir != null) {
+                return installDir.resolve(CONFIG_FILE_NAME);
+            }
+        } catch (Exception ignored) {
+            // Si no se puede determinar la carpeta de instalación, se cae al
+            // directorio de trabajo actual (comportamiento anterior).
+        }
+        return Paths.get(CONFIG_FILE_NAME);
     }
 
     public static ConfigurationManager getInstance() {
@@ -99,11 +122,10 @@ public class ConfigurationManager {
     }
 
     private void loadConfiguration() {
-        Path configPath = Paths.get(CONFIG_FILE);
-        if (Files.exists(configPath)) {
-            try (Reader input = new InputStreamReader(Files.newInputStream(configPath), StandardCharsets.UTF_8)) {
+        if (Files.exists(configFilePath)) {
+            try (Reader input = new InputStreamReader(Files.newInputStream(configFilePath), StandardCharsets.UTF_8)) {
                 properties.load(input);
-                System.out.println("Configuración cargada exitosamente desde: " + CONFIG_FILE);
+                System.out.println("Configuración cargada exitosamente desde: " + configFilePath);
             } catch (IOException e) {
                 System.err.println("Error al cargar la configuración: " + e.getMessage());
                 e.printStackTrace();
@@ -114,9 +136,9 @@ public class ConfigurationManager {
     }
 
     public void saveConfiguration() {
-        try (Writer output = new OutputStreamWriter(Files.newOutputStream(Paths.get(CONFIG_FILE)), StandardCharsets.UTF_8)) {
+        try (Writer output = new OutputStreamWriter(Files.newOutputStream(configFilePath), StandardCharsets.UTF_8)) {
             properties.store(output, "Configuración de S-FIDE GUI");
-            System.out.println("Configuración guardada exitosamente en: " + CONFIG_FILE);
+            System.out.println("Configuración guardada exitosamente en: " + configFilePath);
         } catch (IOException e) {
             System.err.println("Error al guardar la configuración: " + e.getMessage());
             e.printStackTrace();
@@ -139,16 +161,16 @@ public class ConfigurationManager {
         return lastModule;
     }
 
-    public BooleanProperty lockDocumentProperty() {
-        return lockDocument;
-    }
-
-    public StringProperty signatureXProperty() {
-        return signatureX;
-    }
-
-    public StringProperty signatureYProperty() {
-        return signatureY;
+    /**
+     * "Salida simple" en los verificadores de XML/PDF — a diferencia de la
+     * ruta de biblioteca/archivo o el alias, esta sí tiene sentido recordarla
+     * entre sesiones: es una preferencia de cómo mostrar el resultado, no un
+     * dato específico de una operación puntual (a diferencia de la posición
+     * de firma o el bloqueo de documento, que el usuario siempre debe volver
+     * a indicar — ver clearInputFields() en SFideGUI).
+     */
+    public BooleanProperty simpleOutputProperty() {
+        return simpleOutput;
     }
 
     /**
