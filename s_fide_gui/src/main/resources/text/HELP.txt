@@ -98,8 +98,10 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
   actualizar de versión, el primer arranque de la versión nueva reemplaza directamente el ícono
   de la versión anterior en vez de sumar uno más al lado
 - **Nueva pestaña "Documentación" en esta ventana de Ayuda**: abre, con un clic, la Guía de
-  Usuario y el Manual Técnico en el navegador predeterminado. La pestaña "Contacto" ahora
-  incluye también un enlace a la página del proyecto en GitHub
+  Usuario y el Manual Técnico en el navegador predeterminado, y además incluye enlaces a los
+  visualizadores externos de ALADI para Certificados de Origen (COD/CODEH) y Declaraciones
+  Juradas de Origen (DJO/DJOEH). La pestaña "Contacto" ahora incluye también un enlace a la
+  página del proyecto en GitHub
 - **Instancia única**: si ya hay una ventana de S-FiDE abierta desde esta misma carpeta y se
   intenta abrir otra, se avisa y esa segunda ventana se cierra sola, sin afectar a la que ya
   estaba abierta. Instalaciones en carpetas distintas sí pueden correr en paralelo

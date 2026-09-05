@@ -55,8 +55,10 @@ S-FiDE v1.2.0 - Leeme primero:
     versión, el primer arranque de la versión nueva reemplaza directamente el ícono de la versión
     anterior en vez de dejarlo acumulado al lado
   - Nueva pestaña "Documentación" en la ventana de Ayuda de la GUI: abre, con un clic, la Guía de
-    Usuario y el Manual Técnico en el navegador predeterminado. La pestaña "Contacto" ahora incluye
-    también un enlace a la página del proyecto en GitHub
+    Usuario y el Manual Técnico en el navegador predeterminado, y además incluye enlaces a los
+    visualizadores externos de ALADI para Certificados de Origen (COD/CODEH) y Declaraciones
+    Juradas de Origen (DJO/DJOEH). La pestaña "Contacto" ahora incluye también un enlace a la
+    página del proyecto en GitHub
   - La GUI ahora evita que se abran dos instancias al mismo tiempo desde la misma carpeta de
     instalación: si ya hay una ventana abierta y se intenta abrir otra, se avisa y esa segunda
     ventana se cierra sola, sin afectar en nada a la que ya estaba abierta. Carpetas de instalación

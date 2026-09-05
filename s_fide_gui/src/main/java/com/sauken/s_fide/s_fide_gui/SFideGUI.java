@@ -1643,6 +1643,18 @@ public class SFideGUI extends Application {
                                 + "mecanismos de firma (PKCS#11/PKCS#12/Windows CSP-KSP) y "
                                 + "especialización de comercio exterior ALADI/MERCOSUR — para "
                                 + "integradores por línea de comandos."
+                ),
+                new Separator(),
+                createHeading("Visualizadores de documentos XML de comercio exterior", 13.5),
+                createExternalLinkEntry(
+                        "Visualizador de COD",
+                        "https://viewcod.certificadoorigen.com.ar/",
+                        "Sitio externo de ALADI para visualizar un Certificado de Origen Digital (COD/CODEH)."
+                ),
+                createExternalLinkEntry(
+                        "Visualizador de DJO",
+                        "https://viewdjo.certificadoorigen.com.ar/",
+                        "Sitio externo de ALADI para visualizar una Declaración Jurada de Origen (DJO/DJOEH)."
                 )
         );
 
@@ -1652,6 +1664,22 @@ public class SFideGUI extends Application {
     private VBox createDocLinkEntry(String title, String fileName, String description) {
         Hyperlink link = new Hyperlink(title);
         link.setOnAction(e -> Platform.runLater(() -> openDocFile(fileName)));
+
+        Label descLabel = new Label(description);
+        descLabel.setWrapText(true);
+        descLabel.setStyle("-fx-text-fill: #52607a;");
+
+        return new VBox(3, link, descLabel);
+    }
+
+    /**
+     * Igual que createDocLinkEntry(), pero para un enlace externo (http/https)
+     * en vez de un documento local de "doc/" — usado por los visualizadores de
+     * ALADI para COD y DJO en la pestaña "Documentación".
+     */
+    private VBox createExternalLinkEntry(String title, String url, String description) {
+        Hyperlink link = new Hyperlink(title);
+        link.setOnAction(e -> Platform.runLater(() -> openInBrowser(url)));
 
         Label descLabel = new Label(description);
         descLabel.setWrapText(true);
