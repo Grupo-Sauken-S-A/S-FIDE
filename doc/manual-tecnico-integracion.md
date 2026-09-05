@@ -2,7 +2,7 @@
 
 **Sistema de Firma Digital Extendido**
 Grupo Sauken S.A. — Córdoba, Argentina
-Versión del documento: acompaña a S-FiDE v1.2.0 — 03/09/2026
+Versión del documento: acompaña a S-FiDE v1.2.0 — 05/09/2026
 
 ---
 

@@ -97,6 +97,22 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
   directo a la aplicación ya no lleva el número de versión en el nombre (antes sí) - así, al
   actualizar de versión, el primer arranque de la versión nueva reemplaza directamente el ícono
   de la versión anterior en vez de sumar uno más al lado
+- **Nueva pestaña "Documentación" en esta ventana de Ayuda**: abre, con un clic, la Guía de
+  Usuario y el Manual Técnico en el navegador predeterminado. La pestaña "Contacto" ahora
+  incluye también un enlace a la página del proyecto en GitHub
+- **Instancia única**: si ya hay una ventana de S-FiDE abierta desde esta misma carpeta y se
+  intenta abrir otra, se avisa y esa segunda ventana se cierra sola, sin afectar a la que ya
+  estaba abierta. Instalaciones en carpetas distintas sí pueden correr en paralelo
+- **Nuevo botón "Abrir documento generado"** junto al documento de entrada, en las seis
+  pestañas de firma: se habilita solo cuando la firma termina bien y el archivo firmado
+  ("-signed") realmente existe, y lo abre en el navegador con un clic
+- **Nuevo botón de ayuda ("?")** junto a "Elemento XML (ID) a Firmar" y junto a la posición
+  X/Y de firma en PDF, con una explicación detallada de cada campo - la de posición incluye
+  las coordenadas recomendadas para comercio exterior (Exportador y Funcionario Habilitado)
+- Los campos vacíos ahora muestran un ejemplo de carga en gris claro (no es un valor real)
+- **"Salida simple"** de los verificadores ahora se recuerda entre sesiones. La posición X/Y
+  de firma en PDF y "Bloquear documento después de firmar" dejaron de recordarse y de
+  compartirse entre pestañas - siempre hay que indicarlas de nuevo en cada firma
 
 ## Novedades en la versión 1.1.1
 

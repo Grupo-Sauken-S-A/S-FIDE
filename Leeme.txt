@@ -54,6 +54,26 @@ S-FiDE v1.2.0 - Leeme primero:
     aplicación ya no incluye el número de versión en el nombre (antes sí); así, al actualizar de
     versión, el primer arranque de la versión nueva reemplaza directamente el ícono de la versión
     anterior en vez de dejarlo acumulado al lado
+  - Nueva pestaña "Documentación" en la ventana de Ayuda de la GUI: abre, con un clic, la Guía de
+    Usuario y el Manual Técnico en el navegador predeterminado. La pestaña "Contacto" ahora incluye
+    también un enlace a la página del proyecto en GitHub
+  - La GUI ahora evita que se abran dos instancias al mismo tiempo desde la misma carpeta de
+    instalación: si ya hay una ventana abierta y se intenta abrir otra, se avisa y esa segunda
+    ventana se cierra sola, sin afectar en nada a la que ya estaba abierta. Carpetas de instalación
+    distintas (por ejemplo, dos versiones en paralelo) sí pueden correr al mismo tiempo sin problema
+  - Nuevo botón "Abrir documento generado" junto al documento de entrada, en las seis pestañas de
+    firma: se habilita solo cuando la firma termina bien y el archivo firmado ("-signed") realmente
+    existe, y lo abre en el navegador con un clic
+  - Nuevo botón de ayuda ("?") junto a "Elemento XML (ID) a Firmar" (firma de XML) y junto a la
+    posición X/Y (firma de PDF), con una explicación detallada de cada campo - en el caso de la
+    posición, incluye las coordenadas recomendadas para comercio exterior (Exportador y Funcionario
+    Habilitado)
+  - Los campos de la GUI que están vacíos ahora muestran un ejemplo de carga en gris claro (no es un
+    valor real, desaparece al escribir)
+  - La casilla "Salida simple" de los verificadores ahora se recuerda entre sesiones. En cambio, la
+    posición X/Y de firma visible en PDF y la casilla "Bloquear documento después de firmar" dejaron
+    de recordarse y de compartirse entre pestañas - siempre hay que indicarlas de nuevo en cada firma,
+    igual que el elemento/ID de un XML a firmar
 
 - Novedades de la versión 1.1.1:
   - Los módulos que trabajan con tokens PKCS#11 ahora reconocen la marca/modelo según el driver
