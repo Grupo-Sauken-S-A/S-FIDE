@@ -2354,7 +2354,7 @@ public class SFideGUI extends Application {
                         "-p", password,
                         "-x", xPos,
                         "-y", yPos,
-                        "-k", String.valueOf(lock)
+                        "-l", String.valueOf(lock)
                 };
 
                 if (customText != null && !customText.trim().isEmpty()) {

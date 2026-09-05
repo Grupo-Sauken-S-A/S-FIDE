@@ -14,6 +14,7 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 
 ### Corregido
 - **Validación de revocación antes de firmar: siempre caía a "no se pudo determinar" con certificados reales de AC-ONTI.** Confirmado con hardware real (token ePass2004): algunos certificados publican la URL de OCSP/CRL con un prefijo `[CONTEXT N]` pegado (una particularidad de cómo BouncyCastle expone ciertas extensiones ASN.1), que `XMLVerifySignatures`/`PDFVerifySignatures` ya sabían quitar pero que se había perdido al portar esa misma lógica a los seis módulos firmadores. El síntoma era firmar siempre con el aviso de "no se pudo determinar" aunque el certificado no estuviera revocado. Corregido restaurando ese saneo en los seis módulos.
+- **`s_fide_gui`: el checkbox "Bloquear documento después de firmar" de la pestaña "Firmar PDF con PKCS#12" no tenía ningún efecto.** La GUI enviaba el flag `-k` a `PDFSignerPKCS12`, que solo reconoce `-l`/`--lock` (las demás pestañas de firma PDF sí usan `-k` correctamente, ya que en esos módulos `-l` está ocupado por otro parámetro). El flag desconocido se ignoraba en silencio y el documento nunca quedaba bloqueado, sin importar el estado del checkbox.
 
 ## [1.1.1] — 2026-09-01
 
