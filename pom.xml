@@ -15,11 +15,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>23.0.1</javafx.version>
         <java.version>23</java.version>
-        <bouncycastle.version>1.85</bouncycastle.version>
+        <bouncycastle.version>1.86</bouncycastle.version>
         <itext.version>8.0.5</itext.version>
         <xmlsec.version>4.0.4</xmlsec.version>
-        <slf4j.version>2.0.18</slf4j.version>
-        <logback.version>1.6.3</logback.version>
+        <slf4j.version>2.0.20</slf4j.version>
+        <logback.version>1.6.4</logback.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <file.encoding>UTF-8</file.encoding>
