@@ -1,6 +1,6 @@
 # S-FiDE - Guía Rápida
 
-Sistema de Firma Digital Extendida - Versión 1.3.0 - Grupo Sauken S.A.
+Sistema de Firma Digital Extendida - Versión 1.4.0 - Grupo Sauken S.A.
 
 SFide-GUI proporciona una interfaz gráfica de usuario para asignar los parámetros adecuados a
 cada una de las aplicaciones de la plataforma S-FiDE. Las aplicaciones se muestran de manera
@@ -16,14 +16,20 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 
 ## 1. Ver Slots de Token (TokenSlotsView)
 - Permite visualizar los slots disponibles en un token criptográfico
-- Requiere biblioteca PKCS#11 y contraseña
+- Muestra cuántos slots informa la biblioteca y en cuáles hay un token (sin pedir contraseña) y
+  el contenido del token. Requiere biblioteca PKCS#11 y contraseña. El número de slot es opcional
+  (vacío = primer token detectado); la casilla "Leer todos los tokens" los lee a todos con la misma
+  contraseña, asumiendo el riesgo de sumar un intento fallido a un token ajeno
 
 ## 2. Ver Certificados de Token (TokenCertificateExtractor)
-- Extrae certificados digitales almacenados en un token criptográfico
-- Requiere biblioteca PKCS#11, contraseña y número de slot
+- Extrae certificados digitales almacenados en un token criptográfico, informa si están
+  revocados y guarda su clave pública en un archivo .pem en su carpeta personal de S-FiDE
+- Requiere biblioteca PKCS#11, contraseña y número de slot (si en ese slot no hay un token, se
+  lo busca en los demás)
 
 ## 3. Ver Certificados PKCS#12 (PKCS12CertificateExtractor)
-- Extrae certificados desde archivos PKCS#12 (.p12 o .pfx)
+- Extrae certificados desde archivos PKCS#12 (.p12 o .pfx), informa si están revocados y guarda su
+  clave pública en un archivo .pem en su carpeta personal de S-FiDE
 - Requiere archivo PKCS#12 y contraseña
 
 ## 4. Firmar XML con Token (XMLSignerPKCS11)
@@ -79,6 +85,29 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 ## 13. Firmar PDF con Windows CSP/KSP (PDFSignerWindowsCSP) - solo Windows
 - Igual que el anterior, pero para documentos PDF. Admite las mismas opciones de posición,
   texto adicional y bloqueo del documento que "Firmar PDF con Token"
+
+## Novedades en la versión 1.4.0
+
+- **Ayuda > Buscar actualizaciones...**: consulta en GitHub si hay una versión nueva y, solo si
+  usted lo acepta, la descarga, la verifica, reemplaza los archivos de la instalación y vuelve a
+  abrir S-FiDE. Todo o nada: si algo falla, queda como estaba. Si otro usuario del equipo tiene
+  S-FiDE abierto, se le avisa (ver "Preguntas Frecuentes")
+- **Valores recordados por usuario**: "sfide-defaults.properties" ahora vive en la carpeta
+  personal de cada usuario (C:\Users\su-usuario\S-FiDE), no en la carpeta de instalación. Cada
+  usuario de un equipo compartido tiene los suyos, y varios usuarios pueden tener S-FiDE abierto
+  a la vez sobre la misma instalación
+- **Contraseñas reutilizables durante la sesión**: una contraseña que ya funcionó se copia sola
+  a las demás pestañas del mismo tipo (token / archivo PKCS#12) mientras no cambie el token o el
+  archivo. Solo en memoria: nunca se guarda y se pierde al cerrar. "Herramientas > Olvidar
+  contraseñas de esta sesión" la borra
+- **Última carpeta usada**: "Examinar..." abre directamente en la última carpeta de documentos
+  XML, PDF y XSD
+- **Archivos .pem en su carpeta personal**, con un mensaje que aclara que contienen solo la clave
+  pública y dónde quedaron, un botón "Abrir carpeta del .pem", y consulta del estado de
+  revocación del certificado extraído
+- **El token ya no tiene que estar en el slot 0**: si en el slot indicado no hay un token, se lo
+  busca en los demás. Los errores de acceso al token ahora se explican (contraseña incorrecta,
+  token bloqueado o retirado, biblioteca de 32 bits con Java de 64 bits)
 
 ## Novedades en la versión 1.3.0
 
@@ -146,12 +175,15 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 - Biblioteca PKCS#11 del token (para funciones relacionadas con tokens)
 - Biblioteca iText 8 o superior (para funciones relacionadas con documentos PDF)
 - Permisos de lectura en los archivos a procesar
-- Permisos de escritura en las carpetas de salida
+- Permisos de escritura en las carpetas de salida y en su carpeta personal (donde S-FiDE guarda
+  sus valores recordados y los certificados .pem). Para actualizar S-FiDE desde el menú Ayuda se
+  necesita además permiso de escritura sobre la carpeta de instalación
 - Permiso de lectura y ejecución de la biblioteca PKCS#11 del token
 
 ## Notas
 
-- Los archivos de salida se generan en el mismo directorio que los archivos de entrada
+- Los documentos firmados se generan en el mismo directorio que los documentos de entrada. Los
+  certificados .pem de las pestañas "Ver Certificado" se guardan en su carpeta personal de S-FiDE
 - Mantenga sus certificados y contraseñas en lugar seguro. No los comparta
 - Asegúrese de tener copias de respaldo de los archivos antes de procesarlos
 - **Cuidado con los tokens criptográficos:** un número elevado de intentos de acceso fallido

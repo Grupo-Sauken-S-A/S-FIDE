@@ -16,8 +16,8 @@ Detalle completo de esta filosofía y de cada módulo: **[Manual Técnico de Int
 | Módulo | Qué hace |
 |---|---|
 | `token_slots_view` | Lista slots y certificados de un token PKCS#11 |
-| `token_certificate_extractor` | Extrae un certificado de un token PKCS#11 a `.pem` |
-| `pkcs12_certificate_extractor` | Extrae un certificado de un archivo PKCS#12 a `.pem` |
+| `token_certificate_extractor` | Extrae un certificado de un token PKCS#11 a `.pem` (en la carpeta personal del usuario) e informa su estado de revocación |
+| `pkcs12_certificate_extractor` | Extrae un certificado de un archivo PKCS#12 a `.pem` (en la carpeta personal del usuario) e informa su estado de revocación |
 | `xml_signer_pkcs11` | Firma XML con token PKCS#11 |
 | `xml_signer_pkcs12` | Firma XML con archivo PKCS#12 |
 | `xml_signer_windows_csp` | Firma XML con el almacén de certificados de Windows (solo Windows) |
@@ -28,7 +28,8 @@ Detalle completo de esta filosofía y de cada módulo: **[Manual Técnico de Int
 | `pdf_signer_windows_csp` | Firma PDF con el almacén de certificados de Windows (solo Windows) |
 | `pdf_verify_signatures` | Verifica firmas digitales de un PDF |
 | `windows_certificate_store_view` | Lista los certificados del almacén de Windows (solo Windows) |
-| `s_fide_gui` | Interfaz gráfica JavaFX que invoca los módulos anteriores |
+| `s_fide_updater` | Aplica una actualización de S-FiDE descargada desde GitHub, con respaldo y reversión automática |
+| `s_fide_gui` | Interfaz gráfica JavaFX que invoca los módulos anteriores (y busca/instala actualizaciones desde Ayuda) |
 
 S-FiDE también incluye soporte especializado para comercio exterior ALADI/MERCOSUR (Certificados de Origen Digital y Declaraciones Juradas de Origen) — ver la [sección 10 del manual técnico](doc/manual-tecnico-integracion.md#10-especialización-de-comercio-exterior-aladimercosur-cod-codeh-djo-y-djoeh).
 
@@ -42,11 +43,13 @@ cd S-FIDE
 ./mvnw clean install
 ```
 
-Cada uno de los 14 módulos genera su jar en su propia carpeta `target/`.
+Cada uno de los 15 módulos genera su jar en su propia carpeta `target/`.
 
 ## Distribución portable
 
 `install.bat` arma una carpeta de distribución autocontenida (jars con nombre sin versión, runtime de Java y JavaFX embebidos si se indica una carpeta "vendor") que puede ejecutarse desde cualquier ubicación, incluido un medio removible, en un equipo sin Java preinstalado — ver `Leeme.txt` y la [sección 12 del manual técnico](doc/manual-tecnico-integracion.md#12-distribución-y-despliegue).
+
+**Datos por usuario y actualizaciones (desde 1.4.0).** Lo que S-FiDE recuerda (`sfide-defaults.properties`) y los `.pem` extraídos se guardan en la carpeta personal de cada usuario (`~/S-FiDE`, `C:\Users\<usuario>\S-FiDE` en Windows), no en la carpeta de instalación, que puede ser compartida. **Ayuda → Buscar actualizaciones...** instala nuevas versiones desde GitHub, todo o nada y con la instalación compartida en mente; `crear-paquete-actualizacion.ps1` arma el paquete a adjuntar a cada release.
 
 Los ZIP de las [releases](https://github.com/Grupo-Sauken-S-A/S-FIDE/releases) traen esa misma distribución ya armada. **Antes de descomprimir, cree una carpeta propia** (por ejemplo `C:\S-FiDE`) y descomprima el contenido del ZIP dentro de esa carpeta — no directamente en la raíz de una unidad, el Escritorio o Descargas.
 

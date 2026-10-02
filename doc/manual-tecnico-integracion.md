@@ -2,7 +2,7 @@
 
 **Sistema de Firma Digital Extendido**
 Grupo Sauken S.A. — Córdoba, Argentina
-Versión del documento: acompaña a S-FiDE v1.3.0 — 05/09/2026
+Versión del documento: acompaña a S-FiDE v1.4.0 — 02/10/2026
 
 ---
 
@@ -31,6 +31,7 @@ Versión del documento: acompaña a S-FiDE v1.3.0 — 05/09/2026
    9.12. [PDFSignerWindowsCSP](#912-pdfsignerwindowscsp)
    9.13. [WindowsCertificateStoreView](#913-windowscertificatestoreview)
    9.14. [S-FiDE GUI](#914-s-fide-gui)
+   9.15. [SFideUpdater](#915-sfideupdater)
 10. [Especialización de comercio exterior ALADI/MERCOSUR: COD, CODEH, DJO y DJOEH](#10-especialización-de-comercio-exterior-aladimercosur-cod-codeh-djo-y-djoeh)
 11. [Integración desde otras aplicaciones](#11-integración-desde-otras-aplicaciones)
 12. [Distribución y despliegue](#12-distribución-y-despliegue)
@@ -67,7 +68,7 @@ El diseño responde a un principio central: **cada capacidad es un programa inde
 |---|---|
 | Lenguaje / runtime | Java 23 (OpenJDK 23.0.1) |
 | Interfaz gráfica | JavaFX 23.0.1 (solo para el módulo `s_fide_gui`) |
-| Sistema de build | Apache Maven (multi-módulo, 14 módulos) |
+| Sistema de build | Apache Maven (multi-módulo, 15 módulos) |
 | Empaquetado de distribución | Jars autocontenidos ("fat jars", vía `maven-shade-plugin`/`maven-assembly-plugin`) — no requieren classpath externo |
 | Sistemas operativos soportados | Windows, GNU/Linux, macOS (64 bits) — CSP/KSP es exclusivo de Windows |
 | Arquitectura de CPU | x86-64 (64 bits obligatorio; OpenJDK 23 no soporta sistemas de 32 bits) |
@@ -86,7 +87,7 @@ La distribución final embebe su propio runtime de Java y su propio SDK de JavaF
 
 ## 3. Software de terceros y dependencias
 
-| Componente | Versión (1.3.0) | Uso | Licencia |
+| Componente | Versión (1.4.0) | Uso | Licencia |
 |---|---|---|---|
 | BouncyCastle (`bcprov`/`bcpkix`/`bcutil`-jdk18on) | 1.85 | Primitivos criptográficos, ASN.1, construcción de `DigestInfo` | MIT (Bouncy Castle License) |
 | iText (`kernel`/`io`/`commons`/`sign`/`bouncy-castle-adapter`) | 8.0.5 | Firma y verificación de documentos PDF | AGPL v3 / comercial (Apryse) |
@@ -115,8 +116,8 @@ S-FiDE se distribuye bajo la **Licencia Pública General GNU (GNU GPL), versión
 ## 5. Código fuente y repositorio
 
 - **Repositorio:** [github.com/Grupo-Sauken-S-A/S-FIDE](https://github.com/Grupo-Sauken-S-A/S-FIDE)
-- **Organización:** proyecto Maven multi-módulo (14 módulos) con un `pom.xml` raíz de tipo `pom` (agregador) y un módulo por capacidad.
-- **Versionado:** [SemVer](https://semver.org/). Tags publicados: `v1.0.0` (primer release estable), `v1.1.1` (QA de hardware y de código completa, validada contra los tres modelos de token más usados en Argentina), `v1.2.0` (validación de revocación antes de firmar, diálogo de confirmación en la GUI), `v1.3.0` (versión actual).
+- **Organización:** proyecto Maven multi-módulo (15 módulos) con un `pom.xml` raíz de tipo `pom` (agregador) y un módulo por capacidad.
+- **Versionado:** [SemVer](https://semver.org/). Tags publicados: `v1.0.0` (primer release estable), `v1.1.1` (QA de hardware y de código completa, validada contra los tres modelos de token más usados en Argentina), `v1.2.0` (validación de revocación antes de firmar, diálogo de confirmación en la GUI), `v1.3.0` (pestaña Documentación, instancia única, ayudas contextuales), `v1.4.0` (versión actual: búsqueda automática del slot del token, configuración y certificados `.pem` por usuario, reutilización de contraseñas durante la sesión, última carpeta usada, actualización desde GitHub).
 - **Compilar desde el código fuente:**
   ```bash
   git clone https://github.com/Grupo-Sauken-S-A/S-FIDE.git
@@ -140,7 +141,7 @@ Tanto una **aplicación integradora externa** (en cualquier lenguaje) como la pr
 No hay una API interna distinta para "uso avanzado": el contrato de línea de comandos **es** la API. La GUI no tiene ningún atajo que un integrador externo no pueda reproducir.
 
 Cada módulo:
-1. Recibe sus parámetros como argumentos de línea de comandos (nunca por variables de entorno ni archivos de configuración, salvo la excepción documentada de `sfide-defaults.properties` que usa exclusivamente la GUI para recordar valores entre sesiones).
+1. Recibe sus parámetros como argumentos de línea de comandos (nunca por variables de entorno ni archivos de configuración, salvo la excepción documentada de `sfide-defaults.properties`, que usa exclusivamente la GUI para recordar valores entre sesiones y que desde 1.4.0 vive en la carpeta personal de cada usuario — ver [sección 9.14](#914-s-fide-gui)). Los dos extractores de certificados escriben además su archivo `.pem` en esa misma carpeta personal.
 2. Realiza su tarea (firmar, verificar, extraer, listar).
 3. Escribe su resultado en `stdout` y, si corresponde, genera un archivo de salida en disco.
 4. Termina con código `0` (éxito) o `1` (error), habiendo escrito en `stderr` un mensaje de error breve y en español si algo falló.
@@ -335,6 +336,18 @@ Convenciones comunes a todas las aplicaciones de esta sección:
 
 **Qué significa exactamente el "número de slot"** (aplica a `TokenSlotsView`, `TokenCertificateExtractor`, `XMLSignerPKCS11` y `PDFSignerPKCS11`): PKCS#11 tiene dos numeraciones de slot distintas y no intercambiables — el `CK_SLOT_ID` crudo que asigna el driver del fabricante (un identificador opaco, no necesariamente pequeño ni secuencial) y el `slotListIndex`, la posición del slot dentro de la lista que devuelve la biblioteca (`C_GetSlotList`), siempre empezando en 0. **S-FiDE usa exclusivamente `slotListIndex`** en los cuatro módulos — es también el criterio que usa por defecto `TokenSlotsView` al no indicar ningún slot explícito. Para la mayoría de los tokens (SafeNet, por ejemplo) ambas numeraciones coinciden porque el fabricante asigna `CK_SLOT_ID` secuenciales, por lo que la distinción pasa inadvertida — pero con middleware que asigna `CK_SLOT_ID` no secuenciales (confirmado con el mToken CryptoID de Century Longmai/Macroseguridad), el número que muestra `TokenSlotsView` es el que hay que usar en los otros módulos; no corresponde buscar un "número de slot" en ninguna herramienta del fabricante, porque esa herramienta puede estar mostrando el `CK_SLOT_ID`, un número distinto.
 
+**Búsqueda automática del slot (desde 1.4.0).** `slotListIndex` cuenta **todos** los slots que informa la biblioteca del fabricante, tengan o no un token insertado: la biblioteca de SafeNet (`eTPKCS11.dll`), por ejemplo, informa 8 slots fijos, y el token puede ocupar cualquiera de ellos según el puerto USB, otros tokens conectados o lectores instalados. Antes de 1.4.0, si el slot indicado (por defecto `0`) estaba vacío, el proveedor `SunPKCS11` arrancaba igual pero sin registrar el almacén de claves `PKCS11` y la operación fallaba con un mensaje genérico ("Error al leer el token" / "Error en el acceso al token") — aunque el mismo token funcionara perfecto en otro programa que recorre los slots con token. Ahora los cuatro módulos de token (`TokenSlotsView`, `TokenCertificateExtractor`, `XMLSignerPKCS11`, `PDFSignerPKCS11`) prueban primero el slot indicado y, **si no tiene un token, lo buscan en los demás**:
+
+| Situación | Comportamiento |
+|---|---|
+| El slot indicado tiene el token | Se usa tal cual (mismo comportamiento de siempre, sin consultas extra a la biblioteca) |
+| El slot indicado está vacío y hay **un solo** token en otro slot | Se usa ese slot y se informa por `stdout`: `Aviso: no había un token en el slot N; se usó el slot M, donde se detectó el token.` |
+| El slot indicado está vacío y hay **varios** tokens | Falla (código `1`) listando los slots con token y pidiendo que se indique cuál usar — **no** se prueba la contraseña en ninguno, para no sumar un intento fallido al contador de bloqueo de un token equivocado |
+| No hay ningún token | Falla (código `1`): `No se detectó ningún token conectado para la biblioteca ... (la biblioteca informa N slots, todos sin token)` |
+| La biblioteca es de otra arquitectura (32 bits con un Java de 64 bits, o a la inversa) | Falla con un mensaje explícito, detectado leyendo el encabezado del propio archivo (PE en Windows, ELF en Linux). Es una causa frecuente de que un programa antiguo con Java de 32 bits acceda al token y S-FiDE no: en Windows la biblioteca de 64 bits suele estar en `C:\Windows\System32` y la de 32 bits en `C:\Windows\SysWOW64` |
+
+Los errores de acceso al token (contraseña incorrecta, token bloqueado, token retirado, dispositivo con falla, biblioteca incompatible o inexistente) se traducen a un mensaje en español a partir de **toda** la cadena de causas — el error real casi nunca es el de arriba, `SunPKCS11` lo envuelve varias veces —, sin exponer una traza de Java; si la causa no se reconoce, se agrega el detalle técnico en una sola línea.
+
 **Rutas de biblioteca con espacios en el nombre (p. ej. `C:\Program Files (x86)\...`):** los cuatro módulos aceptan estas rutas sin que el integrador deba agregar comillas — la conversión necesaria (barra invertida a barra normal, y encomillado interno) la hace el propio programa antes de pasarla al proveedor SunPKCS11. Este manejo es uniforme en Windows/Linux/macOS.
 
 ### 9.1 TokenSlotsView
@@ -345,7 +358,7 @@ Convenciones comunes a todas las aplicaciones de esta sección:
 
 **Sintaxis:**
 ```
-java -jar TokenSlotsView.jar <Ruta de la biblioteca PKCS#11> <Contraseña del token>
+java -jar TokenSlotsView.jar <Ruta de la biblioteca PKCS#11> <Contraseña del token> [Número de slot | -todos]
 java -jar TokenSlotsView.jar [-version | -ayuda | -licencia | -listar-drivers]
 ```
 
@@ -355,15 +368,17 @@ java -jar TokenSlotsView.jar [-version | -ayuda | -licencia | -listar-drivers]
 |---|---|---|
 | Ruta de biblioteca PKCS#11 | Sí | Ruta absoluta o relativa al `.dll`/`.so`/`.dylib` del fabricante |
 | Contraseña del token | Sí | PIN de usuario del dispositivo |
+| Número de slot | No (desde 1.4.0) | Entero. Lee solo el token de ese slot (si ahí no hay token, aplica la búsqueda automática). Si se omite, lee el primer token detectado e informa en qué otros slots hay tokens. |
+| `-todos` | No (desde 1.4.0) | Lee el contenido de **todos** los tokens detectados con la misma contraseña (un intento por token; si falla en alguno, lo informa y sigue). No se combina con un número de slot. |
 
 **Validaciones y estándares:**
 - Compatible con cualquier token conforme a PKCS#11.
 - Distingue entradas de tipo "Clave Privada" (`KeyStore.isKeyEntry`) de entradas de tipo "Certificado" (`KeyStore.isCertificateEntry`).
 - Reporta sujeto, emisor, período de validez y número de serie de cada certificado X.509 v3 encontrado.
 
-**Salida:** imprime el `slotListIndex` usado (siempre `0`, es el único slot al que este módulo se conecta) y, por cada alias encontrado dentro de ese slot, su tipo (clave privada o certificado), sujeto, emisor, fechas de validez y número de serie. Si el token tiene más de un alias (más de un certificado/clave), cada uno se numera como "Entrada" — ese número identifica la entrada dentro del slot, no es un número de slot adicional a pasar a otros módulos.
+**Salida:** siempre empieza con el **inventario** de la biblioteca — cuántos slots informa y en cuáles hay un token (`Con token: ...` / `Sin token: ...`), información que no necesita contraseña — y a continuación, por cada token leído, el `slotListIndex` y, por cada alias encontrado dentro de ese slot, su tipo (clave privada o certificado), sujeto, emisor, fechas de validez y número de serie. Si el token tiene más de un alias, cada uno se numera como "Entrada" — ese número identifica la entrada dentro del slot, no es un número de slot adicional. El `slotListIndex` mostrado es el que hay que pasar a los demás módulos de token. **Por qué por defecto se lee un solo token:** leer el contenido exige iniciar sesión, y con varios tokens conectados probar la contraseña en uno que no es el suyo puede sumar un intento fallido a su contador de bloqueo; `-todos` asume ese riesgo de forma explícita.
 
-**Mensajes de error posibles:** "El archivo de la biblioteca PKCS#11 no existe", "El proveedor SunPKCS11 no está disponible", "Contraseña incorrecta o error al acceder al token", "Error al leer el token". Si el token no tiene contenido, no es un error: se informa por salida estándar "No se encontraron certificados ni claves en el token."
+**Mensajes de error posibles:** "El archivo de la biblioteca PKCS#11 no existe", "No se detectó ningún token conectado para la biblioteca ...", "La biblioteca PKCS#11 ... es de 32 bits, pero S-FiDE se ejecuta con un Java de 64 bits ...", "Contraseña (PIN) incorrecta.", "El token está bloqueado por demasiados intentos fallidos de contraseña (PIN)", "El token no está presente, fue retirado o no es reconocido por la biblioteca indicada", "El número de slot debe ser un número entero", y, para una causa no reconocida, "No se pudo acceder al token (<detalle técnico>)". Si el token no tiene contenido, no es un error: se informa por salida estándar "No se encontraron certificados ni claves en el token."
 
 **Nota sobre exit code:** invocarlo sin argumentos muestra la ayuda y termina con código `1` (a diferencia de invocarlo explícitamente con `-ayuda`, que termina con código `0`) — un integrador que dispare el proceso "sin querer" sin argumentos para inspeccionar la ayuda no debe interpretar el código `1` resultante como una falla real.
 
@@ -376,13 +391,13 @@ java -jar TokenSlotsView.jar C:\Windows\System32\eTPKCS11.dll "MiPIN123"
 
 ### 9.2 TokenCertificateExtractor
 
-**Qué hace:** extrae el certificado digital almacenado en un slot específico de un token PKCS#11 y lo exporta como archivo `.pem`.
+**Qué hace:** extrae el certificado digital almacenado en un slot de un token PKCS#11, informa su estado de revocación y lo exporta como archivo `.pem` (que contiene solo el certificado con su clave pública, nunca la clave privada) en la carpeta personal del usuario.
 
 **Uso recomendado:** cuando se necesita el certificado público de un token por separado (por ejemplo, para registrarlo en un sistema externo), sin necesidad de firmar nada.
 
 **Sintaxis:**
 ```
-java -jar TokenCertificateExtractor.jar <Ruta de la biblioteca PKCS#11> <Contraseña del token> <Número de slot>
+java -jar TokenCertificateExtractor.jar <Ruta de la biblioteca PKCS#11> <Contraseña del token> <Número de slot> [-omitir-revocacion true|false]
 java -jar TokenCertificateExtractor.jar [-version | -ayuda | -licencia | -listar-drivers]
 ```
 
@@ -392,15 +407,17 @@ java -jar TokenCertificateExtractor.jar [-version | -ayuda | -licencia | -listar
 |---|---|---|
 | Ruta de biblioteca PKCS#11 | Sí | Ídem TokenSlotsView |
 | Contraseña del token | Sí | PIN de usuario |
-| Número de slot | Sí | Entero; ver `TokenSlotsView` para conocerlo |
+| Número de slot | Sí | Entero; ver `TokenSlotsView` para conocerlo. Desde 1.4.0, si en ese slot no hay un token se lo busca en los demás (ver [Búsqueda automática del slot](#9-catálogo-de-aplicaciones)) |
+| `-omitir-revocacion` | No | `true` para no consultar el estado de revocación (por ejemplo, sin conexión a Internet). Por defecto `false`: se consulta |
 
 **Validaciones y estándares:**
 - Compatible con cualquier token conforme a PKCS#11; procesa certificados X.509.
-- El nombre del archivo `.pem` de salida se deriva del componente `CN=` (Common Name) del sujeto del certificado, reemplazando cualquier carácter que no sea letra, dígito, punto o guion por `_`; si no hay `CN=`, usa el nombre literal `certificate.pem`. El archivo se escribe en el directorio de trabajo actual.
+- El nombre del archivo `.pem` de salida se deriva del componente `CN=` (Common Name) del sujeto del certificado, reemplazando cualquier carácter que no sea letra, dígito, punto o guion por `_`; si no hay `CN=`, usa el nombre literal `certificate.pem`. **Desde 1.4.0 el archivo se escribe en la carpeta personal del usuario** (`<carpeta del usuario>/S-FiDE`: `C:\Users\<usuario>\S-FiDE` en Windows, `~/S-FiDE` en Linux/macOS; la propiedad de sistema `-Dsfide.data.dir=<carpeta>` la redirige), no en el directorio de trabajo ni en la carpeta de instalación — la instalación puede ser compartida por varios usuarios y no siempre se puede escribir en ella. Si esa carpeta no se puede crear o escribir, se cae al directorio de trabajo actual (y la salida informa la carpeta real). El nombre del archivo no cambió respecto de versiones anteriores.
+- **Estado de revocación (desde 1.4.0):** por cada certificado se consulta OCSP y, si no da una respuesta concluyente, CRL — el mismo mecanismo que los firmadores y verificadores (ver [sección 7.5](#75-validación-de-revocación-ocsp-y-crl)) — y se informa `VIGENTE`, `REVOCADO` o `NO SE PUDO VERIFICAR`. Es **solo informativo: nunca cambia el código de salida**, ni siquiera con un certificado revocado (quien extrae un certificado para inspeccionarlo justamente quiere verlo, sea cual sea su estado). A diferencia de los firmadores, la autoridad emisora se busca primero entre los demás certificados del mismo token — donde suele estar la AC — y recién después en los certificados confiables de Java, lo que permite armar la consulta OCSP con autoridades certificantes que Java no trae de fábrica.
 
-**Salida:** información del certificado por consola (`Sujeto:`, `Emisor:`, `Número de Serie:`, `Válido desde:`, `Válido hasta:`, `Algoritmo de Firma:`) y un archivo `.pem` con el certificado exportado.
+**Salida:** por cada certificado, información por consola (`Sujeto:`, `Emisor:`, `Número de Serie:`, `Válido desde:`, `Válido hasta:`, `Algoritmo de Firma:`), una línea `Estado de revocación: ...` y un bloque que describe el archivo generado: `Clave pública del certificado guardada en un archivo PEM (contiene solo el certificado con su clave pública; no incluye la clave privada):` seguido de `Archivo: <nombre>.pem` y `Carpeta: <ruta>`.
 
-**Mensajes de error posibles:** "El archivo de la biblioteca PKCS#11 no existe", "Proveedor SunPKCS11 no disponible", "Error al cargar el almacén de claves", "El número de slot debe ser un número entero", "No se encontró ningún certificado en el slot [número]", "Error al exportar el certificado".
+**Mensajes de error posibles:** los mismos de acceso al token que `TokenSlotsView` (biblioteca inexistente o de otra arquitectura, ningún token detectado, contraseña incorrecta, token bloqueado o retirado), "Argumento no reconocido", "El número de slot debe ser un número entero", "No se encontró ningún certificado en el slot [número]", "Error al exportar el certificado".
 
 **Ejemplo:**
 ```
@@ -415,7 +432,7 @@ java -jar TokenCertificateExtractor.jar C:\Windows\System32\eTPKCS11.dll "MiPIN1
 
 **Sintaxis:**
 ```
-java -jar PKCS12CertificateExtractor.jar <archivo.p12> <password>
+java -jar PKCS12CertificateExtractor.jar <archivo.p12> <password> [-omitir-revocacion true|false]
 java -jar PKCS12CertificateExtractor.jar [-version | -ayuda | -licencia]
 ```
 
@@ -425,14 +442,15 @@ java -jar PKCS12CertificateExtractor.jar [-version | -ayuda | -licencia]
 |---|---|---|
 | Archivo PKCS#12 | Sí | Ruta al archivo `.p12`/`.pfx` |
 | Contraseña | Sí | Contraseña del archivo PKCS#12 |
+| `-omitir-revocacion` | No | `true` para no consultar el estado de revocación. Por defecto `false`: se consulta (ver [9.2](#92-tokencertificateextractor)) |
 
 No aplica `-listar-drivers` (no hay drivers involucrados con archivos PKCS#12).
 
 **Validaciones y estándares:**
 - Compatible con archivos PKCS#12 estándar; procesa certificados X.509.
-- Misma lógica de nombre de archivo de salida que `TokenCertificateExtractor` (extracción del `CN=`, saneamiento de caracteres).
+- Misma lógica de nombre de archivo de salida, de carpeta de destino (la carpeta personal del usuario, desde 1.4.0) y de consulta informativa del estado de revocación que `TokenCertificateExtractor` (ver [9.2](#92-tokencertificateextractor)). La autoridad emisora se busca entre los demás certificados del archivo y las cadenas de sus claves antes de recurrir a los de Java.
 
-**Salida:** información del certificado por consola (mismos campos que `TokenCertificateExtractor`, sin número de slot) y un archivo `.pem` exportado.
+**Salida:** información del certificado por consola (mismos campos que `TokenCertificateExtractor`, sin número de slot), la línea `Estado de revocación: ...` y el bloque que describe el archivo `.pem` generado (nombre y carpeta).
 
 **Mensajes de error posibles:** "El archivo PKCS#12 no existe", "El archivo no es un PKCS#12 válido o la contraseña es incorrecta", "El archivo PKCS#12 no contiene ningún certificado", "No se encontró ningún certificado X.509 en el archivo PKCS#12", "Error al exportar certificado".
 
@@ -478,7 +496,7 @@ Antes de firmar, valida el estado de revocación del certificado — ver [secci�
 |---|---|---|
 | Biblioteca PKCS#11 | Sí | Ruta al driver del token |
 | Contraseña | Sí | PIN del token |
-| Número de slot | Sí | Entero |
+| Número de slot | Sí | Entero. Desde 1.4.0, si en ese slot no hay un token se lo busca en los demás (ver [Búsqueda automática del slot](#9-catálogo-de-aplicaciones)) |
 | Archivo XML | Sí | Ruta al XML a firmar |
 | Elemento a firmar | Sí (puede ser cadena vacía `""`) | Si está vacío, firma **todo el documento** (comportamiento estándar y abierto de XML-DSig — no es exclusivo de ningún elemento en particular). Si no está vacío, firma el elemento con ese atributo `Id`/`ID`/`id` (o ese nombre de tag), colocando la firma **embebida**, inmediatamente asociada a ese elemento — también estándar, aplicable a cualquier nombre de elemento. Los valores `COD`, `CODEH`, `DJO` y `DJOEH` tienen además un significado especializado — ver [sección 10](#10-especialización-de-comercio-exterior-aladimercosur-cod-codeh-djo-y-djoeh) |
 
@@ -666,7 +684,7 @@ Antes de firmar, valida el estado de revocación del certificado — ver [secci�
 | `-i`, `--input` | Sí | Archivo PDF a firmar |
 | `-l`, `--library` | Sí | Ruta a la biblioteca PKCS#11 |
 | `-p`, `--password` | Sí | PIN del token |
-| `-s`, `--slot` | Sí | Número de slot |
+| `-s`, `--slot` | Sí | Número de slot. Desde 1.4.0, si en ese slot no hay un token se lo busca en los demás (ver [Búsqueda automática del slot](#9-catálogo-de-aplicaciones)) |
 | `-k`, `--lock` | No (default `false`) | Bloquea el documento contra modificaciones posteriores a la firma (certificación DocMDP + cifrado, ver nota arriba) |
 | `-x`, `--xpos` / `-y`, `--ypos` | No (default `0`) | Posición de una firma visible; si ambas quedan en `0`, la firma es invisible |
 | `-t`, `--text` | No | Texto adicional a mostrar en la firma visible |
@@ -851,19 +869,70 @@ java -jar WindowsCertificateStoreView.jar
 **Navegación (rediseñada en 1.1.1):** hasta la 1.1.1-beta.1, los 12-14 módulos se mostraban como pestañas horizontales en la parte superior — con esa cantidad de títulos, no entraban en el ancho de la ventana y quedaban con scroll horizontal. Se reemplazó por un panel lateral vertical (cada módulo con un ícono según su categoría: ver, firmar o verificar) — el espacio vertical disponible es mucho mayor que el horizontal, así que la lista completa entra sin necesidad de scroll salvo en pantallas muy bajas. El formulario del módulo elegido se muestra en un panel con scroll vertical propio, para que ningún campo quede inaccesible en pantallas chicas, y el panel "Salida del Proceso" ahora se puede colapsar (arranca colapsado y se expande solo cuando aparece un resultado nuevo), liberando espacio para el formulario mientras no se ejecutó nada.
 
 **Funciones adicionales relevantes para quien la use manualmente:**
-- Recuerda entre sesiones, en `sfide-defaults.properties`: la ruta de biblioteca PKCS#11 / archivo PKCS#12 / número de slot (se guardan tanto al usar "Examinar..."/"Detectar automáticamente" como al escribirlos a mano), una ruta de biblioteca particular por cada marca/modelo de token elegida en el selector (en vez de una sola ruta global), el último módulo abierto (se reabre ahí directamente al iniciar), el tamaño/posición/maximizado de la ventana, el alias del almacén de Windows, y la casilla "Salida simple" de los verificadores de XML/PDF. **Nunca se persiste ninguna contraseña.** Tampoco se recuerdan la posición X/Y de firma visible ni la casilla "Bloquear documento después de firmar" — a propósito: el usuario siempre debe indicarlas de nuevo en cada firma, igual que el elemento/ID de un XML a firmar, ninguno de los tres se preserva entre operaciones.
+- Recuerda entre sesiones, en `sfide-defaults.properties` (desde 1.4.0 en la **carpeta personal del usuario**, ver el apartado siguiente): la ruta de biblioteca PKCS#11 / archivo PKCS#12 / número de slot (se guardan tanto al usar "Examinar..."/"Detectar automáticamente" como al escribirlos a mano), una ruta de biblioteca particular por cada marca/modelo de token elegida en el selector (en vez de una sola ruta global), la **última carpeta usada para documentos XML, PDF y XSD**, el último módulo abierto (se reabre ahí directamente al iniciar), el tamaño/posición/maximizado de la ventana, el alias del almacén de Windows, y la casilla "Salida simple" de los verificadores de XML/PDF. **Nunca se persiste ninguna contraseña.** Tampoco se recuerdan la posición X/Y de firma visible ni la casilla "Bloquear documento después de firmar" — a propósito: el usuario siempre debe indicarlas de nuevo en cada firma, igual que el elemento/ID de un XML a firmar, ninguno de los tres se preserva entre operaciones.
+- **Carpeta personal del usuario y versión del formato de `sfide-defaults.properties` (1.4.0).** Los valores recordados, el candado de instancia única y los `.pem` que extraen los módulos "Ver certificado" viven en `<carpeta personal del usuario>/S-FiDE` (`C:\Users\<usuario>\S-FiDE` en Windows, `~/S-FiDE` en Linux/macOS; redirigible con `-Dsfide.data.dir=<carpeta>`), **no** en la carpeta de instalación. Motivo: una instalación compartida por varios usuarios (a la vez o por turnos) pisaba los valores de uno con los de otro, y exigía permiso de escritura sobre la carpeta de instalación. Si la carpeta personal no se puede crear o escribir (perfil de solo lectura), se degrada al directorio de trabajo en vez de impedir el uso. El archivo se guarda de forma atómica (archivo temporal + renombre), así un corte de luz a mitad de escritura no deja un archivo truncado.
+  - **Versión del formato:** el archivo lleva dos claves de control, `config.schema` (entero que identifica el FORMATO — `1` = S-FiDE 1.3.0 y anteriores, `2` = 1.4.0 — y es el que dispara migraciones) y `app.version` (la versión de S-FiDE que lo escribió por última vez, informativa). Al arrancar, un archivo más viejo se adapta paso a paso hasta el formato actual; uno sin `config.schema` se interpreta como formato `1`; uno de un esquema **más nuevo** (alguien volvió a una instalación vieja) se conserva sin tocar, para no perder claves. Como el archivo está fuera de la instalación, **actualizar S-FiDE nunca lo modifica**: lo adapta el propio programa nuevo la primera vez que lo abre.
+  - **Migración desde el archivo de la instalación:** la primera vez que cada usuario abre S-FiDE 1.4.0, si junto a la instalación existe un `sfide-defaults.properties` de una versión anterior, se importa como punto de partida (no se borra ni modifica: otros usuarios del equipo lo necesitan para importar el suyo). No se heredan los indicadores de accesos directos (`desktop.shortcut.created`, `doc.shortcuts.created`): son de quien los generó, y un usuario que nunca recibió sus accesos directos debe recibirlos.
+- **Contraseñas reutilizables durante la sesión (1.4.0).** Una contraseña usada **con éxito** (el módulo terminó con código `0`) se recuerda solo en memoria y se copia automáticamente a los campos de contraseña de las demás pestañas del mismo tipo: las de token PKCS#11 (ver slots, ver certificado, firmar XML, firmar PDF) comparten una, las de archivo PKCS#12 otra. Está atada a la credencial para la que funcionó — biblioteca y slot en el caso del token, ruta en el caso del archivo —; si el usuario cambia de token o de archivo, se olvida. Si escribe una contraseña nueva y funciona, reemplaza a la recordada; no se pisa lo que el usuario esté escribiendo en otra pestaña. Si una contraseña **recordada** falla, se olvida y no se reenvía sola (con un token cada intento fallido cuenta contra el límite que lo bloquea). Nunca se escribe en disco ni se envía a ningún lado; el ítem **Herramientas → Olvidar contraseñas de esta sesión** la borra a pedido, y desaparece al cerrar S-FiDE. Nota de alcance: en Java una contraseña es un `String` inmutable que no se puede sobrescribir en memoria de forma determinística — "olvidar" significa soltar toda referencia. Lógica en `SessionPasswordStore` (sin dependencias de interfaz, con pruebas unitarias).
+- **Última carpeta usada (1.4.0).** Los botones "Examinar..." abren en la última carpeta de la que se tomó un documento del mismo tipo — XML, PDF o XSD, compartida entre todas las pestañas de ese tipo (firmar, verificar, verificar con XSD) y entre sesiones (`last.dir.xml`, `last.dir.pdf`, `last.dir.xsd`). Como el documento firmado se guarda junto al original, una carpeta por tipo alcanza para tomar y para encontrar los archivos. Además de elegir con "Examinar...", la carpeta se actualiza al pegar o escribir la ruta de un archivo existente. La carpeta del archivo ya cargado en el campo tiene prioridad; si la carpeta recordada ya no existe (pendrive, unidad de red), se ignora sin error.
+- **Ayuda → Buscar actualizaciones... (1.4.0).** Ver [sección 9.15](#915-sfideupdater): consulta GitHub, pide permiso, descarga y verifica, y delega en `SFideUpdater.jar`. Al arrancar, si una actualización anterior dejó un resultado, se muestra una sola vez; y mientras alguien está actualizando la instalación, S-FiDE no arranca (muestra un aviso) para no iniciarse sobre archivos a medias.
+- **Pestañas "Ver Certificado de Token" y "Ver Certificado de PKCS#12" (1.4.0):** el botón "Abrir carpeta del .pem" abre en el explorador de archivos la carpeta personal donde quedan los certificados. La pestaña de token y las de firma con token ya no exigen el número de slot (en blanco equivale a `0`, y los módulos buscan el token si ahí no está); la pestaña "Ver Slots de Token" suma el campo opcional "Número de Slot".
 - La ruta de biblioteca PKCS#11 y el número de slot están sincronizados en vivo entre todos los módulos que los usan: cambiarlos en un módulo los actualiza inmediatamente en los demás, sin necesidad de reiniciar la aplicación.
 - Detección automática de driver PKCS#11 por marca/modelo (ver [sección 8](#8-catálogo-de-tokens-y-drivers-soportados)).
 - Los módulos de CSP/KSP (`WindowsCertificateStoreView`/`XMLSignerWindowsCSP`/`PDFSignerWindowsCSP`) solo aparecen en el panel lateral si la GUI corre en Windows.
 - Validación de que todos los `.jar` necesarios estén presentes junto a `SFide-GUI.jar` antes de permitir su uso.
-- **Instancia única por carpeta de instalación:** al arrancar, se detecta si ya hay otra instancia de la GUI corriendo desde la misma carpeta (dos instalaciones en carpetas distintas sí pueden correr en paralelo). Si la hay, se informa y la nueva instancia se cierra sin abrir ninguna ventana, sin afectar la ya abierta. Implementado con un `FileLock` (`java.nio.channels`) exclusivo sobre `sfide-gui.lock`, no con un flag persistido — el sistema operativo libera el lock automáticamente al terminar el proceso, sea un cierre normal o una caída, sin dejar ningún estado que limpiar a mano. Mecanismo estándar del JDK, igual en Windows/Linux/macOS.
+- **Instancia única por usuario y por carpeta de instalación:** al arrancar, se detecta si ese mismo usuario ya tiene otra instancia de la GUI corriendo desde la misma carpeta (dos instalaciones en carpetas distintas sí pueden correr en paralelo, y **usuarios distintos del mismo equipo** — por ejemplo, en un servidor de escritorio remoto — pueden tener cada uno su propia instancia a la vez sobre la misma instalación). Si la hay, se informa y la nueva instancia se cierra sin abrir ninguna ventana, sin afectar la ya abierta. Implementado con un `FileLock` (`java.nio.channels`) exclusivo sobre `sfide-gui-<marca>.lock` en la carpeta personal del usuario (la marca identifica la carpeta de instalación), no con un flag persistido — el sistema operativo libera el lock automáticamente al terminar el proceso, sea un cierre normal o una caída, sin dejar ningún estado que limpiar a mano. Mecanismo estándar del JDK, igual en Windows/Linux/macOS.
 - **Ventana de Ayuda, pestaña "Documentación":** enlaces para abrir, en el navegador web predeterminado del sistema, los documentos HTML de `doc/` (Guía de Usuario y Manual Técnico) como URL `file://`, más enlaces externos a los visualizadores de ALADI para COD/CODEH (`viewcod.certificadoorigen.com.ar`) y DJO/DJOEH (`viewdjo.certificadoorigen.com.ar`). La pestaña "Contacto" de la misma ventana incluye además un enlace a la página del proyecto en GitHub.
 - **Botón "Abrir documento generado"**, junto al campo del documento de entrada en las seis pestañas de firma: deshabilitado hasta que la firma termina con código de salida `0` **y** el archivo `-signed` correspondiente existe realmente en disco (no se confía ciegamente en el código de salida) — al presionarlo, abre ese documento como URL `file://` en el navegador predeterminado. Se deshabilita si el usuario edita el campo del documento de entrada después de firmar.
 - **Botones de ayuda contextual ("?")**: junto a "Elemento XML (ID) a Firmar" en las tres pestañas de firma XML (qué pasa si se deja vacío, qué debe contener, y el detalle de COD/CODEH/DJO/DJOEH para comercio exterior), y junto a la posición X/Y en las tres pestañas de firma PDF (sistema de coordenadas de PDF y las posiciones recomendadas para Exportador/Funcionario Habilitado en comercio exterior — ver también [sección 9.9](#99-pdfsignerpkcs12), tabla de flags).
 - **Campos de entrada vacíos con ejemplo de carga ("placeholder"):** cada `TextField` sin valor recordado muestra, en gris claro, un valor de ejemplo realista (p. ej. `C:\Documentos\factura.xml`) en vez de repetir la etiqueta del campo — no es un valor real, desaparece al tipear y nunca se envía como argumento.
 - **Diálogo "Acerca de" ampliado:** descripción del producto, nombre y ubicación de Grupo Sauken S.A., enlaces al sitio web, al repositorio en GitHub y a la página del proyecto (GitHub Pages), y una mención de la licencia (GPLv2 o posterior) con referencia a Ayuda → Licencia para el texto completo.
-- **(Windows) Accesos directos automáticos, una sola vez por instalación:** al primer arranque de `SFide-GUI.bat`, se crean tres accesos directos en el escritorio y otros tres en el menú inicio (carpeta "S-FiDE"), todos con el ícono de S-FiDE — uno abre la aplicación (`S-FiDE.lnk` hacia el `.bat`), y los otros dos abren en el navegador predeterminado la Guía de Usuario y el Manual Técnico de Integración de la carpeta `doc/` (archivos `.url` con `URL=file:///...`, no requieren asociar ninguna extensión). Cada grupo (aplicación / documentación) se registra con su propia marca independiente en `sfide-defaults.properties` (`desktop.shortcut.created` / `doc.shortcuts.created`) para no repetirse en próximas ejecuciones, incluso si el usuario los borra después. Blindado contra políticas de seguridad corporativas restrictivas (PowerShell bloqueado o colgado, sin permisos de escritura): nunca genera un error visible ni bloquea el arranque.
+- **(Windows) Accesos directos automáticos, una sola vez por usuario:** al primer arranque de `SFide-GUI.bat`, se crean tres accesos directos en el escritorio y otros tres en el menú inicio (carpeta "S-FiDE"), todos con el ícono de S-FiDE — uno abre la aplicación (`S-FiDE.lnk` hacia el `.bat`), y los otros dos abren en el navegador predeterminado la Guía de Usuario y el Manual Técnico de Integración de la carpeta `doc/` (archivos `.url` con `URL=file:///...`, no requieren asociar ninguna extensión). Cada grupo (aplicación / documentación) se registra con su propia marca independiente en el `sfide-defaults.properties` del usuario (`desktop.shortcut.created` / `doc.shortcuts.created`) para no repetirse en próximas ejecuciones, incluso si el usuario los borra después. Blindado contra políticas de seguridad corporativas restrictivas (PowerShell bloqueado o colgado, sin permisos de escritura): nunca genera un error visible ni bloquea el arranque.
   > **Nombre sin número de versión, a propósito.** Ninguno de los tres nombres incluye la versión (antes el de la aplicación sí, `S-FiDE 1.1.1.lnk`). Así, al actualizar S-FiDE a una carpeta nueva, el primer arranque de la versión nueva **sobrescribe** estos mismos archivos en vez de sumar íconos nuevos al lado de los de la versión anterior — que además quedarían apuntando a una ubicación inexistente si el usuario borra la carpeta vieja, como suele pasar. También hay un ítem de menú **Herramientas → Recrear accesos directos** para disparar esto mismo a pedido (por ejemplo, si el usuario borró alguno sin querer, o si por algún motivo el primer arranque automático no llegó a crearlos).
+
+### 9.15 SFideUpdater
+
+**Qué hace:** aplica una actualización de S-FiDE ya descargada y verificada por la interfaz gráfica (**Ayuda → Buscar actualizaciones...**): reemplaza los archivos de la carpeta de instalación con respaldo y reversión automática. Es un módulo más, con el mismo contrato de línea de comandos que el resto (`java -jar SFideUpdater.jar <argumentos>`; código `0` éxito, `1` error; resultado a `stdout`, errores a `stderr` en español, sin trazas de Java). Está pensado para que lo invoque la GUI, pero cualquier integrador puede usarlo para distribuir actualizaciones a una flota de equipos con sus propias herramientas.
+
+**Sintaxis:**
+```
+java -jar SFideUpdater.jar verificar <paquete.zip> <carpeta de instalación> [--ignorar <archivo>]...
+java -jar SFideUpdater.jar aplicar <paquete.zip> <carpeta de instalación> [--esperar-pid <n>] [--relanzar] [--resultado <archivo>] [--log <archivo>]
+java -jar SFideUpdater.jar [-version | -ayuda | -licencia]
+```
+
+| Modo / opción | Descripción |
+|---|---|
+| `verificar` | Valida el paquete y comprueba que la actualización **podría** aplicarse (runtimes exigidos presentes, permiso de escritura, archivos en uso), **sin modificar nada**. La GUI lo corre antes de cerrarse, así cualquier problema previsible se informa sin que el usuario pierda su sesión. |
+| `--ignorar <archivo>` | Archivo que se sabe en uso por quien consulta (la GUI ignora `SFide-GUI.jar` y `SFideUpdater.jar`, que su propia consulta tiene abiertos). |
+| `aplicar` | Reemplaza los archivos. Todo o nada. |
+| `--esperar-pid <n>` | Espera a que termine ese proceso (la GUI) y a continuación unos segundos más — el `.bat`/`.sh` que lanzó la GUI puede seguir leyendo sus últimas líneas un instante después de que Java termina. |
+| `--relanzar` | Vuelve a abrir S-FiDE al terminar, **haya salido bien o se haya revertido** (el usuario tenía S-FiDE abierto y espera encontrarlo). Lanza Java directamente con los runtimes embebidos (`javaw.exe` en Windows, sin ventana de consola); si no puede, usa el lanzador. |
+| `--resultado <archivo>` | Escribe ahí un `.properties` con `status` (`ok`, `revertido`, `revertido-en-uso`), `version` y `message`, que la GUI muestra una sola vez al arrancar. |
+| `--log <archivo>` | Agrega el detalle de lo realizado a ese archivo. |
+
+**El paquete de actualización** (`S-FiDE-<versión>-actualizacion.zip`, publicado como adjunto del GitHub Release junto con su `S-FiDE-<versión>-actualizacion.zip.sha256`) contiene los jars de los 15 módulos, los lanzadores, `Leeme.txt`, `LICENSE`, `sfide-defaults.demo.properties`, el ícono y la carpeta `doc/` — **sin** los runtimes de Java ni de JavaFX (por eso pesa menos de la mitad que la distribución completa) —, más dos archivos de control: `update-manifest.properties` (`version`, y los nombres de carpeta de runtime que esa versión exige: `requires.java`, `requires.javafx`) y `update-files.sha256` (SHA-256 de cada archivo instalable, en formato `sha256sum`). Se arma con `crear-paquete-actualizacion.ps1` en la raíz del repositorio (requiere haber corrido `mvnw clean install`; usa la herramienta `jar` del JDK para que las rutas del zip lleven `/`).
+
+**Validación del paquete (estricta):**
+- Solo puede instalar una lista cerrada: en la raíz, `*.jar`, `*.bat`, `*.sh`, `*.ico`, `Leeme.txt`, `LICENSE` y `sfide-defaults.demo.properties`; en `doc/`, documentos y recursos web. **Nunca** `sfide-defaults.properties` (es del usuario), las carpetas de runtime, ni `test/` o `xsd/`. Cualquier otra ruta invalida el paquete.
+- Rechaza rutas absolutas, con `..` o con letra de unidad (protección contra "zip slip"), y limita la cantidad de archivos y el tamaño total.
+- Cada archivo extraído se verifica contra su SHA-256 **antes** de tocar la instalación.
+- Si la versión exige un runtime que la instalación no tiene (por ejemplo, un Java más nuevo), no se actualiza y se manda a descargar la distribución completa — en vez de dejar una instalación a medio actualizar.
+
+**Cómo se garantiza "todo o nada":** (1) se extrae a una carpeta de trabajo dentro de la propia instalación (mismo volumen: los reemplazos son renombres atómicos); (2) cada archivo actual se **mueve** a una carpeta de respaldo y el nuevo se mueve a su lugar — los archivos cuyo contenido ya es idéntico no se tocan; (3) ante cualquier falla se devuelven los respaldos y se borran los archivos nuevos ya colocados. Mientras dura, existe la marca `.sfide-actualizando` en la carpeta de instalación: ninguna GUI arranca (de ningún usuario) sobre archivos a medias, y una marca de más de 15 minutos (de una caída) se ignora para no trabar para siempre.
+
+**Instalación compartida por varios usuarios.** En Windows, un jar que otro usuario tiene abierto (su S-FiDE en ejecución) no se puede mover ni reemplazar. No se fuerza: la verificación previa lo detecta **antes** de cerrar la GUI y, si igual ocurre durante la aplicación (alguien abrió S-FiDE a último momento), se reintenta unos 30 segundos (por si la otra persona está cerrando) y, si sigue en uso, **se revierte todo** y se informa: "Probablemente otro usuario de este equipo tiene S-FiDE abierto desde la misma carpeta. Pídale que lo cierre y vuelva a intentar". La configuración de cada usuario no se toca nunca: vive en su carpeta personal. En Linux/macOS un archivo en uso sí se puede reemplazar, por lo que no hay bloqueo; las instancias ya abiertas siguen con su versión hasta reiniciarse.
+
+**Cómo se ejecuta desde la GUI.** El módulo se invoca desde una **copia** del jar en la carpeta del usuario (`<carpeta personal>/S-FiDE/update/SFideUpdater-run.jar`), porque el propio `SFideUpdater.jar` forma parte de lo que se reemplaza. La GUI: (1) consulta `api.github.com/repos/Grupo-Sauken-S-A/S-FIDE/releases/latest` por HTTPS y usa la configuración de proxy del sistema; (2) compara contra la versión instalada (SemVer: `1.10.0` es posterior a `1.9.9`, y una pre-publicación es anterior a su versión final); (3) si hay una más nueva, muestra sus novedades y **pide permiso** explícito — nada se descarga ni se instala sin ese sí; (4) descarga el paquete siguiendo las redirecciones **a mano**, validando cada salto contra una lista cerrada de dominios (`github.com`, `*.githubusercontent.com`, solo HTTPS) y verifica el SHA-256 contra el publicado junto al paquete (protege contra descargas cortadas o corruptas; no contra quien alterara la publicación entera — para eso haría falta además firmar el paquete con una clave aparte); (5) corre `verificar`; (6) lanza `aplicar` desacoplado y se cierra. Si la publicación no trae paquete de actualización (por ejemplo, una versión que cambia el Java embebido), la GUI lo explica y ofrece abrir la página de descargas. Para pruebas o un espejo interno existe la propiedad de sistema `-Dsfide.update.api=<url>` (su dominio se agrega a los permitidos; solo la fija quien lanza el programa).
+
+**Requisitos y límites conocidos:** permiso de escritura sobre la carpeta de instalación (si falta, se informa y se sugiere ejecutar como administrador); conexión a Internet; los archivos que una versión nueva ya no incluya **no se borran** (solo se agregan y reemplazan); una instalación anterior a 1.4.0 no tiene este módulo, así que la actualización a 1.4.0 es manual (ZIP completo), y a partir de ahí es automática.
+
+**Mensajes de error posibles:** "No se encuentra el paquete de actualización", "El paquete de actualización está dañado o no es un archivo ZIP válido", "El paquete de actualización contiene un archivo que una actualización no puede instalar: ...", "La versión X necesita ..., que esta instalación no tiene", "No hay permiso para escribir en la carpeta de instalación de S-FiDE", "Hay archivos de S-FiDE en uso (...)", "Ya hay otra actualización de S-FiDE en curso en esta carpeta".
+
+**Ejemplo:**
+```
+java -jar SFideUpdater.jar verificar C:\Temp\S-FiDE-1.5.0-actualizacion.zip C:\S-FiDE --ignorar SFideUpdater.jar
+```
 
 ---
 
@@ -1041,7 +1110,7 @@ Una distribución de S-FiDE lista para usar es una carpeta autocontenida con est
 S-FiDE/
 ├── openjdk-23.0.1/          ← runtime de Java embebido (por plataforma)
 ├── javafx-sdk-23.0.1/       ← SDK de JavaFX embebido (por plataforma)
-├── *.jar                    ← los 14 módulos, con nombre "amigable" sin versión (ver más abajo)
+├── *.jar                    ← los 15 módulos (13 de línea de comandos + SFideUpdater + la GUI), con nombre "amigable" sin versión (ver más abajo)
 ├── SFide-GUI.bat / .sh      ← launchers, se autodetectan solos (no dependen de una letra de unidad fija)
 ├── sfide-defaults.demo.properties
 ├── Leeme.txt
@@ -1056,11 +1125,39 @@ S-FiDE/
 
 **Convención de nombres de jar — importante para integradores:** el nombre del `.jar` de distribución (`XMLSignerPKCS11.jar`) **nunca** incluye el número de versión, a diferencia del artefacto crudo que genera Maven en `target/` (`xml_signer_pkcs11-1.1.1-jar-with-dependencies.jar`). Esto es deliberado: un integrador que ya tiene el nombre del jar hardcodeado en su propio código no debe romperse cuando S-FiDE actualiza de versión.
 
-El script `install.bat` (incluido en el repositorio) automatiza la generación de una carpeta de distribución completa a partir del código fuente compilado, incluyendo opcionalmente los runtimes embebidos si se le indica una carpeta "vendor" de referencia.
+El script `install.bat` (incluido en el repositorio) automatiza la generación de una carpeta de distribución completa a partir del código fuente compilado, incluyendo opcionalmente los runtimes embebidos si se le indica una carpeta "vendor" de referencia. También copia `SFideUpdater.jar`.
+
+**Actualizaciones (desde 1.4.0).** Cada GitHub Release lleva, además de las distribuciones completas por plataforma (`S-FiDE-<versión>-windows.zip`, `-linux.zip`), el paquete `S-FiDE-<versión>-actualizacion.zip` y su `.sha256` (ver [sección 9.15](#915-sfideupdater)), que usa **Ayuda → Buscar actualizaciones...**. Se genera con:
+
+```
+powershell -ExecutionPolicy Bypass -File crear-paquete-actualizacion.ps1 [-Version 1.4.0] [-Salida carpeta]
+```
+
+**Datos por usuario.** La distribución no guarda nada de los usuarios: sus valores recordados y los `.pem` extraídos viven en `<carpeta personal>/S-FiDE` (ver [sección 9.14](#914-s-fide-gui)). `sfide-defaults.demo.properties` es solo una plantilla para copiar allí con el nombre `sfide-defaults.properties`. Una instalación puede ser de solo lectura para los usuarios comunes y compartida por todos; solo actualizarla exige escribir en ella.
 
 ---
 
 ## 13. Historial de versiones
+
+### v1.4.0 (2026-10-02)
+
+- **Corrección: token no detectado por S-FiDE aunque otros programas lo leen sin problema.** `slotListIndex` cuenta todos los slots de la biblioteca (con o sin token), y S-FiDE asumía el slot `0`; ahora se prueba el slot indicado y, si está vacío, se busca el token en los demás. Errores de acceso al token traducidos a mensajes claros (contraseña, bloqueo, retiro, biblioteca de 32/64 bits). Ver [sección 9](#9-catálogo-de-aplicaciones), "Búsqueda automática del slot". `TokenSlotsView` suma el slot opcional.
+- **Configuración y certificados `.pem` por usuario**: `sfide-defaults.properties`, el candado de instancia única y los `.pem` pasan a la carpeta personal `<usuario>/S-FiDE`, con importación única desde el archivo de la instalación, versión de formato (`config.schema`, `app.version`) y guardado atómico. Varios usuarios pueden usar la misma instalación a la vez. Ver [sección 9.14](#914-s-fide-gui).
+- **Extractores de certificados**: mensaje que describe el `.pem` generado (clave pública, nombre y carpeta), botón "Abrir carpeta del .pem" en la GUI, y consulta informativa del estado de revocación (OCSP/CRL, `-omitir-revocacion`). Ver [9.2](#92-tokencertificateextractor) y [9.3](#93-pkcs12certificateextractor).
+- **Contraseñas reutilizables durante la sesión** (solo en memoria, atadas al token/archivo, nunca en disco) y **última carpeta usada** para XML, PDF y XSD. Ver [sección 9.14](#914-s-fide-gui).
+- **Actualización desde GitHub**: nuevo menú Ayuda → "Buscar actualizaciones..." y nuevo módulo `SFideUpdater.jar` (todo o nada, con reversión, seguro con instalaciones compartidas), más `crear-paquete-actualizacion.ps1`. Ver [sección 9.15](#915-sfideupdater).
+
+#### Guía de migración 1.3.0 → 1.4.0
+
+| Qué | Impacto | Acción |
+|---|---|---|
+| `sfide-defaults.properties` | Pasa a `<carpeta personal>/S-FiDE`. El de la instalación se importa una vez por usuario y no se borra. | Ninguna. Para precargar valores, copiar `sfide-defaults.demo.properties` a la carpeta personal del usuario. |
+| Archivos `.pem` de los extractores | Se guardan en la carpeta personal, no en el directorio de trabajo. Mismo nombre de archivo. | Integraciones que esperaban el `.pem` en el directorio de trabajo: leerlo de `<carpeta personal>/S-FiDE`, o fijar `-Dsfide.data.dir=<carpeta>`. |
+| Salida de los extractores | Se agregan líneas `Estado de revocación: ...` y el texto de "Certificado exportado como:" cambia por un bloque `Clave pública ... Archivo: ... Carpeta: ...`. | Integraciones que parseaban esa línea: actualizarlas. El código de salida no cambia. |
+| Argumento `-omitir-revocacion` en los extractores | Nuevo, opcional. | Usar `true` si se ejecutan sin conexión y no se quiere esperar el tiempo de espera de red. |
+| `TokenSlotsView` | Acepta un tercer argumento opcional (slot). | Ninguna. |
+| Módulos de token con slot vacío | Antes fallaban; ahora buscan el token en los demás slots. | Ninguna. |
+| Instalación | Nuevo `SFideUpdater.jar` (la actualización 1.3.0 → 1.4.0 es manual, ZIP completo). | Copiar el jar nuevo si se actualiza a mano. |
 
 ### v1.3.0 (2026-09-05)
 

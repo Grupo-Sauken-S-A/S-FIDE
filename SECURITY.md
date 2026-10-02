@@ -6,7 +6,9 @@ S-FiDE es software de firma digital y verificación de firmas: un problema de se
 
 | Versión | Soportada |
 |---|---|
-| 1.1.x | ✅ |
+| 1.4.x | ✅ |
+| 1.3.x, 1.2.x | ⚠️ Solo correcciones críticas de seguridad |
+| 1.1.x | ⚠️ Solo correcciones críticas de seguridad |
 | 1.0.x | ⚠️ Solo correcciones críticas de seguridad |
 | Anteriores a 1.0.0 | ❌ |
 
@@ -36,6 +38,8 @@ Se consideran problemas de seguridad, entre otros:
 - Exposición de una clave privada, PIN, o contraseña más allá de lo estrictamente necesario para la operación solicitada.
 - Un stack trace de Java u otro detalle técnico interno expuesto al usuario final, si ese detalle revela información sensible (rutas de sistema, credenciales, etc.).
 - Vulnerabilidades en las dependencias de terceros (BouncyCastle, iText, Apache Santuario) que afecten específicamente cómo S-FiDE las usa.
+- El mecanismo de actualización (Ayuda → Buscar actualizaciones y `SFideUpdater.jar`): que se pueda inducir a instalar un archivo no previsto (fuera de la lista cerrada de archivos instalables, o fuera de la carpeta de instalación), a descargar desde un dominio que no sea de GitHub, o a aceptar un paquete cuyo SHA-256 no coincide. Limitación conocida y documentada: el SHA-256 se publica en el mismo GitHub Release que el paquete, por lo que protege contra descargas dañadas pero no contra quien lograra alterar la publicación completa; firmar el paquete con una clave independiente es una mejora posible.
+- Que una contraseña recordada durante la sesión (solo en memoria) se escriba en disco o se envíe fuera del proceso.
 
 No se consideran problemas de seguridad los bugs funcionales sin impacto en la confidencialidad, integridad o disponibilidad — esos se reportan como issues normales.
 

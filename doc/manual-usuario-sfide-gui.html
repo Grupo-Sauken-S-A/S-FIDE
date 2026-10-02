@@ -262,8 +262,8 @@
       <h1>Guía de Usuario S-FiDE GUI</h1>
       <p>Cómo usar la interfaz gráfica de S-FiDE para firmar y verificar documentos XML y PDF, paso a paso, con capturas reales de la propia aplicación. Pensada para quien usa el programa haciendo clic, no para quien integra los módulos por línea de comandos — para eso está el <a href="manual-tecnico-integracion.html">Manual Técnico de Integración</a>.</p>
       <div class="meta">
-        <span>Versión del producto: <strong>1.3.0</strong></span>
-        <span>Documento: <strong>05/09/2026</strong></span>
+        <span>Versión del producto: <strong>1.4.0</strong></span>
+        <span>Documento: <strong>02/10/2026</strong></span>
       </div>
     </div>
 
@@ -286,15 +286,18 @@
         <span class="label">Importante</span>
         <p>Cree primero una carpeta propia (por ejemplo <code>C:\S-FiDE</code>) y descomprima el ZIP <strong>dentro</strong> de esa carpeta — no directamente en la raíz de una unidad, el Escritorio ni Descargas. La distribución trae más de una decena de archivos <code>.jar</code> y el runtime completo de Java y JavaFX (varios cientos de MB); sin una carpeta contenedora, todo eso queda mezclado con sus otros archivos.</p>
       </div>
-      <p>Para arrancar la interfaz gráfica, ejecute <code>SFide-GUI.bat</code> (Windows) o <code>SFide-GUI.sh</code> (Linux/macOS) dentro de esa carpeta. La primera vez que se ejecuta en una instalación (solo en Windows), S-FiDE crea automáticamente, tanto en el <strong>Escritorio</strong> como en una carpeta "S-FiDE" del <strong>Menú Inicio</strong>, tres accesos directos con el ícono propio de S-FiDE:</p>
+      <p>Para arrancar la interfaz gráfica, ejecute <code>SFide-GUI.bat</code> (Windows) o <code>SFide-GUI.sh</code> (Linux/macOS) dentro de esa carpeta. La primera vez que cada usuario lo ejecuta (solo en Windows), S-FiDE crea automáticamente, tanto en el <strong>Escritorio</strong> como en una carpeta "S-FiDE" del <strong>Menú Inicio</strong>, tres accesos directos con el ícono propio de S-FiDE:</p>
       <ul>
         <li>Uno abre la aplicación.</li>
         <li>Otro abre esta misma guía en su navegador.</li>
         <li>El tercero abre el Manual Técnico de Integración.</li>
       </ul>
-      <p>Esto ocurre una sola vez — si borra alguno después, no se vuelve a crear solo. No requiere ninguna acción de su parte ni interrumpe el arranque; si por alguna política de seguridad de su organización no se pudieran crear (por ejemplo, PowerShell bloqueado), el programa arranca igual, sin avisos molestos, y simplemente no quedan esos accesos directos.</p>
+      <p>Esto ocurre una sola vez por usuario — si borra alguno después, no se vuelve a crear solo. No requiere ninguna acción de su parte ni interrumpe el arranque; si por alguna política de seguridad de su organización no se pudieran crear (por ejemplo, PowerShell bloqueado), el programa arranca igual, sin avisos molestos, y simplemente no quedan esos accesos directos.</p>
       <p>Si borró alguno sin querer, o si actualizó S-FiDE a una carpeta nueva y quiere que el acceso directo apunte ahí, use <strong>Herramientas → Recrear accesos directos</strong> en la barra de menú — recrea los tres a pedido, apuntando a la instalación desde la que lo ejecute, y le confirma con un mensaje si salió bien. El acceso directo a la aplicación no lleva el número de versión en el nombre, así que al pasar a una versión nueva, este mismo lo reemplaza en vez de sumar un ícono más al lado del anterior.</p>
-    </section>
+      <h3>Sus datos son suyos: la carpeta personal de S-FiDE</h3>
+      <p>Lo que S-FiDE recuerda (rutas, número de slot, últimas carpetas usadas, tamaño de la ventana, etc.) y los certificados <code>.pem</code> que usted extraiga se guardan en <strong>su carpeta personal</strong>: <code>C:\Users\su-usuario\S-FiDE</code> en Windows (<code>~/S-FiDE</code> en Linux/macOS) — no en la carpeta donde está instalado el programa. Por eso, si varias personas usan el mismo equipo (a la vez o por turnos), cada una tiene sus propios valores, y todas pueden tener S-FiDE abierto al mismo tiempo sobre la misma instalación. No hace falta que usted cree esa carpeta: la crea S-FiDE. La primera vez que abre la versión 1.4.0 se importan sus valores de la versión anterior, si los había.</p>
+      <h3>Cómo actualizar S-FiDE</h3>
+      <p>Desde la versión 1.4.0, use <strong>Ayuda → Buscar actualizaciones...</strong> (ver la sección "La ventana de Ayuda"). Para pasar de una versión anterior a la 1.4.0 (que todavía no tiene ese menú), descargue el ZIP completo y descomprímalo como se explicó arriba.</p>    </section>
 
     <section class="chapter" id="s3">
       <span class="chapter-num">03</span>
@@ -309,8 +312,11 @@
         <li><strong>Formulario del módulo elegido (centro):</strong> una breve descripción arriba, los campos que ese módulo necesita, y el botón <strong>Ejecutar</strong>.</li>
         <li><strong>Salida del Proceso (abajo):</strong> un panel colapsable que se expande solo cuando hay un resultado que mostrar — ahí aparece exactamente lo que el programa imprime, éxito o error, además de un pequeño diálogo emergente ("Estado del Proceso" / "Error") con el mismo resultado.</li>
       </ul>
-      <p>S-FiDE recuerda entre sesiones, sin que tenga que volver a escribirlos: la ruta de la biblioteca PKCS#11 o el archivo PKCS#12, el número de slot, el alias del almacén de Windows, la casilla "Salida simple" de los verificadores, el tamaño y posición de la ventana, y el último módulo que tenía abierto (reabre ahí directamente). <strong>Nunca guarda ninguna contraseña</strong> — esos campos siempre arrancan vacíos. Tampoco recuerda la posición X/Y de firma visible en PDF ni la opción "Bloquear documento después de firmar": a propósito, siempre hay que indicarlas de nuevo en cada firma, igual que el elemento/ID de un XML a firmar.</p>
-    </section>
+      <p>S-FiDE recuerda entre sesiones, sin que tenga que volver a escribirlos: la ruta de la biblioteca PKCS#11 o el archivo PKCS#12, el número de slot, la <strong>última carpeta usada para documentos XML, PDF y XSD</strong> (el botón "Examinar..." abre directamente ahí), el alias del almacén de Windows, la casilla "Salida simple" de los verificadores, el tamaño y posición de la ventana, y el último módulo que tenía abierto (reabre ahí directamente). <strong>Nunca guarda ninguna contraseña en disco</strong> — esos campos siempre arrancan vacíos al abrir el programa. Tampoco recuerda la posición X/Y de firma visible en PDF ni la opción "Bloquear documento después de firmar": a propósito, siempre hay que indicarlas de nuevo en cada firma, igual que el elemento/ID de un XML a firmar.</p>
+      <div class="callout note">
+        <span class="label">Contraseñas durante la sesión</span>
+        <p>Una contraseña que ya funcionó se copia sola a las demás pestañas del mismo tipo — las de <strong>token</strong> (ver slots, ver certificado, firmar XML/PDF con token) comparten una, las de <strong>archivo PKCS#12</strong> comparten otra — para que no tenga que volver a escribirla al pasar de una pestaña a otra. Vale mientras no cambie el token o el archivo, y mientras no escriba una contraseña nueva. Vive <strong>solo en la memoria del programa</strong>: no se guarda en ningún archivo y se pierde al cerrar S-FiDE. Si una contraseña recordada llega a fallar, se olvida y no se vuelve a enviar sola (con un token, cada intento fallido cuenta para el bloqueo). Si deja el equipo en uso por otra persona, use <strong>Herramientas → Olvidar contraseñas de esta sesión</strong>.</p>
+      </div>    </section>
 
     <section class="chapter" id="s4">
       <span class="chapter-num">04</span>
@@ -327,10 +333,12 @@
         <ul>
           <li><strong>Biblioteca PKCS#11:</strong> el archivo del fabricante del token (<code>.dll</code> en Windows). El botón "Detectar automáticamente" y el selector de marca/modelo completan esta ruta por usted si reconocen el driver instalado.</li>
           <li><strong>Contraseña del token:</strong> el PIN del dispositivo.</li>
+          <li><strong>Número de Slot (opcional):</strong> déjelo vacío y el programa lee el primer token que detecte. Antes de leer, siempre muestra el inventario de la biblioteca: cuántos slots informa (SafeNet, por ejemplo, 8) y en cuáles hay un token — eso no necesita contraseña. Para leer el contenido sí hace falta la contraseña, y con varios tokens conectados probarla en uno que no es el suyo puede sumar un intento fallido a su contador de bloqueo; por eso, por defecto, se lee un solo token y se le informa en qué otros slots hay tokens.</li>
+          <li><strong>Leer todos los tokens:</strong> tilde esta casilla para leer todos los tokens conectados con la misma contraseña (un intento por token). Úsela solo si sabe que la contraseña es la misma en todos. Anula el número de slot.</li>
         </ul>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
         <p class="oklist"><code>Éxito</code> — lista, por cada entrada del token, su tipo (clave privada o certificado), sujeto, emisor, fechas de validez y número de serie. Si el token está vacío, no es un error: se informa <em>"No se encontraron certificados ni claves en el token."</em></p>
-        <p class="errlist"><code>Error</code> — biblioteca inexistente, proveedor PKCS#11 no disponible, contraseña incorrecta, o error al leer el token.</p>
+        <p class="errlist"><code>Error</code> — biblioteca inexistente, <strong>ningún token detectado</strong>, contraseña incorrecta, token bloqueado o retirado, o una <strong>biblioteca de 32 bits con el Java de 64 bits</strong> de S-FiDE (en Windows, la de 64 bits está en <code>C:\Windows\System32</code> y la de 32 bits en <code>C:\Windows\SysWOW64</code>). Cada caso se explica con un mensaje claro.</p>
         <div class="callout warn">
           <span class="label">Cuidado con la contraseña</span>
           <p>Un número elevado de intentos fallidos de PIN puede bloquear el token, según la política de seguridad de cada fabricante — a veces exige tramitar un certificado nuevo ante la autoridad certificante. No adivine la contraseña por prueba y error.</p>
@@ -339,27 +347,27 @@
 
       <div class="module" id="g2">
         <div class="module-head"><h3>2. Ver Certificado de Token</h3><span class="module-num">TokenCertificateExtractor</span></div>
-        <p class="desc">Extrae el certificado digital presente en un slot de un token PKCS#11: muestra en pantalla sus datos completos (sujeto, emisor, vigencia, número de serie) y además guarda una copia real en un archivo .PEM en disco — útil para conservarlo fuera del token, inspeccionarlo, o cargarlo en otra herramienta.</p>
+        <p class="desc">Extrae el certificado digital presente en un slot de un token PKCS#11: muestra en pantalla sus datos completos (sujeto, emisor, vigencia, número de serie), consulta si está revocado y guarda una copia de su clave pública en un archivo .PEM en su carpeta personal de S-FiDE — útil para conservarlo fuera del token, inspeccionarlo, o cargarlo en otra herramienta. El archivo no contiene la clave privada.</p>
         <figure class="shot">
           <img src="img/manual-usuario/02_ver_certificado_de_token.png" alt="Pantalla Ver Certificado de Token">
         </figure>
         <p class="field-label">Campos</p>
         <ul>
           <li><strong>Biblioteca PKCS#11</strong> y <strong>Contraseña:</strong> igual que en "Ver Slots de Token".</li>
-          <li><strong>Número de Slot:</strong> el que mostró "Ver Slots de Token" para la entrada que le interesa — no es necesariamente el mismo número que muestre alguna herramienta del fabricante del token.</li>
+          <li><strong>Número de Slot:</strong> el que mostró "Ver Slots de Token" — no es necesariamente el mismo número que muestre alguna herramienta del fabricante del token. Desde la versión 1.4.0 no es obligatorio acertarlo: si en ese slot no hay un token, S-FiDE lo busca en los demás y se lo informa.</li>
         </ul>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
-        <p class="oklist"><code>Éxito</code> — imprime Sujeto, Emisor, Número de Serie, Válido desde/hasta y Algoritmo de Firma, y guarda un archivo <code>.pem</code> nombrado según el certificado.</p>
-        <p class="errlist"><code>Error</code> — biblioteca inexistente, proveedor no disponible, error al cargar el almacén, número de slot inválido, no se encontró certificado en ese slot, o error al exportar.</p>
+        <p class="oklist"><code>Éxito</code> — imprime Sujeto, Emisor, Número de Serie, Válido desde/hasta y Algoritmo de Firma; una línea <strong>Estado de revocación</strong> (<code>VIGENTE</code>, <code>REVOCADO</code> o <code>NO SE PUDO VERIFICAR</code>, por ejemplo sin Internet — es solo informativo); y un aviso que describe el archivo <code>.pem</code> generado (nombrado según el certificado, con solo la clave pública) y la carpeta donde quedó.</p>
+        <p class="errlist"><code>Error</code> — biblioteca inexistente, ningún token detectado, contraseña incorrecta, token bloqueado o retirado, número de slot inválido, no se encontró certificado en ese slot, o error al exportar.</p>
         <div class="callout note">
           <span class="label">Dónde queda el archivo .pem</span>
-          <p>El archivo se guarda en la carpeta donde está instalado S-FiDE (no junto a ningún otro archivo que haya elegido) — revísela ahí después de ejecutar.</p>
+          <p>Desde la versión 1.4.0 el archivo se guarda en <strong>su carpeta personal de S-FiDE</strong> (<code>C:\Users\su-usuario\S-FiDE</code>), la misma donde S-FiDE guarda lo que recuerda — ya no en la carpeta de instalación. El panel de salida le dice el nombre del archivo y la carpeta, y el botón <strong>Abrir carpeta del .pem</strong> (arriba, junto a "Examinar...") la abre en el explorador de archivos.</p>
         </div>
       </div>
 
       <div class="module" id="g3">
         <div class="module-head"><h3>3. Ver Certificado de PKCS#12</h3><span class="module-num">PKCS12CertificateExtractor</span></div>
-        <p class="desc">Extrae el certificado digital de un archivo PKCS#12 (.p12 o .pfx): muestra en pantalla sus datos completos (sujeto, emisor, vigencia, número de serie) y además guarda una copia real en un archivo .PEM en disco. Misma utilidad que el extractor de tokens, pero para certificados que ya existen como archivo.</p>
+        <p class="desc">Extrae el certificado digital de un archivo PKCS#12 (.p12 o .pfx): muestra en pantalla sus datos completos (sujeto, emisor, vigencia, número de serie) y además guarda una copia real en un archivo .PEM en disco. Misma utilidad que el extractor de tokens (incluida la consulta de revocación y el botón "Abrir carpeta del .pem"), pero para certificados que ya existen como archivo.</p>
         <figure class="shot">
           <img src="img/manual-usuario/03_ver_certificado_de_pkcs_12.png" alt="Pantalla Ver Certificado de PKCS#12">
         </figure>
@@ -369,7 +377,7 @@
           <li><strong>Contraseña:</strong> la contraseña de ese archivo.</li>
         </ul>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
-        <p class="oklist"><code>Éxito</code> — mismos datos que el extractor de token, más un archivo <code>.pem</code> (misma nota sobre dónde queda guardado que en el módulo anterior).</p>
+        <p class="oklist"><code>Éxito</code> — mismos datos que el extractor de token (incluido el estado de revocación), y el aviso con el archivo <code>.pem</code> generado y su carpeta (misma nota sobre dónde queda guardado que en el módulo anterior).</p>
         <p class="errlist"><code>Error</code> — archivo inexistente, archivo no es un PKCS#12 válido o contraseña incorrecta, archivo sin certificados, o error al exportar.</p>
       </div>
 
@@ -567,7 +575,7 @@
         <tr><th>Módulo</th><th>Archivo generado</th><th>Dónde queda</th></tr>
         <tr><td>Firmadores de XML (3)</td><td><code>&lt;nombre&gt;-signed.xml</code></td><td>En la misma carpeta que el XML original</td></tr>
         <tr><td>Firmadores de PDF (3)</td><td><code>&lt;nombre&gt;-signed.pdf</code></td><td>En la misma carpeta que el PDF original</td></tr>
-        <tr><td>Extractores de certificado (2)</td><td><code>&lt;nombre-del-certificado&gt;.pem</code></td><td><strong>En la carpeta donde está instalado S-FiDE</strong> — no en la carpeta del token ni la que haya elegido</td></tr>
+        <tr><td>Extractores de certificado (2)</td><td><code>&lt;nombre-del-certificado&gt;.pem</code></td><td><strong>En su carpeta personal de S-FiDE</strong> (<code>C:\Users\su-usuario\S-FiDE</code>) — no junto al token ni al archivo de origen, y desde la 1.4.0 ya no en la carpeta de instalación</td></tr>
       </table>
       <p>Los módulos de "ver"/"verificar" no generan ningún archivo: todo su resultado se muestra en el panel "Salida del Proceso".</p>
       <p>En las seis pestañas de firma, junto al campo del documento de entrada aparece un botón <strong>"Abrir documento generado"</strong>, deshabilitado hasta que la firma termina con éxito y el archivo <code>-signed</code> correspondiente realmente existe en disco. Al presionarlo, abre ese documento en el navegador web predeterminado del sistema. Si edita el campo del documento de entrada después de firmar, el botón se deshabilita — ya no corresponde necesariamente a lo que ve en pantalla.</p>
@@ -611,6 +619,15 @@
         <img src="img/manual-usuario/06_ayuda_contacto.png" alt="Ventana de Ayuda, solapa Contacto">
       </figure>
 
+      <h3>Buscar actualizaciones</h3>
+      <p>El menú <strong>Ayuda → Buscar actualizaciones...</strong> consulta en GitHub cuál es la última versión publicada de S-FiDE. Si hay una más nueva que la suya, le muestra sus novedades y <strong>le pide permiso</strong> antes de hacer nada: si usted no acepta, no se descarga ni se instala nada.</p>
+      <ul>
+        <li>Si acepta, S-FiDE descarga la actualización, verifica que no esté dañada, comprueba que se pueda instalar y recién entonces se cierra, reemplaza sus archivos en la misma carpeta de instalación y <strong>se vuelve a abrir solo</strong> (verá un mensaje que confirma la nueva versión). Sus valores recordados no se tocan.</li>
+        <li>Es "todo o nada": si algo falla durante la instalación, S-FiDE queda exactamente como estaba.</li>
+        <li><strong>Si otra persona tiene S-FiDE abierto en el mismo equipo</strong> (por ejemplo, en un servidor compartido), los archivos que está usando no se pueden reemplazar. S-FiDE lo detecta, no pierde nada y se lo explica: pídale a esa persona que cierre S-FiDE y vuelva a intentarlo.</li>
+        <li>Necesita conexión a Internet y permiso de escritura sobre la carpeta de instalación (si no lo tiene, se lo informa: ejecútelo como administrador). Si su red usa un proxy, S-FiDE usa el configurado en Windows.</li>
+        <li>Si una versión no trae paquete de actualización automática (por ejemplo, si cambia el Java embebido), se lo explica y le ofrece abrir la página de descargas para instalar la versión completa a mano.</li>
+      </ul>
       <h3>Acerca de</h3>
       <p>Fuera de la ventana de Ayuda, el menú <strong>Ayuda → Acerca de</strong> abre un diálogo aparte con la descripción de S-FiDE, la versión instalada, los enlaces al sitio de Grupo Sauken, al repositorio en GitHub y a la página del proyecto en GitHub Pages, y la licencia (GNU GPL v2 o posterior).</p>
       <figure class="shot">
@@ -623,11 +640,14 @@
       <h2>Problemas comunes</h2>
       <table>
         <tr><th>Situación</th><th>Qué hacer</th></tr>
-        <tr><td>No sé qué número de slot usar</td><td>Corra primero "Ver Slots de Token" — el número que muestra ahí es el que hay que usar, no el que muestre alguna herramienta del fabricante.</td></tr>
+        <tr><td>No sé qué número de slot usar</td><td>Corra primero "Ver Slots de Token" (con el slot vacío) — el número que muestra ahí es el que hay que usar, no el que muestre alguna herramienta del fabricante. Desde la 1.4.0, si se equivoca, S-FiDE busca el token en los demás slots.</td></tr>
+        <tr><td>Otro programa lee mi token pero S-FiDE dice "error al acceder al token"</td><td>Revise el mensaje: si dice que la biblioteca es de 32 bits, indique la de 64 bits (en Windows, <code>C:\Windows\System32</code>). Si dice que no se detectó ningún token, verifique que esté insertado, que la biblioteca sea la de su marca/modelo y que ningún otro programa lo esté usando en forma exclusiva.</td></tr>
         <tr><td>No sé el alias/CN de mi certificado de Windows</td><td>Corra "Ver Certificados de Windows" primero, o use el botón "Ver certificados" en el propio formulario de firma.</td></tr>
         <tr><td>Windows me pide el PIN en cada documento</td><td>Es esperable con los módulos CSP/KSP — no hay forma de evitarlo. Para firmar varios documentos sin interrupciones, use el módulo equivalente de Token o PKCS#12.</td></tr>
         <tr><td>No encuentro el archivo firmado</td><td>Queda en la misma carpeta que el archivo original (ver la tabla de la sección anterior) — no en la carpeta de instalación de S-FiDE.</td></tr>
-        <tr><td>No encuentro el .pem que extraje</td><td>A diferencia de los firmadores, este sí queda en la carpeta de instalación de S-FiDE, no junto al token/archivo de origen.</td></tr>
+        <tr><td>No encuentro el .pem que extraje</td><td>Queda en su carpeta personal de S-FiDE (<code>C:\Users\su-usuario\S-FiDE</code>), no junto al token/archivo de origen. Use el botón "Abrir carpeta del .pem" de las pestañas "Ver Certificado".</td></tr>
+        <tr><td>La actualización dice que hay archivos en uso</td><td>Otro usuario del equipo tiene S-FiDE abierto desde la misma carpeta. Pídale que lo cierre y vuelva a intentar.</td></tr>
+        <tr><td>Cada usuario del equipo ve valores distintos (rutas, carpetas)</td><td>Es lo esperado desde la 1.4.0: lo que S-FiDE recuerda es por usuario.</td></tr>
         <tr><td>El programa dice que un archivo "no existe"</td><td>Use siempre el botón "Examinar..." para elegir el archivo en vez de escribir la ruta a mano — evita errores de tipeo.</td></tr>
       </table>
     </section>

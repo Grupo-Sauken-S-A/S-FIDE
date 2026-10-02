@@ -4,6 +4,30 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), y el versionado sigue [SemVer](https://semver.org/lang/es/).
 
+## [1.4.0] — 2026-10-02
+
+### Agregado
+- **Buscador e instalador de actualizaciones: Ayuda → "Buscar actualizaciones...".** Consulta en GitHub la última versión publicada, muestra sus novedades y, solo si el usuario lo acepta, descarga la actualización, verifica su integridad (SHA-256 publicado junto al paquete), comprueba que la instalación se pueda actualizar, cierra S-FiDE, reemplaza los archivos en la misma carpeta de instalación y lo vuelve a abrir. Todo o nada: si algo falla se revierte la instalación al estado anterior. Con una instalación compartida por varios usuarios, si otro usuario tiene S-FiDE abierto (sus archivos están en uso) la actualización se detecta antes de cerrar nada o se revierte automáticamente, y se le explica al usuario qué pasó. Las actualizaciones se publican como un paquete adicional del GitHub Release (`S-FiDE-<versión>-actualizacion.zip` + su `.sha256`), sin los runtimes de Java/JavaFX. Ver [sección 9.15](doc/manual-tecnico-integracion.md#915-sfideupdater) del manual técnico.
+- **Nuevo módulo `s_fide_updater` (`SFideUpdater.jar`)**: aplica una actualización ya descargada y verificada, con respaldo y reversión automática, lista cerrada de archivos que puede instalar (jars, lanzadores, documentación; nunca los datos del usuario ni los runtimes) y modos `verificar` (sin modificar nada) y `aplicar`. Mismo contrato de línea de comandos que el resto de los módulos.
+- **`crear-paquete-actualizacion.ps1`**: arma el paquete de actualización (`.zip` + `.sha256`) a adjuntar a cada GitHub Release.
+- **`s_fide_gui`: contraseñas reutilizables durante la sesión.** La contraseña usada con éxito se recuerda solo en memoria y se copia automáticamente a las demás pestañas del mismo tipo (token PKCS#11, o archivo PKCS#12), mientras no se cambie el token/archivo o se escriba una contraseña nueva. Nunca se guarda en disco; se pierde al cerrar. Nuevo ítem "Herramientas → Olvidar contraseñas de esta sesión". Una contraseña recordada que falla se olvida (nunca se reenvía sola: con un token cada intento fallido cuenta contra el bloqueo).
+- **`s_fide_gui`: se recuerda la última carpeta usada** para documentos XML, PDF y XSD en los botones "Examinar...", compartida entre las pestañas del mismo tipo y entre sesiones. También se actualiza al pegar o escribir a mano la ruta de un archivo existente. Si la carpeta ya no existe, se ignora sin error.
+- **`s_fide_gui`: botón "Abrir carpeta del .pem"** en las pestañas "Ver Certificado de Token" y "Ver Certificado de PKCS#12".
+- **Extractores de certificados (`TokenCertificateExtractor`, `PKCS12CertificateExtractor`): consulta del estado de revocación** (OCSP, con reintento por CRL) del certificado extraído, solo informativa (nunca cambia el código de salida) — `VIGENTE`, `REVOCADO` o `NO SE PUDO VERIFICAR`. Busca la autoridad emisora entre los demás certificados del mismo token/archivo antes de recurrir a los de Java, lo que permite consultar OCSP con autoridades certificantes que Java no trae. Nuevo flag `-omitir-revocacion true` para saltearla (uso sin conexión).
+- **`TokenSlotsView`: inventario completo de la biblioteca y lectura controlada.** Siempre muestra cuántos slots informa la biblioteca y en cuáles hay un token (sin pedir contraseña); luego lee un token (el del número de slot opcional indicado, o el primero detectado) e informa en qué otros slots hay tokens. El nuevo parámetro `-todos` lee todos los tokens con la misma contraseña (un intento por token): por defecto se lee uno solo para no sumar un intento fallido al contador de bloqueo de un token ajeno. La pestaña de la GUI suma el campo "Número de Slot (opcional)" y la casilla "Leer todos los tokens".
+- **Configuración con versión de formato** (`config.schema`, `app.version`): al arrancar, S-FiDE adapta automáticamente una configuración escrita por una versión anterior.
+
+### Cambiado
+- **`sfide-defaults.properties` ya no vive en la carpeta de instalación sino en la carpeta personal de cada usuario** (`<carpeta del usuario>/S-FiDE`, por ejemplo `C:\Users\<usuario>\S-FiDE`), de modo que cada usuario de un equipo compartido tiene sus propios valores recordados y nadie necesita permiso de escritura sobre la instalación. Al primer arranque se importa, una sola vez por usuario, el archivo de la versión anterior si existe (sin borrarlo ni heredar los indicadores de accesos directos). El guardado ahora es atómico (archivo temporal + renombre). Propiedad `-Dsfide.data.dir` para redirigir la carpeta.
+- **El candado de instancia única es ahora por usuario y por instalación** (`sfide-gui-<marca>.lock` en la carpeta del usuario): usuarios distintos del mismo equipo pueden tener cada uno su S-FiDE abierto sobre la misma instalación (antes el segundo quedaba bloqueado).
+- **Los archivos `.pem` de los extractores de certificados se guardan en la carpeta personal del usuario** (la misma de `sfide-defaults.properties`), no en la carpeta de instalación/directorio de trabajo. El nombre del archivo se mantiene (el `CN` del certificado). El mensaje de salida ahora aclara que el archivo contiene la clave pública (no la privada) y en qué carpeta quedó.
+- **Los módulos de token PKCS#11 (`TokenSlotsView`, `TokenCertificateExtractor`, `XMLSignerPKCS11`, `PDFSignerPKCS11`) ya no exigen que el token esté en el slot indicado**: prueban primero ese slot y, si no tiene token, lo buscan en los demás (informándolo con un aviso). Con más de un token conectado y el indicado ausente, fallan pidiendo que se indique cuál usar, sin probar la contraseña en ninguno. En la GUI, el número de slot dejó de ser obligatorio.
+- La versión de la GUI se lee del `pom.xml` (recurso filtrado `s-fide-version.properties`), ya no de una constante a mano.
+
+### Corregido
+- **Un token que otros programas (p. ej. DS-COD con Java 8) leen sin problema no se podía acceder desde S-FiDE** ("Error al procesar el token: Error al leer el token" / "Error en el acceso al token"). Causa: `slotListIndex` de SunPKCS11 es un índice sobre **todos** los slots que informa la biblioteca del fabricante (con o sin token), no sobre los slots con token; las bibliotecas como la de SafeNet exponen una cantidad fija de slots (8) y el token puede estar en cualquiera. S-FiDE asumía el slot 0 (el valor por defecto) y, si estaba vacío, SunPKCS11 arrancaba sin almacén de claves y la falla se reportaba con un mensaje genérico. Ver el punto anterior en "Cambiado".
+- **Errores de acceso al token más claros**: se distinguen y explican en español la contraseña incorrecta, el token bloqueado, el token ausente o retirado, y una biblioteca PKCS#11 de 32 bits usada con un Java de 64 bits (o a la inversa) — causa frecuente de que un programa antiguo con Java de 32 bits acceda al token y S-FiDE no —, sin exponer trazas de Java.
+
 ## [1.3.0] — 2026-09-05
 
 ### Agregado
@@ -111,6 +135,7 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 ### Agregado
 - Primer release estable: 10 módulos (extracción de certificados desde token o PKCS#12, firma y verificación de XML/PDF vía PKCS#11 y PKCS#12, validación de estructura XSD) más la interfaz gráfica JavaFX.
 
+[1.4.0]: https://github.com/Grupo-Sauken-S-A/S-FIDE/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/Grupo-Sauken-S-A/S-FIDE/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Grupo-Sauken-S-A/S-FIDE/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Grupo-Sauken-S-A/S-FIDE/compare/v1.0.0...v1.1.1

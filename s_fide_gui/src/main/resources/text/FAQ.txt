@@ -34,6 +34,15 @@
   recordar la ruta exacta
 - Si su modelo de token es reciente o poco común, puede que la selección automática no lo
   reconozca por nombre de archivo; en ese caso indique la ruta manualmente con "Examinar..."
+- Desde la versión 1.4.0, S-FiDE ya no exige que el token esté en el slot indicado: las
+  bibliotecas de los fabricantes informan varios slots (SafeNet, por ejemplo, 8) y el token
+  puede estar en cualquiera según el puerto USB o los demás dispositivos conectados. Si en el
+  slot indicado no hay un token, S-FiDE lo busca en los demás y se lo informa. Use "Ver Slots de
+  Token" para ver en qué slot está
+- Si otro programa (por ejemplo, uno antiguo hecho con Java 8) accede a su token pero S-FiDE no,
+  revise que la biblioteca PKCS#11 sea de la misma cantidad de bits que el Java de S-FiDE (64 bits):
+  en Windows, la de 64 bits está en C:\Windows\System32 y la de 32 bits en C:\Windows\SysWOW64.
+  S-FiDE detecta esa diferencia y la informa con un mensaje claro
 
 ## 5. ¿Puedo firmar múltiples documentos a la vez?
 
@@ -93,12 +102,23 @@
   "Examinar.../Detectar automáticamente" como al escribirlos a mano, y quedan sincronizados en
   vivo entre todos los módulos que los usan
 - Una ruta de biblioteca particular para cada marca/modelo de token que elija en el selector
+- La última carpeta usada para documentos XML, PDF y XSD (desde la versión 1.4.0): el botón
+  "Examinar..." abre directamente ahí, en cualquier pestaña del mismo tipo de documento. Como el
+  documento firmado se guarda junto al original, una sola carpeta por tipo alcanza para tomar y
+  para encontrar los archivos. Si esa carpeta ya no existe (un pendrive, una carpeta de red), se
+  ignora sin error
 - El último módulo que tenía abierto, para reabrirlo directamente la próxima vez
 - El tamaño y la posición de la ventana
 - La casilla "Salida simple" de los verificadores de XML y PDF
 - El alias o nombre (CN) del certificado del almacén de Windows, compartido y sincronizado en
   vivo entre "Firmar XML con Windows CSP/KSP" y "Firmar PDF con Windows CSP/KSP"
-- **Nunca** se guarda ninguna contraseña
+- **Dónde se guardan (desde la versión 1.4.0):** en la carpeta personal de cada usuario
+  (C:\Users\su-usuario\S-FiDE en Windows, ~/S-FiDE en Linux/macOS), en el archivo
+  "sfide-defaults.properties" — no en la carpeta de instalación. Así, en un equipo que usan
+  varias personas, cada una tiene sus propios valores. La primera vez que abre S-FiDE 1.4.0 se
+  importan los de la versión anterior, si existían
+- **Nunca** se guarda ninguna contraseña en disco (ver pregunta 16 sobre la reutilización
+  durante la sesión)
 - **Tampoco** se recuerdan la posición X/Y de firma visible ni la casilla "Bloquear documento
   después de firmar" - a propósito, siempre hay que indicarlas de nuevo en cada firma, igual
   que el elemento/ID de un XML a firmar
@@ -111,12 +131,59 @@
   aplicación), y los otros dos abren en su navegador la Guía de Usuario y el Manual Técnico de
   Integración (los mismos documentos de la carpeta "doc")
 - Solo se crean una vez: si los borra después, no se vuelven a crear solos
-- Es por instalación: si tiene varias copias de S-FiDE en carpetas distintas (por ejemplo,
-  una por cada versión), cada una crea los suyos la primera vez que la ejecute
+- Es por usuario: cada persona que usa el equipo recibe los suyos la primera vez que ejecuta
+  S-FiDE con su propio usuario
+- Si tiene varias copias de S-FiDE en carpetas distintas (por ejemplo, una por cada versión),
+  use "Herramientas > Recrear accesos directos" desde la que quiera que abran los íconos
 
 ## 13. ¿Puedo tener S-FiDE GUI abierto dos veces al mismo tiempo?
 
-- No, desde la misma carpeta de instalación: si ya hay una ventana abierta y intenta abrir otra,
-  se le avisa y esa segunda ventana se cierra sola, sin afectar en nada a la que ya tenía abierta
-- Sí puede tener abiertas al mismo tiempo instancias de carpetas de instalación distintas (por
-  ejemplo, dos versiones de S-FiDE en carpetas separadas) - cada carpeta es independiente
+- No, el mismo usuario desde la misma carpeta de instalación: si ya hay una ventana abierta y
+  intenta abrir otra, se le avisa y esa segunda ventana se cierra sola, sin afectar en nada a la
+  que ya tenía abierta
+- Sí pueden tener S-FiDE abierto a la vez distintos usuarios del mismo equipo sobre la misma
+  instalación (por ejemplo, en un servidor de escritorio remoto) - cada uno con sus propios
+  valores recordados. También puede tener abiertas al mismo tiempo instancias de carpetas de
+  instalación distintas (por ejemplo, dos versiones de S-FiDE en carpetas separadas)
+
+## 14. ¿Cómo actualizo S-FiDE a una versión nueva?
+
+- Use "Ayuda > Buscar actualizaciones...". S-FiDE consulta en GitHub cuál es la última versión
+  publicada y, si hay una más nueva que la suya, le muestra las novedades y le pide permiso para
+  instalarla. Nada se descarga ni se instala sin que usted lo acepte
+- Si acepta, S-FiDE descarga la actualización, verifica que no esté dañada, se cierra,
+  reemplaza sus archivos en la misma carpeta de instalación y se vuelve a abrir solo. Sus
+  valores recordados no se tocan: están en su carpeta personal, no en la instalación
+- Es "todo o nada": si algo falla, la instalación vuelve exactamente al estado anterior
+- **Si hay otro usuario con S-FiDE abierto** (en un equipo compartido), los archivos que usa no
+  se pueden reemplazar: la actualización se detecta antes de cerrar nada, o se revierte sola, y
+  se le avisa. Pídale a esa persona que cierre S-FiDE y vuelva a intentarlo
+- Para actualizar necesita permiso de escritura sobre la carpeta de instalación; si no lo tiene,
+  S-FiDE se lo informa (ejecútelo como administrador)
+- Hace falta conexión a Internet. En redes con proxy, S-FiDE usa la configuración de proxy del
+  sistema
+- Algunas versiones no incluyen paquete de actualización automática (por ejemplo, si cambian el
+  Java o JavaFX embebidos): en ese caso S-FiDE se lo explica y le ofrece abrir la página de
+  descargas para instalar la distribución completa
+
+## 15. ¿Dónde queda el archivo .pem que extraigo de un certificado?
+
+- En su carpeta personal de S-FiDE (C:\Users\su-usuario\S-FiDE en Windows, ~/S-FiDE en
+  Linux/macOS), la misma donde S-FiDE guarda sus valores recordados — ya no en la carpeta de
+  instalación. El botón "Abrir carpeta del .pem" de las pestañas "Ver Certificado de Token" y "Ver
+  Certificado de PKCS#12" la abre directamente
+- El archivo se llama como el certificado (su CN) y contiene solo el certificado con su clave
+  pública: nunca la clave privada. El panel de salida informa el nombre y la carpeta
+- Además de mostrar los datos del certificado, esas pestañas consultan si está revocado (OCSP o
+  CRL) y lo informan. Es solo informativo; sin Internet dice "NO SE PUDO VERIFICAR"
+
+## 16. ¿S-FiDE recuerda mi contraseña?
+
+- Solo mientras la ventana de S-FiDE esté abierta, y solo en memoria: nunca se guarda en ningún
+  archivo y se pierde al cerrar el programa
+- Una contraseña que ya funcionó se copia sola a las demás pestañas del mismo tipo (token, o
+  archivo PKCS#12), mientras no cambie el token o el archivo, o no escriba una contraseña
+  nueva. Si esa contraseña recordada llega a fallar, se olvida y no se vuelve a enviar sola (con
+  un token, cada intento fallido cuenta para el bloqueo)
+- "Herramientas > Olvidar contraseñas de esta sesión" la borra cuando quiera, por ejemplo si deja
+  el equipo en uso por otra persona
