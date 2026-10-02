@@ -66,7 +66,7 @@ import java.util.List;
 import java.util.Map;
 
 public class PKCS12CertificateExtractor {
-    private static final String VERSION = "S-FIDE PKCS12CertificateExtractor v1.3.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE PKCS12CertificateExtractor v1.4.0 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT = readResourceFile("/LICENSE.txt");
     private static final String HELP_TEXT = readResourceFile("/HELP.txt");
     private static PrintStream errorStream;
