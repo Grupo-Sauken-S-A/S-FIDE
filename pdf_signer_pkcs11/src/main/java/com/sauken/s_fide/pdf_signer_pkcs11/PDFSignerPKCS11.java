@@ -263,7 +263,7 @@ public class PDFSignerPKCS11 {
         Provider provider = configurePKCS11Provider(libraryPath, slotNumber);
         Security.addProvider(provider);
         try {
-            KeyStore keyStore = loadKeyStore(password);
+            KeyStore keyStore = loadKeyStore(password, libraryPath);
             String alias = keyStore.aliases().nextElement();
             Certificate[] chain = keyStore.getCertificateChain(alias);
             X509Certificate cert = (X509Certificate) chain[0];
@@ -346,7 +346,7 @@ public class PDFSignerPKCS11 {
                 Security.addProvider(provider);
 
                 try {
-                    KeyStore keyStore = loadKeyStore(params.password());
+                    KeyStore keyStore = loadKeyStore(params.password(), params.libraryPath());
                     String alias = keyStore.aliases().nextElement();
 
                     if (!keyStore.isKeyEntry(alias)) {
@@ -370,8 +370,11 @@ public class PDFSignerPKCS11 {
                         errorStream.println("Error: Error al acceder a la clave privada del token");
                         return false;
                     }
+                } catch (TokenAccessException e) {
+                    errorStream.println(e.getMessage());
+                    return false;
                 } catch (GeneralSecurityException e) {
-                    errorStream.println("Error: Error al cargar el KeyStore");
+                    errorStream.println("Error: " + Pkcs11Access.describeFailure(e, params.libraryPath()));
                     return false;
                 }
 
@@ -402,39 +405,43 @@ public class PDFSignerPKCS11 {
         return path.resolveSibling(baseName + OUTPUT_SUFFIX + extension).toString();
     }
 
-    private static Provider configurePKCS11Provider(String libraryPath, int slotNumber) {
-        String config = String.format(
-                "--name=PDFSignerProvider\nlibrary=%s\nslotListIndex=%d",
-                sanitizeLibraryPathForPkcs11Config(libraryPath),
-                slotNumber);
-
-        Provider provider = Security.getProvider("SunPKCS11");
-        if (provider == null) {
-            throw new IllegalArgumentException("Error: Proveedor SunPKCS11 no disponible");
-        }
-        return provider.configure(config);
-    }
+    // validateInputs() y signDocument() configuran el proveedor cada uno por su cuenta: el aviso de
+    // "se usó otro slot" se imprime una sola vez por ejecución, no una por cada configuración.
+    private static boolean slotNoticePrinted;
 
     /**
-     * El parser de configuración de SunPKCS11 trata la barra invertida como
-     * carácter de escape, por lo que una ruta de Windows sin convertir (aun
-     * entre comillas) falla al configurar el proveedor. Se reemplaza "\" por
-     * "/" (aceptado igual por el cargador nativo de la biblioteca) y se
-     * encierra el valor entre comillas para tolerar espacios en el path.
+     * Configura el proveedor sobre el slot pedido o, si ese slot no tiene
+     * token, sobre el slot donde se detecte uno (ver Pkcs11Access: el slot es
+     * un índice sobre TODOS los slots de la biblioteca, y el token puede no
+     * estar en el que se indicó).
      */
-    private static String sanitizeLibraryPathForPkcs11Config(String path) {
-        return "\"" + path.replace('\\', '/') + "\"";
+    private static Provider configurePKCS11Provider(String libraryPath, int slotNumber) {
+        Pkcs11Access.Resolution resolution =
+                Pkcs11Access.resolve(libraryPath, slotNumber, "PDFSignerProvider", false);
+        if (resolution.differsFromRequested() && !slotNoticePrinted) {
+            slotNoticePrinted = true;
+            System.out.println("Aviso: no había un token en el slot " + slotNumber
+                    + "; se usó el slot " + resolution.selected().slotIndex() + ", donde se detectó el token.");
+        }
+        return resolution.selected().provider();
     }
 
-    private static KeyStore loadKeyStore(String password) throws GeneralSecurityException {
+    /** Error al acceder al token cuyo mensaje ya está traducido para el usuario final. */
+    private static final class TokenAccessException extends GeneralSecurityException {
+        private static final long serialVersionUID = 1L;
+
+        TokenAccessException(String message) {
+            super(message);
+        }
+    }
+
+    private static KeyStore loadKeyStore(String password, String libraryPath) throws GeneralSecurityException {
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS11");
             keyStore.load(null, password.toCharArray());
             return keyStore;
-        } catch (IOException e) {
-            throw new GeneralSecurityException("Error: Contraseña incorrecta o error al acceder al token");
         } catch (Exception e) {
-            throw new GeneralSecurityException("Error: Error al cargar el KeyStore");
+            throw new TokenAccessException("Error: " + Pkcs11Access.describeFailure(e, libraryPath));
         }
     }
 
@@ -451,14 +458,16 @@ public class PDFSignerPKCS11 {
             X500Principal subjectDN;
 
             try {
-                KeyStore keyStore = loadKeyStore(params.password());
+                KeyStore keyStore = loadKeyStore(params.password(), params.libraryPath());
                 alias = keyStore.aliases().nextElement();
                 privateKey = (PrivateKey) keyStore.getKey(alias, params.password().toCharArray());
                 chain = keyStore.getCertificateChain(alias);
                 X509Certificate cert = (X509Certificate) chain[0];
                 subjectDN = cert.getSubjectX500Principal();
+            } catch (TokenAccessException e) {
+                throw e;
             } catch (Exception e) {
-                throw new GeneralSecurityException("Error: Error al acceder al token");
+                throw new GeneralSecurityException("Error: " + Pkcs11Access.describeFailure(e, params.libraryPath()));
             }
 
             validarRevocacionAntesDeFirmar((X509Certificate) chain[0], params.omitirRevocacion());

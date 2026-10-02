@@ -184,7 +184,7 @@ public class XMLSignerPKCS11 {
         Provider provider = configurePKCS11Provider(pkcs11LibraryPath, slotNumber);
         Security.addProvider(provider);
 
-        KeyStore keyStore = loadKeyStore(password);
+        KeyStore keyStore = loadKeyStore(password, pkcs11LibraryPath);
         String alias = keyStore.aliases().nextElement();
         X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
 
@@ -291,37 +291,29 @@ public class XMLSignerPKCS11 {
         }
     }
 
-    private static Provider configurePKCS11Provider(String pkcs11LibraryPath, int slotNumber) {
-        String config = String.format(
-                "--name=XMLSignerProvider\nlibrary=%s\nslotListIndex=%d",
-                sanitizeLibraryPathForPkcs11Config(pkcs11LibraryPath),
-                slotNumber
-        );
-        Provider provider = Security.getProvider("SunPKCS11");
-        if (provider == null) {
-            throw new IllegalArgumentException("Proveedor SunPKCS11 no disponible");
-        }
-        return provider.configure(config);
-    }
-
     /**
-     * El parser de configuración de SunPKCS11 trata la barra invertida como
-     * carácter de escape, por lo que una ruta de Windows sin convertir (aun
-     * entre comillas) falla al configurar el proveedor. Se reemplaza "\" por
-     * "/" (aceptado igual por el cargador nativo de la biblioteca) y se
-     * encierra el valor entre comillas para tolerar espacios en el path.
+     * Configura el proveedor sobre el slot pedido o, si ese slot no tiene
+     * token, sobre el slot donde se detecte uno (ver Pkcs11Access: el slot es
+     * un índice sobre TODOS los slots de la biblioteca, y el token puede no
+     * estar en el que se indicó).
      */
-    private static String sanitizeLibraryPathForPkcs11Config(String path) {
-        return "\"" + path.replace('\\', '/') + "\"";
+    private static Provider configurePKCS11Provider(String pkcs11LibraryPath, int slotNumber) {
+        Pkcs11Access.Resolution resolution =
+                Pkcs11Access.resolve(pkcs11LibraryPath, slotNumber, "XMLSignerProvider", false);
+        if (resolution.differsFromRequested()) {
+            outputStream.println("Aviso: no había un token en el slot " + slotNumber
+                    + "; se usó el slot " + resolution.selected().slotIndex() + ", donde se detectó el token.");
+        }
+        return resolution.selected().provider();
     }
 
-    private static KeyStore loadKeyStore(String password) throws Exception {
+    private static KeyStore loadKeyStore(String password, String pkcs11LibraryPath) {
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS11");
             keyStore.load(null, password.toCharArray());
             return keyStore;
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Contraseña incorrecta");
+        } catch (Exception e) {
+            throw new IllegalArgumentException(Pkcs11Access.describeFailure(e, pkcs11LibraryPath));
         }
     }
 
@@ -344,7 +336,7 @@ public class XMLSignerPKCS11 {
             provider = configurePKCS11Provider(pkcs11LibraryPath, slotNumber);
             Security.addProvider(provider);
 
-            KeyStore keyStore = loadKeyStore(password);
+            KeyStore keyStore = loadKeyStore(password, pkcs11LibraryPath);
             String alias = keyStore.aliases().nextElement();
             PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
             X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
@@ -359,7 +351,7 @@ public class XMLSignerPKCS11 {
                 errorMessage = e.getMessage();
             } else if (e instanceof KeyStoreException || e instanceof NoSuchAlgorithmException ||
                     e instanceof UnrecoverableKeyException) {
-                errorMessage = "Error en el acceso al token";
+                errorMessage = "Error en el acceso al token: " + Pkcs11Access.describeFailure(e, pkcs11LibraryPath);
             } else if (e instanceof IOException) {
                 errorMessage = "Error de E/S: " + e.getMessage();
             }

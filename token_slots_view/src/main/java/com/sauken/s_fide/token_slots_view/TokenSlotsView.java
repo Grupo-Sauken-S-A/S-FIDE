@@ -59,7 +59,9 @@ import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class TokenSlotsView {
@@ -132,72 +134,145 @@ public class TokenSlotsView {
             }
         }
 
-        if (args.length != 2) {
+        if (args.length < 2 || args.length > 4) {
             throw new IllegalArgumentException("Número incorrecto de argumentos.\n\n" + HELP_TEXT);
         }
 
+        int requestedSlot = -1;
+        boolean all = false;
+        for (int i = 2; i < args.length; i++) {
+            String arg = args[i].trim();
+            if (arg.equalsIgnoreCase("-todos") || arg.equalsIgnoreCase("--todos")) {
+                all = true;
+            } else if (requestedSlot < 0) {
+                try {
+                    requestedSlot = Integer.parseInt(arg);
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Argumento no reconocido: " + arg
+                            + " (se esperaba un número de slot o -todos).");
+                }
+                if (requestedSlot < 0) {
+                    throw new IllegalArgumentException("El número de slot no puede ser negativo.");
+                }
+            } else {
+                throw new IllegalArgumentException("Número incorrecto de argumentos.\n\n" + HELP_TEXT);
+            }
+        }
+        if (all && requestedSlot >= 0) {
+            throw new IllegalArgumentException("Use un número de slot o -todos, no ambos.");
+        }
+
         try {
-            validateAndProcessToken(args[0], args[1]);
+            validateAndProcessToken(args[0], args[1], requestedSlot, all);
         } catch (Exception e) {
             throw new IllegalArgumentException("Error al procesar el token: " + e.getMessage());
         }
     }
 
-    private static void validateAndProcessToken(String pkcs11LibraryPath, String password) {
-        Path libraryPath = Path.of(pkcs11LibraryPath);
-        if (!Files.exists(libraryPath)) {
-            throw new IllegalArgumentException("El archivo de la biblioteca PKCS#11 no existe: " + pkcs11LibraryPath);
-        }
-
+    private static void validateAndProcessToken(String pkcs11LibraryPath, String password, int requestedSlot,
+                                                boolean all) {
         Security.addProvider(new BouncyCastleProvider());
 
-        String config = "--name=CustomProvider\nlibrary=" + sanitizeLibraryPathForPkcs11Config(pkcs11LibraryPath) + "\nslotListIndex=0";
-        Provider provider = Security.getProvider("SunPKCS11");
-        if (provider == null) {
-            throw new IllegalArgumentException("El proveedor SunPKCS11 no está disponible");
+        // Inventario de la biblioteca: no necesita contraseña (saber si hay un token en un slot es
+        // información pública), así que se muestra siempre y completo.
+        Pkcs11Access.Inventory inventory = Pkcs11Access.inventory(pkcs11LibraryPath, "CustomProvider");
+        printInventory(inventory);
+
+        // Qué slots se leen. Leer el contenido exige iniciar sesión con la contraseña; con varios
+        // tokens, probarla en uno que no es el suyo puede sumar un intento fallido a SU contador de
+        // bloqueo. Por eso, por defecto, solo se lee uno; para leer todos hay que pedirlo (-todos).
+        List<Pkcs11Access.TokenSlot> targets;
+        if (all) {
+            if (inventory.withToken().isEmpty()) {
+                Pkcs11Access.resolve(pkcs11LibraryPath, -1, "CustomProvider", true); // lanza el mensaje de "sin token"
+            }
+            targets = inventory.withToken();
+            if (targets.size() > 1) {
+                standardOutput.println("Se leerán los " + targets.size() + " tokens con la misma contraseña "
+                        + "(un intento por token).");
+            }
+        } else {
+            Pkcs11Access.Resolution resolution =
+                    Pkcs11Access.resolve(pkcs11LibraryPath, requestedSlot, "CustomProvider", requestedSlot < 0);
+            if (resolution.differsFromRequested()) {
+                standardOutput.println("Aviso: no había un token en el slot " + requestedSlot
+                        + "; se usó el slot " + resolution.selected().slotIndex() + ", donde se detectó el token.");
+            }
+            targets = List.of(resolution.selected());
+            if (!resolution.otherSlotsWithToken().isEmpty()) {
+                standardOutput.println("Nota: solo se lee un token para no probar la contraseña en uno que quizá no "
+                        + "sea el suyo. Hay tokens también en los slots " + resolution.otherSlotsWithToken()
+                        .toString().replaceAll("[\\[\\]]", "") + ": indique un número de slot para leer uno "
+                        + "puntual, o use -todos para leerlos a todos.");
+            }
         }
 
-        provider = provider.configure(config);
-        Security.addProvider(provider);
-
-        try {
-            readToken(password);
-        } finally {
-            Security.removeProvider(provider.getName());
+        int readOk = 0;
+        String lastError = null;
+        for (Pkcs11Access.TokenSlot target : targets) {
+            try {
+                readToken(password, target, pkcs11LibraryPath);
+                readOk++;
+            } catch (IllegalArgumentException e) {
+                if (targets.size() == 1) {
+                    throw e;
+                }
+                lastError = e.getMessage();
+                standardOutput.println("  Slot " + target.slotIndex() + ": no se pudo leer. " + e.getMessage());
+                standardOutput.println();
+            }
+        }
+        if (readOk == 0 && lastError != null) {
+            throw new IllegalArgumentException(lastError);
         }
     }
 
-    /**
-     * El parser de configuración de SunPKCS11 trata la barra invertida como
-     * carácter de escape, por lo que una ruta de Windows sin convertir (aun
-     * entre comillas) falla al configurar el proveedor. Se reemplaza "\" por
-     * "/" (aceptado igual por el cargador nativo de la biblioteca) y se
-     * encierra el valor entre comillas para tolerar espacios en el path.
-     */
-    private static String sanitizeLibraryPathForPkcs11Config(String path) {
-        return "\"" + path.replace('\\', '/') + "\"";
+    private static void printInventory(Pkcs11Access.Inventory inventory) {
+        List<Integer> withToken = new ArrayList<>();
+        for (Pkcs11Access.TokenSlot t : inventory.withToken()) {
+            withToken.add(t.slotIndex());
+        }
+        List<Integer> empty = new ArrayList<>();
+        for (int i = 0; i < inventory.totalSlots(); i++) {
+            if (!withToken.contains(i)) {
+                empty.add(i);
+            }
+        }
+        standardOutput.println("La biblioteca informa " + inventory.totalSlots() + " slot"
+                + (inventory.totalSlots() == 1 ? "" : "s") + ".");
+        standardOutput.println("  Con token: " + (withToken.isEmpty() ? "ninguno" : join(withToken)));
+        standardOutput.println("  Sin token: " + (empty.isEmpty() ? "ninguno" : join(empty)));
+        standardOutput.println();
     }
 
-    private static void readToken(String password) {
+    private static String join(List<Integer> numbers) {
+        return numbers.stream().map(String::valueOf).collect(Collectors.joining(", "));
+    }
+
+    private static void readToken(String password, Pkcs11Access.TokenSlot slot, String libraryPath) {
+        KeyStore keyStore;
         try {
-            KeyStore keyStore = KeyStore.getInstance("PKCS11");
+            // Con el proveedor de ESE slot, sin registrarlo: así cada token se lee por separado.
+            keyStore = KeyStore.getInstance("PKCS11", slot.provider());
             keyStore.load(null, password.toCharArray());
-            displayTokenContents(keyStore);
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Contraseña incorrecta o error al acceder al token");
-        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
-            throw new IllegalArgumentException("Error al leer el token");
+        } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
+            throw new IllegalArgumentException(Pkcs11Access.describeFailure(e, libraryPath));
+        }
+        try {
+            displayTokenContents(keyStore, slot.slotIndex());
+        } catch (KeyStoreException e) {
+            throw new IllegalArgumentException(Pkcs11Access.describeFailure(e, libraryPath));
         }
     }
 
-    private static void displayTokenContents(KeyStore keyStore) throws KeyStoreException {
+    private static void displayTokenContents(KeyStore keyStore, int slotIndex) throws KeyStoreException {
         var aliases = Collections.list(keyStore.aliases());
         if (aliases.isEmpty()) {
             standardOutput.println("No se encontraron certificados ni claves en el token.");
             return;
         }
 
-        standardOutput.println("  Slot: 0");
+        standardOutput.println("  Slot: " + slotIndex);
         for (int i = 0; i < aliases.size(); i++) {
             String alias = aliases.get(i);
             if (aliases.size() > 1) {

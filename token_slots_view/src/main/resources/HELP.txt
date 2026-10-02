@@ -1,20 +1,34 @@
 TokenSlotsView - Programa que visualiza/extrae el contenido de los Slots de un Token de Firma Digital
 
-Uso: java -jar TokenSlotsView.jar [OPCIÓN] | <Ruta de la biblioteca PKCS#11> <Contraseña del token>
+Uso: java -jar TokenSlotsView.jar [OPCIÓN] | <Ruta de la biblioteca PKCS#11> <Contraseña del token> [Número de slot | -todos]
 
 Opciones:
   -version, -v, --version              Muestra la versión del programa
   -ayuda, -h, --help                   Muestra este mensaje de ayuda
   -licencia, --license                 Muestra la información de licencia
   -listar-drivers, --listar-drivers    Muestra las rutas típicas de librerías PKCS#11 conocidas para este sistema operativo
+  -todos, --todos                      Lee el contenido de TODOS los tokens conectados (ver Notas)
 
 Para usar el programa con un token:
-  java -jar TokenSlotsView.jar <Ruta de la biblioteca PKCS#11> <Contraseña del token>
+  java -jar TokenSlotsView.jar <Ruta de la biblioteca PKCS#11> <Contraseña del token> [Número de slot | -todos]
 
-Ejemplo:
+Ejemplos:
   java -jar TokenSlotsView.jar c:/WINDOWS/system32/eTPKCS11.dll "password123"
+  java -jar TokenSlotsView.jar c:/WINDOWS/system32/eTPKCS11.dll "password123" 3
+  java -jar TokenSlotsView.jar c:/WINDOWS/system32/eTPKCS11.dll "password123" -todos
 
 Notas:
+- Siempre se muestra primero el inventario de la biblioteca: cuántos slots informa y en cuáles hay un token.
+  Esa información no necesita contraseña. Los fabricantes suelen informar varios slots (SafeNet, por ejemplo,
+  8) y el token puede estar en cualquiera, no necesariamente en el 0.
+- Para leer el contenido de un token hay que iniciar sesión con la contraseña. Con varios tokens conectados,
+  probarla en uno que no es el suyo puede sumar un intento fallido a SU contador de bloqueo. Por eso, por
+  defecto, se lee un solo token: el del número de slot indicado o, si no se indica, el primero que se detecte
+  (y se informa en qué otros slots hay tokens).
+- Con -todos se leen todos los tokens detectados, con la misma contraseña (un intento por token). Si falla en
+  alguno, se informa y se sigue con los demás. No se puede combinar con un número de slot.
+- El número que se muestra en "Slot:" es el que debe usarse luego en los demás programas.
+- Si la biblioteca es de 32 bits y Java es de 64 bits (o a la inversa), el programa lo informa con un mensaje claro.
 - La ruta de la biblioteca PKCS#11 debe ser absoluta o relativa al directorio actual
 - La contraseña del token es sensible a mayúsculas y minúsculas
 - El programa mostrará información detallada de los certificados y claves en el token

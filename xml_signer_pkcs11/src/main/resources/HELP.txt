@@ -13,7 +13,8 @@ Para firmar un documento XML:
 donde:
     <Biblioteca PKCS#11>        Ruta a la librería PKCS#11 de acceso al token que contiene el certificado digital X.509
     <Contraseña>                Contraseña de acceso al token usando PKCS#11
-    <Número de slot>            Slot en donde se encuentra el certificado X.509 que se usará para firmar digitalmente
+    <Número de slot>            Slot en donde se encuentra el certificado X.509 que se usará para firmar digitalmente.
+                                Si en ese slot no hay un token, se busca el token en los demás slots y se informa con un aviso
     <Archivo XML>               Archivo XML a firmar
     <Elemento XML a firmar>     Párrafo o elemento a firmar (vacío "" para firmar todo el documento)
     -omitir-revocacion true|false  Opcional (por defecto false). Fuerza la firma aunque el certificado
