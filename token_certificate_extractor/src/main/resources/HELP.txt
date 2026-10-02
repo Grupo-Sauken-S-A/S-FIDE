@@ -1,12 +1,13 @@
 TokenCertificateExtractor - Programa que extrae la clave pública en formato .PEM de un Token de Firma Digital
 
-Uso: java -jar TokenCertificateExtractor.jar [OPCIÓN] | <Ruta de la biblioteca PKCS#11> <Contraseña del token> <Número de slot>
+Uso: java -jar TokenCertificateExtractor.jar [OPCIÓN] | <Ruta de la biblioteca PKCS#11> <Contraseña del token> <Número de slot> [-omitir-revocacion true|false]
 
 Opciones:
   -version, -v, --version              Muestra la versión del programa
   -ayuda, -h, --help                   Muestra este mensaje de ayuda
   -licencia, --license                 Muestra la información de licencia
   -listar-drivers, --listar-drivers    Muestra las rutas típicas de librerías PKCS#11 conocidas para este sistema operativo
+  -omitir-revocacion true              No consulta el estado de revocación del certificado (por defecto sí se consulta)
 
 Para usar el programa con un token:
   java -jar TokenCertificateExtractor.jar <Ruta de la biblioteca PKCS#11> <Contraseña del token> <Número de slot>
@@ -17,4 +18,13 @@ Ejemplo:
 Notas:
 - La ruta de la biblioteca PKCS#11 debe ser la ruta completa al archivo .so o .dll del driver
 - La contraseña del token es la PIN de usuario del dispositivo
-- El número de slot es típicamente 0 para el primer token conectado
+- El número de slot es un índice sobre TODOS los slots que informa la biblioteca del fabricante (con o sin token).
+  Si en ese slot no hay un token, el programa busca el token en los demás slots y lo informa con un aviso; si hay
+  más de un token y el indicado no está, falla pidiendo que se indique cuál usar (para no probar la contraseña en
+  un token equivocado)
+- El archivo .pem generado contiene únicamente el certificado con su clave pública (no incluye la clave privada).
+  Se guarda en la carpeta personal del usuario: <carpeta del usuario>/S-FiDE (por ejemplo, C:\Users\su-usuario\S-FiDE),
+  con el nombre tomado del CN del certificado. El programa informa el nombre del archivo y la carpeta donde quedó.
+- Además de mostrar los datos del certificado, el programa consulta su estado de revocación (OCSP y, si no responde,
+  CRL) y lo informa: VIGENTE, REVOCADO o NO SE PUDO VERIFICAR (por ejemplo, sin conexión a Internet). Es solo
+  informativo: no cambia el resultado de la extracción

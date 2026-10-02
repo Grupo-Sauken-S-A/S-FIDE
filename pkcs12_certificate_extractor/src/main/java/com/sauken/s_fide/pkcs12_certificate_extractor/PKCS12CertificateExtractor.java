@@ -59,10 +59,11 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.Base64;
+import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Optional;
-import javax.security.auth.x500.X500Principal;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class PKCS12CertificateExtractor {
     private static final String VERSION = "S-FIDE PKCS12CertificateExtractor v1.3.0 - Grupo Sauken S.A.";
@@ -98,11 +99,20 @@ public class PKCS12CertificateExtractor {
             return;
         }
 
-        if (args.length != 2) {
+        // <archivo PKCS#12> <contraseña> [-omitir-revocacion true|false]
+        if (args.length != 2 && args.length != 4) {
             throw new CustomException("Número incorrecto de argumentos.\n\n" + HELP_TEXT);
         }
 
-        processStandardArguments(args[0], args[1]);
+        boolean omitirRevocacion = false;
+        if (args.length == 4) {
+            if (!"-omitir-revocacion".equalsIgnoreCase(args[2]) && !"--omitir-revocacion".equalsIgnoreCase(args[2])) {
+                throw new CustomException("Argumento no reconocido: " + args[2]);
+            }
+            omitirRevocacion = Boolean.parseBoolean(args[3]);
+        }
+
+        processStandardArguments(args[0], args[1], omitirRevocacion);
     }
 
     private static void processSpecialArgument(String arg) {
@@ -115,9 +125,9 @@ public class PKCS12CertificateExtractor {
         }
     }
 
-    private static void processStandardArguments(String pkcs12File, String password) {
+    private static void processStandardArguments(String pkcs12File, String password, boolean omitirRevocacion) {
         validatePKCS12File(pkcs12File, password);
-        extractCertificates(pkcs12File, password);
+        extractCertificates(pkcs12File, password, omitirRevocacion);
     }
 
     private static void validatePKCS12File(String pkcs12File, String password) {
@@ -139,30 +149,51 @@ public class PKCS12CertificateExtractor {
         }
     }
 
-    private static void extractCertificates(String pkcs12File, String password) {
+    private static void extractCertificates(String pkcs12File, String password, boolean omitirRevocacion) {
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
             try (InputStream is = Files.newInputStream(Paths.get(pkcs12File))) {
                 keyStore.load(is, password.toCharArray());
             }
 
-            boolean foundCertificate = false;
+            // Se juntan primero todos los certificados del archivo (y las cadenas de sus claves):
+            // entre ellos suele estar la AC emisora, necesaria para la consulta OCSP de revocación.
+            Map<String, X509Certificate> found = new LinkedHashMap<>();
+            List<X509Certificate> todos = new ArrayList<>();
             Enumeration<String> aliases = keyStore.aliases();
-
             while (aliases.hasMoreElements()) {
                 String alias = aliases.nextElement();
                 Certificate cert = keyStore.getCertificate(alias);
-
                 if (cert instanceof X509Certificate x509Cert) {
-                    foundCertificate = true;
-                    printCertificateInfo(x509Cert, alias);
-                    exportToPEM(x509Cert);
+                    found.put(alias, x509Cert);
+                    todos.add(x509Cert);
+                }
+                Certificate[] chain = keyStore.getCertificateChain(alias);
+                if (chain != null) {
+                    for (Certificate c : chain) {
+                        if (c instanceof X509Certificate x509 && !todos.contains(x509)) {
+                            todos.add(x509);
+                        }
+                    }
                 }
             }
 
-            if (!foundCertificate) {
+            if (found.isEmpty()) {
                 throw new CustomException("No se encontró ningún certificado X.509 en el archivo PKCS#12");
             }
+
+            for (Map.Entry<String, X509Certificate> entry : found.entrySet()) {
+                X509Certificate x509Cert = entry.getValue();
+                printCertificateInfo(x509Cert, entry.getKey());
+                ExtractorSupport.printRevocationStatus(x509Cert, todos, omitirRevocacion, System.out);
+                try {
+                    ExtractorSupport.exportPem(x509Cert, System.out);
+                } catch (IOException e) {
+                    throw new CustomException("Error al exportar certificado: " + e.getMessage());
+                }
+            }
+        } catch (CustomException e) {
+            throw e;
         } catch (Exception e) {
             throw new CustomException("Error al procesar certificados: " + e.getMessage());
         }
@@ -171,42 +202,6 @@ public class PKCS12CertificateExtractor {
     private static void printCertificateInfo(X509Certificate cert, String alias) {
         CertificateInfo info = new CertificateInfo(cert, alias);
         System.out.println(info);
-    }
-
-    private static void exportToPEM(X509Certificate cert) {
-        try {
-            String fileName = getFileNameFromSubject(cert.getSubjectX500Principal()) + ".pem";
-            Path outputPath = Paths.get(fileName);
-
-            String pemContent = convertToPEM(cert);
-            Files.writeString(outputPath, pemContent, StandardCharsets.UTF_8);
-
-            System.out.println("Certificado exportado como: " + fileName);
-        } catch (Exception e) {
-            throw new CustomException("Error al exportar certificado: " + e.getMessage());
-        }
-    }
-
-    private static String convertToPEM(X509Certificate cert) {
-        try {
-            Base64.Encoder encoder = Base64.getMimeEncoder(64, System.lineSeparator().getBytes());
-            String certEncoded = encoder.encodeToString(cert.getEncoded());
-            return String.format("-----BEGIN CERTIFICATE-----%n%s%n-----END CERTIFICATE-----", certEncoded);
-        } catch (Exception e) {
-            throw new CustomException("Error al convertir certificado a formato PEM: " + e.getMessage());
-        }
-    }
-
-    private static String getFileNameFromSubject(X500Principal subject) {
-        return Optional.of(subject.getName())
-                .map(name -> name.split(","))
-                .flatMap(parts -> java.util.Arrays.stream(parts)
-                        .map(String::trim)
-                        .filter(part -> part.startsWith("CN="))
-                        .map(part -> part.substring(3))
-                        .findFirst())
-                .map(cn -> cn.replaceAll("[^a-zA-Z0-9.-]", "_"))
-                .orElse("certificate");
     }
 
     private static void showHelp() {

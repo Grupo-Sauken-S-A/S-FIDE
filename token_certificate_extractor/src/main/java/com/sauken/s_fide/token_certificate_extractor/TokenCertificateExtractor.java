@@ -63,9 +63,11 @@ import java.security.Provider;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.Base64;
+import java.util.ArrayList;
 import java.util.Enumeration;
-import javax.security.auth.x500.X500Principal;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TokenCertificateExtractor {
     private static final String VERSION = "S-FIDE TokenCertificateExtractor v1.3.0 - Grupo Sauken S.A.";
@@ -141,14 +143,24 @@ public class TokenCertificateExtractor {
             }
         }
 
-        if (args.length != 3) {
+        // <biblioteca> <contraseña> <slot> [-omitir-revocacion true|false]
+        if (args.length != 3 && args.length != 5) {
             throw new IllegalArgumentException("Número incorrecto de argumentos.\n" + HELP_TEXT);
         }
 
-        processStandardArguments(args[0], args[1], args[2]);
+        boolean omitirRevocacion = false;
+        if (args.length == 5) {
+            if (!"-omitir-revocacion".equalsIgnoreCase(args[3]) && !"--omitir-revocacion".equalsIgnoreCase(args[3])) {
+                throw new IllegalArgumentException("Argumento no reconocido: " + args[3]);
+            }
+            omitirRevocacion = Boolean.parseBoolean(args[4]);
+        }
+
+        processStandardArguments(args[0], args[1], args[2], omitirRevocacion);
     }
 
-    private static void processStandardArguments(String libraryPath, String password, String slotArg) throws Exception {
+    private static void processStandardArguments(String libraryPath, String password, String slotArg,
+                                                  boolean omitirRevocacion) throws Exception {
         int slotNumber;
         try {
             slotNumber = Integer.parseInt(slotArg);
@@ -157,7 +169,7 @@ public class TokenCertificateExtractor {
         }
 
         validatePKCS11Library(libraryPath);
-        extractCertificate(libraryPath, password, slotNumber);
+        extractCertificate(libraryPath, password, slotNumber, omitirRevocacion);
     }
 
     private static void validatePKCS11Library(String pkcs11LibraryPath) throws IOException {
@@ -171,15 +183,29 @@ public class TokenCertificateExtractor {
         System.out.println(HELP_TEXT);
     }
 
-    private static void extractCertificate(String pkcs11LibraryPath, String password, int slotNumber) throws Exception {
+    private static void extractCertificate(String pkcs11LibraryPath, String password, int slotNumber,
+                                            boolean omitirRevocacion) throws Exception {
         Provider provider = null;
         try {
-            provider = configurePKCS11Provider(pkcs11LibraryPath, slotNumber);
+            // Se prueba primero el slot pedido; si no tiene token se busca el token en los demás
+            // slots (ver Pkcs11Access: el slot pedido es un índice sobre TODOS los slots de la
+            // biblioteca, y el token puede no estar en el que se indicó).
+            Pkcs11Access.Resolution resolution =
+                    Pkcs11Access.resolve(pkcs11LibraryPath, slotNumber, "CustomProvider", false);
+            provider = resolution.selected().provider();
             Security.addProvider(provider);
-            KeyStore keyStore = loadKeyStore(password);
-            processCertificates(keyStore, slotNumber);
+            int usedSlot = resolution.selected().slotIndex();
+            if (resolution.differsFromRequested()) {
+                System.out.println("Aviso: no había un token en el slot " + slotNumber
+                        + "; se usó el slot " + usedSlot + ", donde se detectó el token.");
+            }
+            KeyStore keyStore = loadKeyStore(password, pkcs11LibraryPath);
+            processCertificates(keyStore, usedSlot, omitirRevocacion);
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
-            throw new IllegalArgumentException("Error en la extracción del certificado: " + e.getMessage());
+            throw new IllegalArgumentException("Error en la extracción del certificado: "
+                    + Pkcs11Access.describeFailure(e, pkcs11LibraryPath));
         } finally {
             if (provider != null) {
                 Security.removeProvider(provider.getName());
@@ -187,56 +213,44 @@ public class TokenCertificateExtractor {
         }
     }
 
-    private static Provider configurePKCS11Provider(String pkcs11LibraryPath, int slotNumber) throws IllegalArgumentException {
-        String config = String.format(
-                "--name=CustomProvider%nlibrary=%s%nslotListIndex=%d",
-                sanitizeLibraryPathForPkcs11Config(pkcs11LibraryPath),
-                slotNumber
-        );
-        Provider provider = Security.getProvider("SunPKCS11");
-        if (provider == null) {
-            throw new IllegalArgumentException("Proveedor SunPKCS11 no disponible");
-        }
-        return provider.configure(config);
-    }
-
-    /**
-     * El parser de configuración de SunPKCS11 trata la barra invertida como
-     * carácter de escape, por lo que una ruta de Windows sin convertir (aun
-     * entre comillas) falla al configurar el proveedor. Se reemplaza "\" por
-     * "/" (aceptado igual por el cargador nativo de la biblioteca) y se
-     * encierra el valor entre comillas para tolerar espacios en el path.
-     */
-    private static String sanitizeLibraryPathForPkcs11Config(String path) {
-        return "\"" + path.replace('\\', '/') + "\"";
-    }
-
-    private static KeyStore loadKeyStore(String password) throws Exception {
+    private static KeyStore loadKeyStore(String password, String pkcs11LibraryPath) {
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS11");
             keyStore.load(null, password.toCharArray());
             return keyStore;
         } catch (Exception e) {
-            throw new IllegalArgumentException("Error al cargar el almacén de claves: " + e.getMessage());
+            throw new IllegalArgumentException(Pkcs11Access.describeFailure(e, pkcs11LibraryPath));
         }
     }
 
-    private static void processCertificates(KeyStore keyStore, int slotNumber) throws Exception {
+    private static void processCertificates(KeyStore keyStore, int slotNumber, boolean omitirRevocacion) throws Exception {
+        // Primero se juntan todos los certificados del token: los demás suelen incluir a la AC
+        // emisora, necesaria para la consulta OCSP del estado de revocación.
+        Map<String, X509Certificate> found = new LinkedHashMap<>();
         Enumeration<String> aliases = keyStore.aliases();
-        boolean foundCertificate = false;
-
         while (aliases.hasMoreElements()) {
             String alias = aliases.nextElement();
             Certificate cert = keyStore.getCertificate(alias);
-            if (cert instanceof X509Certificate) {
-                foundCertificate = true;
-                printCertificateInfo((X509Certificate) cert, alias, slotNumber);
-                exportToPEM((X509Certificate) cert);
+            if (cert instanceof X509Certificate x509) {
+                found.put(alias, x509);
             }
         }
 
-        if (!foundCertificate) {
+        if (found.isEmpty()) {
             System.out.println("No se encontró ningún certificado en el slot " + slotNumber);
+            return;
+        }
+
+        List<X509Certificate> todos = new ArrayList<>(found.values());
+        for (Map.Entry<String, X509Certificate> entry : found.entrySet()) {
+            X509Certificate cert = entry.getValue();
+            printCertificateInfo(cert, entry.getKey(), slotNumber);
+            ExtractorSupport.printRevocationStatus(cert, todos, omitirRevocacion, System.out);
+            try {
+                ExtractorSupport.exportPem(cert, System.out);
+            } catch (IOException e) {
+                throw new IllegalArgumentException("Error al exportar el certificado: " + e.getMessage());
+            }
         }
     }
 
@@ -254,34 +268,4 @@ public class TokenCertificateExtractor {
         System.out.println(info.toString());
     }
 
-    private static void exportToPEM(X509Certificate cert) throws Exception {
-        try {
-            String fileName = getFileNameFromSubject(cert.getSubjectX500Principal()) + ".pem";
-            Path outputPath = Paths.get(fileName);
-
-            Base64.Encoder encoder = Base64.getMimeEncoder(64, System.lineSeparator().getBytes());
-            String certEncoded = encoder.encodeToString(cert.getEncoded());
-            String pemContent = String.format(
-                    "-----BEGIN CERTIFICATE-----%n%s%n-----END CERTIFICATE-----",
-                    certEncoded
-            );
-
-            Files.writeString(outputPath, pemContent, StandardCharsets.UTF_8);
-            System.out.println("Certificado exportado como: " + fileName);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Error al exportar el certificado: " + e.getMessage());
-        }
-    }
-
-    private static String getFileNameFromSubject(X500Principal subject) {
-        String name = subject.getName();
-        String[] parts = name.split(",");
-        for (String part : parts) {
-            String trimmed = part.trim();
-            if (trimmed.startsWith("CN=")) {
-                return trimmed.substring(3).replaceAll("[^a-zA-Z0-9.-]", "_");
-            }
-        }
-        return "certificate";
-    }
 }
