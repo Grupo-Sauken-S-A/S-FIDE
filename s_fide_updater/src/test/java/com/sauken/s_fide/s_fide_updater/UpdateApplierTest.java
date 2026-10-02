@@ -288,4 +288,30 @@ class UpdateApplierTest {
         // los lanzadores van al final: son lo último que se reemplaza
         assertEquals("SFide-GUI.bat", pkg.entries().get(pkg.entries().size() - 1));
     }
+
+    @Test
+    void enLinuxLosLanzadoresShConservanOGananElPermisoDeEjecucion() throws Exception {
+        assumeTrue(java.nio.file.FileSystems.getDefault().supportedFileAttributeViews().contains("posix"),
+                "Los permisos de Unix no existen en Windows");
+        Path launcher = install.resolve("SFide-GUI.sh");
+        write(launcher, "viejo");
+        // el lanzador anterior ya había perdido el permiso de ejecución; el jar tiene permisos propios
+        Files.setPosixFilePermissions(launcher, java.nio.file.attribute.PosixFilePermissions.fromString("rw-r--r--"));
+        Files.setPosixFilePermissions(install.resolve("Aaa.jar"), java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
+
+        Map<String, String> files = new LinkedHashMap<>();
+        files.put("SFide-GUI.sh", "nuevo");
+        files.put("Otro.sh", "nuevo-lanzador");
+        files.put("Aaa.jar", "aaa-nueva");
+        files.put("Datos.ico", "icono");
+        Path zip = zip("perm.zip", files, Map.of(), Map.of());
+        applier(UpdatePackage.open(zip)).apply();
+
+        assertEquals("rwxr-xr-x", java.nio.file.attribute.PosixFilePermissions.toString(Files.getPosixFilePermissions(launcher)));
+        assertEquals("rwxr-xr-x", java.nio.file.attribute.PosixFilePermissions.toString(Files.getPosixFilePermissions(install.resolve("Otro.sh"))),
+                "un .sh nuevo debe ser ejecutable");
+        assertEquals("rw-------", java.nio.file.attribute.PosixFilePermissions.toString(Files.getPosixFilePermissions(install.resolve("Aaa.jar"))),
+                "se conservan los permisos del archivo que se reemplaza");
+        assertFalse(Files.isExecutable(install.resolve("Datos.ico")), "un archivo común nuevo no debe ser ejecutable");
+    }
 }

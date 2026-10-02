@@ -56,7 +56,9 @@ import java.io.OutputStream;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
@@ -306,6 +308,7 @@ final class UpdateApplier {
             Files.createDirectories(backupFile.getParent());
             Files.move(target, backupFile, StandardCopyOption.REPLACE_EXISTING);
         }
+        applyPermissions(staged, hadOriginal ? backupFile : null, entry);
         try {
             Files.move(staged, target, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
@@ -313,6 +316,34 @@ final class UpdateApplier {
                 Files.move(backupFile, target, StandardCopyOption.REPLACE_EXISTING);
             }
             throw e;
+        }
+    }
+
+    /**
+     * En Linux/macOS un archivo recién extraído nace sin los permisos del que
+     * reemplaza (el zip no los guarda): sin esto, SFide-GUI.sh quedaría sin
+     * permiso de ejecución y S-FiDE dejaría de poder lanzarse tras actualizar.
+     * Se copian los permisos del archivo anterior y, para los .sh (lanzadores),
+     * se garantiza el permiso de ejecución aunque el anterior lo hubiera perdido;
+     * un .sh nuevo (sin anterior) queda rwxr-xr-x. No hace nada en Windows.
+     */
+    static void applyPermissions(Path staged, Path original, String entry) {
+        if (!FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+            return;
+        }
+        try {
+            java.util.Set<PosixFilePermission> perms = original != null
+                    ? new java.util.HashSet<>(Files.getPosixFilePermissions(original))
+                    : new java.util.HashSet<>(java.util.Set.of(PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ));
+            if (entry.endsWith(".sh")) {
+                perms.addAll(java.util.Set.of(PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_EXECUTE,
+                        PosixFilePermission.OTHERS_EXECUTE, PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ,
+                        PosixFilePermission.OTHERS_READ));
+            }
+            Files.setPosixFilePermissions(staged, perms);
+        } catch (IOException | UnsupportedOperationException e) {
+            // Los permisos son un complemento: no deben impedir la actualización.
         }
     }
 
