@@ -1,0 +1,31 @@
+SFideUpdater - Programa que aplica una actualización de S-FiDE ya descargada, con respaldo y reversión automática
+
+Uso: java -jar SFideUpdater.jar [OPCIÓN] | verificar <Paquete .zip> <Carpeta de instalación> [--ignorar <archivo>]
+                                         | aplicar <Paquete .zip> <Carpeta de instalación> [opciones]
+
+Opciones:
+  -version, -v, --version      Muestra la versión del programa
+  -ayuda, -h, --help           Muestra este mensaje de ayuda
+  -licencia, --license         Muestra la información de licencia
+
+Modos:
+  verificar    Valida el paquete y comprueba que la actualización podría aplicarse (permiso de escritura sobre la
+               carpeta de instalación, archivos en uso por otros procesos), sin modificar nada.
+               --ignorar <archivo>   Archivo que se sabe en uso por quien consulta (se omite en la comprobación)
+  aplicar      Reemplaza los archivos de la instalación por los del paquete. Todo o nada: ante cualquier falla
+               la instalación vuelve exactamente al estado anterior.
+               --esperar-pid <n>     Espera a que termine ese proceso (la interfaz gráfica) antes de empezar
+               --relanzar            Vuelve a abrir S-FiDE al terminar, haya salido bien o se haya revertido
+               --resultado <archivo> Escribe ahí el resultado (estado y mensaje) para que la interfaz lo muestre
+               --log <archivo>       Agrega el detalle de lo realizado a ese archivo
+
+Ejemplo:
+  java -jar SFideUpdater.jar verificar C:/Temp/S-FiDE-1.4.0-actualizacion.zip C:/S-FiDE
+
+Notas:
+- El paquete (S-FiDE-<versión>-actualizacion.zip) solo puede instalar jars, lanzadores, documentación y textos de
+  distribución en la carpeta de instalación. Nunca toca la configuración del usuario, los runtimes de Java/JavaFX,
+  ni las carpetas test/ y xsd/.
+- Si otro usuario del equipo tiene S-FiDE abierto desde la misma carpeta, sus archivos están en uso y no pueden
+  reemplazarse: el programa reintenta unos segundos y, si siguen en uso, revierte todo e informa.
+- Código de salida: 0 = éxito, 1 = error.

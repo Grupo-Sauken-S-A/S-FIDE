@@ -7,3 +7,5 @@ dependency-reduced-pom.xml
 /sfide-defaults.properties
 /sfide-gui.lock
 **/logs/
+/dist-update/
+

@@ -110,6 +110,11 @@ del /q "%DEPLOY%\SFide-GUI.jar" 2>nul
 for %%F in ("%SOURCE%\s_fide_gui\target\s_fide_gui-*.jar") do copy /y "%%F" "%DEPLOY%\SFide-GUI.jar" >nul
 if exist "%DEPLOY%\SFide-GUI.jar" (echo   OK  SFide-GUI.jar) else (echo   ADVERTENCIA: falta el jar de s_fide_gui)
 
+REM --- Actualizador: aplica las actualizaciones descargadas desde Ayuda > Buscar actualizaciones ---
+del /q "%DEPLOY%\SFideUpdater.jar" 2>nul
+for %%F in ("%SOURCE%\s_fide_updater\target\s_fide_updater-*-jar-with-dependencies.jar") do copy /y "%%F" "%DEPLOY%\SFideUpdater.jar" >nul
+if exist "%DEPLOY%\SFideUpdater.jar" (echo   OK  SFideUpdater.jar) else (echo   ADVERTENCIA: falta el jar de s_fide_updater)
+
 REM --- Archivos de distribucion que acompanan a los jars ---
 copy /y "%SOURCE%\SFide-GUI.bat"                  "%DEPLOY%\" >nul
 copy /y "%SOURCE%\SFide-GUI.sh"                   "%DEPLOY%\" >nul
@@ -142,5 +147,6 @@ if not "%VENDOR%"=="" (
 
 echo.
 echo Distribucion actualizada en: %DEPLOY%
-pause
+REM Con SFIDE_NOPAUSE definida (la usa crear-paquete-actualizacion.ps1) no se espera una tecla.
+if not defined SFIDE_NOPAUSE pause
 endlocal
