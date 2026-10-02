@@ -1,0 +1,2 @@
+# Los scripts de shell deben quedar siempre con fin de linea LF (un CRLF rompe "#!/bin/sh" en Linux/macOS)
+*.sh text eol=lf
