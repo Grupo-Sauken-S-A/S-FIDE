@@ -50,11 +50,15 @@
 
 package com.sauken.s_fide.s_fide_gui;
 
+import com.sauken.s_fide.s_fide_gui.update.UpdateController;
+import com.sauken.s_fide.s_fide_gui.utils.AppInfo;
 import com.sauken.s_fide.s_fide_gui.utils.GUIUtils;
 import com.sauken.s_fide.s_fide_gui.validators.ModuleValidator;
 import com.sauken.s_fide.s_fide_gui.utils.ConfigurationManager;
+import com.sauken.s_fide.s_fide_gui.utils.SessionPasswordStore;
 import com.sauken.s_fide.s_fide_gui.utils.SingleInstanceGuard;
 import com.sauken.s_fide.s_fide_gui.utils.TokenProfileCatalog;
+import com.sauken.s_fide.s_fide_gui.utils.UserDataDirectory;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.animation.PauseTransition;
@@ -95,11 +99,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.IntConsumer;
 
 public class SFideGUI extends Application {
-    private static final String VERSION_NUMBER = "1.3.0";
+    // Sale del pom (recurso filtrado s-fide-version.properties): una sola fuente de verdad.
+    private static final String VERSION_NUMBER = AppInfo.version();
     private static final String VERSION = "S-FIDE GUI v" + VERSION_NUMBER + " - Grupo Sauken S.A.";
     private static final String CSS_FILE = "css/styles.css";
     private static final String HELP_FILE = "text/HELP.txt";
@@ -132,6 +139,7 @@ public class SFideGUI extends Application {
     private String xmlElementHelpText;
     private String pdfPositionHelpText;
     private ConfigurationManager configManager;
+    private UpdateController updateController;
 
     @Override
     public void init() throws Exception {
@@ -168,6 +176,13 @@ public class SFideGUI extends Application {
             System.err.println("Error no capturado en el thread: " + thread.getName());
             throwable.printStackTrace(System.err);
         });
+
+        // Mientras otro usuario (o este mismo) está actualizando la instalación, los archivos pueden
+        // estar a medias: se espera en vez de arrancar con errores confusos.
+        if (UpdateController.isInstallationBeingUpdated()) {
+            UpdateController.showBeingUpdatedMessage();
+            System.exit(0);
+        }
 
         if (!SingleInstanceGuard.tryAcquire()) {
             SingleInstanceGuard.showAlreadyRunningMessage();
@@ -215,6 +230,8 @@ public class SFideGUI extends Application {
             if (configManager != null) {
                 configManager.saveConfiguration();
             }
+            // Las contraseñas de la sesión viven solo en memoria: se sueltan al cerrar.
+            sessionPasswords.clear();
             if (executorService != null) {
                 executorService.shutdown();
             }
@@ -457,6 +474,9 @@ public class SFideGUI extends Application {
             return;
         }
 
+        watchCredentialChanges();
+        updateController = new UpdateController(primaryStage, executorService, this::openInBrowser, this::exitForUpdate);
+
         VBox root = new VBox(10);
         root.setPadding(new Insets(10));
         root.setStyle("-fx-background-color: #f5f5f5;");
@@ -478,6 +498,31 @@ public class SFideGUI extends Application {
 
         executorService.submit(this::createDesktopShortcutIfNeeded);
         executorService.submit(this::createDocShortcutsIfNeeded);
+
+        // Si una actualización anterior dejó un resultado, se le cuenta al usuario una sola vez.
+        Platform.runLater(updateController::showPendingResult);
+        executorService.submit(UpdateController::cleanLeftovers);
+    }
+
+    /**
+     * Cierra la aplicación para que el actualizador pueda reemplazar sus
+     * archivos. A diferencia de "Salir", no pide confirmación (el usuario ya
+     * aceptó la actualización) — pero guarda lo mismo: posición de la ventana
+     * y valores recordados. Las contraseñas de la sesión se sueltan en stop().
+     */
+    private void exitForUpdate() {
+        try {
+            configManager.saveWindowBounds(
+                    primaryStage.getX(),
+                    primaryStage.getY(),
+                    primaryStage.getWidth(),
+                    primaryStage.getHeight(),
+                    primaryStage.isMaximized()
+            );
+        } catch (Exception e) {
+            System.err.println("No se pudo guardar la posición de la ventana antes de actualizar: " + e.getMessage());
+        }
+        Platform.exit();
     }
 
     /**
@@ -966,6 +1011,31 @@ public class SFideGUI extends Application {
         return createTextField(promptText, "");
     }
 
+    /**
+     * Campo de ruta de un documento (XML, PDF o XSD). Además de lo de un campo
+     * de texto común, recuerda la carpeta del archivo cada vez que el campo
+     * apunta a un archivo que existe — sea porque se eligió con "Examinar...",
+     * se pegó o se escribió a mano — para abrir "Examinar..." directamente ahí
+     * la próxima vez, también en las demás pestañas del mismo tipo de documento
+     * y en la próxima sesión.
+     */
+    private TextField createDocumentPathField(String promptText, ConfigurationManager.DirectoryKind kind) {
+        TextField field = createTextField(promptText);
+        field.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && !newValue.isBlank()) {
+                try {
+                    File file = new File(newValue.trim());
+                    if (file.isFile()) {
+                        configManager.setLastDirectory(kind, file);
+                    }
+                } catch (SecurityException ignored) {
+                    // Sin permiso para consultarlo: simplemente no se recuerda.
+                }
+            }
+        });
+        return field;
+    }
+
     private TextField createNumericTextField(String promptText, String defaultValue) {
         TextField textField = createTextField(promptText, defaultValue);
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -985,6 +1055,120 @@ public class SFideGUI extends Application {
         passwordField.setPromptText(promptText);
         passwordField.setPrefWidth(400);
         return passwordField;
+    }
+
+    // --- Contraseñas de la sesión (solo en memoria; ver SessionPasswordStore) ---
+
+    private final SessionPasswordStore sessionPasswords = new SessionPasswordStore();
+    private final Map<SessionPasswordStore.Kind, List<PasswordField>> sessionPasswordFields =
+            new EnumMap<>(SessionPasswordStore.Kind.class);
+
+    /**
+     * Campo de contraseña que participa de la reutilización dentro de la
+     * sesión: todos los campos del mismo tipo (token PKCS#11, o archivo
+     * PKCS#12) reciben la contraseña que acaba de funcionar en cualquiera de
+     * ellos, mientras no cambie el token/archivo.
+     */
+    private PasswordField createSessionPasswordField(String promptText, SessionPasswordStore.Kind kind) {
+        PasswordField field = createPasswordField(promptText);
+        sessionPasswordFields.computeIfAbsent(kind, k -> new ArrayList<>()).add(field);
+        sessionPasswords.recall(kind, currentCredentialKey(kind)).ifPresent(field::setText);
+        return field;
+    }
+
+    /** La credencial actual de cada tipo: lo que identifica "este mismo token" / "este mismo archivo". */
+    private String currentCredentialKey(SessionPasswordStore.Kind kind) {
+        return kind == SessionPasswordStore.Kind.PKCS11
+                ? SessionPasswordStore.tokenKey(configManager.pkcs11LibraryPathProperty().get(),
+                configManager.pkcs11SlotNumberProperty().get())
+                : SessionPasswordStore.fileKey(configManager.pkcs12FilePathProperty().get());
+    }
+
+    /**
+     * Si el usuario cambia de token (biblioteca/slot) o de archivo PKCS#12, la
+     * contraseña recordada ya no corresponde: se olvida. Las rutas y el slot
+     * son compartidos entre pestañas (ConfigurationManager), así que alcanza
+     * con mirar esas propiedades una sola vez.
+     */
+    private void watchCredentialChanges() {
+        javafx.beans.value.ChangeListener<String> tokenListener =
+                (obs, oldValue, newValue) -> forgetIfCredentialChanged(SessionPasswordStore.Kind.PKCS11);
+        configManager.pkcs11LibraryPathProperty().addListener(tokenListener);
+        configManager.pkcs11SlotNumberProperty().addListener(tokenListener);
+        configManager.pkcs12FilePathProperty().addListener(
+                (obs, oldValue, newValue) -> forgetIfCredentialChanged(SessionPasswordStore.Kind.PKCS12));
+    }
+
+    private void forgetIfCredentialChanged(SessionPasswordStore.Kind kind) {
+        if (sessionPasswords.hasAny(kind)
+                && !sessionPasswords.isForCurrentCredential(kind, currentCredentialKey(kind))) {
+            forgetSessionPassword(kind);
+        }
+    }
+
+    private void rememberSessionPassword(SessionPasswordStore.Kind kind, String key, String password) {
+        String previous = sessionPasswords.peek(kind).orElse(null);
+        sessionPasswords.remember(kind, key, password);
+        for (PasswordField field : sessionPasswordFields.getOrDefault(kind, List.of())) {
+            String text = field.getText();
+            // No se pisa lo que el usuario esté escribiendo en otra pestaña: solo los campos
+            // vacíos o que mostraban la contraseña anterior.
+            if (text == null || text.isEmpty() || text.equals(previous) || text.equals(password)) {
+                field.setText(password);
+            }
+        }
+    }
+
+    private void forgetSessionPassword(SessionPasswordStore.Kind kind) {
+        String old = sessionPasswords.peek(kind).orElse(null);
+        sessionPasswords.forget(kind);
+        clearPasswordFieldsShowing(kind, old);
+    }
+
+    private void clearPasswordFieldsShowing(SessionPasswordStore.Kind kind, String password) {
+        if (password == null) {
+            return;
+        }
+        for (PasswordField field : sessionPasswordFields.getOrDefault(kind, List.of())) {
+            if (password.equals(field.getText())) {
+                field.setText("");
+            }
+        }
+    }
+
+    /** Olvida todas las contraseñas de la sesión y vacía los campos que las muestran. */
+    private void forgetAllSessionPasswords() {
+        for (SessionPasswordStore.Kind kind : SessionPasswordStore.Kind.values()) {
+            forgetSessionPassword(kind);
+        }
+        sessionPasswords.clear();
+    }
+
+    /**
+     * Qué hacer con la contraseña cuando termina la operación, a partir del
+     * código de salida real del módulo (se invoca siempre en el hilo de la
+     * interfaz):
+     * <ul>
+     *   <li>0 (éxito): esa contraseña funciona, se recuerda para toda la sesión y se copia a
+     *   los demás campos del mismo tipo.</li>
+     *   <li>Distinto de 0 y era la recordada: se olvida y se vacían los campos. Nunca se
+     *   reenvía sola una contraseña que acaba de fallar: con un token, cada intento fallido
+     *   cuenta contra el límite que lo bloquea.</li>
+     *   <li>Distinto de 0 y era recién escrita: el campo se vacía, como siempre.</li>
+     * </ul>
+     */
+    private IntConsumer sessionPasswordOutcome(SessionPasswordStore.Kind kind, String password) {
+        String key = currentCredentialKey(kind);
+        boolean wasRemembered = sessionPasswords.isRemembered(kind, key, password);
+        return exitCode -> {
+            if (exitCode == 0) {
+                rememberSessionPassword(kind, key, password);
+            } else if (wasRemembered) {
+                forgetSessionPassword(kind);
+            } else {
+                clearPasswordFieldsShowing(kind, password);
+            }
+        };
     }
 
     /**
@@ -1241,7 +1425,13 @@ public class SFideGUI extends Application {
         return content;
     }
 
-    private void selectFile(TextField field, String title, String description, String... extensions) {
+    /**
+     * Selector de archivo común a todos los botones "Examinar...". Si se
+     * indica {@code directoryKind}, abre en la última carpeta usada para ese
+     * tipo de documento y la actualiza al elegir un archivo.
+     */
+    private void selectFile(TextField field, ConfigurationManager.DirectoryKind directoryKind,
+                            String title, String description, String... extensions) {
         try {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle(title);
@@ -1254,16 +1444,28 @@ public class SFideGUI extends Application {
                 fileChooser.getExtensionFilters().add(filter);
             }
 
+            // Carpeta inicial: la del archivo que ya está en el campo; si no hay (o ya no existe),
+            // la última carpeta usada para ese tipo de documento (recordada entre sesiones).
+            File initialDirectory = null;
             String currentPath = field.getText();
             if (currentPath != null && !currentPath.isEmpty()) {
-                File currentFile = new File(currentPath);
-                if (currentFile.getParentFile() != null && currentFile.getParentFile().exists()) {
-                    fileChooser.setInitialDirectory(currentFile.getParentFile());
+                File parent = new File(currentPath).getParentFile();
+                if (parent != null && parent.isDirectory()) {
+                    initialDirectory = parent;
                 }
+            }
+            if (initialDirectory == null && directoryKind != null) {
+                initialDirectory = configManager.getLastDirectory(directoryKind);
+            }
+            if (initialDirectory != null) {
+                fileChooser.setInitialDirectory(initialDirectory);
             }
 
             File file = fileChooser.showOpenDialog(primaryStage);
             if (file != null) {
+                if (directoryKind != null) {
+                    configManager.setLastDirectory(directoryKind, file);
+                }
                 Platform.runLater(() -> field.setText(file.getAbsolutePath()));
             }
         } catch (Exception e) {
@@ -1272,7 +1474,7 @@ public class SFideGUI extends Application {
     }
 
     private void selectLibraryFile(TextField field) {
-        selectFile(field,
+        selectFile(field, null,
                 "Seleccionar Biblioteca PKCS#11",
                 "Bibliotecas",
                 "*.dll", "*.so"
@@ -1281,7 +1483,7 @@ public class SFideGUI extends Application {
     }
 
     private void selectPKCS12File(TextField field) {
-        selectFile(field,
+        selectFile(field, null,
                 "Seleccionar Archivo PKCS#12",
                 "Archivos PKCS#12",
                 "*.p12", "*.pfx"
@@ -1290,7 +1492,7 @@ public class SFideGUI extends Application {
     }
 
     private void selectXMLFile(TextField field) {
-        selectFile(field,
+        selectFile(field, ConfigurationManager.DirectoryKind.XML,
                 "Seleccionar Archivo XML",
                 "Archivos XML",
                 "*.xml"
@@ -1298,7 +1500,7 @@ public class SFideGUI extends Application {
     }
 
     private void selectXSDFile(TextField field) {
-        selectFile(field,
+        selectFile(field, ConfigurationManager.DirectoryKind.XSD,
                 "Seleccionar Archivo XSD",
                 "Archivos XSD",
                 "*.xsd"
@@ -1306,11 +1508,25 @@ public class SFideGUI extends Application {
     }
 
     private void selectPDFFile(TextField field) {
-        selectFile(field,
+        selectFile(field, ConfigurationManager.DirectoryKind.PDF,
                 "Seleccionar Archivo PDF",
                 "Archivos PDF",
                 "*.pdf"
         );
+    }
+
+    // Texto de ejemplo del campo "Número de Slot" (ver slotOrDefault()).
+    private static final String SLOT_PROMPT_OPTIONAL = "0 (si ahí no hay token, se busca solo)";
+
+    /**
+     * El número de slot dejó de ser obligatorio: los módulos de token prueban
+     * primero el slot indicado y, si no tiene token, buscan el slot donde
+     * está (el token puede no estar en el 0). Si el campo quedó vacío se
+     * usa 0, que es lo que el contrato de línea de comandos de los módulos
+     * sigue esperando como argumento posicional.
+     */
+    private static String slotOrDefault(String slotNumber) {
+        return (slotNumber == null || slotNumber.isBlank()) ? "0" : slotNumber.trim();
     }
 
     private void validateRequiredField(String fieldName, String value) {
@@ -1334,7 +1550,9 @@ public class SFideGUI extends Application {
         clearLogsMenuItem.setOnAction(e -> Platform.runLater(this::clearOutput));
         MenuItem validateMenuItem = new MenuItem("Validar Módulos");
         validateMenuItem.setOnAction(e -> Platform.runLater(() -> validateModules(true)));
-        toolsMenu.getItems().addAll(clearLogsMenuItem, validateMenuItem);
+        MenuItem forgetPasswordsMenuItem = new MenuItem("Olvidar contraseñas de esta sesión");
+        forgetPasswordsMenuItem.setOnAction(e -> Platform.runLater(this::forgetAllSessionPasswords));
+        toolsMenu.getItems().addAll(clearLogsMenuItem, validateMenuItem, new SeparatorMenuItem(), forgetPasswordsMenuItem);
 
         if (isWindowsOS()) {
             MenuItem recreateShortcutsMenuItem = new MenuItem("Recrear accesos directos");
@@ -1353,10 +1571,15 @@ public class SFideGUI extends Application {
         helpMenuItem.setOnAction(e -> Platform.runLater(this::showHelpDialog));
         aboutMenuItem.setOnAction(e -> Platform.runLater(this::showAboutDialog));
 
+        MenuItem updatesMenuItem = new MenuItem("Buscar actualizaciones...");
+        updatesMenuItem.setOnAction(e -> Platform.runLater(updateController::checkInteractively));
+
         helpMenu.getItems().addAll(
                 versionMenuItem,
                 licenseMenuItem,
                 helpMenuItem,
+                new SeparatorMenuItem(),
+                updatesMenuItem,
                 new SeparatorMenuItem(),
                 aboutMenuItem
         );
@@ -1441,6 +1664,26 @@ public class SFideGUI extends Application {
         } catch (Exception e) {
             handleError("Error al abrir el enlace en el navegador", e);
         }
+    }
+
+    /**
+     * Botón "Abrir carpeta de certificados" de las dos pestañas "Ver
+     * certificado": abre en el explorador de archivos del sistema la carpeta
+     * personal del usuario (ver UserDataDirectory), donde los extractores
+     * dejan el .pem — el usuario no tiene por qué saber dónde queda.
+     */
+    private Button createOpenUserFolderButton() {
+        Button button = new Button("Abrir carpeta del .pem");
+        button.setTooltip(new Tooltip("Abre la carpeta donde se guardan los certificados .pem extraídos: "
+                + UserDataDirectory.get()));
+        button.setOnAction(e -> Platform.runLater(() -> {
+            try {
+                Desktop.getDesktop().open(UserDataDirectory.get().toFile());
+            } catch (Exception ex) {
+                handleError("No se pudo abrir la carpeta " + UserDataDirectory.get(), ex);
+            }
+        }));
+        return button;
     }
 
     private void openWebsite() {
@@ -2005,7 +2248,11 @@ public class SFideGUI extends Application {
 
         TextField pkcs11LibPath = createTextField("C:\\Windows\\System32\\eTPKCS11.dll");
         pkcs11LibPath.textProperty().bindBidirectional(configManager.pkcs11LibraryPathProperty());
-        PasswordField password = createPasswordField("Contraseña del token");
+        PasswordField password = createSessionPasswordField("Contraseña del token", SessionPasswordStore.Kind.PKCS11);
+        TextField slotNumber = createNumericTextField(SLOT_PROMPT_OPTIONAL);
+        slotNumber.textProperty().bindBidirectional(configManager.pkcs11SlotNumberProperty());
+        CheckBox readAllTokens = new CheckBox("Leer todos los tokens (un intento de contraseña por token)");
+        readAllTokens.setTooltip(new Tooltip("Con varios tokens conectados, prueba la misma contraseña en cada uno"));
 
         Button browseLib = createBrowseButton();
         browseLib.setOnAction(e -> Platform.runLater(() -> selectLibraryFile(pkcs11LibPath)));
@@ -2013,21 +2260,30 @@ public class SFideGUI extends Application {
         Button execute = createExecuteButton();
         execute.setOnAction(e -> Platform.runLater(() -> {
             String pass = password.getText();
-            executeTokenSlotsView(pkcs11LibPath.getText(), pass);
-            clearInputFields(password);
+            executeTokenSlotsView(pkcs11LibPath.getText(), pass, slotNumber.getText(), readAllTokens.isSelected(),
+                    sessionPasswordOutcome(SessionPasswordStore.Kind.PKCS11, pass));
         }));
 
         addToGrid(grid, 0, "Biblioteca PKCS#11:", pkcs11LibPath, browseLib);
         grid.add(createDriverSelectorBox(pkcs11LibPath), 1, 1);
         addToGrid(grid, 2, "Contraseña:", password, null);
-        addExecuteButton(grid, execute, 3);
+        addToGrid(grid, 3, "Número de Slot (opcional):", slotNumber, null);
+        grid.add(readAllTokens, 1, 4);
+        slotNumber.disableProperty().bind(readAllTokens.selectedProperty());
+        addExecuteButton(grid, execute, 5);
 
         VBox content = createTabContent(
-                "Muestra el contenido de cada entrada de un token PKCS#11: el número de slot que el resto de "
-                        + "los módulos necesita como parámetro, y si hay un certificado presente, de quién es y "
-                        + "su vigencia. Es la manera de distinguir, en tokens donde conviven un certificado "
-                        + "vencido y su renovación en entradas distintas del mismo dispositivo —algo frecuente "
-                        + "con las autoridades certificantes—, cuál es cuál antes de usarlo para firmar.",
+                "Muestra cuántos slots informa la biblioteca de un token PKCS#11 y en cuáles hay un token, y el "
+                        + "contenido de cada entrada: el número de slot que el resto de los módulos necesita como "
+                        + "parámetro y, si hay un certificado presente, de quién es y su vigencia. Es la manera de "
+                        + "distinguir, en tokens donde conviven un certificado vencido y su renovación en entradas "
+                        + "distintas del mismo dispositivo —algo frecuente con las autoridades certificantes—, cuál "
+                        + "es cuál antes de usarlo para firmar. El listado de slots no necesita contraseña. Para "
+                        + "leer el contenido hay que iniciar sesión, y con varios tokens conectados probar la "
+                        + "contraseña en uno que no es el suyo puede sumar un intento fallido a su contador de "
+                        + "bloqueo: por eso, por defecto, se lee un solo token (el del número de slot indicado, o el "
+                        + "primero que se detecte). Tilde \"Leer todos los tokens\" para leerlos a todos con la "
+                        + "misma contraseña, un intento por token.",
                 grid
         );
 
@@ -2041,8 +2297,8 @@ public class SFideGUI extends Application {
 
         TextField pkcs11LibPath = createTextField("C:\\Windows\\System32\\eTPKCS11.dll");
         pkcs11LibPath.textProperty().bindBidirectional(configManager.pkcs11LibraryPathProperty());
-        PasswordField password = createPasswordField("Contraseña del token");
-        TextField slotNumber = createNumericTextField("0");
+        PasswordField password = createSessionPasswordField("Contraseña del token", SessionPasswordStore.Kind.PKCS11);
+        TextField slotNumber = createNumericTextField(SLOT_PROMPT_OPTIONAL);
         slotNumber.textProperty().bindBidirectional(configManager.pkcs11SlotNumberProperty());
 
         Button browseLib = createBrowseButton();
@@ -2052,8 +2308,8 @@ public class SFideGUI extends Application {
         execute.setOnAction(e -> Platform.runLater(() -> {
             String pass = password.getText();
             configManager.setDefaultSlotNumber(slotNumber.getText());
-            executeTokenCertExtractor(pkcs11LibPath.getText(), pass, slotNumber.getText());
-            clearInputFields(password);
+            executeTokenCertExtractor(pkcs11LibPath.getText(), pass, slotNumber.getText(),
+                    sessionPasswordOutcome(SessionPasswordStore.Kind.PKCS11, pass));
         }));
 
         addToGrid(grid, 0, "Biblioteca PKCS#11:", pkcs11LibPath, browseLib);
@@ -2061,12 +2317,14 @@ public class SFideGUI extends Application {
         addToGrid(grid, 2, "Contraseña:", password, null);
         addToGrid(grid, 3, "Número de Slot:", slotNumber, null);
         addExecuteButton(grid, execute, 4);
+        addButtonToRow(grid, 0, createOpenUserFolderButton());
 
         VBox content = createTabContent(
                 "Extrae el certificado digital presente en un slot de un token PKCS#11: muestra en pantalla sus "
-                        + "datos completos (sujeto, emisor, vigencia, número de serie) y además guarda una copia "
-                        + "real en un archivo .PEM en disco — útil para conservarlo fuera del token, inspeccionarlo, "
-                        + "o cargarlo en otra herramienta.",
+                        + "datos completos (sujeto, emisor, vigencia, número de serie), consulta su estado de "
+                        + "revocación (OCSP, con reintento por CRL) y guarda una copia de su clave pública en un "
+                        + "archivo .PEM en su carpeta personal de S-FiDE — útil para conservarlo fuera del token, "
+                        + "inspeccionarlo, o cargarlo en otra herramienta. El archivo no contiene la clave privada.",
                 grid
         );
 
@@ -2080,7 +2338,7 @@ public class SFideGUI extends Application {
 
         TextField pkcs12Path = createTextField("C:\\Certificados\\certificado.pfx");
         pkcs12Path.textProperty().bindBidirectional(configManager.pkcs12FilePathProperty());
-        PasswordField password = createPasswordField("Contraseña del archivo");
+        PasswordField password = createSessionPasswordField("Contraseña del archivo", SessionPasswordStore.Kind.PKCS12);
 
         Button browsePKCS12 = createBrowseButton();
         browsePKCS12.setOnAction(e -> Platform.runLater(() -> selectPKCS12File(pkcs12Path)));
@@ -2088,19 +2346,21 @@ public class SFideGUI extends Application {
         Button execute = createExecuteButton();
         execute.setOnAction(e -> Platform.runLater(() -> {
             String pass = password.getText();
-            executePKCS12CertExtractor(pkcs12Path.getText(), pass);
-            clearInputFields(password);
+            executePKCS12CertExtractor(pkcs12Path.getText(), pass,
+                    sessionPasswordOutcome(SessionPasswordStore.Kind.PKCS12, pass));
         }));
 
         addToGrid(grid, 0, "Archivo PKCS#12:", pkcs12Path, browsePKCS12);
         addToGrid(grid, 1, "Contraseña:", password, null);
         addExecuteButton(grid, execute, 2);
+        addButtonToRow(grid, 0, createOpenUserFolderButton());
 
         VBox content = createTabContent(
                 "Extrae el certificado digital de un archivo PKCS#12 (.p12 o .pfx): muestra en pantalla sus "
-                        + "datos completos (sujeto, emisor, vigencia, número de serie) y además guarda una copia "
-                        + "real en un archivo .PEM en disco. Misma utilidad que el extractor de tokens, pero para "
-                        + "certificados que ya existen como archivo.",
+                        + "datos completos (sujeto, emisor, vigencia, número de serie), consulta su estado de "
+                        + "revocación (OCSP, con reintento por CRL) y guarda una copia de su clave pública en un "
+                        + "archivo .PEM en su carpeta personal de S-FiDE. Misma utilidad que el extractor de "
+                        + "tokens, pero para certificados que ya existen como archivo.",
                 grid
         );
 
@@ -2114,10 +2374,10 @@ public class SFideGUI extends Application {
 
         TextField pkcs11LibPath = createTextField("C:\\Windows\\System32\\eTPKCS11.dll");
         pkcs11LibPath.textProperty().bindBidirectional(configManager.pkcs11LibraryPathProperty());
-        PasswordField password = createPasswordField("Contraseña del token");
-        TextField slotNumber = createNumericTextField("0");
+        PasswordField password = createSessionPasswordField("Contraseña del token", SessionPasswordStore.Kind.PKCS11);
+        TextField slotNumber = createNumericTextField(SLOT_PROMPT_OPTIONAL);
         slotNumber.textProperty().bindBidirectional(configManager.pkcs11SlotNumberProperty());
-        TextField xmlPath = createTextField("C:\\Documentos\\factura.xml");
+        TextField xmlPath = createDocumentPathField("C:\\Documentos\\factura.xml", ConfigurationManager.DirectoryKind.XML);
         TextField uri = createTextField("Opcional, por ejemplo: COD");
         OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(xmlPath);
 
@@ -2133,9 +2393,13 @@ public class SFideGUI extends Application {
             configManager.setDefaultSlotNumber(slotNumber.getText());
             String uriValue = uri.getText() != null ? uri.getText().trim() : "";
             String xmlPathValue = xmlPath.getText();
+            IntConsumer passwordOutcome = sessionPasswordOutcome(SessionPasswordStore.Kind.PKCS11, pass);
             executeXMLSignerPKCS11(pkcs11LibPath.getText(), pass, slotNumber.getText(), xmlPathValue, uriValue,
-                    exitCode -> opener.onExecutionResult(xmlPathValue, exitCode));
-            clearInputFields(password, xmlPath, uri);
+                    exitCode -> {
+                        opener.onExecutionResult(xmlPathValue, exitCode);
+                        passwordOutcome.accept(exitCode);
+                    });
+            clearInputFields(xmlPath, uri);
         }));
 
         addToGrid(grid, 0, "Biblioteca PKCS#11:", pkcs11LibPath, browseLib);
@@ -2168,8 +2432,8 @@ public class SFideGUI extends Application {
 
         TextField pkcs12Path = createTextField("C:\\Certificados\\certificado.pfx");
         pkcs12Path.textProperty().bindBidirectional(configManager.pkcs12FilePathProperty());
-        PasswordField password = createPasswordField("Contraseña del archivo");
-        TextField xmlPath = createTextField("C:\\Documentos\\factura.xml");
+        PasswordField password = createSessionPasswordField("Contraseña del archivo", SessionPasswordStore.Kind.PKCS12);
+        TextField xmlPath = createDocumentPathField("C:\\Documentos\\factura.xml", ConfigurationManager.DirectoryKind.XML);
         TextField uri = createTextField("Opcional, por ejemplo: COD");
         OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(xmlPath);
 
@@ -2184,9 +2448,13 @@ public class SFideGUI extends Application {
             String pass = password.getText();
             String uriValue = uri.getText() != null ? uri.getText().trim() : "";
             String xmlPathValue = xmlPath.getText();
+            IntConsumer passwordOutcome = sessionPasswordOutcome(SessionPasswordStore.Kind.PKCS12, pass);
             executeXMLSignerPKCS12(pkcs12Path.getText(), pass, xmlPathValue, uriValue,
-                    exitCode -> opener.onExecutionResult(xmlPathValue, exitCode));
-            clearInputFields(password, xmlPath, uri);
+                    exitCode -> {
+                        opener.onExecutionResult(xmlPathValue, exitCode);
+                        passwordOutcome.accept(exitCode);
+                    });
+            clearInputFields(xmlPath, uri);
         }));
 
         addToGrid(grid, 0, "Archivo PKCS#12:", pkcs12Path, browsePKCS12);
@@ -2213,7 +2481,7 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Verificar Firmas en XML");
         GridPane grid = createStandardGridPane();
 
-        TextField xmlPath = createTextField("C:\\Documentos\\factura.xml");
+        TextField xmlPath = createDocumentPathField("C:\\Documentos\\factura.xml", ConfigurationManager.DirectoryKind.XML);
         CheckBox simpleOutput = new CheckBox("Salida simple");
         simpleOutput.selectedProperty().bindBidirectional(configManager.simpleOutputProperty());
         simpleOutput.setTooltip(new Tooltip("Mostrar salida simplificada del proceso de verificación"));
@@ -2248,8 +2516,8 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Verificar XML con XSD");
         GridPane grid = createStandardGridPane();
 
-        TextField xmlPath = createTextField("C:\\Documentos\\factura.xml");
-        TextField xsdPath = createTextField("Opcional: C:\\Esquemas\\esquema.xsd");
+        TextField xmlPath = createDocumentPathField("C:\\Documentos\\factura.xml", ConfigurationManager.DirectoryKind.XML);
+        TextField xsdPath = createDocumentPathField("Opcional: C:\\Esquemas\\esquema.xsd", ConfigurationManager.DirectoryKind.XSD);
 
         Button browseXML = createBrowseButton();
         browseXML.setOnAction(e -> Platform.runLater(() -> selectXMLFile(xmlPath)));
@@ -2285,10 +2553,10 @@ public class SFideGUI extends Application {
 
         TextField pkcs11LibPath = createTextField("C:\\Windows\\System32\\eTPKCS11.dll");
         pkcs11LibPath.textProperty().bindBidirectional(configManager.pkcs11LibraryPathProperty());
-        PasswordField password = createPasswordField("Contraseña del token");
-        TextField slotNumber = createNumericTextField("0");
+        PasswordField password = createSessionPasswordField("Contraseña del token", SessionPasswordStore.Kind.PKCS11);
+        TextField slotNumber = createNumericTextField(SLOT_PROMPT_OPTIONAL);
         slotNumber.textProperty().bindBidirectional(configManager.pkcs11SlotNumberProperty());
-        TextField pdfPath = createTextField("C:\\Documentos\\factura.pdf");
+        TextField pdfPath = createDocumentPathField("C:\\Documentos\\factura.pdf", ConfigurationManager.DirectoryKind.PDF);
         TextField xPos = createNumericTextField("40");
         TextField yPos = createNumericTextField("55");
         xPos.setPrefWidth(190);
@@ -2309,6 +2577,7 @@ public class SFideGUI extends Application {
         execute.setOnAction(e -> Platform.runLater(() -> {
             String pass = password.getText();
             String pdfPathValue = pdfPath.getText();
+            IntConsumer passwordOutcome = sessionPasswordOutcome(SessionPasswordStore.Kind.PKCS11, pass);
             executePDFSignerPKCS11(
                     pkcs11LibPath.getText(),
                     pass,
@@ -2318,9 +2587,12 @@ public class SFideGUI extends Application {
                     yPos.getText(),
                     customText.getText(),
                     lockDocument.isSelected(),
-                    exitCode -> opener.onExecutionResult(pdfPathValue, exitCode)
+                    exitCode -> {
+                        opener.onExecutionResult(pdfPathValue, exitCode);
+                        passwordOutcome.accept(exitCode);
+                    }
             );
-            clearInputFields(password, pdfPath, xPos, yPos, customText);
+            clearInputFields(pdfPath, xPos, yPos, customText);
             lockDocument.setSelected(false);
         }));
 
@@ -2354,8 +2626,8 @@ public class SFideGUI extends Application {
 
         TextField pkcs12Path = createTextField("C:\\Certificados\\certificado.pfx");
         pkcs12Path.textProperty().bindBidirectional(configManager.pkcs12FilePathProperty());
-        PasswordField password = createPasswordField("Contraseña del archivo");
-        TextField pdfPath = createTextField("C:\\Documentos\\factura.pdf");
+        PasswordField password = createSessionPasswordField("Contraseña del archivo", SessionPasswordStore.Kind.PKCS12);
+        TextField pdfPath = createDocumentPathField("C:\\Documentos\\factura.pdf", ConfigurationManager.DirectoryKind.PDF);
         TextField xPos = createNumericTextField("40");
         TextField yPos = createNumericTextField("55");
         xPos.setPrefWidth(190);
@@ -2376,6 +2648,7 @@ public class SFideGUI extends Application {
         execute.setOnAction(e -> Platform.runLater(() -> {
             String pass = password.getText();
             String pdfPathValue = pdfPath.getText();
+            IntConsumer passwordOutcome = sessionPasswordOutcome(SessionPasswordStore.Kind.PKCS12, pass);
             executePDFSignerPKCS12(
                     pkcs12Path.getText(),
                     pass,
@@ -2384,9 +2657,12 @@ public class SFideGUI extends Application {
                     yPos.getText(),
                     customText.getText(),
                     lockDocument.isSelected(),
-                    exitCode -> opener.onExecutionResult(pdfPathValue, exitCode)
+                    exitCode -> {
+                        opener.onExecutionResult(pdfPathValue, exitCode);
+                        passwordOutcome.accept(exitCode);
+                    }
             );
-            clearInputFields(password, pdfPath, xPos, yPos, customText);
+            clearInputFields(pdfPath, xPos, yPos, customText);
             lockDocument.setSelected(false);
         }));
 
@@ -2415,7 +2691,7 @@ public class SFideGUI extends Application {
         Tab tab = new Tab("Verificar Firmas en PDF");
         GridPane grid = createStandardGridPane();
 
-        TextField pdfPath = createTextField("C:\\Documentos\\factura.pdf");
+        TextField pdfPath = createDocumentPathField("C:\\Documentos\\factura.pdf", ConfigurationManager.DirectoryKind.PDF);
         CheckBox simpleOutput = new CheckBox("Salida simple");
         simpleOutput.selectedProperty().bindBidirectional(configManager.simpleOutputProperty());
         simpleOutput.setTooltip(new Tooltip("Mostrar salida simplificada del proceso de verificación"));
@@ -2445,15 +2721,22 @@ public class SFideGUI extends Application {
         return tab;
     }
 
-    private void executeTokenSlotsView(String libPath, String password) {
+    private void executeTokenSlotsView(String libPath, String password, String slotNumber, boolean readAll,
+                                       IntConsumer onExit) {
         try {
             validateRequiredField("biblioteca PKCS#11", libPath);
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("TokenSlotsView");
             if (result.valid()) {
                 Platform.runLater(() -> sharedOutputArea.clear());
-                String[] args = {libPath, password};
-                GUIUtils.executeCommand("TokenSlotsView", args, sharedOutputArea);
+                // Sin número de slot, el módulo busca solo el slot donde está el token.
+                // -todos y un número de slot son excluyentes: con "leer todos" el slot se ignora.
+                String[] args = readAll
+                        ? new String[]{libPath, password, "-todos"}
+                        : (slotNumber == null || slotNumber.isBlank())
+                        ? new String[]{libPath, password}
+                        : new String[]{libPath, password, slotNumber.trim()};
+                GUIUtils.executeCommand("TokenSlotsView", args, sharedOutputArea, onExit);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
@@ -2465,16 +2748,15 @@ public class SFideGUI extends Application {
         }
     }
 
-    private void executeTokenCertExtractor(String libPath, String password, String slotNumber) {
+    private void executeTokenCertExtractor(String libPath, String password, String slotNumber, IntConsumer onExit) {
         try {
             validateRequiredField("biblioteca PKCS#11", libPath);
-            validateRequiredField("número de slot", slotNumber);
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("TokenCertificateExtractor");
             if (result.valid()) {
                 Platform.runLater(() -> sharedOutputArea.clear());
-                String[] args = {libPath, password, slotNumber};
-                GUIUtils.executeCommand("TokenCertificateExtractor", args, sharedOutputArea);
+                String[] args = {libPath, password, slotOrDefault(slotNumber)};
+                GUIUtils.executeCommand("TokenCertificateExtractor", args, sharedOutputArea, onExit);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
@@ -2486,7 +2768,7 @@ public class SFideGUI extends Application {
         }
     }
 
-    private void executePKCS12CertExtractor(String pkcs12Path, String password) {
+    private void executePKCS12CertExtractor(String pkcs12Path, String password, IntConsumer onExit) {
         try {
             validateRequiredField("archivo PKCS#12", pkcs12Path);
 
@@ -2494,7 +2776,7 @@ public class SFideGUI extends Application {
             if (result.valid()) {
                 Platform.runLater(() -> sharedOutputArea.clear());
                 String[] args = {pkcs12Path, password};
-                GUIUtils.executeCommand("PKCS12CertificateExtractor", args, sharedOutputArea);
+                GUIUtils.executeCommand("PKCS12CertificateExtractor", args, sharedOutputArea, onExit);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
@@ -2511,13 +2793,12 @@ public class SFideGUI extends Application {
                                         IntConsumer onExit) {
         try {
             validateRequiredField("biblioteca PKCS#11", libPath);
-            validateRequiredField("número de slot", slotNumber);
             validateRequiredField("archivo XML", xmlPath);
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("XMLSignerPKCS11");
             if (result.valid()) {
                 Platform.runLater(() -> sharedOutputArea.clear());
-                String[] args = {libPath, password, slotNumber, xmlPath, uri};
+                String[] args = {libPath, password, slotOrDefault(slotNumber), xmlPath, uri};
                 GUIUtils.executeCommand("XMLSignerPKCS11", args, sharedOutputArea, onExit);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
@@ -2612,7 +2893,6 @@ public class SFideGUI extends Application {
             IntConsumer onExit) {
         try {
             validateRequiredField("biblioteca PKCS#11", libPath);
-            validateRequiredField("número de slot", slotNumber);
             validateRequiredField("archivo PDF", pdfPath);
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("PDFSignerPKCS11");
@@ -2622,7 +2902,7 @@ public class SFideGUI extends Application {
                         "-i", pdfPath,
                         "-l", libPath,
                         "-p", password,
-                        "-s", slotNumber,
+                        "-s", slotOrDefault(slotNumber),
                         "-x", xPos,
                         "-y", yPos,
                         "-k", String.valueOf(lock)
@@ -2765,7 +3045,7 @@ public class SFideGUI extends Application {
 
         TextField aliasField = createTextField("Juan Pérez");
         aliasField.textProperty().bindBidirectional(configManager.windowsCertAliasProperty());
-        TextField xmlPath = createTextField("C:\\Documentos\\factura.xml");
+        TextField xmlPath = createDocumentPathField("C:\\Documentos\\factura.xml", ConfigurationManager.DirectoryKind.XML);
         TextField uri = createTextField("Opcional, por ejemplo: COD");
         OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(xmlPath);
 
@@ -2812,7 +3092,7 @@ public class SFideGUI extends Application {
 
         TextField aliasField = createTextField("Juan Pérez");
         aliasField.textProperty().bindBidirectional(configManager.windowsCertAliasProperty());
-        TextField pdfPath = createTextField("C:\\Documentos\\factura.pdf");
+        TextField pdfPath = createDocumentPathField("C:\\Documentos\\factura.pdf", ConfigurationManager.DirectoryKind.PDF);
         TextField xPos = createNumericTextField("40");
         TextField yPos = createNumericTextField("55");
         xPos.setPrefWidth(190);
