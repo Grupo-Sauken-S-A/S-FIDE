@@ -56,17 +56,19 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 /**
- * Evita que se ejecuten dos instancias de S-FiDE GUI en simultáneo desde la
- * misma carpeta de instalación (dos instalaciones distintas en carpetas
- * separadas pueden correr en paralelo sin problema, cada una con su propio
- * lock — mismo criterio que sfide-defaults.properties).
+ * Evita que UN MISMO USUARIO ejecute dos instancias de S-FiDE GUI en
+ * simultáneo desde la misma carpeta de instalación. Usuarios distintos del
+ * mismo equipo (por ejemplo, en un servidor de escritorio remoto) sí pueden
+ * tener cada uno su propia instancia a la vez sobre la misma instalación, y
+ * un mismo usuario puede correr dos instalaciones en carpetas separadas: el
+ * candado vive en la carpeta personal del usuario (ver {@link UserDataDirectory})
+ * y su nombre incluye una marca de la carpeta de instalación.
  * <p>
  * Usa un {@link FileLock} exclusivo sobre un archivo dedicado
- * ("sfide-gui.lock", junto al jar en ejecución), no un flag persistido en
+ * ("sfide-gui-&lt;marca&gt;.lock"), no un flag persistido en
  * disco: la diferencia importa porque un flag es un dato que puede quedar
  * "marcado" para siempre si el proceso termina de mala manera (caída,
  * kill, corte de luz), dejando el sistema inoperable hasta borrarlo a mano.
@@ -79,7 +81,8 @@ import java.nio.file.StandardOpenOption;
  * Linux, macOS) con esta misma semántica en los tres.
  */
 public final class SingleInstanceGuard {
-    private static final String LOCK_FILE_NAME = "sfide-gui.lock";
+    private static final String LOCK_FILE_PREFIX = "sfide-gui-";
+    private static final String LOCK_FILE_SUFFIX = ".lock";
 
     // Deliberadamente nunca se cierran: cerrarlos liberaría el lock antes de
     // tiempo. El propio sistema operativo los cierra (liberando el lock) al
@@ -104,9 +107,7 @@ public final class SingleInstanceGuard {
      */
     public static boolean tryAcquire() {
         try {
-            Path installDir = resolveInstallDir();
-            Path lockPath = (installDir != null ? installDir : Paths.get("."))
-                    .resolve(LOCK_FILE_NAME);
+            Path lockPath = UserDataDirectory.resolve(lockFileName(AppInfo.installDir()));
 
             lockChannel = FileChannel.open(
                     lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE
@@ -124,14 +125,14 @@ public final class SingleInstanceGuard {
         }
     }
 
-    private static Path resolveInstallDir() {
-        try {
-            return Paths.get(
-                    SingleInstanceGuard.class.getProtectionDomain().getCodeSource().getLocation().toURI()
-            ).getParent();
-        } catch (Exception e) {
-            return null;
-        }
+    /**
+     * Nombre del archivo de candado para una carpeta de instalación dada:
+     * una marca corta y estable (ocho dígitos hexadecimales de la ruta
+     * normalizada) distingue una instalación de otra.
+     */
+    static String lockFileName(Path installDir) {
+        String key = installDir == null ? "" : installDir.toAbsolutePath().normalize().toString().toLowerCase();
+        return LOCK_FILE_PREFIX + String.format("%08x", key.hashCode()) + LOCK_FILE_SUFFIX;
     }
 
     /**

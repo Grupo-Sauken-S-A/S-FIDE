@@ -14,15 +14,42 @@ import java.util.Properties;
 
 /**
  * Valores por defecto recordados entre sesiones de S-FiDE GUI, persistidos en
- * sfide-defaults.properties. Las rutas/valores expuestos como Property son
- * compartidos por todos los módulos que los usan: dos campos distintos
- * (en distintos módulos del panel lateral) atados a la misma Property quedan
- * sincronizados entre sí en vivo, no solo al reiniciar la aplicación.
- *
+ * sfide-defaults.properties dentro de la carpeta PERSONAL del usuario (ver
+ * {@link UserDataDirectory}) — no en la carpeta de instalación, para que cada
+ * usuario de un equipo compartido tenga los suyos. Las rutas/valores expuestos
+ * como Property son compartidos por todos los módulos que los usan: dos campos
+ * distintos (en distintos módulos del panel lateral) atados a la misma
+ * Property quedan sincronizados entre sí en vivo, no solo al reiniciar la
+ * aplicación.
+ * <p>
+ * El archivo lleva dos claves de control: {@code config.schema} (entero, la
+ * versión del FORMATO — es la que dispara migraciones) y {@code app.version}
+ * (la versión de S-FiDE que lo escribió por última vez, informativa). Como el
+ * archivo vive fuera de la instalación, actualizar S-FiDE nunca lo toca; es
+ * este programa, al arrancar, quien lo adapta si lo encuentra más viejo.
+ * <p>
  * Deliberadamente NUNCA se persiste ninguna contraseña.
  */
 public class ConfigurationManager {
     private static final String CONFIG_FILE_NAME = "sfide-defaults.properties";
+
+    /**
+     * Versión actual del formato del archivo. Historial:
+     * 1 = S-FiDE hasta 1.3.0 (sin claves de control, archivo junto a la instalación);
+     * 2 = S-FiDE 1.4.0 (carpeta personal del usuario, claves de control, últimas carpetas usadas).
+     * Al subir este número, agregar el paso correspondiente en {@link #upgradeSchema(int)}.
+     */
+    static final int CURRENT_SCHEMA = 2;
+    private static final String SCHEMA_KEY = "config.schema";
+    private static final String APP_VERSION_KEY = "app.version";
+
+    /**
+     * Claves del archivo de la instalación (versiones anteriores) que NO se
+     * importan al migrar: son del usuario que las generó, no de quien migra —
+     * un usuario que nunca recibió los accesos directos debe recibirlos igual.
+     */
+    private static final String[] NOT_MIGRATED_KEYS = {"desktop.shortcut.created", "doc.shortcuts.created"};
+
     private static ConfigurationManager instance;
     private final Path configFilePath;
     private final Properties properties;
@@ -74,30 +101,20 @@ public class ConfigurationManager {
     }
 
     /**
-     * Resuelve sfide-defaults.properties relativo a la carpeta de instalación
-     * (la que contiene el jar en ejecución) — misma resolución ya usada por
-     * los accesos directos y la apertura de documentación (ver SFideGUI:
-     * createDocShortcuts()/openDocFile()) — en vez de relativo al directorio
-     * de trabajo del proceso. SFide-GUI.bat/.sh y el acceso directo de
-     * escritorio ya fijan el directorio de trabajo correcto, así que esto no
-     * cambia el comportamiento en un uso normal; lo que corrige es el caso en
-     * que la GUI se lance de otra forma (doble clic directo al jar, un acceso
-     * directo mal armado, etc.), donde antes se leía/escribía el archivo en
-     * el lugar equivocado en silencio.
+     * sfide-defaults.properties vive en la carpeta personal del usuario, no
+     * junto a la instalación: con una instalación compartida por varios
+     * usuarios (a la vez o por turnos), un archivo único pisaba los valores
+     * de uno con los de otro, y exigía permiso de escritura sobre la carpeta
+     * de instalación.
      */
     private static Path resolveConfigFilePath() {
-        try {
-            Path installDir = Paths.get(
-                    ConfigurationManager.class.getProtectionDomain().getCodeSource().getLocation().toURI()
-            ).getParent();
-            if (installDir != null) {
-                return installDir.resolve(CONFIG_FILE_NAME);
-            }
-        } catch (Exception ignored) {
-            // Si no se puede determinar la carpeta de instalación, se cae al
-            // directorio de trabajo actual (comportamiento anterior).
-        }
-        return Paths.get(CONFIG_FILE_NAME);
+        return UserDataDirectory.resolve(CONFIG_FILE_NAME);
+    }
+
+    /** El archivo que usaban las versiones anteriores, junto a la instalación (puede no existir). */
+    private static Path legacyConfigFilePath() {
+        Path installDir = AppInfo.installDir();
+        return installDir == null ? null : installDir.resolve(CONFIG_FILE_NAME);
     }
 
     public static ConfigurationManager getInstance() {
@@ -122,26 +139,139 @@ public class ConfigurationManager {
     }
 
     private void loadConfiguration() {
-        if (Files.exists(configFilePath)) {
-            try (Reader input = new InputStreamReader(Files.newInputStream(configFilePath), StandardCharsets.UTF_8)) {
-                properties.load(input);
-                System.out.println("Configuración cargada exitosamente desde: " + configFilePath);
-            } catch (IOException e) {
-                System.err.println("Error al cargar la configuración: " + e.getMessage());
-                e.printStackTrace();
-            }
+        boolean existed = Files.exists(configFilePath);
+        boolean migratedFromInstallation = false;
+
+        if (existed) {
+            loadInto(properties, configFilePath);
+            System.out.println("Configuración cargada exitosamente desde: " + configFilePath);
         } else {
-            System.out.println("Archivo de configuración no encontrado. Se utilizarán valores vacíos por defecto.");
+            migratedFromInstallation = importLegacyConfiguration();
+            if (!migratedFromInstallation) {
+                System.out.println("Archivo de configuración no encontrado. Se utilizarán valores vacíos por defecto.");
+            }
+        }
+
+        // Un archivo sin config.schema es de una versión anterior a 1.4.0 (esquema 1).
+        int storedSchema = parseSchema(properties.getProperty(SCHEMA_KEY), (existed || migratedFromInstallation) ? 1 : CURRENT_SCHEMA);
+        boolean changed = false;
+        if (storedSchema < CURRENT_SCHEMA) {
+            upgradeSchema(storedSchema);
+            changed = true;
+        } else if (storedSchema > CURRENT_SCHEMA) {
+            // Archivo escrito por una S-FiDE más nueva (el usuario volvió a una instalación
+            // vieja): se respeta tal cual y no se rebaja el esquema, para no perder sus claves.
+            System.out.println("Aviso: la configuración fue escrita por una versión más nueva de S-FiDE (esquema "
+                    + storedSchema + "); se conserva sin cambios.");
+            return;
+        }
+        if (!AppInfo.version().equals(properties.getProperty(APP_VERSION_KEY))) {
+            properties.setProperty(APP_VERSION_KEY, AppInfo.version());
+            changed = true;
+        }
+        if (changed || migratedFromInstallation) {
+            properties.setProperty(SCHEMA_KEY, String.valueOf(CURRENT_SCHEMA));
+            saveConfiguration();
         }
     }
 
-    public void saveConfiguration() {
-        try (Writer output = new OutputStreamWriter(Files.newOutputStream(configFilePath), StandardCharsets.UTF_8)) {
-            properties.store(output, "Configuración de S-FIDE GUI");
+    private static void loadInto(Properties target, Path file) {
+        try {
+            // Un archivo editado a mano con el Bloc de notas puede traer una marca de orden de bytes
+            // (BOM) al inicio; sin quitarla, quedaría pegada al nombre de la primera clave.
+            String text = Files.readString(file, StandardCharsets.UTF_8);
+            if (text.startsWith("﻿")) {
+                text = text.substring(1);
+            }
+            target.load(new StringReader(text));
+        } catch (IOException | IllegalArgumentException e) {
+            System.err.println("Error al cargar la configuración (" + file + "): " + e.getMessage());
+        }
+    }
+
+    /**
+     * Primer arranque de un usuario con S-FiDE 1.4.0 o posterior: si la
+     * instalación todavía tiene el sfide-defaults.properties de versiones
+     * anteriores, se usa como punto de partida (rutas de biblioteca PKCS#11,
+     * último módulo, etc.). El archivo original NO se borra ni se modifica:
+     * otros usuarios del equipo todavía lo necesitan para migrar por su
+     * cuenta. Los indicadores de accesos directos no se heredan (ver
+     * {@link #NOT_MIGRATED_KEYS}).
+     */
+    private boolean importLegacyConfiguration() {
+        Path legacy = legacyConfigFilePath();
+        if (legacy == null || !Files.isRegularFile(legacy) || legacy.equals(configFilePath)) {
+            return false;
+        }
+        loadInto(properties, legacy);
+        for (String key : NOT_MIGRATED_KEYS) {
+            properties.remove(key);
+        }
+        System.out.println("Se importó la configuración previa de la instalación (" + legacy
+                + ") a la carpeta personal: " + configFilePath);
+        return true;
+    }
+
+    private static int parseSchema(String value, int whenAbsent) {
+        if (value == null || value.isBlank()) {
+            return whenAbsent;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return whenAbsent;
+        }
+    }
+
+    /**
+     * Lleva la configuración almacenada, de a un paso por vez, hasta
+     * {@link #CURRENT_SCHEMA}. Cada versión del formato que cambie el
+     * significado o el nombre de una clave agrega acá su paso; las claves
+     * nuevas que simplemente no existen todavía no necesitan paso (los
+     * valores por defecto de cada Property ya cubren su ausencia).
+     */
+    private void upgradeSchema(int fromSchema) {
+        int schema = fromSchema;
+        while (schema < CURRENT_SCHEMA) {
+            switch (schema) {
+                case 1 -> {
+                    // 1 -> 2: solo cambió DÓNDE vive el archivo y se sumaron claves de control y de
+                    // últimas carpetas usadas; ninguna clave existente cambia de significado.
+                }
+                default -> {
+                    // Sin paso definido: nada que transformar.
+                }
+            }
+            schema++;
+        }
+        System.out.println("Configuración adaptada del esquema " + fromSchema + " al " + CURRENT_SCHEMA + ".");
+    }
+
+    /**
+     * Guarda en disco de forma atómica: se escribe un archivo temporal en la
+     * misma carpeta y recién entonces reemplaza al definitivo, así un corte
+     * de luz o un cierre forzado a mitad de escritura nunca deja un archivo
+     * truncado (que el siguiente arranque leería como "sin configuración").
+     */
+    public synchronized void saveConfiguration() {
+        Path temp = configFilePath.resolveSibling(CONFIG_FILE_NAME + ".tmp");
+        try {
+            try (Writer output = new OutputStreamWriter(Files.newOutputStream(temp), StandardCharsets.UTF_8)) {
+                properties.store(output, "Configuración de S-FIDE GUI (propia de este usuario)");
+            }
+            try {
+                Files.move(temp, configFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(temp, configFilePath, StandardCopyOption.REPLACE_EXISTING);
+            }
             System.out.println("Configuración guardada exitosamente en: " + configFilePath);
         } catch (IOException e) {
             System.err.println("Error al guardar la configuración: " + e.getMessage());
-            e.printStackTrace();
+            try {
+                Files.deleteIfExists(temp);
+            } catch (IOException ignored) {
+                // Nada más que hacer.
+            }
         }
     }
 
@@ -200,6 +330,61 @@ public class ConfigurationManager {
         }
         properties.setProperty("pkcs11.library.path.profile." + profileKey, path);
         saveDebounce.playFromStart();
+    }
+
+    /**
+     * Tipos de documento cuya última carpeta usada se recuerda. Se comparte
+     * entre todas las pestañas del mismo tipo (por ejemplo, "Firmar XML con
+     * token", "Verificar firmas en XML" y "Verificar XML con XSD" usan la
+     * misma carpeta de XML): el documento firmado se guarda junto al
+     * original, así que una sola carpeta por tipo alcanza para tomar y para
+     * dejar los archivos.
+     */
+    public enum DirectoryKind {
+        XML("last.dir.xml"),
+        PDF("last.dir.pdf"),
+        XSD("last.dir.xsd");
+
+        private final String key;
+
+        DirectoryKind(String key) {
+            this.key = key;
+        }
+    }
+
+    /**
+     * La última carpeta usada para ese tipo de documento, o {@code null} si
+     * nunca se usó o ya no existe (por ejemplo, un pendrive o una carpeta de
+     * red que dejó de estar disponible) — en ese caso el selector de archivos
+     * abre en su ubicación por defecto en vez de fallar.
+     */
+    public File getLastDirectory(DirectoryKind kind) {
+        String value = properties.getProperty(kind.key, "");
+        if (value.isBlank()) {
+            return null;
+        }
+        File directory = new File(value);
+        return directory.isDirectory() ? directory : null;
+    }
+
+    /**
+     * Recuerda la carpeta de ese archivo (o la carpeta misma, si se pasa una
+     * carpeta) como la última usada para ese tipo de documento. Se ignora si
+     * no existe: nunca se guarda una ruta que no se pudo comprobar.
+     */
+    public void setLastDirectory(DirectoryKind kind, File location) {
+        if (location == null) {
+            return;
+        }
+        File directory = location.isDirectory() ? location : location.getAbsoluteFile().getParentFile();
+        if (directory == null || !directory.isDirectory()) {
+            return;
+        }
+        String path = directory.getAbsolutePath();
+        if (!path.equals(properties.getProperty(kind.key))) {
+            properties.setProperty(kind.key, path);
+            saveDebounce.playFromStart();
+        }
     }
 
     public String getWindowX() {
