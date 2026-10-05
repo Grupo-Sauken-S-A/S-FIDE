@@ -22,7 +22,7 @@
         <maven.compiler.source>23</maven.compiler.source>
         <maven.compiler.target>23</maven.compiler.target>
         <junit.version>5.10.1</junit.version>
-        <mockito.version>5.23.0</mockito.version>
+        <mockito.version>5.24.0</mockito.version>
         <shade.plugin.version>3.6.0</shade.plugin.version>
     </properties>
 
