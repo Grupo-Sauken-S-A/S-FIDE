@@ -40,8 +40,8 @@ CORRECCIONES IMPORTANTES
 
 PARA INTEGRADORES (los .jar)
 
-* El contrato no cambia: mismos argumentos y código de salida 0 o 1. Lo nuevo es opcional. Los .jar de XML, los
-  extractores de certificados y el actualizador solo cambian el texto de -version.
+* El contrato no cambia: mismos argumentos y código de salida 0 o 1. Lo nuevo es opcional. Los extractores,
+  WindowsCertificateStoreView y el actualizador solo cambian el texto de -version. Los .jar de XML aceptan además un XML con BOM (con un aviso).
 * Firmadores de PDF: opciones nuevas -pagina, -ancho, -alto, -campo, -proteger-contenido y los modos de solo
   lectura -analizar-documento y -vista-previa-texto. Cambia el comportamiento: una firma previa inválida ya no
   impide firmar; un documento ya cerrado se rechaza (código 1); -l true sobre un documento con firmas es una
@@ -65,5 +65,5 @@ CÓMO ACTUALIZAR
 LÍMITES CONOCIDOS
 
 * S-FiDE no usa sello de tiempo al firmar: la fecha de cada firma es la del reloj del equipo de quien firma.
-* La firma con token y con el almacén de certificados de Windows requiere probarse con el dispositivo real.
+* La firma con token y con el almacén de Windows requiere probarse con el dispositivo real.
 * El paquete de macOS todavía no se probó en un Mac real.

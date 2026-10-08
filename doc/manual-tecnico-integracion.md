@@ -388,7 +388,9 @@ El menú **Archivo → Abrir PDF…** / **Abrir XML…** de `s_fide_gui` muestra
 
 **Contrato general: no cambió.** Cada jar se sigue invocando como `java -jar Modulo.jar <argumentos>`, con los mismos argumentos y el mismo orden, y el código de salida sigue siendo `0` (éxito) o `1` (error). Todo lo nuevo son opciones **opcionales**: una integración que funcionaba con 1.4.0 sigue invocándose igual.
 
-**Sin ningún cambio de comportamiento (solo cambia el texto de `-version`, ahora `v1.5.0`):** `XMLSignerPKCS11`, `XMLSignerPKCS12`, `XMLSignerWindowsCSP`, `XMLVerifySignatures`, `XMLVerifyXSDStructure`, `TokenSlotsView`, `TokenCertificateExtractor`, `PKCS12CertificateExtractor`, `WindowsCertificateStoreView` y `SFideUpdater`. Si la integración compara el texto de `-version`, actualice la comparación.
+**Sin ningún cambio de comportamiento (solo cambia el texto de `-version`, ahora `v1.5.0`):** `TokenSlotsView`, `TokenCertificateExtractor`, `PKCS12CertificateExtractor`, `WindowsCertificateStoreView` y `SFideUpdater`. Si la integración compara el texto de `-version`, actualice la comparación.
+
+**Módulos XML (`XMLSignerPKCS11`, `XMLSignerPKCS12`, `XMLSignerWindowsCSP`, `XMLVerifySignatures`, `XMLVerifyXSDStructure`): aceptan más casos y no rechazan nada nuevo.** Un XML con marca BOM de UTF-8, que antes terminaba en error (código `1`, `Content is not allowed in prolog`), ahora se procesa y se informa con una línea `AVISO:` en `stdout` (los firmadores generan el documento firmado sin BOM; el original no se modifica); un XML en UTF-16 se rechaza con un mensaje claro. Los firmadores ahora también firman un elemento que es el último de su padre (antes fallaban con `nextSibling cannot be null`). Todo lo que funcionaba en 1.4.0 sigue igual, salvo la línea `AVISO:` adicional cuando el archivo trae BOM. Ver la sección 7.10.
 
 **Firmadores de PDF** (`PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`):
 
@@ -412,6 +414,11 @@ El menú **Archivo → Abrir PDF…** / **Abrir XML…** de `s_fide_gui` muestra
 - El texto de cada firma cambió: aparece primero `Resultado:` (`VÁLIDA`, `VÁLIDA, CON COMPROBACIONES PENDIENTES` o `NO VÁLIDA`) con su explicación, y se agregan las líneas `Nota:`; ya no se imprime `Cubre todo el documento`. Quien interprete el texto debe basarse en el código de salida y en las líneas `DOCUMENTO VÁLIDO`/`DOCUMENTO INVÁLIDO`, no en el resto.
 
 **Recomendación a los integradores:** decidan por el **código de salida**; para saber de antemano si un PDF admite más firmas y en qué estado están las existentes, usen `-analizar-documento` (formato estable, sección 7.7) en vez de interpretar mensajes. La interfaz gráfica (`s_fide_gui`) no forma parte del contrato de integración.
+### 7.10 XML con marca BOM y XML compacto (1.5.0)
+
+**Marca BOM.** El BOM (*Byte Order Mark*) son tres bytes invisibles (`EF BB BF`) que algunos editores, como el Bloc de notas de Windows, agregan al guardar un archivo como UTF-8. No forman parte del documento, el estándar XML no los necesita en UTF-8 y varios sistemas receptores rechazan el archivo por su causa. Hasta la 1.4.0 un XML con BOM no se podía firmar ni verificar: fallaba con `Content is not allowed in prolog`. Desde la 1.5.0, `XMLSignerPKCS11`, `XMLSignerPKCS12`, `XMLSignerWindowsCSP`, `XMLVerifySignatures` y `XMLVerifyXSDStructure` la ignoran: la quitan **en memoria** (el archivo original nunca se modifica) y lo informan por `stdout` con una línea `AVISO:` que explica qué es. Los firmadores generan el documento firmado **sin** BOM. **No afecta firmas existentes:** la canonicalización XML (C14N) que se firma trabaja sobre el contenido del documento y no incluye la marca; se comprobó firmando y verificando el mismo documento con y sin BOM (`XmlBomTest`). Solo se trata el BOM de UTF-8: un XML en UTF-16 (que lleva su propio BOM, obligatorio) se rechaza con un mensaje que pide guardarlo como UTF-8. La clase `XmlBom` está duplicada en los cinco módulos (cada jar es independiente).
+
+**XML compacto.** Si el elemento a firmar es el último de su padre —típico de un XML sin saltos de línea— los firmadores fallaban con `nextSibling cannot be null` (JSR 105 no admite un "siguiente" nulo). Ahora la firma se agrega al final del padre.
 
 ---
 
@@ -1321,7 +1328,7 @@ powershell -ExecutionPolicy Bypass -File crear-paquete-actualizacion.ps1 [-Versi
 | `PDFVerifySignatures` y certificados dados de baja | Una baja posterior a la firma ya no invalida | Ninguna |
 | `PDFVerifySignatures`: cuándo devuelve `1` | Ahora también si el documento se modificó después de la última firma o si el certificado no era vigente (o ya estaba dado de baja) en la fecha de la firma | Revisar documentos que antes daban `0`; es el comportamiento correcto, pero puede cambiar resultados |
 | Firmadores de PDF: posición, salida y red | Con `-x`/`-y` se valida página y recuadro (código `1` si no entran); si el documento ya tenía firmas se imprime antes el informe del análisis y se consulta por red la revocación de las anteriores | Tolerar líneas adicionales en `stdout` y una posible demora; una falla de red no impide firmar |
-| Resto de los `.jar` (XML, extractores, `WindowsCertificateStoreView`, `SFideUpdater`) | Sin cambios de comportamiento; solo el texto de `-version` | Actualizar comparaciones del texto de versión, si las hubiera. Detalle completo en la [sección 7.9](#79-compatibilidad-con-integraciones-existentes-de-140-a-150) |
+| Módulos XML (`XMLSigner*`, `XMLVerify*`) | Aceptan además un XML con BOM de UTF-8 (con un `AVISO:` en `stdout`) y firman un elemento que es el último de su padre; antes ambos casos daban error. Nada de lo que funcionaba cambia | Actualizar comparaciones del texto de versión, si las hubiera. Detalle completo en la [sección 7.9](#79-compatibilidad-con-integraciones-existentes-de-140-a-150) |
 | Argumentos nuevos | `-pagina`, `-ancho`, `-alto`, `-campo`, `-proteger-contenido` (opcionales) | Ninguna: los comandos de la 1.4.0 siguen funcionando igual |
 | `sfide-defaults.properties` | Clave nueva `novedades.vistas` | Ninguna (no requiere migración del formato) |
 | Instalación | `SFide-GUI.jar` incluye Apache PDFBox (unos 7 MB más); sin jars ni carpetas nuevas | Ninguna. La actualización desde 1.4.0 se hace con Ayuda → Buscar actualizaciones |

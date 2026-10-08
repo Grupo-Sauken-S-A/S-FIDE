@@ -263,7 +263,7 @@ public class XMLSignerPKCS12 {
     private static String readFileToString(String filePath) throws IOException {
         StringBuilder content = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                new FileInputStream(filePath), StandardCharsets.UTF_8))) {
+                new ByteArrayInputStream(XmlBom.leer(filePath, XmlBom.Uso.FIRMA, outputStream)), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 content.append(line).append("\n");
@@ -312,7 +312,7 @@ public class XMLSignerPKCS12 {
 
             // Leer el documento
             Document doc;
-            try (FileInputStream fis = new FileInputStream(xmlFile)) {
+            try (InputStream fis = new ByteArrayInputStream(XmlBom.leer(xmlFile, XmlBom.Uso.FIRMA, outputStream))) {
                 DocumentBuilder builder = dbf.newDocumentBuilder();
                 InputSource is = new InputSource(new InputStreamReader(fis, "UTF-8"));
                 is.setEncoding("UTF-8");
@@ -555,7 +555,11 @@ public class XMLSignerPKCS12 {
             }
             Node parentNode = elementToSign.getParentNode();
             Node nextSibling = elementToSign.getNextSibling();
-            DOMSignContext dsc = new DOMSignContext(privateKey, parentNode, nextSibling);
+            // Si el elemento es el último de su padre (por ejemplo, un XML compacto sin saltos de línea), JSR 105 no admite
+            // un "siguiente" nulo: en ese caso la firma se agrega al final del padre.
+            DOMSignContext dsc = nextSibling != null
+                    ? new DOMSignContext(privateKey, parentNode, nextSibling)
+                    : new DOMSignContext(privateKey, parentNode);
             dsc.setDefaultNamespacePrefix("ds");
             return dsc;
         }

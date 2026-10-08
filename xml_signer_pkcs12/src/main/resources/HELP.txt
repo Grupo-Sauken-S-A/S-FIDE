@@ -35,3 +35,10 @@ Revocación:
 - Para consultar el estado de revocación sin firmar nada:
     java -jar XMLSignerPKCS12.jar -verificar-revocacion <Archivo PKCS#12> <Contraseña>
   Imprime "ESTADO_REVOCACION: GOOD|UNKNOWN|REVOKED" (y "DETALLE: ..." si corresponde) y termina.
+
+
+MARCA BOM EN EL XML (desde 1.5.0):
+  Si el XML comienza con una marca BOM (Byte Order Mark: tres bytes invisibles que algunos editores, como el
+  Bloc de notas de Windows, agregan al guardar en UTF-8), el programa lo informa, la ignora y firma igual:
+  el documento firmado se genera SIN la marca (el archivo original no se modifica). No afecta las firmas
+  que el documento ya tuviera. Un XML guardado en UTF-16 se rechaza con un mensaje: vuelva a guardarlo como UTF-8.

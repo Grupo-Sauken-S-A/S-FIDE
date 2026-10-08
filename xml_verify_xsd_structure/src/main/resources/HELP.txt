@@ -11,3 +11,9 @@ Para verificar la estructura XSD y firmas en un archivo XML:
   java -jar XMLVerifyXSDStructure.jar <Archivo XML> [<Archivo XSD>]
 
 Si no se especifica un archivo XSD, se intentará usar el esquema referenciado en el documento XML.
+
+
+MARCA BOM EN EL XML (desde 1.5.0):
+  Si el XML comienza con una marca BOM (tres bytes invisibles que algunos editores agregan al guardar en UTF-8),
+  el programa lo informa y la ignora para verificar: no afecta el resultado de las firmas. El archivo no se
+  modifica. Un XML guardado en UTF-16 se rechaza con un mensaje: debe volver a guardarse como UTF-8.

@@ -282,7 +282,7 @@ public class XMLVerifyXSDStructure {
         dbf.setXIncludeAware(false);
 
         Document doc;
-        try (FileInputStream fis = new FileInputStream(xmlFile)) {
+        try (InputStream fis = new ByteArrayInputStream(XmlBom.leer(xmlFile, XmlBom.Uso.VERIFICACION, System.out))) {
             InputSource is = new InputSource(new InputStreamReader(fis, StandardCharsets.UTF_8.name()));
             is.setEncoding(StandardCharsets.UTF_8.name());
             doc = dbf.newDocumentBuilder().parse(is);

@@ -234,7 +234,7 @@ public class XMLVerifySignatures {
     private static Document loadXMLDocument(String xmlFile, DocumentBuilderFactory dbf) throws Exception {
         try {
             DocumentBuilder builder = dbf.newDocumentBuilder();
-            try (FileInputStream fis = new FileInputStream(xmlFile)) {
+            try (InputStream fis = new ByteArrayInputStream(XmlBom.leer(xmlFile, XmlBom.Uso.VERIFICACION, System.out))) {
                 InputSource is = new InputSource(new InputStreamReader(fis, "UTF-8"));
                 is.setEncoding("UTF-8");
                 return builder.parse(is);
