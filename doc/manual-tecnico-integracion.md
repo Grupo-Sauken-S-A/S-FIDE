@@ -94,13 +94,13 @@ Cada `.jar` de distribución incluye (empaquetadas dentro) las bibliotecas que u
 | iText (`kernel`, `io`, `commons`, `sign`, `forms`, `layout`, `pdfa`, `pdfua`, `barcodes`, `svg`, `styled-xml-parser`, `hyph`, `font-asian`, `bouncy-castle-adapter`/`connector`) | 8.0.5 | Los cuatro módulos de PDF (`PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`, `PDFVerifySignatures`): firma y verificación | **AGPL v3** (o licencia comercial de Apryse). `hyph` y `font-asian` traen datos de terceros bajo licencias propias de cada archivo |
 | Bouncy Castle (`bcprov`, `bcpkix`, `bcutil`, `bctls`-jdk18on) | 1.86 | Todos los módulos de firma y verificación, y los extractores de certificados | Bouncy Castle Licence (tipo MIT) |
 | Apache Santuario (`xmlsec`) | 4.0.4 | `XMLSignerPKCS11` | Apache License 2.0 |
-| Apache Commons Codec | 1.18.0 | `XMLSignerPKCS11` (dependencia de Santuario) | Apache License 2.0 |
-| Woodstox (`woodstox-core`) | 7.1.0 | `XMLSignerPKCS11` (dependencia de Santuario) | Apache License 2.0 |
-| Stax2 API | 4.2.2 | `XMLSignerPKCS11` (dependencia de Woodstox) | BSD de 2 cláusulas |
+| Apache Commons Codec | 1.22.1 | `XMLSignerPKCS11` (dependencia de Santuario) | Apache License 2.0 |
+| Woodstox (`woodstox-core`) | 7.3.0 | `XMLSignerPKCS11` (dependencia de Santuario) | Apache License 2.0 |
+| Stax2 API | 4.3.1 | `XMLSignerPKCS11` (dependencia de Woodstox) | BSD de 2 cláusulas |
 | SLF4J (`slf4j-api`; `slf4j-simple` en `PDFVerifySignatures`) | 2.0.20 | Módulos de PDF | MIT |
 | Logback (`logback-classic`, `logback-core`) | 1.6.5 | `PDFSignerPKCS11` y `PDFSignerPKCS12` | EPL 2.0 **o** LGPL 2.1 (a elección; S-FiDE usa la LGPL 2.1, compatible con la GPL) |
-| Apache PDFBox (`pdfbox`, `fontbox`, `pdfbox-io`) | 3.0.5 | **Solo `s_fide_gui`**: dibuja las páginas del PDF (ubicación de la firma y visor). No firma ni modifica nada, y ningún módulo CLI depende de él. Incluye la Adobe Glyph List, un perfil de color ICC de dominio público (CC0) y partes de TwelveMonkeys ImageIO, con los avisos que detalla su archivo `NOTICE` | Apache License 2.0 |
-| Apache Commons Logging | 1.3.5 | `s_fide_gui` (dependencia de PDFBox) | Apache License 2.0 |
+| Apache PDFBox (`pdfbox`, `fontbox`, `pdfbox-io`) | 3.0.8 | **Solo `s_fide_gui`**: dibuja las páginas del PDF (ubicación de la firma y visor). No firma ni modifica nada, y ningún módulo CLI depende de él. Incluye la Adobe Glyph List, un perfil de color ICC de dominio público (CC0) y partes de TwelveMonkeys ImageIO, con los avisos que detalla su archivo `NOTICE` | Apache License 2.0 |
+| Apache Commons Logging | 1.3.6 | `s_fide_gui` (dependencia de PDFBox) | Apache License 2.0 |
 | JavaFX (`javafx-base`, `controls`, `fxml`, `graphics`) | 23.0.1 | `s_fide_gui`; el paquete completo trae el SDK de cada plataforma | GPL v2 con *Classpath Exception* (OpenJFX) |
 | OpenJDK (runtime de Java embebido) | 23.0.1 | Todos los módulos; el paquete completo trae un runtime por plataforma | GPL v2 con *Classpath Exception*; trae además los avisos de sus propios componentes de terceros |
 
@@ -113,6 +113,25 @@ Las carpetas `xsd/` y `test/` del paquete completo contienen esquemas y document
 **Apache PDFBox (desde 1.5.0):** se usa únicamente en la interfaz gráfica, para mostrar la página sobre la que la persona ubica su firma. Su licencia (Apache 2.0) es compatible con GPLv3, y la cláusula "o posterior" de la licencia de S-FiDE es la que permite combinarlo — mismo razonamiento que el del párrafo siguiente para iText. La firma y la verificación siguen haciéndolas los módulos CLI con iText; PDFBox nunca interviene en ellas.
 
 **Nota sobre compatibilidad de licencias:** iText 8.x se distribuye bajo AGPL v3 (o licencia comercial de Apryse). Los archivos fuente de S-FiDE están licenciados bajo **GPLv2 "o cualquier versión posterior"** — esa cláusula "o posterior" es la que habilita la compatibilidad de combinación con AGPLv3 (§13 de la AGPLv3 permite explícitamente la combinación con código bajo GPLv3). No es necesario ningún trámite adicional para usar S-FiDE tal como se distribuye; un integrador que quiera **modificar y redistribuir** los módulos que usan iText debe tener en cuenta los términos de AGPL v3 para esa parte específica.
+
+### 3.1 Revisión de seguridad de dependencias (1.5.0, 2026-10-08)
+
+Antes de publicar la 1.5.0 se revisó la seguridad de **todo lo que se distribuye**, a raíz de un informe de un escáner de composición de software hecho sobre la 1.3.0 (que señalaba Bouncy Castle 1.78, Jackson 2.17.0 y Logback 1.2.13). **Método:** (1) se listaron todas las bibliotecas que cada `.jar` incluye realmente (dependencias de ejecución que resuelve Maven) más los runtimes embebidos; (2) se consultó la base pública de vulnerabilidades [OSV](https://osv.dev) para cada artefacto y versión, con un control positivo (las versiones viejas del informe sí devolvieron avisos, así que la consulta funciona); (3) se compararon con las últimas versiones publicadas en Maven Central; (4) se inspeccionaron los jars generados y se verificó **en ejecución** qué versión se carga.
+
+| Componente | Antes | Ahora | Avisos conocidos (OSV) | Resultado |
+|---|---|---|---|---|
+| Bouncy Castle (`bcprov`/`bcpkix`/`bcutil`/`bctls`) | 1.85 | **1.86** | ninguno | Actualizado. En ejecución carga `BC 1.86` |
+| Logback | 1.6.3 | **1.6.5** | ninguno | Actualizado |
+| SLF4J | 2.0.18 | **2.0.20** | ninguno | Actualizado. Los jars incluyen 2.0.20 |
+| Apache PDFBox (+ `fontbox`, `pdfbox-io`) | 3.0.5 | **3.0.8** | ninguno | Actualizado (solo `s_fide_gui`) |
+| Commons Codec / Woodstox / Stax2 API / Commons Logging | 1.18.0 / 7.1.0 / 4.2.2 / 1.3.5 | **1.22.1 / 7.3.0 / 4.3.1 / 1.3.6** | ninguno | Actualizados. Llegan como dependencia de Santuario o PDFBox: se **fijan** en el `pom.xml` padre para que la versión distribuida sea la revisada |
+| Apache Santuario (`xmlsec`) | 4.0.4 | 4.0.4 | ninguno | Ya era la última |
+| iText | 8.0.5 | 8.0.5 | ninguno | **Sin cambios.** Las vulnerabilidades públicas de iText 8 (CVE-2023-6299 y CVE-2023-6298) se corrigieron en 8.0.2 y no alcanzan a 8.0.5. Existe la línea 9.x (9.8.0 al momento de la revisión): es un salto mayor con cambios de API en la firma, y queda como decisión pendiente |
+| Jackson | — | — | — | **No forma parte de S-FiDE:** ningún jar contiene clases de `com.fasterxml.jackson` |
+| JavaFX | 23.0.1 | 23.0.1 | ninguno | **Atención:** JavaFX 23 es una línea sin soporte; la línea con soporte largo es JavaFX 25 (acompaña a JDK 25 LTS). Decisión pendiente |
+| OpenJDK (runtime embebido) | 23.0.1 | 23.0.1 | no cubierto por OSV | **Atención:** JDK 23 no es una versión de soporte largo y ya terminó su ciclo de vida (su última actualización fue la 23.0.2), por lo que no recibe correcciones de seguridad. Se recomienda pasar el runtime a **JDK 25 (LTS)** con JavaFX 25. Decisión pendiente |
+
+**Alcance y límites.** OSV reúne los avisos publicados (GitHub Security Advisories y otras fuentes) y no cubre el JDK; la revisión no reemplaza un análisis completo contra el NVD ni al escáner del cliente, que conviene volver a correr sobre la versión publicada. **Pendientes que requieren decisión:** migrar a JDK 25 LTS y JavaFX 25 (cambia los runtimes de todas las plataformas, incluido macOS) y evaluar iText 9.x. Esta revisión se repite **antes de cada release** (ver `AGENTS.md`).
 
 ---
 
@@ -1255,7 +1274,7 @@ S-FiDE/
 
 **No requiere instalación ni Java preinstalado** — puede copiarse a cualquier ubicación, incluido un medio removible, y ejecutarse desde ahí en un equipo "limpio" (Windows, Linux o macOS), gracias al runtime embebido y a que los launchers se autodetectan (no hay ninguna ruta ni letra de unidad hardcodeada).
 
-> **Cómo descomprimir el ZIP de distribución.** Cree primero una carpeta propia (por ejemplo `C:\S-FiDE` en Windows, o `~/S-FiDE` en Linux/macOS) y descomprima el contenido del ZIP **dentro** de esa carpeta — no directamente en la raíz de una unidad, en el Escritorio ni en la carpeta de descargas. La distribución trae más de una decena de archivos `.jar` sueltos y dos carpetas de varios cientos de MB (los runtimes embebidos de Java y JavaFX): si se descomprime sin crear antes una carpeta contenedora, todo eso termina mezclado entre los demás archivos de esa ubicación. Esto pasó en la práctica con el ZIP de Windows: algunos usuarios lo descomprimieron directo en `C:\`, entendiendo que el ZIP mismo ya "era" la carpeta de instalación. A partir de esta versión, `SFide-GUI.bat` detecta ese caso puntual (raíz de unidad) y muestra un aviso recomendando moverlo — no es un error, el programa funciona igual, pero una carpeta propia es la forma correcta de instalarlo.
+> **Cómo descomprimir el ZIP de distribución.** Cree primero una carpeta propia (se recomienda `C:\S-FiDE` en Windows y `/opt/S-FiDE` en Linux y macOS; en Linux/macOS, `sudo mkdir -p /opt/S-FiDE && sudo chown "$USER" /opt/S-FiDE` permite después actualizar sin permisos de administrador) y descomprima el contenido del ZIP **dentro** de esa carpeta — no directamente en la raíz de una unidad, en el Escritorio ni en la carpeta de descargas. La distribución trae más de una decena de archivos `.jar` sueltos y dos carpetas de varios cientos de MB (los runtimes embebidos de Java y JavaFX): si se descomprime sin crear antes una carpeta contenedora, todo eso termina mezclado entre los demás archivos de esa ubicación. Esto pasó en la práctica con el ZIP de Windows: algunos usuarios lo descomprimieron directo en `C:\`, entendiendo que el ZIP mismo ya "era" la carpeta de instalación. A partir de esta versión, `SFide-GUI.bat` detecta ese caso puntual (raíz de unidad) y muestra un aviso recomendando moverlo — no es un error, el programa funciona igual, pero una carpeta propia es la forma correcta de instalarlo.
 
 **Convención de nombres de jar — importante para integradores:** el nombre del `.jar` de distribución (`XMLSignerPKCS11.jar`) **nunca** incluye el número de versión, a diferencia del artefacto crudo que genera Maven en `target/` (`xml_signer_pkcs11-1.1.1-jar-with-dependencies.jar`). Esto es deliberado: un integrador que ya tiene el nombre del jar hardcodeado en su propio código no debe romperse cuando S-FiDE actualiza de versión.
 

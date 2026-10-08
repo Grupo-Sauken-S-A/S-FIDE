@@ -1,7 +1,7 @@
 S-FiDE v1.5.0 - Leeme primero:
 
-- IMPORTANTE - Cómo instalar: cree primero una carpeta propia con el nombre que prefiera (por ejemplo
-  "C:\S-FiDE") y descomprima el contenido del ZIP DENTRO de esa carpeta. No lo descomprima directamente
+- IMPORTANTE - Cómo instalar: cree primero una carpeta propia con el nombre que prefiera (se recomienda
+  "C:\S-FiDE" en Windows y "/opt/S-FiDE" en Linux y macOS) y descomprima el contenido del ZIP DENTRO de esa carpeta. No lo descomprima directamente
   en la raíz de una unidad (por ejemplo "C:\"), en el Escritorio ni en "Descargas": S-FiDE trae más de
   una decena de archivos .jar y dos carpetas de varios cientos de MB (el runtime de Java y JavaFX), y
   todo eso quedaría mezclado con sus otros archivos. Esta versión ya detecta y avisa si igual lo ejecuta
@@ -25,14 +25,15 @@ S-FiDE v1.5.0 - Leeme primero:
 - macOS: hay un paquete por procesador, "S-FiDE-<versión>-macos-aarch64.tar.gz" para Mac con Apple Silicon
   (M1, M2, M3, M4...) y "S-FiDE-<versión>-macos-x64.tar.gz" para Mac con procesador Intel. Para saber cuál es
   el suyo: menú Apple > "Acerca de este Mac" (dice "Chip Apple M..." o "Procesador Intel"). Cree una carpeta
-  propia (por ejemplo "~/S-FiDE-programa", no "~/S-FiDE": esa es la carpeta donde S-FiDE guarda SUS datos) y
+  propia (se recomienda "/opt/S-FiDE"; no use "~/S-FiDE": esa es la carpeta donde S-FiDE guarda SUS datos) y
   descomprima el paquete DENTRO de ella, desde la Terminal:
-    cd ~/S-FiDE-programa
+    sudo mkdir -p /opt/S-FiDE && sudo chown "$USER" /opt/S-FiDE
+    cd /opt/S-FiDE
     tar xzf ~/Downloads/S-FiDE-<versión>-macos-aarch64.tar.gz
   Para abrir S-FiDE haga doble clic en "SFide-GUI.command" (la primera vez macOS pide confirmar: clic derecho
   sobre el archivo, "Abrir" y otra vez "Abrir") o ejecute "./SFide-GUI.sh" en la Terminal. Si macOS dice que
   no puede verificar al desarrollador de algún archivo, es la marca de "descargado de Internet": se quita con
-    xattr -dr com.apple.quarantine ~/S-FiDE-programa
+    xattr -dr com.apple.quarantine /opt/S-FiDE
   (el propio "SFide-GUI.sh" lo hace solo cada vez que arranca). Requiere macOS 12 o posterior
 
 - Los valores recordados por la GUI (rutas, slot, últimas carpetas, etc.) se guardan, desde la versión

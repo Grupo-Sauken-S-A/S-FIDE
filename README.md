@@ -55,7 +55,7 @@ Cada uno de los 15 módulos genera su jar en su propia carpeta `target/`.
 
 **macOS (desde 1.5.0).** Hay un paquete por procesador, `S-FiDE-<versión>-macos-aarch64.tar.gz` (Apple Silicon) y `S-FiDE-<versión>-macos-x64.tar.gz` (Intel), con su propio Java y JavaFX embebidos (macOS 12 o posterior). Se arman con `crear-distribucion-macos.ps1`/`.sh`; las instrucciones de uso están en `Leeme.txt`.
 
-Los ZIP de las [releases](https://github.com/Grupo-Sauken-S-A/S-FIDE/releases) traen esa misma distribución ya armada. **Antes de descomprimir, cree una carpeta propia** (por ejemplo `C:\S-FiDE`) y descomprima el contenido del ZIP dentro de esa carpeta — no directamente en la raíz de una unidad, el Escritorio o Descargas.
+Los ZIP de las [releases](https://github.com/Grupo-Sauken-S-A/S-FIDE/releases) traen esa misma distribución ya armada. **Antes de descomprimir, cree una carpeta propia** (se recomienda `C:\S-FiDE` en Windows y `/opt/S-FiDE` en Linux y macOS) y descomprima el contenido del ZIP dentro de esa carpeta — no directamente en la raíz de una unidad, el Escritorio o Descargas. Se recomienda `C:S-FiDE` en Windows y `/opt/S-FiDE` en Linux y macOS.
 
 ## Documentación
 
