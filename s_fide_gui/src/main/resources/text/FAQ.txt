@@ -188,3 +188,20 @@
   un token, cada intento fallido cuenta para el bloqueo)
 - "Herramientas > Olvidar contraseñas de esta sesión" la borra cuando quiera, por ejemplo si deja
   el equipo en uso por otra persona
+
+## 17. ¿Puedo ver un documento XML o PDF dentro de S-FiDE?
+- Sí: menú **Archivo > Abrir PDF...** o **Abrir XML...**. Es solo para mirar: no firma ni modifica nada.
+  El PDF se muestra página por página, con una revisión de sus firmas en palabras simples. El XML se
+  muestra como un árbol con colores donde puede plegar y desplegar elementos, buscar y copiar, y con
+  las firmas marcadas (quién firmó y qué quedó firmado). Esas marcas son informativas: para comprobar
+  que una firma es válida use el botón **Validar firmas** de la misma ventana.
+- Si el XML es un Certificado de Origen o una Declaración Jurada de Origen aparece además un botón que
+  abre el visor oficial en su navegador (esos visores no aceptan un archivo de su computadora: al
+  abrirse tendrá que cargar allí el documento). Los PDF tienen "Ver en visor externo".
+
+## 18. Al firmar un XML apareció un aviso sobre una marca "BOM", ¿es un error?
+- No. El BOM son tres caracteres invisibles que algunos editores, como el Bloc de notas de Windows,
+  agregan al principio de un archivo al guardarlo en UTF-8. No forman parte del documento y algunos
+  sistemas receptores rechazan el archivo por su causa. S-FiDE la ignora y firma igual: el documento
+  firmado queda sin ella y su archivo original no se modifica. No afecta a las firmas que el documento
+  ya tuviera. Si el archivo está guardado en UTF-16, S-FiDE le pide volver a guardarlo como UTF-8.

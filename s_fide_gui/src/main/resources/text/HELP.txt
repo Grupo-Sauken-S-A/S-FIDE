@@ -108,6 +108,13 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
   puede ajustar su altura arrastrando el divisor; y tiene botones para Copiar, Guardar y Limpiar
 - **Abrir PDF / Abrir XML** (menú Archivo): muestra un documento sin modificarlo; el XML con
   colores, elementos plegables y las firmas marcadas (informativo: use "Validar firmas")
+- **Visores externos**: si el XML es un Certificado de Origen o una Declaración Jurada de Origen,
+  el visor de XML suma un botón azul que abre el visor oficial en el navegador; los PDF tienen
+  "Ver en visor externo". "Validar XSD" aparece solo para un COD o DJO completo (firmado en sus
+  dos partes) que indica de dónde bajar su esquema: S-FiDE lo descarga solo, nunca se lo pide
+- **XML con marca BOM**: si el archivo trae esa marca invisible al principio (algunos editores la
+  agregan), S-FiDE se lo explica, la ignora y firma igual dejando el documento sin ella
+- **macOS**: hay paquetes para Mac con Apple Silicon y con procesador Intel
 - **Novedades al actualizar**: la primera vez que usted abre una versión nueva se muestra un
   resumen de los cambios (también está en "Ayuda > Novedades de esta versión")
 - **Verificar Firmas en PDF** explica cada resultado en palabras simples: un certificado que

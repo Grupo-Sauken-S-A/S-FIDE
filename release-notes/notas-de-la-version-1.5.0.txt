@@ -1,69 +1,63 @@
-S-FiDE 1.5.0 - Firmar PDF es más fácil, y varias personas pueden firmar el mismo documento
+S-FiDE 1.5.0 - Firmar PDF es más fácil, varias personas pueden firmar el mismo documento, y ahora también hay versión para macOS
 
-(Este texto es el cuerpo del Release de GitHub. El actualizador de la versión 1.4.0 lo muestra, tal cual, al pedir
-autorización para instalar: por eso es texto plano y de menos de 4000 caracteres.)
+(Este texto es el cuerpo del Release de GitHub. El actualizador de la versión 1.4.0 muestra solo sus primeros 4000
+caracteres al pedir autorización para instalar: por eso lo esencial va al principio, en texto plano. Debajo de la
+línea de guiones empieza el cuerpo; al publicar se le agrega la tabla de descargas con sus SHA-256.)
 
 --------------------------------------------------------------------------------
 
 QUÉ HAY DE NUEVO
 
-* Elegir dónde queda la firma mirando el propio documento, como en Acrobat Reader: se arrastra el recuadro con el
-  mouse y se muestra el texto real que va a llevar (su nombre, la fecha y el texto adicional). Se terminaron los
-  números de X e Y. Puede elegir la página y el tamaño, y firmar dentro de los campos de firma que haya dejado
-  preparados quien armó el documento.
-
+* Elegir dónde queda la firma mirando el propio PDF, como en Acrobat Reader: se arrastra el recuadro con el mouse y
+  se ve el texto real que va a llevar. Se puede elegir la página, el tamaño y los campos de firma preparados.
 * Varias personas pueden firmar el mismo PDF una después de otra, en computadoras distintas y con S-FiDE o Acrobat
-  Reader en cualquier combinación. Lo que firma S-FiDE es válido en Acrobat Reader, y a la inversa.
-
-* Antes de firmar, S-FiDE revisa el documento y las firmas que ya tiene, y se lo explica en palabras simples. Si
-  una firma anterior tiene un problema real se le avisa y usted decide si firma igual. Que un certificado haya
-  vencido, o haya sido dado de baja, DESPUÉS de firmar ya no se presenta como un problema.
-
-* La última persona puede cerrar el documento con su firma final: después no admite más firmas, y Acrobat Reader
-  también lo muestra como bloqueado. También hay una opción para la primera firma: proteger el contenido
-  permitiendo que otras personas sigan firmando.
-
-* Solo se hace una operación a la vez. La "Salida del Proceso" se puede achicar para dejar más lugar a la pantalla
-  principal, y tiene botones para copiar, guardar y limpiar su contenido.
-
-* La primera vez que cada usuario abre esta versión ve un resumen de las novedades.
-
-* "Verificar Firmas en PDF" explica cada resultado en palabras simples y reconoce los documentos bloqueados con
-  Acrobat.
+  Reader en cualquier combinación. Antes de firmar, S-FiDE revisa el documento y las firmas anteriores y se lo explica
+  en palabras simples. La última persona puede cerrar el documento; Acrobat Reader lo muestra como bloqueado.
+* Visor interno (Archivo > Abrir PDF / Abrir XML): el XML se ve con colores, con elementos plegables y las firmas
+  marcadas. Para un Certificado de Origen o una DJO, un botón abre el visor oficial; "Validar XSD" comprueba la
+  estructura con el esquema que indica el propio documento, sin pedirlo nunca.
+* Un XML con marca BOM (carácter invisible que agregan algunos editores) ya no falla: se explica, se ignora y el
+  documento firmado queda sin ella. Tampoco afecta firmas existentes.
+* NUEVO: paquetes para macOS, uno para Apple Silicon y otro para Intel, con su propio Java.
+* Solo se hace una operación a la vez; la "Salida del Proceso" se achica y tiene botones de copiar, guardar y limpiar;
+  la primera vez que se abre una versión nueva se muestra un resumen de novedades.
 
 CORRECCIONES IMPORTANTES
 
 * Cerrar con "Bloquear" un PDF que ya tenía firmas dañaba las firmas anteriores. Ahora se cierra sin tocarlas.
-* S-FiDE firmaba encima de un documento que otra persona había bloqueado con Acrobat, lo que invalidaba la firma de
-  esa persona. Ahora lo impide y explica por qué.
-* S-FiDE se negaba a firmar si una firma anterior era inválida. Ahora informa y deja la decisión a quien firma.
+* S-FiDE firmaba encima de un documento que otra persona había bloqueado con Acrobat, invalidando su firma. Ahora lo
+  impide y explica por qué. Tampoco se negaba ya a firmar ante una firma anterior inválida: informa y usted decide.
+* "Verificar Firmas en PDF" explica cada resultado; un certificado vencido o dado de baja DESPUÉS de firmar ya no se
+  muestra como problema.
+
+SEGURIDAD
+
+* Se actualizaron Bouncy Castle (1.86), Logback, SLF4J, Apache PDFBox y otras bibliotecas, y se documentaron las
+  licencias de terceros. Jackson no forma parte de S-FiDE. Pendiente: pasar el Java embebido (23, sin soporte) a la
+  versión 25 con soporte largo.
+
+CÓMO ACTUALIZAR
+
+* Desde la 1.4.0: "Ayuda > Buscar actualizaciones...". S-FiDE pide autorización, descarga, verifica, reemplaza sus
+  archivos y se reabre. Si algo falla, queda todo como estaba. Su configuración no se toca.
+* Desde una versión anterior: descargue el ZIP completo de su sistema. Instalación recomendada: C:\S-FiDE en
+  Windows, /opt/S-FiDE en Linux y macOS (instrucciones en Leeme.txt).
 
 PARA INTEGRADORES (los .jar)
 
 * El contrato no cambia: mismos argumentos y código de salida 0 o 1. Lo nuevo es opcional. Los extractores,
-  WindowsCertificateStoreView y el actualizador solo cambian el texto de -version. Los .jar de XML aceptan además un XML con BOM (con un aviso).
+  WindowsCertificateStoreView y el actualizador solo cambian el texto de -version. Los .jar de XML aceptan además
+  un XML con BOM (con un aviso) y firman un elemento que es el último de su padre.
 * Firmadores de PDF: opciones nuevas -pagina, -ancho, -alto, -campo, -proteger-contenido y los modos de solo
   lectura -analizar-documento y -vista-previa-texto. Cambia el comportamiento: una firma previa inválida ya no
   impide firmar; un documento ya cerrado se rechaza (código 1); -l true sobre un documento con firmas es una
   firma de cierre.
-* PDFVerifySignatures: devuelve 1 también si el documento se modificó tras la última firma, y 0 si el
-  certificado venció o se dio de baja después de firmar. Cambió el texto de cada firma; decida por el código.
-
-TAMBIÉN PARA macOS
-
-* Paquetes para Mac con Apple Silicon (macos-aarch64.tar.gz) y con procesador Intel (macos-x64.tar.gz), con su
-  propio Java. Requieren macOS 12 o posterior; instrucciones en Leeme.txt.
-
-CÓMO ACTUALIZAR
-
-* Si usa la versión 1.4.0: abra "Ayuda > Buscar actualizaciones...". S-FiDE le pide autorización, descarga la
-  actualización, comprueba que no esté dañada, se cierra, reemplaza sus archivos y vuelve a abrirse solo. Si algo
-  falla, queda todo como estaba. Su configuración no se toca.
-* Si usa una versión anterior a la 1.4.0: descargue el ZIP completo de su sistema operativo y descomprímalo en una
-  carpeta propia (instrucciones en el archivo Leeme.txt).
+* PDFVerifySignatures: devuelve 1 también si el documento se modificó tras la última firma, y 0 si el certificado
+  venció o se dio de baja después de firmar. Cambió el texto de cada firma; decida por el código de salida.
+  Detalle: sección 7.9 del manual técnico.
 
 LÍMITES CONOCIDOS
 
 * S-FiDE no usa sello de tiempo al firmar: la fecha de cada firma es la del reloj del equipo de quien firma.
 * La firma con token y con el almacén de Windows requiere probarse con el dispositivo real.
-* El paquete de macOS todavía no se probó en un Mac real.
+* El paquete de macOS todavía no se probó en un Mac real: si algo no anda, avísenos.

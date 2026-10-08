@@ -8,6 +8,11 @@
 - Asociación Latinoamericana de Integración: organismo intergubernamental que agrupa a países
   de Sudamérica, incluido el bloque MERCOSUR, para promover el comercio regional
 
+## BOM
+- Byte Order Mark: tres bytes invisibles que algunos editores (por ejemplo el Bloc de notas de Windows)
+  agregan al principio de un archivo al guardarlo en UTF-8. No forman parte del documento XML y algunos
+  sistemas receptores lo rechazan; S-FiDE lo ignora al firmar y deja el documento firmado sin él
+
 ## CAPI / CNG
 - CryptoAPI / Cryptography API: Next Generation: las dos generaciones de la API criptográfica
   nativa de Windows, usadas por los módulos que firman contra el almacén de certificados de

@@ -205,8 +205,8 @@ public final class CrearDistribucionMacOS {
                 if (home == null || home.isEmpty()) {
                     continue;
                 }
-                // jmods/ e include/ solo sirven para compilar o armar runtimes con jlink, no para ejecutar.
-                if (home.startsWith("jmods") || home.startsWith("include")) {
+                // jmods/, include/ y lib/src.zip solo sirven para compilar o armar runtimes con jlink, no para ejecutar.
+                if (home.startsWith("jmods") || home.startsWith("include") || home.equals("lib/src.zip")) {
                     continue;
                 }
                 String ruta = destino + "/" + sinBarraFinal(home);

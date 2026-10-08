@@ -10,3 +10,4 @@ dependency-reduced-pom.xml
 /dist-update/
 
 /dist-macos/
+/dist-release/

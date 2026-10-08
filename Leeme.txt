@@ -76,6 +76,16 @@ S-FiDE v1.5.0 - Leeme primero:
     de baja DESPUÉS de firmar ya no se muestra como un problema
   - Nuevas opciones de línea de comandos de los firmadores de PDF: -pagina, -ancho, -alto, -campo,
     -proteger-contenido, -analizar-documento y -vista-previa-texto (ver el Manual Técnico)
+  - Nuevo visor interno: "Archivo > Abrir PDF..." y "Abrir XML...". El XML se muestra con colores, con
+    elementos que se pliegan y despliegan y con las firmas marcadas; si es un Certificado de Origen o
+    una Declaración Jurada de Origen, un botón abre el visor oficial en el navegador, y "Validar XSD"
+    comprueba su estructura con el esquema que el propio documento indica (nunca se pide el archivo)
+  - Un XML con la marca BOM (un carácter invisible que agregan algunos editores) ya no falla: se informa,
+    se ignora y el documento firmado queda sin ella. También se pueden firmar XML compactos, sin saltos
+    de línea, cuando el elemento a firmar es el último de su padre
+  - Ahora hay paquetes para macOS (Apple Silicon e Intel)
+  - Se actualizaron las bibliotecas de seguridad (Bouncy Castle, Logback, SLF4J, Apache PDFBox y otras) y
+    se documentaron todas las licencias de terceros (sección 3 del Manual Técnico)
 
 - Novedades de la versión 1.4.0:
   - Nuevo menú "Ayuda > Buscar actualizaciones...": consulta en GitHub si hay una versión nueva y, solo
