@@ -1597,7 +1597,11 @@ public class SFideGUI extends Application {
         Menu fileMenu = new Menu("Archivo");
         MenuItem exitMenuItem = new MenuItem("Salir");
         exitMenuItem.setOnAction(e -> Platform.runLater(this::handleApplicationClose));
-        fileMenu.getItems().add(exitMenuItem);
+        MenuItem openPdfMenuItem = new MenuItem("Abrir PDF…");
+        openPdfMenuItem.setOnAction(e -> Platform.runLater(this::openPdfInViewer));
+        MenuItem openXmlMenuItem = new MenuItem("Abrir XML…");
+        openXmlMenuItem.setOnAction(e -> Platform.runLater(this::openXmlInViewer));
+        fileMenu.getItems().addAll(openPdfMenuItem, openXmlMenuItem, new SeparatorMenuItem(), exitMenuItem);
 
         Menu toolsMenu = new Menu("Herramientas");
         MenuItem clearLogsMenuItem = new MenuItem("Limpiar Logs");
@@ -1652,6 +1656,7 @@ public class SFideGUI extends Application {
     private OutputPanel createOutputPanel() {
         outputPanel = new OutputPanel(() -> primaryStage, isLowResolution());
         sharedOutputArea = outputPanel.area();
+        GUIUtils.alMostrarResultado(outputPanel::mostrarSiHaySalida);
         System.setProperty("file.encoding", "UTF-8");
         System.setProperty("sun.jnu.encoding", "UTF-8");
         return outputPanel;
@@ -2219,6 +2224,11 @@ public class SFideGUI extends Application {
                 (observable, oldTab, newTab) -> {
                     if (newTab != null) {
                         System.out.println("Cambio a módulo: " + newTab.getText());
+                        // Cambiar de opción de menú colapsa la salida para dejar lugar a la pantalla nueva,
+                        // pero nunca borra lo que había: eso solo lo hace una operación nueva o "Limpiar".
+                        if (outputPanel != null) {
+                            outputPanel.colapsar();
+                        }
                         contentScroll.setContent(newTab.getContent());
                         configManager.lastModuleProperty().set(newTab.getText());
                     }
@@ -2757,7 +2767,6 @@ public class SFideGUI extends Application {
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("TokenSlotsView");
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 // Sin número de slot, el módulo busca solo el slot donde está el token.
                 // -todos y un número de slot son excluyentes: con "leer todos" el slot se ignora.
                 String[] args = readAll
@@ -2783,7 +2792,6 @@ public class SFideGUI extends Application {
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("TokenCertificateExtractor");
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 String[] args = {libPath, password, slotOrDefault(slotNumber)};
                 GUIUtils.executeCommand("TokenCertificateExtractor", args, sharedOutputArea, onExit);
             } else {
@@ -2803,7 +2811,6 @@ public class SFideGUI extends Application {
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("PKCS12CertificateExtractor");
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 String[] args = {pkcs12Path, password};
                 GUIUtils.executeCommand("PKCS12CertificateExtractor", args, sharedOutputArea, onExit);
             } else {
@@ -2826,7 +2833,6 @@ public class SFideGUI extends Application {
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("XMLSignerPKCS11");
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 String[] args = {libPath, password, slotOrDefault(slotNumber), xmlPath, uri};
                 GUIUtils.executeCommand("XMLSignerPKCS11", args, sharedOutputArea, onExit);
             } else {
@@ -2848,7 +2854,6 @@ public class SFideGUI extends Application {
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("XMLSignerPKCS12");
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 String[] checkArgs = {"-verificar-revocacion", pkcs12Path, password};
                 String[] signArgs = {pkcs12Path, password, xmlPath, uri};
                 GUIUtils.executeSignCommandWithRevocationCheck("XMLSignerPKCS12", checkArgs, signArgs, sharedOutputArea, onExit);
@@ -2869,7 +2874,6 @@ public class SFideGUI extends Application {
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("XMLVerifySignatures");
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 String[] args = simpleOutput ?
                         new String[]{xmlPath, "-simple"} :
                         new String[]{xmlPath};
@@ -2891,7 +2895,6 @@ public class SFideGUI extends Application {
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("XMLVerifyXSDStructure");
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 String[] args;
                 if (xsdPath != null && !xsdPath.trim().isEmpty()) {
                     args = new String[]{xmlPath, xsdPath};
@@ -2924,7 +2927,6 @@ public class SFideGUI extends Application {
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("PDFSignerPKCS11");
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 List<String> args = new ArrayList<>(List.of(
                         "-i", pdfPath,
                         "-l", libPath,
@@ -2966,7 +2968,6 @@ public class SFideGUI extends Application {
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("PDFSignerPKCS12");
 
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 List<String> args = new ArrayList<>(List.of(
                         "-i", pdfPath,
                         "-c", pkcs12Path,
@@ -3008,7 +3009,6 @@ public class SFideGUI extends Application {
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("PDFVerifySignatures");
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 String[] args = simpleOutput ?
                         new String[]{pdfPath, "-simple"} :
                         new String[]{pdfPath};
@@ -3022,6 +3022,71 @@ public class SFideGUI extends Application {
             handleError("Error al verificar firmas PDF", e);
             Platform.runLater(() -> sharedOutputArea.appendText("\nError: " + e.getMessage()));
         }
+    }
+
+    /** Archivo ▸ Abrir PDF…: lo muestra en el visor interno (solo lectura). */
+    private void openPdfInViewer() {
+        File file = chooseDocumentToView("Abrir PDF", ConfigurationManager.DirectoryKind.PDF,
+                "Documentos PDF", "*.pdf");
+        if (file == null) {
+            return;
+        }
+        try {
+            com.sauken.s_fide.s_fide_gui.viewer.PdfViewerWindow.abrir(primaryStage, file.toPath(),
+                    path -> runVerificationFromViewer(() -> executePDFVerifySignatures(path.toString(), false)));
+        } catch (com.sauken.s_fide.s_fide_gui.pdf.PdfDocumentView.VistaPreviaException e) {
+            showViewerError(e.getMessage());
+        }
+    }
+
+    /** Archivo ▸ Abrir XML…: lo muestra en el visor interno (solo lectura), con las firmas marcadas. */
+    private void openXmlInViewer() {
+        File file = chooseDocumentToView("Abrir XML", ConfigurationManager.DirectoryKind.XML,
+                "Documentos XML", "*.xml");
+        if (file == null) {
+            return;
+        }
+        try {
+            com.sauken.s_fide.s_fide_gui.viewer.XmlViewerWindow.abrir(primaryStage, file.toPath(),
+                    path -> runVerificationFromViewer(() -> executeXMLVerifySignatures(path.toString(), false)));
+        } catch (com.sauken.s_fide.s_fide_gui.viewer.XmlDocumentModel.XmlViewException e) {
+            showViewerError(e.getMessage());
+        }
+    }
+
+    private File chooseDocumentToView(String title, ConfigurationManager.DirectoryKind kind, String description,
+                                      String extension) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(title);
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(description, extension));
+        File initial = configManager.getLastDirectory(kind);
+        if (initial != null) {
+            chooser.setInitialDirectory(initial);
+        }
+        File file = chooser.showOpenDialog(primaryStage);
+        if (file != null) {
+            configManager.setLastDirectory(kind, file);
+        }
+        return file;
+    }
+
+    /** La verificación se corre con el programa de siempre y su resultado aparece en la Salida del Proceso. */
+    private void runVerificationFromViewer(Runnable verification) {
+        if (GUIUtils.busyProperty().get()) {
+            showViewerError("Hay otra operación en curso. Espere a que termine para verificar las firmas.");
+            return;
+        }
+        primaryStage.toFront();
+        executorService.submit(verification);
+    }
+
+    private void showViewerError(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.initOwner(primaryStage);
+        alert.setTitle("No se puede mostrar el documento");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private boolean isWindowsOS() {
@@ -3060,7 +3125,6 @@ public class SFideGUI extends Application {
         try {
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("WindowsCertificateStoreView");
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 GUIUtils.executeCommand("WindowsCertificateStoreView", new String[0], sharedOutputArea);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
@@ -3180,7 +3244,6 @@ public class SFideGUI extends Application {
         try {
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile(jarName);
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 String flag = "PDFSignerWindowsCSP".equals(jarName) ? "--listar-certificados" : "-listar-certificados";
                 GUIUtils.executeCommand(jarName, new String[]{flag}, sharedOutputArea);
             } else {
@@ -3198,7 +3261,6 @@ public class SFideGUI extends Application {
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("XMLSignerWindowsCSP");
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 String[] checkArgs = {"-verificar-revocacion", alias};
                 String[] signArgs = {alias, xmlPath, uri};
                 GUIUtils.executeSignCommandWithRevocationCheck("XMLSignerWindowsCSP", checkArgs, signArgs, sharedOutputArea, onExit);
@@ -3225,7 +3287,6 @@ public class SFideGUI extends Application {
 
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("PDFSignerWindowsCSP");
             if (result.valid()) {
-                Platform.runLater(() -> sharedOutputArea.clear());
                 List<String> args = new ArrayList<>(List.of(
                         "-i", pdfPath,
                         "-a", alias));

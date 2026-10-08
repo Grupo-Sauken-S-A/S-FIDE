@@ -559,44 +559,8 @@ public final class PdfSignaturePlacementDialog {
     }
 
     private VBox construirResumenDeFirmas() {
-        VBox caja = new VBox(8);
-
-        Label titulo = new Label("Revisión del documento");
-        titulo.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
-        caja.getChildren().add(titulo);
-
-        if (informe == null) {
-            caja.getChildren().add(texto("No se pudieron analizar las firmas de este documento. Igualmente puede "
-                    + "ubicar su firma.", GRIS));
-            return caja;
-        }
-
-        if (informe.cerrado()) {
-            Label cerrado = texto("⛔ " + informe.motivoCierre(), ROJO);
-            cerrado.setStyle(cerrado.getStyle() + "; -fx-font-weight: bold;");
-            caja.getChildren().add(cerrado);
-        }
-
-        if (informe.firmas().isEmpty()) {
-            caja.getChildren().add(texto("El documento todavía no tiene firmas.", GRIS));
-        }
-        for (PdfAnalysisReport.Firma firma : informe.firmas()) {
-            caja.getChildren().add(filaDeFirma(firma));
-        }
-        if (informe.avisoDocumento() != null) {
-            caja.getChildren().add(texto("ⓘ " + informe.avisoDocumento(), informe.hayProblemas() ? ROJO : GRIS));
-        }
-        if (informe.notaDocumento() != null) {
-            caja.getChildren().add(texto("ⓘ " + informe.notaDocumento(), GRIS));
-        }
-        if (informe.hayProblemas() && informe.recomendacion() != null) {
-            caja.getChildren().add(texto(informe.recomendacion(), ROJO));
-        }
-        if (informe.contenidoProtegido()) {
-            caja.getChildren().add(texto("🔒 El contenido del documento está protegido contra cambios, pero admite "
-                    + "más firmas.", GRIS));
-        }
-        return caja;
+        return PdfReviewPanel.crear(informe,
+                "No se pudieron analizar las firmas de este documento. Igualmente puede ubicar su firma.");
     }
 
     private Label texto(String contenido, String color) {
@@ -605,44 +569,6 @@ public final class PdfSignaturePlacementDialog {
         etiqueta.setMaxWidth(300);
         etiqueta.setStyle("-fx-text-fill: " + color + ";");
         return etiqueta;
-    }
-
-    private VBox filaDeFirma(PdfAnalysisReport.Firma firma) {
-        String icono;
-        String color;
-        if (firma.esInvalida()) {
-            icono = "✖";
-            color = ROJO;
-        } else if (firma.esNoVerificable()) {
-            icono = "✔";
-            color = AZUL;
-        } else {
-            icono = "✔";
-            color = VERDE;
-        }
-        Label marca = new Label(icono);
-        marca.setStyle("-fx-text-fill: " + color + "; -fx-font-weight: bold; -fx-font-size: 14px;");
-        Label mensaje = texto(firma.mensaje() != null ? firma.mensaje() : firma.firmante(), firma.esInvalida() ? ROJO : "#212121");
-        mensaje.setMaxWidth(270);
-        HBox cabecera = new HBox(8, marca, mensaje);
-        cabecera.setAlignment(Pos.TOP_LEFT);
-
-        VBox fila = new VBox(2, cabecera);
-        boolean hayDetalle = !firma.notas().isEmpty() || firma.revocacion() != null;
-        if (hayDetalle) {
-            VBox detalle = new VBox(4);
-            for (String nota : firma.notas()) {
-                detalle.getChildren().add(texto(nota, GRIS));
-            }
-            if (firma.revocacion() != null) {
-                detalle.getChildren().add(texto("Estado del certificado: " + firma.revocacion(), GRIS));
-            }
-            TitledPane plegable = new TitledPane("Ver detalle", detalle);
-            plegable.setExpanded(false);
-            plegable.setStyle("-fx-font-size: 11px;");
-            fila.getChildren().add(plegable);
-        }
-        return fila;
     }
 
     private HBox construirPie() {

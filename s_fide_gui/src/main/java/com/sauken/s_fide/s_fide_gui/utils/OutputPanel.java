@@ -88,14 +88,17 @@ import java.util.function.Supplier;
  * <p>
  * Funciona así:
  * <ul>
- *   <li>Se puede <b>colapsar y expandir</b> desde su barra de título. Al colapsarla, la pantalla principal
- *   <b>recupera el espacio</b> que ocupaba; al expandirla, vuelve a la altura que la persona le dio.</li>
- *   <li>Su altura se <b>ajusta arrastrando</b> el divisor que la separa de la pantalla principal.</li>
- *   <li>Se abre sola al empezar una operación (cuando llega la primera línea), pero respeta que la persona
- *   la colapse: no se vuelve a abrir con cada línea nueva. Si hay salida nueva mientras está colapsada, o una
- *   operación en curso, lo indica en la barra de título.</li>
- *   <li>La barra de título tiene botones para <b>copiar</b>, <b>guardar</b> en un archivo de texto y <b>limpiar</b>.
- *   Limpiar vacía la salida y la colapsa: no hay nada más para mostrar.</li>
+ *   <li>Arranca <b>colapsada</b>, y se puede colapsar y expandir desde su barra de título. Al colapsarla, la
+ *   pantalla principal <b>recupera el espacio</b> que ocupaba; al expandirla, vuelve a la altura que la
+ *   persona le dio (que se ajusta <b>arrastrando</b> el divisor que la separa de la pantalla principal).</li>
+ *   <li>Se <b>abre sola cada vez que termina una operación</b> o una opción de menú que dejó salida —aunque
+ *   la persona la hubiera colapsado mientras corría—, y no antes: durante la operación solo avisa
+ *   "En curso…" y, si ya hay salida, "● hay salida nueva".</li>
+ *   <li><b>Cambiar de opción de menú la colapsa</b> (para dejar lugar a la pantalla nueva) pero <b>nunca borra</b>
+ *   la salida anterior.</li>
+ *   <li>La salida anterior se borra <b>solo</b> cuando una operación nueva genera su primera línea de salida, o
+ *   cuando la persona presiona <b>Limpiar</b> (que además la colapsa: no hay nada más para mostrar).</li>
+ *   <li>La barra de título tiene botones para <b>copiar</b>, <b>guardar</b> en un archivo de texto y <b>limpiar</b>.</li>
  *   <li>Siempre muestra lo último que se imprimió.</li>
  * </ul>
  */
@@ -104,12 +107,37 @@ public final class OutputPanel {
     private static final double ALTURA_MINIMA = 90;
     private static final double FRACCION_MAXIMA = 0.75;
 
-    private final TextArea area = new TextArea();
+    private final SalidaTextArea area = new SalidaTextArea();
     private final TitledPane panel = new TitledPane();
     private final SplitPane divisor = new SplitPane();
     private final Label aviso = new Label();
     private final ProgressIndicator progreso = new ProgressIndicator();
     private final Supplier<Window> propietario;
+
+    /**
+     * Área de texto que borra lo anterior cuando llega la primera salida de una operación nueva. Todo el
+     * programa escribe en ella con {@code appendText}, así que el borrado ocurre en un único lugar.
+     */
+    private static final class SalidaTextArea extends TextArea {
+        private boolean borrarAlLlegarTexto;
+
+        void borrarAlLlegarTexto() {
+            borrarAlLlegarTexto = true;
+        }
+
+        void noBorrarAlLlegarTexto() {
+            borrarAlLlegarTexto = false;
+        }
+
+        @Override
+        public void appendText(String texto) {
+            if (borrarAlLlegarTexto && texto != null && !texto.isEmpty()) {
+                borrarAlLlegarTexto = false;
+                clear();
+            }
+            super.appendText(texto);
+        }
+    }
 
     private double alturaExpandida;
     private boolean ajustandoDivisor;
@@ -123,11 +151,12 @@ public final class OutputPanel {
      */
     public OutputPanel(Supplier<Window> propietario, boolean pantallaChica) {
         this.propietario = propietario;
-        this.alturaExpandida = pantallaChica ? 150 : 210;
+        // Alto inicial: lo que antes, más dos líneas de texto.
+        this.alturaExpandida = pantallaChica ? 184 : 244;
 
         area.setEditable(false);
         area.setWrapText(true);
-        area.setPrefRowCount(pantallaChica ? 6 : 8);
+        area.setPrefRowCount(pantallaChica ? 8 : 10);
         area.setStyle("-fx-font-family: 'Consolas', monospace; -fx-control-inner-background: white;");
 
         panel.setContent(area);
@@ -149,7 +178,31 @@ public final class OutputPanel {
             ajustarDivisor(ahora);
             actualizarAviso();
         });
-        GUIUtils.busyProperty().addListener((obs, antes, ahora) -> actualizarAviso());
+        GUIUtils.busyProperty().addListener((obs, antes, ahora) -> {
+            if (ahora) {
+                // Empieza una operación nueva: lo anterior se borra cuando llegue su primera línea.
+                area.borrarAlLlegarTexto();
+            } else {
+                // Terminó: se muestra el resultado. Lo que llegue después (otra opción de menú) borra esto.
+                mostrarSiHaySalida();
+                area.borrarAlLlegarTexto();
+            }
+            actualizarAviso();
+        });
+    }
+
+    /** Abre (descolapsa) la salida si hay algo para mostrar. Se usa al terminar cada operación. */
+    public void mostrarSiHaySalida() {
+        if (!area.getText().isEmpty() && !panel.isExpanded()) {
+            panel.setExpanded(true);
+        }
+        haySalidaNueva = false;
+        actualizarAviso();
+    }
+
+    /** La colapsa sin tocar su contenido: se usa al cambiar de opción de menú. */
+    public void colapsar() {
+        panel.setExpanded(false);
     }
 
     /** El área de texto donde los programas escriben. */
@@ -184,6 +237,7 @@ public final class OutputPanel {
     /** Vacía la salida y la colapsa: ya no hay nada para mostrar. */
     public void limpiar() {
         area.clear();
+        area.noBorrarAlLlegarTexto();
         haySalidaNueva = false;
         panel.setExpanded(false);
         actualizarAviso();
@@ -231,12 +285,13 @@ public final class OutputPanel {
 
     private void alCambiarElTexto(String antes, String ahora) {
         if (ahora != null && !ahora.isEmpty()) {
-            boolean empezoUnaOperacion = antes == null || antes.isEmpty();
             if (!panel.isExpanded()) {
-                if (empezoUnaOperacion) {
-                    panel.setExpanded(true); // al empezar algo nuevo se muestra; después se respeta lo que haga la persona
-                } else {
+                if (GUIUtils.busyProperty().get()) {
+                    // Hay una operación en curso: se abre cuando termine, no línea por línea.
                     haySalidaNueva = true;
+                } else {
+                    // Una opción de menú que escribe sin lanzar un proceso: se muestra enseguida.
+                    panel.setExpanded(true);
                 }
             }
             // Siempre se ve lo último que se imprimió.

@@ -212,18 +212,32 @@ public final class GUIUtils {
         Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, titulo, mensaje));
     }
 
+    /**
+     * Qué hacer cuando un proceso terminó y su resultado está por mostrarse: la interfaz abre la "Salida del
+     * Proceso" para que el texto ya esté a la vista detrás del aviso de "Estado del Proceso".
+     */
+    private static volatile Runnable alMostrarResultado;
+
+    public static void alMostrarResultado(Runnable accion) {
+        alMostrarResultado = accion;
+    }
+
     public static void showCommandResult(int exitStatus) {
         String mensaje = exitStatus == 0
                 ? "Proceso finalizado correctamente"
                 : "El proceso finalizó con errores";
 
-        Platform.runLater(() ->
-                showAlert(
+        Platform.runLater(() -> {
+            Runnable abrirSalida = alMostrarResultado;
+            if (abrirSalida != null) {
+                abrirSalida.run();
+            }
+            showAlert(
                         exitStatus == 0 ? Alert.AlertType.INFORMATION : Alert.AlertType.ERROR,
                         "Estado del Proceso",
                         mensaje
-                )
-        );
+            );
+        });
     }
 
     private static void showAlert(Alert.AlertType tipo, String titulo, String mensaje) {
