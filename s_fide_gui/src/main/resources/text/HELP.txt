@@ -107,7 +107,7 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 - **Salida del Proceso rediseñada**: al colapsarla, la pantalla principal recupera el espacio; se
   puede ajustar su altura arrastrando el divisor; y tiene botones para Copiar, Guardar y Limpiar
 - **Abrir PDF / Abrir XML** (menú Archivo): muestra un documento sin modificarlo; el XML con
-  colores, elementos plegables y las firmas marcadas (informativo: use "Verificar firmas")
+  colores, elementos plegables y las firmas marcadas (informativo: use "Validar firmas")
 - **Novedades al actualizar**: la primera vez que usted abre una versión nueva se muestra un
   resumen de los cambios (también está en "Ayuda > Novedades de esta versión")
 - **Verificar Firmas en PDF** explica cada resultado en palabras simples: un certificado que

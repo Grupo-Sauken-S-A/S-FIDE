@@ -148,6 +148,65 @@ class XmlDocumentModelTest {
     }
 
     @Test
+    void reconoceUnCodUnaDjoYLoDemasLoDejaSinTipo() throws Exception {
+        assertEquals(XmlDocumentModel.TipoComex.COD, modelo("<R><COD Id=\"COD\"/></R>").tipoComex());
+        assertEquals(XmlDocumentModel.TipoComex.COD, modelo("<R><X Id=\"CODEH\"/></R>").tipoComex());
+        assertEquals(XmlDocumentModel.TipoComex.DJO, modelo("<R><DJO Id=\"DJO\"/></R>").tipoComex());
+        assertEquals(XmlDocumentModel.TipoComex.DJO, modelo("<R><X Id=\"DJOEH\"/></R>").tipoComex());
+        assertEquals(XmlDocumentModel.TipoComex.NINGUNO, modelo("<R><Otro Id=\"A\"/></R>").tipoComex());
+    }
+
+    private static final String XSI = " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"";
+
+    @Test
+    void unCodEsCompletoSoloSiCodYCodehEstanFirmados() throws Exception {
+        String ambos = "<R" + XSI + " xsi:noNamespaceSchemaLocation=\"https://cod.certificadoorigen.com.ar/COD.xsd\">"
+                + "<COD Id=\"COD\"/><CODEH Id=\"CODEH\"/>" + firma("#COD", CERTIFICADO) + firma("#CODEH", CERTIFICADO) + "</R>";
+        XmlDocumentModel completo = modelo(ambos);
+        assertTrue(completo.esComexCompleto());
+        assertTrue(completo.puedeValidarXsd());
+        assertEquals("https://cod.certificadoorigen.com.ar/COD.xsd", completo.urlDelEsquema());
+
+        XmlDocumentModel soloUna = modelo("<R" + XSI + " xsi:noNamespaceSchemaLocation=\"https://x/COD.xsd\">"
+                + "<COD Id=\"COD\"/><CODEH Id=\"CODEH\"/>" + firma("#COD", CERTIFICADO) + "</R>");
+        assertTrue(!soloUna.esComexCompleto());
+        assertTrue(!soloUna.puedeValidarXsd());
+
+        XmlDocumentModel sinCodeh = modelo("<R><COD Id=\"COD\"/>" + firma("#COD", CERTIFICADO) + "</R>");
+        assertTrue(!sinCodeh.esComexCompleto());
+    }
+
+    @Test
+    void unaDjoCompletaSeReconoceConDjoYDjoeh() throws Exception {
+        XmlDocumentModel m = modelo("<R" + XSI + " xsi:schemaLocation=\"urn:x https://x/DJO.xsd\">"
+                + "<DJO Id=\"DJO\"/><DJOEH Id=\"DJOEH\"/>" + firma("#DJO", CERTIFICADO) + firma("#DJOEH", null) + "</R>");
+
+        assertEquals(XmlDocumentModel.TipoComex.DJO, m.tipoComex());
+        assertTrue(m.esComexCompleto());
+        assertEquals("https://x/DJO.xsd", m.urlDelEsquema());
+    }
+
+    @Test
+    void sinDireccionWebDelEsquemaNoSeOfreceValidarXsd() throws Exception {
+        String firmas = firma("#COD", CERTIFICADO) + firma("#CODEH", CERTIFICADO);
+        String cuerpo = "<COD Id=\"COD\"/><CODEH Id=\"CODEH\"/>" + firmas + "</R>";
+
+        assertTrue(!modelo("<R>" + cuerpo).puedeValidarXsd(), "Sin referencia al esquema");
+        assertTrue(!modelo("<R" + XSI + " xsi:noNamespaceSchemaLocation=\"C:/esquemas/COD.xsd\">" + cuerpo).puedeValidarXsd(),
+                "Una ruta local no se acepta");
+        assertTrue(modelo("<R" + XSI + " xsi:noNamespaceSchemaLocation=\"C:/esquemas/COD.xsd\">" + cuerpo).esComexCompleto());
+    }
+
+    @Test
+    void unXmlQueNoEsComexNuncaPuedeValidarXsd() throws Exception {
+        XmlDocumentModel m = modelo("<R" + XSI + " xsi:noNamespaceSchemaLocation=\"https://x/a.xsd\"><A Id=\"A\"/>"
+                + firma("#A", CERTIFICADO) + "</R>");
+
+        assertEquals(XmlDocumentModel.TipoComex.NINGUNO, m.tipoComex());
+        assertTrue(!m.puedeValidarXsd());
+    }
+
+    @Test
     void cuentaLosElementosYArmaLaRuta() throws Exception {
         XmlDocumentModel m = modelo("<A><B/><B><C/></B></A>");
 

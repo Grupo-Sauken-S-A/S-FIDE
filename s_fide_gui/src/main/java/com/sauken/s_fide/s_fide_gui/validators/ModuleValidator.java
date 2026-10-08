@@ -133,7 +133,7 @@ public class ModuleValidator {
         alert.setTitle("Error de Validación");
         alert.setHeaderText("Error en la validación de parámetros");
         alert.setContentText(result.errorMessage());
-        alert.showAndWait();
+        com.sauken.s_fide.s_fide_gui.utils.DialogOwner.conPropietario(alert).showAndWait();
     }
 
     public static ValidationResult validatePKCS11(String libPath, String password, String slotNumber) {
@@ -362,7 +362,7 @@ public class ModuleValidator {
         alert.setHeaderText("El archivo ya existe");
         alert.setContentText("¿Desea sobrescribir el archivo?\n" + filePath);
 
-        Optional<ButtonType> result = alert.showAndWait();
+        Optional<ButtonType> result = com.sauken.s_fide.s_fide_gui.utils.DialogOwner.conPropietario(alert).showAndWait();
         return result.isPresent() && result.get() == ButtonType.OK;
     }
 }

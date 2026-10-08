@@ -91,7 +91,7 @@ import java.util.function.Consumer;
  * en un navegador, más el marcado de las firmas digitales que contiene.
  * <p>
  * Es solo para mirar. Las marcas de firma salen de los datos de la propia firma y no dicen si es válida: para
- * eso está el botón "Verificar firmas", que usa el mismo programa de verificación de siempre.
+ * eso está el botón "Validar firmas", que usa el mismo programa de verificación de siempre.
  */
 public final class XmlViewerWindow {
 
@@ -103,6 +103,8 @@ public final class XmlViewerWindow {
     private static final Color COLOR_COMENTARIO = Color.web("#236e25");
     private static final Color COLOR_FIRMADO = Color.web("#2e7d32");
     private static final Color COLOR_FIRMA = Color.web("#1565c0");
+    /** Letra de ancho fijo: la primera que exista entre las típicas de Windows, macOS y Linux. */
+    private static final String FAMILIA_DE_CODIGO = elegirFamiliaDeCodigo();
     private static final int LARGO_MAXIMO_DE_TEXTO = 300;
     private static final int NIVELES_AL_ABRIR = 2;
     private static final int LIMITE_PARA_EXPANDIR_TODO = 5000;
@@ -116,7 +118,8 @@ public final class XmlViewerWindow {
     private List<Node> coincidencias = List.of();
     private int coincidenciaActual = -1;
 
-    private XmlViewerWindow(Window propietario, Path archivo, XmlDocumentModel modelo, Consumer<Path> verificar) {
+    private XmlViewerWindow(Window propietario, Path archivo, XmlDocumentModel modelo, Consumer<Path> verificar,
+                          Consumer<Path> validarXsd) {
         this.modelo = modelo;
         ventana.initOwner(propietario);
         ventana.setTitle("Visor de XML — " + archivo.getFileName());
@@ -128,8 +131,10 @@ public final class XmlViewerWindow {
         expandirHasta(arbol.getRoot(), NIVELES_AL_ABRIR);
         arbol.setContextMenu(menuContextual());
 
-        Button verificarBoton = new Button("Verificar firmas");
-        verificarBoton.setDisable(modelo.firmas().isEmpty());
+        Button verificarBoton = new Button("Validar firmas");
+        // Solo se ofrece si el documento tiene firmas: sin firmas no hay nada que validar.
+        verificarBoton.setVisible(!modelo.firmas().isEmpty());
+        verificarBoton.setManaged(!modelo.firmas().isEmpty());
         verificarBoton.setOnAction(e -> verificar.accept(archivo));
 
         Button expandir = new Button("Expandir todo");
@@ -151,7 +156,19 @@ public final class XmlViewerWindow {
 
         Region relleno = new Region();
         HBox.setHgrow(relleno, Priority.ALWAYS);
-        HBox barra = new HBox(8, busqueda, anterior, siguiente, expandir, colapsar, relleno, verificarBoton);
+        HBox barra = new HBox(8, busqueda, anterior, siguiente, expandir, colapsar, relleno);
+        Button visorExterno = botonDeVisorExterno(modelo.tipoComex());
+        if (visorExterno != null) {
+            barra.getChildren().add(visorExterno);
+        }
+        if (modelo.puedeValidarXsd()) {
+            Button xsd = new Button("Validar XSD");
+            xsd.setTooltip(new javafx.scene.control.Tooltip("Valida la estructura del documento contra su esquema XSD, "
+                    + "que se descarga solo de la dirección que el propio documento indica."));
+            xsd.setOnAction(e -> validarXsd.accept(archivo));
+            barra.getChildren().add(xsd);
+        }
+        barra.getChildren().add(verificarBoton);
         barra.setAlignment(Pos.CENTER_LEFT);
         barra.setPadding(new Insets(8));
 
@@ -171,11 +188,34 @@ public final class XmlViewerWindow {
      *
      * @param verificar qué hacer cuando la persona pide verificar las firmas del archivo
      */
-    public static Stage abrir(Window propietario, Path archivo, Consumer<Path> verificar)
+    public static Stage abrir(Window propietario, Path archivo, Consumer<Path> verificar, Consumer<Path> validarXsd)
             throws XmlDocumentModel.XmlViewException {
-        XmlViewerWindow visor = new XmlViewerWindow(propietario, archivo, XmlDocumentModel.abrir(archivo), verificar);
+        XmlViewerWindow visor = new XmlViewerWindow(propietario, archivo, XmlDocumentModel.abrir(archivo), verificar,
+                validarXsd);
         visor.ventana.show();
         return visor.ventana;
+    }
+
+    /**
+     * Solo para un COD o una DJO: un botón destacado que abre el visor oficial en el navegador. Esos visores
+     * no aceptan un archivo local (solo una dirección web del XML), así que se abre el visor y allí se carga
+     * el documento. Para cualquier otro XML no hay botón.
+     */
+    private Button botonDeVisorExterno(XmlDocumentModel.TipoComex tipo) {
+        if (tipo == XmlDocumentModel.TipoComex.NINGUNO) {
+            return null;
+        }
+        boolean esCod = tipo == XmlDocumentModel.TipoComex.COD;
+        String direccion = esCod ? "https://viewcod.certificadoorigen.com.ar/"
+                : "https://viewdjo.certificadoorigen.com.ar/";
+        Button boton = new Button(esCod ? "Visor de COD" : "Visor de DJO");
+        boton.setStyle("-fx-background-color: #1565c0; -fx-text-fill: white; -fx-font-weight: bold;"
+                + " -fx-background-radius: 4; -fx-cursor: hand;");
+        boton.setTooltip(new javafx.scene.control.Tooltip("Abre el visor oficial de "
+                + (esCod ? "Certificados de Origen Digital" : "Declaraciones Juradas de Origen")
+                + " en su navegador. Allí deberá cargar este archivo."));
+        boton.setOnAction(e -> ExternalOpener.abrirEnlace(direccion, mensaje -> ExternalOpener.informar(ventana, mensaje)));
+        return boton;
     }
 
     private String resumen() {
@@ -189,7 +229,7 @@ public final class XmlViewerWindow {
             quienes.add(f.firmante() == null ? XmlDocumentModel.FIRMANTE_DESCONOCIDO : f.firmante());
         }
         return texto + " · " + firmas + (firmas == 1 ? " firma digital" : " firmas digitales") + " (" + String.join(", ", quienes)
-                + "). Las marcas son informativas: use «Verificar firmas» para comprobar su validez.";
+                + "). Las marcas son informativas: use «Validar firmas» para comprobar su validez.";
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -331,10 +371,21 @@ public final class XmlViewerWindow {
         return true;
     }
 
+    private static String elegirFamiliaDeCodigo() {
+        List<String> instaladas = Font.getFamilies();
+        for (String candidata : List.of("Consolas", "Menlo", "DejaVu Sans Mono", "Liberation Mono", "Ubuntu Mono",
+                "Noto Sans Mono", "Courier New")) {
+            if (instaladas.contains(candidata)) {
+                return candidata;
+            }
+        }
+        return "Monospaced";
+    }
+
     private static void agregar(TextFlow flujo, String contenido, Color color, boolean destacado) {
         Text texto = new Text(contenido);
         texto.setFill(color);
-        texto.setFont(destacado ? Font.font("System", FontWeight.BOLD, 12) : Font.font("Consolas", 13));
+        texto.setFont(destacado ? Font.font("System", FontWeight.BOLD, 12) : Font.font(FAMILIA_DE_CODIGO, 13));
         flujo.getChildren().add(texto);
     }
 

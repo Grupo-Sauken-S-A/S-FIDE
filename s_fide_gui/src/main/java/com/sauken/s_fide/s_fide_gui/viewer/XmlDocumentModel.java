@@ -114,6 +114,9 @@ public final class XmlDocumentModel {
         }
     }
 
+    /** Documentos de comercio exterior ALADI/MERCOSUR que S-FiDE reconoce por el Id de sus elementos. */
+    public enum TipoComex { COD, DJO, NINGUNO }
+
     /** Una firma digital del documento: quién la hizo y qué elementos cubre. */
     public record FirmaXml(Element elemento, String firmante, List<Element> cubre) {
     }
@@ -123,12 +126,26 @@ public final class XmlDocumentModel {
     private final Map<Element, Set<String>> firmantesPorElemento = new IdentityHashMap<>();
     private final Map<Element, FirmaXml> firmaPorElemento = new IdentityHashMap<>();
     private final int cantidadDeElementos;
+    private final TipoComex tipoComex;
+    private final boolean comexCompleto;
+    private final String urlDelEsquema;
+    static final String NS_XSI = "http://www.w3.org/2001/XMLSchema-instance";
 
     private XmlDocumentModel(Document documento) {
         this.documento = documento;
         Map<String, Element> porId = new HashMap<>();
         this.cantidadDeElementos = indexar(documento.getDocumentElement(), porId);
+        // Mismo criterio que los firmadores: un elemento con Id COD/CODEH o DJO/DJOEH.
+        if (porId.containsKey("COD") || porId.containsKey("CODEH")) {
+            this.tipoComex = TipoComex.COD;
+        } else if (porId.containsKey("DJO") || porId.containsKey("DJOEH")) {
+            this.tipoComex = TipoComex.DJO;
+        } else {
+            this.tipoComex = TipoComex.NINGUNO;
+        }
         identificarFirmas(porId);
+        this.comexCompleto = calcularComexCompleto(porId);
+        this.urlDelEsquema = leerUrlDelEsquema(documento.getDocumentElement());
     }
 
     public static XmlDocumentModel abrir(Path archivo) throws XmlViewException {
@@ -192,6 +209,32 @@ public final class XmlDocumentModel {
         return Collections.unmodifiableList(firmas);
     }
 
+    /** Si el documento es un Certificado de Origen Digital, una Declaración Jurada de Origen u otra cosa. */
+    public TipoComex tipoComex() {
+        return tipoComex;
+    }
+
+    /**
+     * ¿Es un COD o una DJO completo? Es decir, sus dos elementos (COD y CODEH, o DJO y DJOEH) existen y cada
+     * uno está cubierto por alguna firma.
+     */
+    public boolean esComexCompleto() {
+        return comexCompleto;
+    }
+
+    /** Dirección (http o https) del esquema XSD que el propio documento declara en su elemento raíz, o {@code null}. */
+    public String urlDelEsquema() {
+        return urlDelEsquema;
+    }
+
+    /**
+     * ¿Corresponde ofrecer "Validar XSD"? Solo para un COD o una DJO completo que declara de dónde bajar su
+     * esquema: el XSD nunca se le pide a la persona, así que sin esa dirección no hay nada que validar.
+     */
+    public boolean puedeValidarXsd() {
+        return comexCompleto && urlDelEsquema != null;
+    }
+
     public int cantidadDeElementos() {
         return cantidadDeElementos;
     }
@@ -208,6 +251,54 @@ public final class XmlDocumentModel {
     }
 
     // ---------------------------------------------------------------------------------------------
+
+    private boolean calcularComexCompleto(Map<String, Element> porId) {
+        String externo;
+        String interno;
+        switch (tipoComex) {
+            case COD -> {
+                externo = "COD";
+                interno = "CODEH";
+            }
+            case DJO -> {
+                externo = "DJO";
+                interno = "DJOEH";
+            }
+            default -> {
+                return false;
+            }
+        }
+        Element a = porId.get(externo);
+        Element b = porId.get(interno);
+        return a != null && b != null && !firmantesDe(a).isEmpty() && !firmantesDe(b).isEmpty();
+    }
+
+    /**
+     * Misma regla que usa XMLVerifyXSDStructure para encontrar el esquema: el atributo
+     * {@code xsi:schemaLocation} (la última dirección del par) o {@code xsi:noNamespaceSchemaLocation} del
+     * elemento raíz. Solo se aceptan direcciones web; nunca una ruta local.
+     */
+    private static String leerUrlDelEsquema(Element raiz) {
+        String conEspacio = raiz.getAttributeNS(NS_XSI, "schemaLocation").trim();
+        String candidata = null;
+        if (!conEspacio.isEmpty()) {
+            String[] partes = conEspacio.split("\\s+");
+            if (partes.length >= 2) {
+                candidata = partes[partes.length - 1];
+            }
+        }
+        if (candidata == null) {
+            String sinEspacio = raiz.getAttributeNS(NS_XSI, "noNamespaceSchemaLocation").trim();
+            if (!sinEspacio.isEmpty()) {
+                candidata = sinEspacio;
+            }
+        }
+        if (candidata == null) {
+            return null;
+        }
+        String minuscula = candidata.toLowerCase(java.util.Locale.ROOT);
+        return minuscula.startsWith("http://") || minuscula.startsWith("https://") ? candidata : null;
+    }
 
     private static int indexar(Element elemento, Map<String, Element> porId) {
         int cuenta = 1;

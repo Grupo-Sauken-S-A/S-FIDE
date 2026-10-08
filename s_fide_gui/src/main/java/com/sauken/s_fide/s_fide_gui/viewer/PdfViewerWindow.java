@@ -83,7 +83,7 @@ import java.util.function.Consumer;
  * firma y, al costado, la revisión de las firmas que informa el propio firmador ({@code -analizar-documento}).
  * <p>
  * Es solo para mirar: no firma ni modifica el documento. Para comprobar la validez de las firmas está el
- * botón "Verificar firmas", que usa el programa de verificación de siempre.
+ * botón "Validar firmas", que usa el programa de verificación de siempre.
  */
 public final class PdfViewerWindow {
 
@@ -103,6 +103,7 @@ public final class PdfViewerWindow {
     private final ScrollPane desplazamiento = new ScrollPane(new StackPane(hoja));
     private final Label etiquetaPagina = new Label();
     private final Label etiquetaZoom = new Label();
+    private final Button verificarBoton = new Button("Validar firmas");
     private final BorderPane raiz = new BorderPane();
     private final VBox panelDerecho = new VBox(10);
 
@@ -129,13 +130,20 @@ public final class PdfViewerWindow {
         mas.setOnAction(e -> cambiarZoom(zoom * 1.2));
         Button alAncho = new Button("Ajustar al ancho");
         alAncho.setOnAction(e -> ajustarAlAncho());
-        Button verificarBoton = new Button("Verificar firmas");
+        // Solo se ofrece si el documento tiene firmas: al abrir se usa lo que se ve en el propio PDF (campos
+        // firmados) y cuando llega el análisis se confirma con las firmas que informa.
         verificarBoton.setOnAction(e -> verificar.accept(archivo));
+        mostrarValidarFirmas(vista.camposDeFirma().stream().anyMatch(PdfDocumentView.CampoDeFirma::firmado));
 
         Region relleno = new Region();
         HBox.setHgrow(relleno, Priority.ALWAYS);
+        Button externo = new Button("Ver en visor externo");
+        externo.setTooltip(new javafx.scene.control.Tooltip("Abre el documento con el programa que su equipo "
+                + "tenga para PDF; si no tiene ninguno, lo abre en el navegador."));
+        externo.setOnAction(e -> ExternalOpener.abrirDocumento(archivo,
+                mensaje -> ExternalOpener.informar(ventana, mensaje)));
         HBox barra = new HBox(8, anterior, etiquetaPagina, siguiente, menos, etiquetaZoom, mas, alAncho, relleno,
-                verificarBoton);
+                externo, verificarBoton);
         barra.setAlignment(Pos.CENTER_LEFT);
         barra.setPadding(new Insets(8));
 
@@ -179,6 +187,11 @@ public final class PdfViewerWindow {
         return visor.ventana;
     }
 
+    private void mostrarValidarFirmas(boolean hayFirmas) {
+        verificarBoton.setVisible(hayFirmas);
+        verificarBoton.setManaged(hayFirmas);
+    }
+
     private void analizar(Path archivo) {
         Thread hilo = new Thread(() -> {
             GUIUtils.SalidaDeProceso respuesta = GUIUtils.ejecutarYCapturar("PDFSignerPKCS12",
@@ -186,6 +199,9 @@ public final class PdfViewerWindow {
             PdfAnalysisReport informe = respuesta.codigo() == 0 ? PdfAnalysisReport.parse(respuesta.lineas()) : null;
             Platform.runLater(() -> {
                 panelDerecho.getChildren().setAll(PdfReviewPanel.crear(informe, TEXTO_SIN_ANALISIS));
+                if (informe != null) {
+                    mostrarValidarFirmas(!informe.firmas().isEmpty());
+                }
             });
         }, "visor-pdf-analisis");
         hilo.setDaemon(true);

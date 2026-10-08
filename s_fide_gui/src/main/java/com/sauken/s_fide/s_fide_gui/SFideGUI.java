@@ -54,6 +54,7 @@ import com.sauken.s_fide.s_fide_gui.update.ReleaseNotes;
 import com.sauken.s_fide.s_fide_gui.update.UpdateController;
 import com.sauken.s_fide.s_fide_gui.update.WhatsNewDialog;
 import com.sauken.s_fide.s_fide_gui.utils.AppInfo;
+import com.sauken.s_fide.s_fide_gui.utils.DialogOwner;
 import com.sauken.s_fide.s_fide_gui.utils.OutputPanel;
 import com.sauken.s_fide.s_fide_gui.utils.GUIUtils;
 import com.sauken.s_fide.s_fide_gui.validators.ModuleValidator;
@@ -89,11 +90,9 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.FontPosture;
 import java.util.Optional;
 import javafx.scene.control.ButtonType;
-import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -210,6 +209,7 @@ public class SFideGUI extends Application {
         try {
             System.out.println("Configurando ventana principal...");
             this.primaryStage = stage;
+            com.sauken.s_fide.s_fide_gui.viewer.ExternalOpener.inicializar(getHostServices());
 
             Platform.runLater(() -> {
                 try {
@@ -407,7 +407,7 @@ public class SFideGUI extends Application {
                 alert.setTitle("Validación de Módulos");
                 alert.setHeaderText("Validación Exitosa");
                 alert.setContentText("Todos los módulos están correctamente habilitados");
-                alert.showAndWait();
+                DialogOwner.conPropietario(alert).showAndWait();
             });
         }
 
@@ -432,7 +432,7 @@ public class SFideGUI extends Application {
         textArea.setPrefColumnCount(50);
 
         alert.getDialogPane().setContent(new VBox(textArea));
-        alert.showAndWait();
+        DialogOwner.conPropietario(alert).showAndWait();
         Platform.exit();
     }
 
@@ -443,7 +443,7 @@ public class SFideGUI extends Application {
             alert.setHeaderText("¿Está seguro que desea salir?");
             alert.setContentText("Se cerrarán todas las operaciones en curso.");
 
-            Optional<ButtonType> result = alert.showAndWait();
+            Optional<ButtonType> result = DialogOwner.conPropietario(alert).showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
                 System.out.println("Cerrando aplicación por solicitud del usuario");
                 configManager.saveWindowBounds(
@@ -620,7 +620,7 @@ public class SFideGUI extends Application {
                 alert.setContentText("Revise la consola para más detalle. Esto no afecta el funcionamiento "
                         + "normal de S-FiDE.");
             }
-            alert.showAndWait();
+            DialogOwner.conPropietario(alert).showAndWait();
         });
     }
 
@@ -1245,7 +1245,7 @@ public class SFideGUI extends Application {
         alert.getDialogPane().setContent(createRichTextView(helpText));
         alert.getDialogPane().setPrefWidth(620);
         alert.getDialogPane().setPrefHeight(480);
-        alert.showAndWait();
+        DialogOwner.conPropietario(alert).showAndWait();
     }
 
     private Button createBrowseButton() {
@@ -1342,7 +1342,7 @@ public class SFideGUI extends Application {
             alert.setHeaderText("Se encontró más de un driver instalado");
             alert.setContentText(sb.toString());
         }
-        alert.showAndWait();
+        DialogOwner.conPropietario(alert).showAndWait();
     }
 
     private Button createExecuteButton() {
@@ -1699,12 +1699,10 @@ public class SFideGUI extends Application {
      * documento local.
      */
     private void openInBrowser(String url) {
-        try {
-            Desktop.getDesktop().browse(new URI(url));
-            System.out.println("Enlace abierto en el navegador: " + url);
-        } catch (Exception e) {
-            handleError("Error al abrir el enlace en el navegador", e);
-        }
+        // HostServices y no java.awt.Desktop: con AWT en modo headless (lo activa el dibujo de PDF) Desktop falla.
+        com.sauken.s_fide.s_fide_gui.viewer.ExternalOpener.abrirEnlace(url,
+                mensaje -> GUIUtils.showError("No se pudo abrir", mensaje));
+        System.out.println("Enlace abierto en el navegador: " + url);
     }
 
     /**
@@ -1718,11 +1716,8 @@ public class SFideGUI extends Application {
         button.setTooltip(new Tooltip("Abre la carpeta donde se guardan los certificados .pem extraídos: "
                 + UserDataDirectory.get()));
         button.setOnAction(e -> Platform.runLater(() -> {
-            try {
-                Desktop.getDesktop().open(UserDataDirectory.get().toFile());
-            } catch (Exception ex) {
-                handleError("No se pudo abrir la carpeta " + UserDataDirectory.get(), ex);
-            }
+            com.sauken.s_fide.s_fide_gui.viewer.ExternalOpener.abrirCarpeta(UserDataDirectory.get(),
+                    mensaje -> GUIUtils.showError("No se pudo abrir", mensaje));
         }));
         return button;
     }
@@ -2046,7 +2041,7 @@ public class SFideGUI extends Application {
             );
 
             alert.getDialogPane().setExpandableContent(content);
-            alert.showAndWait();
+            DialogOwner.conPropietario(alert).showAndWait();
 
             System.out.println("Diálogo de versión mostrado");
         } catch (Exception e) {
@@ -2079,7 +2074,7 @@ public class SFideGUI extends Application {
 
             alert.getDialogPane().setContent(content);
             alert.getDialogPane().setPrefWidth(620);
-            alert.showAndWait();
+            DialogOwner.conPropietario(alert).showAndWait();
 
             System.out.println("Diálogo de licencia mostrado");
         } catch (Exception e) {
@@ -2120,7 +2115,7 @@ public class SFideGUI extends Application {
             alert.getDialogPane().setPrefWidth(760);
             alert.getDialogPane().setPrefHeight(520);
 
-            alert.showAndWait();
+            DialogOwner.conPropietario(alert).showAndWait();
 
             System.out.println("Diálogo de ayuda mostrado");
         } catch (Exception e) {
@@ -2178,7 +2173,7 @@ public class SFideGUI extends Application {
 
             alert.getDialogPane().setContent(content);
             alert.getDialogPane().setPrefWidth(460);
-            alert.showAndWait();
+            DialogOwner.conPropietario(alert).showAndWait();
 
             System.out.println("Diálogo Acerca de mostrado");
         } catch (Exception e) {
@@ -3048,7 +3043,9 @@ public class SFideGUI extends Application {
         }
         try {
             com.sauken.s_fide.s_fide_gui.viewer.XmlViewerWindow.abrir(primaryStage, file.toPath(),
-                    path -> runVerificationFromViewer(() -> executeXMLVerifySignatures(path.toString(), false)));
+                    path -> runVerificationFromViewer(() -> executeXMLVerifySignatures(path.toString(), false)),
+                    // Sin archivo XSD: el verificador lo descarga solo de la dirección que declara el documento.
+                    path -> runVerificationFromViewer(() -> executeXMLVerifyXSDStructure(path.toString(), null)));
         } catch (com.sauken.s_fide.s_fide_gui.viewer.XmlDocumentModel.XmlViewException e) {
             showViewerError(e.getMessage());
         }
@@ -3086,7 +3083,7 @@ public class SFideGUI extends Application {
         alert.setTitle("No se puede mostrar el documento");
         alert.setHeaderText(null);
         alert.setContentText(message);
-        alert.showAndWait();
+        DialogOwner.conPropietario(alert).showAndWait();
     }
 
     private boolean isWindowsOS() {

@@ -245,7 +245,7 @@ public final class GUIUtils {
         alert.setTitle(titulo);
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
-        alert.showAndWait();
+        DialogOwner.conPropietario(alert).showAndWait();
     }
 
     public static String loadResourceFile(String rutaRecurso) {
@@ -465,7 +465,7 @@ public final class GUIUtils {
         alert.setTitle(titulo);
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
-        return alert.showAndWait().filter(boton -> boton == ButtonType.OK).isPresent();
+        return DialogOwner.conPropietario(alert).showAndWait().filter(boton -> boton == ButtonType.OK).isPresent();
     }
 
     private static RevocationCheckOutcome runRevocationCheck(String jarName, String[] checkArgs) {
