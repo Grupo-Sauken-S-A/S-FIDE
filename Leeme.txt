@@ -22,6 +22,19 @@ S-FiDE v1.5.0 - Leeme primero:
   guarda permisos Unix), otórgueselo una sola vez con:
     chmod +x SFide-GUI.sh openjdk-23.0.1/linux-x64/bin/*
 
+- macOS: hay un paquete por procesador, "S-FiDE-<versión>-macos-aarch64.tar.gz" para Mac con Apple Silicon
+  (M1, M2, M3, M4...) y "S-FiDE-<versión>-macos-x64.tar.gz" para Mac con procesador Intel. Para saber cuál es
+  el suyo: menú Apple > "Acerca de este Mac" (dice "Chip Apple M..." o "Procesador Intel"). Cree una carpeta
+  propia (por ejemplo "~/S-FiDE-programa", no "~/S-FiDE": esa es la carpeta donde S-FiDE guarda SUS datos) y
+  descomprima el paquete DENTRO de ella, desde la Terminal:
+    cd ~/S-FiDE-programa
+    tar xzf ~/Downloads/S-FiDE-<versión>-macos-aarch64.tar.gz
+  Para abrir S-FiDE haga doble clic en "SFide-GUI.command" (la primera vez macOS pide confirmar: clic derecho
+  sobre el archivo, "Abrir" y otra vez "Abrir") o ejecute "./SFide-GUI.sh" en la Terminal. Si macOS dice que
+  no puede verificar al desarrollador de algún archivo, es la marca de "descargado de Internet": se quita con
+    xattr -dr com.apple.quarantine ~/S-FiDE-programa
+  (el propio "SFide-GUI.sh" lo hace solo cada vez que arranca). Requiere macOS 12 o posterior
+
 - Los valores recordados por la GUI (rutas, slot, últimas carpetas, etc.) se guardan, desde la versión
   1.4.0, en el archivo "sfide-defaults.properties" dentro de la carpeta PERSONAL de cada usuario
   ("C:\Users\su-usuario\S-FiDE" en Windows, "~/S-FiDE" en Linux/macOS), no en la carpeta de instalación:

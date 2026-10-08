@@ -20,9 +20,10 @@ REM  VENDOR es una carpeta "maestra" que se arma UNA SOLA VEZ (no cambia
 REM  salvo que se actualice la version de Java o JavaFX) con esta forma:
 REM    VENDOR\openjdk-23.0.1\windows-x64\...
 REM    VENDOR\openjdk-23.0.1\linux-x64\...
-REM    VENDOR\openjdk-23.0.1\macos\...
 REM    (cada carpeta de plataforma lleva dentro su "legal": los avisos de licencia del JDK; viaja con el runtime)
-REM    VENDOR\javafx-sdk-23.0.1\windows-x64\...  (idem linux-x64, macos)
+REM    VENDOR\javafx-sdk-23.0.1\windows-x64\...  (idem linux-x64)
+REM    VENDOR\macos\...  los originales de OpenJDK y JavaFX para macOS (NO pasan por este script:
+REM                      ver crear-distribucion-macos.ps1)
 REM    VENDOR\test\...   (opcional, documentos de ejemplo)
 REM    VENDOR\xsd\...    (opcional, esquemas de ejemplo)
 REM  Si deja VENDOR vacio, siga copiando esos archivos a mano como hasta ahora.

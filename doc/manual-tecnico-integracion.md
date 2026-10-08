@@ -70,8 +70,8 @@ El diseño responde a un principio central: **cada capacidad es un programa inde
 | Interfaz gráfica | JavaFX 23.0.1 (solo para el módulo `s_fide_gui`) |
 | Sistema de build | Apache Maven (multi-módulo, 15 módulos) |
 | Empaquetado de distribución | Jars autocontenidos ("fat jars", vía `maven-shade-plugin`/`maven-assembly-plugin`) — no requieren classpath externo |
-| Sistemas operativos soportados | Windows, GNU/Linux, macOS (64 bits) — CSP/KSP es exclusivo de Windows |
-| Arquitectura de CPU | x86-64 (64 bits obligatorio; OpenJDK 23 no soporta sistemas de 32 bits) |
+| Sistemas operativos soportados | Windows, GNU/Linux y macOS 12 o posterior (Apple Silicon e Intel), todos de 64 bits — CSP/KSP es exclusivo de Windows |
+| Arquitectura de CPU | x86-64 (Windows, Linux, macOS Intel) y ARM64 (macOS Apple Silicon); 64 bits obligatorio (OpenJDK 23 no soporta sistemas de 32 bits) |
 | Requisito mínimo de SO en Windows | Windows 10 de 64 bits o superior |
 | Estándares de firma implementados | XMLDSig (XML), PAdES-equivalente vía CMS/PKCS#7 detached conforme ETSI EN 319 142 (PDF) — ver nota en [sección 9](#9-catálogo-de-aplicaciones) |
 | Algoritmos de firma aplicados por S-FiDE | RSA 2048 bits, SHA-256, PKCS#1 v1.5 |
@@ -92,13 +92,13 @@ Cada `.jar` de distribución incluye (empaquetadas dentro) las bibliotecas que u
 | Componente | Versión | Dónde se usa | Licencia |
 |---|---|---|---|
 | iText (`kernel`, `io`, `commons`, `sign`, `forms`, `layout`, `pdfa`, `pdfua`, `barcodes`, `svg`, `styled-xml-parser`, `hyph`, `font-asian`, `bouncy-castle-adapter`/`connector`) | 8.0.5 | Los cuatro módulos de PDF (`PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`, `PDFVerifySignatures`): firma y verificación | **AGPL v3** (o licencia comercial de Apryse). `hyph` y `font-asian` traen datos de terceros bajo licencias propias de cada archivo |
-| Bouncy Castle (`bcprov`, `bcpkix`, `bcutil`, `bctls`-jdk18on) | 1.85 | Todos los módulos de firma y verificación, y los extractores de certificados | Bouncy Castle Licence (tipo MIT) |
+| Bouncy Castle (`bcprov`, `bcpkix`, `bcutil`, `bctls`-jdk18on) | 1.86 | Todos los módulos de firma y verificación, y los extractores de certificados | Bouncy Castle Licence (tipo MIT) |
 | Apache Santuario (`xmlsec`) | 4.0.4 | `XMLSignerPKCS11` | Apache License 2.0 |
 | Apache Commons Codec | 1.18.0 | `XMLSignerPKCS11` (dependencia de Santuario) | Apache License 2.0 |
 | Woodstox (`woodstox-core`) | 7.1.0 | `XMLSignerPKCS11` (dependencia de Santuario) | Apache License 2.0 |
 | Stax2 API | 4.2.2 | `XMLSignerPKCS11` (dependencia de Woodstox) | BSD de 2 cláusulas |
-| SLF4J (`slf4j-api`; `slf4j-simple` en `PDFVerifySignatures`) | 2.0.18 | Módulos de PDF | MIT |
-| Logback (`logback-classic`, `logback-core`) | 1.6.3 | `PDFSignerPKCS11` y `PDFSignerPKCS12` | EPL 2.0 **o** LGPL 2.1 (a elección; S-FiDE usa la LGPL 2.1, compatible con la GPL) |
+| SLF4J (`slf4j-api`; `slf4j-simple` en `PDFVerifySignatures`) | 2.0.20 | Módulos de PDF | MIT |
+| Logback (`logback-classic`, `logback-core`) | 1.6.5 | `PDFSignerPKCS11` y `PDFSignerPKCS12` | EPL 2.0 **o** LGPL 2.1 (a elección; S-FiDE usa la LGPL 2.1, compatible con la GPL) |
 | Apache PDFBox (`pdfbox`, `fontbox`, `pdfbox-io`) | 3.0.5 | **Solo `s_fide_gui`**: dibuja las páginas del PDF (ubicación de la firma y visor). No firma ni modifica nada, y ningún módulo CLI depende de él. Incluye la Adobe Glyph List, un perfil de color ICC de dominio público (CC0) y partes de TwelveMonkeys ImageIO, con los avisos que detalla su archivo `NOTICE` | Apache License 2.0 |
 | Apache Commons Logging | 1.3.5 | `s_fide_gui` (dependencia de PDFBox) | Apache License 2.0 |
 | JavaFX (`javafx-base`, `controls`, `fxml`, `graphics`) | 23.0.1 | `s_fide_gui`; el paquete completo trae el SDK de cada plataforma | GPL v2 con *Classpath Exception* (OpenJFX) |
@@ -1222,7 +1222,7 @@ Este mismo patrón sirve para **cualquiera** de los 13 módulos — solo cambia 
 #!/bin/sh
 SFIDE=/opt/S-FiDE
 cd "$SFIDE"
-JAVA_HOME="$SFIDE/openjdk-23.0.1/linux-x64"   # en macOS: "$SFIDE/openjdk-23.0.1/macos"
+JAVA_HOME="$SFIDE/openjdk-23.0.1/linux-x64"   # en macOS: macos-aarch64 (Apple Silicon) o macos-x64 (Intel)
 PATH="$JAVA_HOME/bin:$PATH"
 
 "$JAVA_HOME/bin/java" -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 \
@@ -1260,6 +1260,10 @@ S-FiDE/
 **Convención de nombres de jar — importante para integradores:** el nombre del `.jar` de distribución (`XMLSignerPKCS11.jar`) **nunca** incluye el número de versión, a diferencia del artefacto crudo que genera Maven en `target/` (`xml_signer_pkcs11-1.1.1-jar-with-dependencies.jar`). Esto es deliberado: un integrador que ya tiene el nombre del jar hardcodeado en su propio código no debe romperse cuando S-FiDE actualiza de versión.
 
 El script `install.bat` (incluido en el repositorio) automatiza la generación de una carpeta de distribución completa a partir del código fuente compilado, incluyendo opcionalmente los runtimes embebidos si se le indica una carpeta "vendor" de referencia. También copia `SFideUpdater.jar`.
+
+**Paquetes para macOS (desde 1.5.0).** El Java y el JavaFX de macOS son distintos según el procesador, así que hay un paquete completo por cada uno: `S-FiDE-<versión>-macos-aarch64.tar.gz` (Apple Silicon: M1, M2, M3…) y `S-FiDE-<versión>-macos-x64.tar.gz` (Intel), requieren macOS 12 o posterior. Son `.tar.gz` y no `.zip` porque tar conserva los permisos de ejecución que necesita el Java embebido (un zip armado en Windows no los guarda). Cada uno trae `openjdk-23.0.1/macos-<procesador>/` y `javafx-sdk-23.0.1/macos-<procesador>/` —el nombre de carpeta que eligen `SFide-GUI.sh` (con `uname -m`) y `SFideUpdater` (con `os.arch`)—, un `SFide-GUI.command` para abrirlo con doble clic desde el Finder, y la carpeta `legal` del JDK y de JavaFX dentro de cada runtime. Se arman con `crear-distribucion-macos.ps1` (Windows) o `crear-distribucion-macos.sh`, que ejecutan `herramientas/CrearDistribucionMacOS.java`: leen **directamente** los originales (OpenJDK 23.0.1 de Oracle, `openjdk-23.0.1_macos-<procesador>_bin.tar.gz`, cuya suma SHA-256 verifican contra la publicada, y el SDK `openjfx-23.0.1_osx-<procesador>_bin-sdk.zip` de Gluon, guardados en la carpeta `macos` del vendor), sin extraerlos a disco, de modo que se conservan los permisos y los enlaces simbólicos de `legal` se convierten en archivos comunes; se omiten `jmods` e `include` del JDK, que solo sirven para compilar. El paquete de actualización (`S-FiDE-<versión>-actualizacion.zip`) es el mismo para todas las plataformas: no lleva runtimes y no incluye `SFide-GUI.command` (el actualizador solo instala la lista cerrada de archivos de la sección 9.15).
+
+**Qué cambia en macOS en tiempo de ejecución.** `SFide-GUI.sh` elige el runtime según `uname -m`, quita de la carpeta de S-FiDE la marca de cuarentena de Gatekeeper (`xattr -dr com.apple.quarantine`) y pasa `-Xdock:name=S-FiDE`; la GUI muestra el menú en la barra superior del sistema (`MenuBar.setUseSystemMenuBar`); abrir enlaces, documentos y carpetas usa `open` a través de `HostServices`; la letra del árbol XML es Menlo; no se crean accesos directos (son de Windows). Los módulos exclusivos de Windows siguen sin funcionar fuera de ese sistema, como en Linux.
 
 **Actualizaciones (desde 1.4.0).** Cada GitHub Release lleva, además de las distribuciones completas por plataforma (`S-FiDE-<versión>-windows.zip`, `-linux.zip`), el paquete `S-FiDE-<versión>-actualizacion.zip` y su `.sha256` (ver [sección 9.15](#915-sfideupdater)), que usa **Ayuda → Buscar actualizaciones...**. Se genera con:
 

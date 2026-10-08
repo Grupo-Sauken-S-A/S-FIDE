@@ -6,9 +6,25 @@
 SFIDE="$(cd "$(dirname "$0")" && pwd)"
 cd "$SFIDE" || exit 1
 
+# Opciones de Java propias de cada sistema (vacio salvo en macOS).
+SISTEMA_OPCIONES=""
+
 case "$(uname -s)" in
     Darwin)
-        PLATFORM=macos
+        # En macOS hay un runtime por procesador: Apple Silicon (arm64) o Intel (x86_64).
+        # Un Mac con Apple Silicon que abre la terminal con Rosetta informa x86_64 y usa
+        # el runtime de Intel, que tambien funciona.
+        case "$(uname -m)" in
+            arm64|aarch64) PLATFORM=macos-aarch64 ;;
+            *)             PLATFORM=macos-x64 ;;
+        esac
+        # Al descargar el ZIP con el navegador, macOS marca todo lo que contiene como "de
+        # Internet" (cuarentena) y Gatekeeper bloquea el Java embebido la primera vez
+        # ("no se puede abrir porque no se puede verificar al desarrollador"). Se quita la
+        # marca solo de esta carpeta: es la de S-FiDE, no se toca nada fuera de ella.
+        xattr -dr com.apple.quarantine "$SFIDE" 2>/dev/null || true
+        # Nombre de la aplicacion en la barra de menu y en el Dock.
+        SISTEMA_OPCIONES="-Xdock:name=S-FiDE"
         ;;
     *)
         PLATFORM=linux-x64
@@ -37,4 +53,6 @@ if [ ! -f "$SFIDE/SFide-GUI.jar" ]; then
     exit 1
 fi
 
-"$JAVA_HOME/bin/java" --module-path "$JAVA_FX/lib" --add-modules javafx.controls,javafx.fxml -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -jar "$SFIDE/SFide-GUI.jar"
+# SISTEMA_OPCIONES va sin comillas a proposito: puede estar vacio o llevar mas de una opcion.
+# shellcheck disable=SC2086
+"$JAVA_HOME/bin/java" $SISTEMA_OPCIONES --module-path "$JAVA_FX/lib" --add-modules javafx.controls,javafx.fxml -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -jar "$SFIDE/SFide-GUI.jar"

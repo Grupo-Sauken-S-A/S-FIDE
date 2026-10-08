@@ -48,7 +48,11 @@ PARA INTEGRADORES (los .jar)
   firma de cierre.
 * PDFVerifySignatures: devuelve 1 también si el documento se modificó tras la última firma, y 0 si el
   certificado venció o se dio de baja después de firmar. Cambió el texto de cada firma; decida por el código.
-* Detalle: sección 7.9 del manual técnico.
+
+TAMBIÉN PARA macOS
+
+* Paquetes para Mac con Apple Silicon (macos-aarch64.tar.gz) y con procesador Intel (macos-x64.tar.gz), con su
+  propio Java. Requieren macOS 12 o posterior; instrucciones en Leeme.txt.
 
 CÓMO ACTUALIZAR
 
@@ -62,3 +66,4 @@ LÍMITES CONOCIDOS
 
 * S-FiDE no usa sello de tiempo al firmar: la fecha de cada firma es la del reloj del equipo de quien firma.
 * La firma con token y con el almacén de certificados de Windows requiere probarse con el dispositivo real.
+* El paquete de macOS todavía no se probó en un Mac real.

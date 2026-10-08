@@ -1593,6 +1593,11 @@ public class SFideGUI extends Application {
 
     private MenuBar createMenuBar() {
         MenuBar menuBar = new MenuBar();
+        // En macOS el menú va en la barra superior del sistema, como en cualquier aplicación del Mac; si el
+        // sistema no lo admite, JavaFX lo deja dentro de la ventana. En Windows y Linux no cambia nada.
+        if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
+            menuBar.setUseSystemMenuBar(true);
+        }
 
         Menu fileMenu = new Menu("Archivo");
         MenuItem exitMenuItem = new MenuItem("Salir");

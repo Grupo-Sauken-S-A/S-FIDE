@@ -9,3 +9,4 @@ dependency-reduced-pom.xml
 **/logs/
 /dist-update/
 
+/dist-macos/

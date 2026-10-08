@@ -310,6 +310,21 @@ public final class SFideUpdater {
         }
     }
 
+    /**
+     * Nombre de la carpeta de runtime de esta plataforma dentro de la instalación: el mismo que elige
+     * SFide-GUI.bat/.sh. En macOS hay una por procesador (Apple Silicon o Intel).
+     */
+    static String platformFolder(boolean windows, boolean mac, String arch) {
+        if (windows) {
+            return "windows-x64";
+        }
+        if (mac) {
+            String a = arch == null ? "" : arch.toLowerCase(Locale.ROOT);
+            return a.contains("aarch64") || a.contains("arm64") ? "macos-aarch64" : "macos-x64";
+        }
+        return "linux-x64";
+    }
+
     /** El mismo comando que arma SFide-GUI.bat/.sh, o {@code null} si no se pueden ubicar los runtimes. */
     private static ProcessBuilder directLaunch(Path installDir, UpdatePackage pkg, boolean windows, boolean mac) {
         if (pkg == null) {
@@ -321,7 +336,7 @@ public final class SFideUpdater {
         if (jdkFolder == null || fxFolder == null || !Files.exists(gui)) {
             return null;
         }
-        String platform = windows ? "windows-x64" : (mac ? "macos" : "linux-x64");
+        String platform = platformFolder(windows, mac, System.getProperty("os.arch", ""));
         // javaw.exe en Windows: no abre una ventana de consola.
         Path java = installDir.resolve(jdkFolder).resolve(platform).resolve("bin").resolve(windows ? "javaw.exe" : "java");
         Path fxLib = installDir.resolve(fxFolder).resolve(platform).resolve("lib");

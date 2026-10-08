@@ -53,6 +53,8 @@ Cada uno de los 15 módulos genera su jar en su propia carpeta `target/`.
 
 **Datos por usuario y actualizaciones (desde 1.4.0).** Lo que S-FiDE recuerda (`sfide-defaults.properties`) y los `.pem` extraídos se guardan en la carpeta personal de cada usuario (`~/S-FiDE`, `C:\Users\<usuario>\S-FiDE` en Windows), no en la carpeta de instalación, que puede ser compartida. **Ayuda → Buscar actualizaciones...** instala nuevas versiones desde GitHub, todo o nada y con la instalación compartida en mente; `crear-paquete-actualizacion.ps1` arma el paquete a adjuntar a cada release.
 
+**macOS (desde 1.5.0).** Hay un paquete por procesador, `S-FiDE-<versión>-macos-aarch64.tar.gz` (Apple Silicon) y `S-FiDE-<versión>-macos-x64.tar.gz` (Intel), con su propio Java y JavaFX embebidos (macOS 12 o posterior). Se arman con `crear-distribucion-macos.ps1`/`.sh`; las instrucciones de uso están en `Leeme.txt`.
+
 Los ZIP de las [releases](https://github.com/Grupo-Sauken-S-A/S-FIDE/releases) traen esa misma distribución ya armada. **Antes de descomprimir, cree una carpeta propia** (por ejemplo `C:\S-FiDE`) y descomprima el contenido del ZIP dentro de esa carpeta — no directamente en la raíz de una unidad, el Escritorio o Descargas.
 
 ## Documentación
