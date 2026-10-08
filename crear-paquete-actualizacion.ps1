@@ -56,6 +56,14 @@ $jars = @(Get-ChildItem $stage -Filter *.jar)
 if ($jars.Count -lt 15) { throw "Se esperaban al menos 15 jars (14 modulos + SFideUpdater) y hay $($jars.Count). Corrio 'mvnw clean install'?" }
 
 # Manifiesto: version y que runtimes embebidos exige esta version.
+# El actualizador rechaza el paquete entero si trae un archivo que no puede instalar; en doc/ solo admite
+# html, md e imagenes. Se controla aca para fallar con un mensaje claro y no al actualizar en el equipo del usuario.
+$noInstalables = @(Get-ChildItem (Join-Path $stage 'doc') -Recurse -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Extension.ToLower() -notin '.html', '.md', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.css', '.ico' })
+if ($noInstalables.Count -gt 0) {
+    throw ("doc/ contiene archivos que el actualizador rechaza: " + (($noInstalables | ForEach-Object { $_.Name }) -join ', ') + ". Muevalos fuera de doc/ (por ejemplo a release-notes/).")
+}
+
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 $manifest = "version=$Version`nrequires.java=$RuntimeJava`nrequires.javafx=$RuntimeJavaFx`n"
 [IO.File]::WriteAllText((Join-Path $stage 'update-manifest.properties'), $manifest, $utf8)

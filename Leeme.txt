@@ -154,3 +154,8 @@ S-FiDE v1.5.0 - Leeme primero:
 
 - Para la validación de firmas digitales como para validación de esquema contra un archivo XSD, es conveniente
   disponer de una conexión a Internet para lograr una validación completa
+
+- Licencias: S-FiDE es software libre bajo la GNU GPL versión 2 o posterior (archivo "LICENSE"). Incluye
+  componentes de otros autores, cada uno con su propia licencia libre: iText (AGPL v3), Bouncy Castle (tipo MIT),
+  Apache PDFBox y Apache Santuario (Apache 2.0), SLF4J, Logback, y OpenJDK y JavaFX (GPL v2 con Classpath
+  Exception). El detalle esta en la seccion 3 del manual tecnico de integracion (carpeta "doc")

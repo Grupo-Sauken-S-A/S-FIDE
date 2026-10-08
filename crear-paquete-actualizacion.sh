@@ -86,6 +86,12 @@ chmod 755 "$STAGE/SFide-GUI.sh"
 JARS="$(ls "$STAGE"/*.jar | wc -l | tr -d ' ')"
 [ "$JARS" -ge 15 ] || { echo "Se esperaban al menos 15 jars (14 modulos + SFideUpdater) y hay $JARS." >&2; exit 1; }
 
+# El actualizador rechaza el paquete entero si trae un archivo que no puede instalar; en doc/ solo admite
+# html, md e imagenes. Se controla aca para fallar con un mensaje claro y no al actualizar en el equipo del usuario.
+BAD="$(find "$STAGE/doc" -type f ! \( -iname '*.html' -o -iname '*.md' -o -iname '*.png' -o -iname '*.jpg' \
+    -o -iname '*.jpeg' -o -iname '*.gif' -o -iname '*.svg' -o -iname '*.css' -o -iname '*.ico' \) -exec basename {} \;)"
+[ -z "$BAD" ] || { echo "doc/ contiene archivos que el actualizador rechaza: $(echo $BAD). Muevalos fuera de doc/ (por ejemplo a release-notes/)." >&2; exit 1; }
+
 # Manifiesto: version y que runtimes embebidos exige esta version
 printf 'version=%s\nrequires.java=%s\nrequires.javafx=%s\n' "$VERSION" "$RUNTIME_JAVA" "$RUNTIME_JAVAFX" \
     > "$STAGE/update-manifest.properties"

@@ -2157,6 +2157,15 @@ public class SFideGUI extends Application {
             licenseLabel.setWrapText(true);
             licenseLabel.setStyle("-fx-text-fill: #52607a; -fx-font-size: 12px;");
 
+            Label thirdPartyLabel = new Label(
+                    "Incluye componentes de otros autores, cada uno con su propia licencia libre: iText (AGPL v3), "
+                            + "Bouncy Castle (tipo MIT), Apache PDFBox y Apache Santuario (Apache 2.0), SLF4J, "
+                            + "Logback, y OpenJDK y JavaFX (GPL v2 con Classpath Exception). El detalle está en la "
+                            + "sección 3 del Manual Técnico de Integración."
+            );
+            thirdPartyLabel.setWrapText(true);
+            thirdPartyLabel.setStyle("-fx-text-fill: #52607a; -fx-font-size: 12px;");
+
             content.getChildren().addAll(
                     titleLabel,
                     versionLabel,
@@ -2168,7 +2177,8 @@ public class SFideGUI extends Application {
                     createGithubLink(),
                     createGithubPagesLink(),
                     new Separator(),
-                    licenseLabel
+                    licenseLabel,
+                    thirdPartyLabel
             );
 
             alert.getDialogPane().setContent(content);

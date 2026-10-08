@@ -38,6 +38,18 @@ CORRECCIONES IMPORTANTES
   esa persona. Ahora lo impide y explica por qué.
 * S-FiDE se negaba a firmar si una firma anterior era inválida. Ahora informa y deja la decisión a quien firma.
 
+PARA INTEGRADORES (los .jar)
+
+* El contrato no cambia: mismos argumentos y código de salida 0 o 1. Lo nuevo es opcional. Los .jar de XML, los
+  extractores de certificados y el actualizador solo cambian el texto de -version.
+* Firmadores de PDF: opciones nuevas -pagina, -ancho, -alto, -campo, -proteger-contenido y los modos de solo
+  lectura -analizar-documento y -vista-previa-texto. Cambia el comportamiento: una firma previa inválida ya no
+  impide firmar; un documento ya cerrado se rechaza (código 1); -l true sobre un documento con firmas es una
+  firma de cierre.
+* PDFVerifySignatures: devuelve 1 también si el documento se modificó tras la última firma, y 0 si el
+  certificado venció o se dio de baja después de firmar. Cambió el texto de cada firma; decida por el código.
+* Detalle: sección 7.9 del manual técnico.
+
 CÓMO ACTUALIZAR
 
 * Si usa la versión 1.4.0: abra "Ayuda > Buscar actualizaciones...". S-FiDE le pide autorización, descarga la

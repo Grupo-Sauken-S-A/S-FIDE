@@ -80,6 +80,8 @@ S-FiDE se distribuye bajo la **Licencia Pública General GNU (GPL), versión 2 o
 
 Copyright © 2024 Juan Carlos Ríos y Juan Ignacio Ríos, Grupo Sauken S.A.
 
+**Componentes de terceros.** S-FiDE incluye bibliotecas de otros autores, cada una con su propia licencia libre: iText 8 (**AGPL v3**), Bouncy Castle (tipo MIT), Apache PDFBox, Apache Santuario, Commons y Woodstox (Apache 2.0), SLF4J (MIT), Logback (EPL 2.0 o LGPL 2.1), y el runtime OpenJDK y JavaFX (GPL v2 con *Classpath Exception*). La tabla completa —versión, módulo que la usa y qué obliga cada licencia a quien modifica o redistribuye— está en la [sección 3 del Manual Técnico](doc/manual-tecnico-integracion.md#3-software-de-terceros-y-dependencias).
+
 ## Soporte y contacto
 
 **Grupo Sauken S.A.** — Córdoba, Argentina

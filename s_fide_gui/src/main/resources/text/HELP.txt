@@ -202,7 +202,7 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 - OpenJDK 23 o superior
 - JavaFX 23 o superior (solo para esta aplicación con interfaz gráfica)
 - Biblioteca PKCS#11 del token (para funciones relacionadas con tokens)
-- Biblioteca iText 8 o superior (para funciones relacionadas con documentos PDF)
+- Biblioteca iText (para documentos PDF): ya viene incluida dentro de los programas, no hay que instalarla
 - Permisos de lectura en los archivos a procesar
 - Permisos de escritura en las carpetas de salida y en su carpeta personal (donde S-FiDE guarda
   sus valores recordados y los certificados .pem). Para actualizar S-FiDE desde el menú Ayuda se

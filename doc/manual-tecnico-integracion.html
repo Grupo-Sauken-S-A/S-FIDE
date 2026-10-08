@@ -475,18 +475,29 @@
     <section class="chapter" id="s3">
       <span class="chapter-num">03</span>
       <h2>Software de terceros y dependencias</h2>
+      <p>Cada <code>.jar</code> de distribución incluye (empaquetadas dentro) las bibliotecas que usa, y el paquete completo trae además el runtime de Java y el SDK de JavaFX. Lo que sigue lista <strong>todo lo que se distribuye</strong>, con la licencia que declara cada proyecto (versiones de 1.5.0, verificadas contra los metadatos de cada artefacto):</p>
       <div class="table-wrap">
         <table>
-          <tr><th>Componente</th><th>Versión</th><th>Uso</th><th>Licencia</th></tr>
-          <tr><td>BouncyCastle</td><td>1.85</td><td>Primitivos criptográficos, ASN.1, <code>DigestInfo</code></td><td>MIT-like</td></tr>
-          <tr><td>iText</td><td>8.0.5</td><td>Firma y verificación PDF</td><td>AGPL v3 / comercial</td></tr>
-          <tr><td>Apache PDFBox</td><td>3.0.5</td><td>Dibujar las páginas de un PDF en la ventana de ubicación de la firma. <strong>Solo <code>s_fide_gui</code></strong>: no firma ni modifica nada, y ningún módulo CLI depende de él</td><td>Apache 2.0</td></tr>
-          <tr><td>Apache Santuario (xmlsec)</td><td>4.0.4</td><td>Soporte de firma XML adicional</td><td>Apache 2.0</td></tr>
-          <tr><td>JavaFX</td><td>23.0.1</td><td>GUI únicamente</td><td>GPLv2 + Classpath Exception</td></tr>
-          <tr><td>SLF4J</td><td>2.0.17</td><td>Fachada de logging</td><td>MIT</td></tr>
-          <tr><td>Logback</td><td>1.5.18</td><td>Implementación de logging</td><td>EPL 1.0 / LGPL 2.1</td></tr>
-          <tr><td>Apache Maven</td><td>3.9.x</td><td>Build del proyecto</td><td>Apache 2.0</td></tr>
+          <tr><th>Componente</th><th>Versión</th><th>Dónde se usa</th><th>Licencia</th></tr>
+          <tr><td>iText (<code>kernel</code>, <code>io</code>, <code>commons</code>, <code>sign</code>, <code>forms</code>, <code>layout</code>, <code>pdfa</code>, <code>pdfua</code>, <code>barcodes</code>, <code>svg</code>, <code>styled-xml-parser</code>, <code>hyph</code>, <code>font-asian</code>, <code>bouncy-castle-adapter</code>/<code>connector</code>)</td><td>8.0.5</td><td>Los cuatro módulos de PDF (<code>PDFSignerPKCS11</code>, <code>PDFSignerPKCS12</code>, <code>PDFSignerWindowsCSP</code>, <code>PDFVerifySignatures</code>): firma y verificación</td><td><strong>AGPL v3</strong> (o licencia comercial de Apryse). <code>hyph</code> y <code>font-asian</code> traen datos de terceros bajo licencias propias de cada archivo</td></tr>
+          <tr><td>Bouncy Castle (<code>bcprov</code>, <code>bcpkix</code>, <code>bcutil</code>, <code>bctls</code>-jdk18on)</td><td>1.85</td><td>Todos los módulos de firma y verificación, y los extractores de certificados</td><td>Bouncy Castle Licence (tipo MIT)</td></tr>
+          <tr><td>Apache Santuario (<code>xmlsec</code>)</td><td>4.0.4</td><td><code>XMLSignerPKCS11</code></td><td>Apache License 2.0</td></tr>
+          <tr><td>Apache Commons Codec</td><td>1.18.0</td><td><code>XMLSignerPKCS11</code> (dependencia de Santuario)</td><td>Apache License 2.0</td></tr>
+          <tr><td>Woodstox (<code>woodstox-core</code>)</td><td>7.1.0</td><td><code>XMLSignerPKCS11</code> (dependencia de Santuario)</td><td>Apache License 2.0</td></tr>
+          <tr><td>Stax2 API</td><td>4.2.2</td><td><code>XMLSignerPKCS11</code> (dependencia de Woodstox)</td><td>BSD de 2 cláusulas</td></tr>
+          <tr><td>SLF4J (<code>slf4j-api</code>; <code>slf4j-simple</code> en <code>PDFVerifySignatures</code>)</td><td>2.0.18</td><td>Módulos de PDF</td><td>MIT</td></tr>
+          <tr><td>Logback (<code>logback-classic</code>, <code>logback-core</code>)</td><td>1.6.3</td><td><code>PDFSignerPKCS11</code> y <code>PDFSignerPKCS12</code></td><td>EPL 2.0 <strong>o</strong> LGPL 2.1 (a elección; S-FiDE usa la LGPL 2.1, compatible con la GPL)</td></tr>
+          <tr><td>Apache PDFBox (<code>pdfbox</code>, <code>fontbox</code>, <code>pdfbox-io</code>)</td><td>3.0.5</td><td><strong>Solo <code>s_fide_gui</code></strong>: dibuja las páginas del PDF (ubicación de la firma y visor). No firma ni modifica nada, y ningún módulo CLI depende de él. Incluye la Adobe Glyph List, un perfil de color ICC de dominio público (CC0) y partes de TwelveMonkeys ImageIO, con los avisos que detalla su archivo <code>NOTICE</code></td><td>Apache License 2.0</td></tr>
+          <tr><td>Apache Commons Logging</td><td>1.3.5</td><td><code>s_fide_gui</code> (dependencia de PDFBox)</td><td>Apache License 2.0</td></tr>
+          <tr><td>JavaFX (<code>javafx-base</code>, <code>controls</code>, <code>fxml</code>, <code>graphics</code>)</td><td>23.0.1</td><td><code>s_fide_gui</code>; el paquete completo trae el SDK de cada plataforma</td><td>GPL v2 con <em>Classpath Exception</em> (OpenJFX)</td></tr>
+          <tr><td>OpenJDK (runtime de Java embebido)</td><td>23.0.1</td><td>Todos los módulos; el paquete completo trae un runtime por plataforma</td><td>GPL v2 con <em>Classpath Exception</em>; trae además los avisos de sus propios componentes de terceros</td></tr>
         </table>
+      </div>
+      <p>Los módulos <code>XMLVerifyXSDStructure</code>, <code>WindowsCertificateStoreView</code> y <code>SFideUpdater</code> no usan ninguna biblioteca de terceros (solo el runtime de Java). <strong>No se distribuyen</strong> y solo se usan para construir y probar: Apache Maven y sus complementos (Apache 2.0), JUnit 5 (EPL 2.0) y Mockito (MIT).</p>
+      <p>Las carpetas <code>xsd/</code> y <code>test/</code> del paquete completo contienen esquemas y documentos de ejemplo de comercio exterior (COD/DJO) que pertenecen a sus respectivos titulares (ALADI/MERCOSUR); se incluyen a título de muestra de uso.</p>
+      <div class="callout note">
+        <span class="label">Qué obliga cada licencia, en la práctica (orientativo; no es asesoramiento legal)</span>
+        <p>S-FiDE es GPL v2 o posterior y su código fuente es público (<a href="https://github.com/Grupo-Sauken-S-A/S-FIDE">GitHub</a>), lo que cubre la obligación de ofrecer el fuente de lo que se distribuye. Las bibliotecas Apache 2.0, MIT/BSD y Bouncy Castle exigen conservar sus avisos de derechos de autor y de licencia, que viajan dentro de cada jar. Logback se usa bajo la LGPL 2.1 y OpenJDK y JavaFX bajo GPL v2 con <em>Classpath Exception</em>: el uso y la redistribución como parte de S-FiDE no imponen nada más a quien integra los <code>.jar</code>. <strong>iText (AGPL v3) es el componente que más condiciona:</strong> usar los <code>.jar</code> tal como se distribuyen no requiere trámite alguno, pero quien <strong>modifique y redistribuya</strong> los módulos de PDF —o los ofrezca como servicio a terceros a través de una red— debe cumplir la AGPL v3 para esa parte, o adquirir una licencia comercial de iText.</p>
       </div>
       <div class="callout note">
         <span class="label">Apache PDFBox (desde 1.5.0)</span>
@@ -757,6 +768,33 @@ cd S-FIDE
         <li><strong>Seguridad:</strong> el XML puede venir de terceros, así que se lee sin resolver entidades ni DTD (un documento que declare <code>&lt;!DOCTYPE&gt;</code> no se abre, con un mensaje claro), con procesamiento seguro activado y un límite de 60 MB. Un XML mal formado se explica con línea y columna, sin trazas de Java.</li>
         <li><strong>Independencia de módulos:</strong> el visor vive solo en <code>s_fide_gui</code> (paquete <code>viewer</code>); no agrega dependencias entre jars ni dependencias nuevas.</li>
       </ul>
+
+      <h3>7.9 — Compatibilidad con integraciones existentes: de 1.4.0 a 1.5.0</h3>
+      <p><strong>Contrato general: no cambió.</strong> Cada jar se sigue invocando como <code>java -jar Modulo.jar &lt;argumentos&gt;</code>, con los mismos argumentos y el mismo orden, y el código de salida sigue siendo <code>0</code> (éxito) o <code>1</code> (error). Todo lo nuevo son opciones <strong>opcionales</strong>: una integración que funcionaba con 1.4.0 sigue invocándose igual.</p>
+      <p><strong>Sin ningún cambio de comportamiento (solo cambia el texto de <code>-version</code>, ahora <code>v1.5.0</code>):</strong> <code>XMLSignerPKCS11</code>, <code>XMLSignerPKCS12</code>, <code>XMLSignerWindowsCSP</code>, <code>XMLVerifySignatures</code>, <code>XMLVerifyXSDStructure</code>, <code>TokenSlotsView</code>, <code>TokenCertificateExtractor</code>, <code>PKCS12CertificateExtractor</code>, <code>WindowsCertificateStoreView</code> y <code>SFideUpdater</code>. Si la integración compara el texto de <code>-version</code>, actualice la comparación.</p>
+      <p><strong>Firmadores de PDF</strong> (<code>PDFSignerPKCS11</code>, <code>PDFSignerPKCS12</code>, <code>PDFSignerWindowsCSP</code>):</p>
+      <table>
+        <thead><tr><th>Qué</th><th>Antes (1.4.0)</th><th>Ahora (1.5.0)</th></tr></thead>
+        <tbody>
+          <tr><td>Opciones nuevas</td><td>—</td><td><code>-pagina</code>, <code>-ancho</code>, <code>-alto</code>, <code>-campo</code>, <code>-proteger-contenido</code> (todas opcionales; los valores por defecto reproducen el comportamiento anterior: página 1, recuadro de 160 × 70)</td></tr>
+          <tr><td>Modos nuevos de solo lectura</td><td>—</td><td><code>-analizar-documento &lt;pdf&gt;</code> (informe de formato estable) y <code>-vista-previa-texto</code> (texto exacto de la firma visible). No firman nada</td></tr>
+          <tr><td>Documento con una firma previa <strong>inválida</strong></td><td>Código <code>1</code>, sin firmar</td><td>Informa el problema y <strong>firma igual</strong> (código <code>0</code>): la decisión es de quien firma. Si la integración dependía del rechazo, debe consultar antes con <code>-analizar-documento</code></td></tr>
+          <tr><td>Documento <strong>ya cerrado</strong> (certificación sin cambios, bloqueo de Acrobat o firma final de S-FiDE)</td><td>Firmaba encima e invalidaba la firma de quien lo cerró</td><td>Código <code>1</code> con un mensaje que indica quién lo cerró; no se genera archivo</td></tr>
+          <tr><td><code>-l true</code> sobre un documento que <strong>ya tiene firmas</strong></td><td>Reescribía y cifraba el archivo, dañando las firmas anteriores</td><td><strong>Firma de cierre</strong>: agrega una firma sin tocar las anteriores; el documento ya no admite más firmas. Sobre un documento sin firmas, igual que antes (certificación + cifrado)</td></tr>
+          <tr><td>Posición con <code>-x</code>/<code>-y</code></td><td>Sin comprobación completa</td><td>Se comprueba que la página exista y que el recuadro entre en la hoja; si no, código <code>1</code> con mensaje</td></tr>
+          <tr><td>Salida estándar</td><td>Solo el registro de la firma</td><td>Si el documento ya tenía firmas, antes de firmar se imprime el informe del análisis (líneas <code>ESTADO_DOCUMENTO</code>, <code>FIRMA</code>, etc.). Un parseo estricto de <code>stdout</code> debe tolerar líneas adicionales</td></tr>
+          <tr><td>Consulta de revocación</td><td>Solo la del certificado propio</td><td>También se consulta (OCSP/CRL, por red) la revocación de las firmas anteriores: puede sumar demora; una falla de red no impide firmar</td></tr>
+          <tr><td>Control del resultado</td><td>—</td><td>Si al terminar alguna firma previa quedara dañada, se borra el archivo de salida y se devuelve <code>1</code></td></tr>
+        </tbody>
+      </table>
+      <p><strong><code>PDFVerifySignatures</code>:</strong> mismos argumentos (incluido <code>-simple</code>), mismo código de salida (<code>0</code> válido, <code>1</code> no válido) y se conservan las líneas <code>DOCUMENTO VÁLIDO</code> / <code>DOCUMENTO INVÁLIDO</code> y <code>Estado del documento</code>. Lo que cambia es <strong>qué se considera inválido</strong> y el texto de las firmas:</p>
+      <ul>
+        <li>Ahora devuelve <code>1</code> además cuando el documento <strong>fue modificado después de la última firma</strong> o cuando el certificado <strong>no era vigente (o ya estaba dado de baja) en la fecha de la firma</strong>.</li>
+        <li>Ahora devuelve <code>0</code> cuando el certificado venció o fue dado de baja <strong>después</strong> de firmar (antes una baja informada por OCSP invalidaba sin mirar la fecha), y acepta documentos con sellos de tiempo, información de validación (LTV/DSS) o comentarios agregados después de la última firma.</li>
+        <li>Sigue devolviendo <code>1</code> para certificados autofirmados o de prueba (regla sin cambios).</li>
+        <li>El texto de cada firma cambió: aparece primero <code>Resultado:</code> (<code>VÁLIDA</code>, <code>VÁLIDA, CON COMPROBACIONES PENDIENTES</code> o <code>NO VÁLIDA</code>) con su explicación, y se agregan las líneas <code>Nota:</code>; ya no se imprime <code>Cubre todo el documento</code>. Quien interprete el texto debe basarse en el código de salida y en las líneas <code>DOCUMENTO VÁLIDO</code>/<code>DOCUMENTO INVÁLIDO</code>, no en el resto.</li>
+      </ul>
+      <p><strong>Recomendación a los integradores:</strong> decidan por el <strong>código de salida</strong>; para saber de antemano si un PDF admite más firmas y en qué estado están las existentes, usen <code>-analizar-documento</code> (formato estable, sección 7.7) en vez de interpretar mensajes. La interfaz gráfica (<code>s_fide_gui</code>) no forma parte del contrato de integración.</p>
     </section>
 
     <section class="chapter" id="s8">
@@ -1424,6 +1462,9 @@ exit $RESULT</code></pre>
         <li><strong>Nuevas opciones de los firmadores de PDF:</strong> <code>-pagina</code>, <code>-ancho</code>, <code>-alto</code>, <code>-campo</code>, <code>-proteger-contenido</code> y los modos de solo lectura <code>-analizar-documento</code> y <code>-vista-previa-texto</code>.</li>
         <li><strong><code>PDFVerifySignatures</code> más claro y más justo:</strong> resultado en lenguaje simple por firma, vigencia y revocación <strong>a la fecha de la firma</strong> (un certificado dado de baja después de firmar ya no invalida la firma; antes una baja informada por OCSP la invalidaba sin mirar la fecha), reconocimiento de documentos bloqueados con Acrobat, sellos de tiempo, información de validación y comentarios posteriores, y campos sin firmar.</li>
         <li><strong>GUI:</strong> ubicación de la firma sobre el propio documento (PDFBox), revisión previa con confirmaciones, una operación a la vez, novedades de la versión en el primer arranque de cada usuario (con saltos de versión) y rediseño de la Salida del Proceso. Ver 9.14.</li>
+        <li><strong>Visor interno de documentos en la GUI</strong> (Archivo → Abrir PDF… / Abrir XML…), con marcado de firmas, botones de visor externo (COD/DJO y PDF) y "Validar XSD". Ver la sección 7.8. Apertura de enlaces y documentos con <code>HostServices</code> (multiplataforma) y todo diálogo con ventana propietaria.</li>
+        <li><strong>Compatibilidad para integradores consolidada</strong> en la sección 7.9 y licencias de terceros completas en la sección 3.</li>
+        <li><strong>El paquete de actualización rechaza ahora, al armarlo, cualquier archivo que el actualizador no pueda instalar</strong> (en <code>doc/</code> solo <code>.html</code>, <code>.md</code> e imágenes): un <code>.txt</code> en <code>doc/</code> habría hecho fallar la actualización de 1.4.0 a 1.5.0. El cuerpo del Release vive en <code>release-notes/</code>.</li>
         <li><strong>Actualización desde 1.4.0 verificada:</strong> el paquete de la 1.5.0 se aplicó con el <code>SFideUpdater.jar</code> real de la 1.4.0 sobre una copia de una instalación 1.4.0 (verificar + aplicar), y el primer arranque posterior mostró el aviso de actualización y las novedades.</li>
       </ul>
       <h4>Guía de migración 1.4.0 → 1.5.0</h4>
@@ -1435,6 +1476,9 @@ exit $RESULT</code></pre>
           <tr><td>Documentos cerrados (DocMDP nivel 1, bloqueo de Acrobat, firma de cierre)</td><td>Se rechazan con código <code>1</code> y un mensaje</td><td>Ninguna</td></tr>
           <tr><td>Salida de <code>PDFVerifySignatures</code></td><td>Texto nuevo por firma; estado de revocación como texto; se quita "Cubre todo el documento"</td><td>Actualizar quien parseaba esas líneas. Código de salida y líneas <code>DOCUMENTO VÁLIDO/INVÁLIDO</code> sin cambios</td></tr>
           <tr><td><code>PDFVerifySignatures</code> y certificados dados de baja</td><td>Una baja posterior a la firma ya no invalida</td><td>Ninguna</td></tr>
+          <tr><td><code>PDFVerifySignatures</code>: cuándo devuelve <code>1</code></td><td>Ahora también si el documento se modificó después de la última firma o si el certificado no era vigente (o ya estaba dado de baja) en la fecha de la firma</td><td>Revisar documentos que antes daban <code>0</code>; es el comportamiento correcto, pero puede cambiar resultados</td></tr>
+          <tr><td>Firmadores de PDF: posición, salida y red</td><td>Con <code>-x</code>/<code>-y</code> se valida página y recuadro (código <code>1</code> si no entran); si el documento ya tenía firmas se imprime antes el informe del análisis y se consulta por red la revocación de las anteriores</td><td>Tolerar líneas adicionales en <code>stdout</code> y una posible demora; una falla de red no impide firmar</td></tr>
+          <tr><td>Resto de los <code>.jar</code> (XML, extractores, <code>WindowsCertificateStoreView</code>, <code>SFideUpdater</code>)</td><td>Sin cambios de comportamiento; solo el texto de <code>-version</code></td><td>Actualizar comparaciones del texto de versión, si las hubiera. Detalle completo en la <a href="#s7">sección 7.9</a></td></tr>
           <tr><td>Argumentos nuevos</td><td><code>-pagina</code>, <code>-ancho</code>, <code>-alto</code>, <code>-campo</code>, <code>-proteger-contenido</code> (opcionales)</td><td>Ninguna: los comandos de la 1.4.0 siguen funcionando igual</td></tr>
           <tr><td><code>sfide-defaults.properties</code></td><td>Clave nueva <code>novedades.vistas</code></td><td>Ninguna (no requiere migración del formato)</td></tr>
           <tr><td>Instalación</td><td><code>SFide-GUI.jar</code> incluye Apache PDFBox (unos 7 MB más); sin jars ni carpetas nuevas</td><td>Ninguna. La actualización desde 1.4.0 se hace con Ayuda → Buscar actualizaciones</td></tr>
