@@ -13,7 +13,7 @@
 
     <artifactId>s_fide_gui</artifactId>
     <name>S-FIDE GUI</name>
-    <description>Interfaz gráfica para S-FIDE (Sistema de Firma Digital Extendida)</description>
+    <description>Interfaz gráfica para S-FIDE (Sistema de Firma Digital Extendido)</description>
 
     <properties>
         <main.class>com.sauken.s_fide.s_fide_gui.SFideGUI</main.class>

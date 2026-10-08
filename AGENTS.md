@@ -197,6 +197,7 @@ S-FiDE tiene soporte especializado para Certificados de Origen Digital (`COD`/`C
 - [ ] Si tocaste `PdfDocumentAnalyzer` o `RevocationValidator`, actualizaste las cuatro copias (ver sección 6).
 - [ ] Si es una versión nueva: agregaste su sección a `NOVEDADES.txt`, redactaste el cuerpo del Release (texto plano, menos de 4000 caracteres) y probaste la actualización desde la versión anterior con **su** `SFideUpdater.jar`.
 - [ ] Si es una versión nueva: hiciste la revisión de seguridad de dependencias (ver sección 6) y actualizaste la sección 3.1 del manual técnico.
+- [ ] Si es una versión nueva: repasaste TODO lo que dice cuál es la versión actual o qué plataformas hay: sección 5 del manual técnico ("Tags publicados … (actual)"), `doc/index.html` (página de inicio de GitHub Pages), `SECURITY.md` (versiones soportadas), `Leeme.txt`, `README.md`, la ayuda de la GUI (HELP, FAQ, glosario) y la Guía de Usuario; y leíste los dos manuales completos buscando frases desactualizadas (en 1.5.0 el manual técnico seguía diciendo que la 1.4.0 era la actual y la página de inicio no mencionaba macOS).
 - [ ] Los mensajes de commit explican el *por qué* del cambio, en español, siguiendo el estilo del historial existente (`git log` para ver ejemplos).
 
 ---

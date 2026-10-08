@@ -271,7 +271,7 @@
       <span class="chapter-num">01</span>
       <h2>Qué es esta guía</h2>
       <p>S-FiDE incluye una interfaz gráfica (<strong>S-FiDE GUI</strong>) que agrupa 13 funciones distintas de firma digital y verificación — firmar y verificar documentos XML y PDF, y consultar certificados digitales guardados en un token criptográfico, en un archivo, o en el almacén de Windows — todo desde una sola ventana, sin necesidad de escribir comandos.</p>
-      <p>Esta guía recorre cada una de esas 13 pantallas con capturas reales de la aplicación: qué hace cada una, qué significa cada campo, y qué puede pasar al presionar "Ejecutar" — tanto si todo sale bien como los mensajes más comunes cuando algo falta o está mal.</p>
+      <p>Además, el menú <strong>Archivo</strong> abre un <strong>visor interno</strong> de PDF y de XML (ver «Abrir un documento para mirarlo»). Esta guía recorre cada una de esas 13 pantallas con capturas reales de la aplicación: qué hace cada una, qué significa cada campo, y qué puede pasar al presionar "Ejecutar" — tanto si todo sale bien como los mensajes más comunes cuando algo falta o está mal.</p>
       <div class="callout note">
         <span class="label">Nota sobre las capturas</span>
         <p>Las capturas de esta guía se hicieron sin un token ni certificado real conectado, por eso los formularios aparecen vacíos o con datos de ejemplo. Los mensajes de error y de éxito que se describen en cada sección son los mensajes reales que imprime cada programa — algunos con captura real (como "Ver Certificados de Windows", que no necesita ningún dato para ejecutarse), y el resto tomados textualmente de la documentación técnica del producto.</p>
@@ -294,6 +294,8 @@
         <li>Para abrir S-FiDE, haga doble clic en <code>SFide-GUI.command</code>. La primera vez macOS pide confirmación: clic derecho sobre el archivo, <em>Abrir</em> y otra vez <em>Abrir</em>. También puede ejecutar <code>./SFide-GUI.sh</code> desde la Terminal.</li>
       </ol>
       <p>Si macOS dice que no puede verificar al desarrollador de algún archivo, es la marca de «descargado de Internet». <code>SFide-GUI.sh</code> la quita solo de la carpeta de S-FiDE cada vez que arranca; a mano se quita con <code>xattr -dr com.apple.quarantine /opt/S-FiDE</code>. En macOS el menú de S-FiDE aparece en la barra superior de la pantalla, como en cualquier aplicación del Mac, y los accesos directos de Windows no existen.</p>
+      <h3>En Linux</h3>
+      <p>El ZIP de Linux se armó en Windows y no guarda permisos de Unix: la primera vez, dentro de la carpeta de instalación (<code>/opt/S-FiDE</code>), otorgue permiso de ejecución una sola vez con <code>chmod +x SFide-GUI.sh openjdk-23.0.1/linux-x64/bin/*</code> y abra S-FiDE con <code>./SFide-GUI.sh</code>. Para poder actualizar después sin permisos de administrador, cree la carpeta como en macOS: <code>sudo mkdir -p /opt/S-FiDE &amp;&amp; sudo chown "$USER" /opt/S-FiDE</code>.</p>
       <p>Para arrancar la interfaz gráfica, ejecute <code>SFide-GUI.bat</code> (Windows) o <code>SFide-GUI.sh</code> (Linux/macOS) dentro de esa carpeta. La primera vez que cada usuario lo ejecuta (solo en Windows), S-FiDE crea automáticamente, tanto en el <strong>Escritorio</strong> como en una carpeta "S-FiDE" del <strong>Menú Inicio</strong>, tres accesos directos con el ícono propio de S-FiDE:</p>
       <ul>
         <li>Uno abre la aplicación.</li>
@@ -407,7 +409,7 @@
           <li><strong>Elemento XML (ID) a Firmar:</strong> déjelo vacío para firmar el documento completo, o escriba el identificador del elemento puntual a firmar (por ejemplo <code>COD</code>, <code>CODEH</code>, <code>DJO</code>, <code>DJOEH</code> en documentos de comercio exterior — ver la solapa "Comercio Exterior" de la <a href="#s6">Ayuda</a>). El botón <strong>"?"</strong> junto al campo abre esta misma explicación sin salir de la pantalla.</li>
         </ul>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
-        <p class="oklist"><code>Éxito</code> — crea un archivo <code>&lt;nombre&gt;-signed.xml</code> junto al original. Antes de firmar, valida por Internet que el certificado no esté revocado (ver recuadro abajo); si eso no se puede confirmar, avisa por el panel de salida y firma igual.</p>
+        <p class="oklist"><code>Éxito</code> — crea un archivo <code>&lt;nombre&gt;-signed.xml</code> junto al original. Antes de firmar, valida por Internet que el certificado no esté revocado (ver recuadro abajo); si eso no se puede confirmar, avisa por el panel de salida y firma igual. Si el XML comienza con una marca «BOM» (un carácter invisible que agregan algunos editores), se lo explica, la ignora y firma igual: ver «Problemas comunes».</p>
         <p class="errlist"><code>Error</code> — biblioteca o archivo XML inexistente, contraseña incorrecta, el elemento indicado no existe en el documento, proveedor no disponible, el elemento ya tiene una firma aplicada, se intentó firmar <code>CODEH</code>/<code>DJOEH</code> sin una firma previa sobre <code>COD</code>/<code>DJO</code>, el certificado está revocado, o (caso extremo) el token no admite ningún mecanismo de firma compatible.</p>
         <div class="callout note">
           <span class="label">Validación de revocación antes de firmar (tokens: sin diálogo)</span>
@@ -469,6 +471,7 @@
         </ul>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
         <p class="oklist"><code>Éxito</code> — confirma que la estructura cumple el esquema y muestra el resultado de verificar las firmas presentes.</p>
+        <p class="oklist"><code>Desde el visor de XML</code> — si abre un Certificado de Origen o una Declaración Jurada de Origen completos con <strong>Archivo → Abrir XML…</strong>, el botón <strong>Validar XSD</strong> hace lo mismo sin que usted tenga que elegir nada: usa el esquema que indica el propio documento y nunca le pide el archivo.</p>
         <p class="errlist"><code>Error</code> — XML o XSD inexistente, no se encontró referencia a ningún esquema y tampoco se indicó uno, error al descargar el esquema, el contenido descargado no es un XSD válido, o sin conexión a Internet cuando hacía falta descargar algo.</p>
         <div class="callout warn">
           <span class="label">No valida revocación</span>
@@ -658,7 +661,7 @@
       <h3>Novedades de la versión</h3>
       <p>La primera vez que usted abre una versión nueva de S-FiDE se muestra automáticamente un cuadro de diálogo con los cambios y agregados, escrito en palabras simples. Si se actualizó saltando versiones, incluye las novedades de todas las versiones intermedias. Aparece una sola vez por usuario; para volver a verlo (con el historial completo) use <strong>Ayuda → Novedades de esta versión</strong>.</p>
       <h3>Acerca de</h3>
-      <p>Fuera de la ventana de Ayuda, el menú <strong>Ayuda → Acerca de</strong> abre un diálogo aparte con la descripción de S-FiDE, la versión instalada, los enlaces al sitio de Grupo Sauken, al repositorio en GitHub y a la página del proyecto en GitHub Pages, y la licencia (GNU GPL v2 o posterior).</p>
+      <p>Fuera de la ventana de Ayuda, el menú <strong>Ayuda → Acerca de</strong> abre un diálogo aparte con la descripción de S-FiDE, la versión instalada, los enlaces al sitio de Grupo Sauken, al repositorio en GitHub y a la página del proyecto en GitHub Pages, la licencia (GNU GPL v2 o posterior) y la lista de los componentes de otros autores que S-FiDE incluye, con sus licencias.</p>
       <figure class="shot">
         <img src="img/manual-usuario/07_acerca_de.png" alt="Diálogo Acerca de">
       </figure>
@@ -681,6 +684,9 @@
         <tr><td>El botón Ejecutar está deshabilitado</td><td>Hay otra operación en curso (la barra de "Salida del Proceso" muestra "En curso…"). Espere a que termine: solo se hace una operación a la vez.</td></tr>
         <tr><td>Colapsé la "Salida del Proceso" y no veo el resultado</td><td>Se abre sola cuando termina la próxima operación; mientras tanto, la flecha de su barra de título la vuelve a expandir (y su contenido no se borró al cambiar de opción de menú). Si llegó salida nueva, la barra lo indica con "● hay salida nueva".</td></tr>
         <tr><td>Al firmar o verificar un XML aparece un aviso sobre una marca «BOM»</td><td>No es un error. El BOM son tres caracteres invisibles que algunos editores, como el Bloc de notas de Windows, agregan al principio de un archivo al guardarlo en UTF-8; no forman parte del documento y algunos sistemas receptores rechazan el archivo por su causa. S-FiDE la ignora y firma igual: el documento firmado queda sin ella y su archivo original no se modifica. Tampoco afecta a las firmas que el documento ya tuviera. Si el archivo está guardado en UTF-16, S-FiDE le pide volver a guardarlo como UTF-8.</td></tr>
+        <tr><td>macOS dice que no puede verificar al desarrollador, o no abre <code>SFide-GUI.command</code></td><td>Es la marca de «descargado de Internet». La primera vez, clic derecho sobre el archivo, <em>Abrir</em> y otra vez <em>Abrir</em>; o ejecute <code>./SFide-GUI.sh</code> desde la Terminal, que quita esa marca de la carpeta de S-FiDE.</td></tr>
+        <tr><td>El visor de COD o de DJO se abre vacío y no muestra mi documento</td><td>Es lo esperado: esos visores oficiales no pueden recibir un archivo de su computadora, solo una dirección web. Cargue allí el documento usted, con el botón del propio visor.</td></tr>
+        <tr><td>No veo el botón «Validar XSD» o «Validar firmas» en el visor de XML</td><td>Cada uno aparece solo cuando corresponde. «Validar firmas» solo si el documento tiene firmas. «Validar XSD» solo para un Certificado de Origen o una Declaración Jurada de Origen completos (firmados en sus dos partes) que indican de dónde bajar su esquema.</td></tr>
         <tr><td>La actualización dice que hay archivos en uso</td><td>Otro usuario del equipo tiene S-FiDE abierto desde la misma carpeta. Pídale que lo cierre y vuelva a intentar.</td></tr>
         <tr><td>Cada usuario del equipo ve valores distintos (rutas, carpetas)</td><td>Es lo esperado desde la 1.4.0: lo que S-FiDE recuerda es por usuario.</td></tr>
         <tr><td>El programa dice que un archivo "no existe"</td><td>Use siempre el botón "Examinar..." para elegir el archivo en vez de escribir la ruta a mano — evita errores de tipeo.</td></tr>
