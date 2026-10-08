@@ -2,6 +2,8 @@
 
 [![Licencia: GPL v2 o posterior](https://img.shields.io/badge/Licencia-GPLv2%20o%20posterior-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-23-orange.svg)](https://openjdk.org/)
+[![Última versión](https://img.shields.io/github/v/release/Grupo-Sauken-S-A/S-FIDE)](https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/latest)
+[![Compilar y verificar](https://github.com/Grupo-Sauken-S-A/S-FIDE/actions/workflows/ci.yml/badge.svg)](https://github.com/Grupo-Sauken-S-A/S-FIDE/actions/workflows/ci.yml)
 
 Suite de programas Java independientes, de Grupo Sauken S.A., para firmar y verificar firmas digitales en documentos XML y PDF en Argentina, y para extraer/inspeccionar certificados digitales desde tokens criptográficos (PKCS#11), archivos PKCS#12 o el almacén de certificados de Windows. Trabaja con certificados de firma digital emitidos bajo la Ley 25.506 de Firma Digital argentina —la misma normativa detrás de los certificados de la Autoridad Certificante de la ONTI (AC-ONTI) y de trámites ante organismos como AFIP/ARCA— y con la especialización de comercio exterior ALADI/MERCOSUR. Incluye una interfaz gráfica JavaFX opcional (`s_fide_gui`) que orquesta esos mismos programas.
 

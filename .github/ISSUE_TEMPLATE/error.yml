@@ -1,0 +1,75 @@
+name: Error o comportamiento inesperado
+description: Algo no funciona como dice la documentación
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por avisar. **No incluya contraseñas, PIN de tokens, certificados ni claves privadas reales**, ni documentos con datos personales: use archivos de prueba. Si el problema es de seguridad, no abra un issue: siga [SECURITY.md](https://github.com/Grupo-Sauken-S-A/S-FIDE/blob/main/SECURITY.md).
+  - type: input
+    id: version
+    attributes:
+      label: Versión de S-FiDE
+      description: Menú Ayuda > Versión, o `java -jar Modulo.jar -version`
+      placeholder: "1.5.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: sistema
+    attributes:
+      label: Sistema operativo
+      options:
+        - Windows
+        - Linux
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+    validations:
+      required: true
+  - type: dropdown
+    id: forma
+    attributes:
+      label: Cómo lo usa
+      options:
+        - Interfaz gráfica (SFide-GUI)
+        - Línea de comandos (un .jar)
+        - Integrado en otra aplicación
+    validations:
+      required: true
+  - type: input
+    id: modulo
+    attributes:
+      label: Módulo o pantalla
+      placeholder: "XMLSignerPKCS11, Firmar PDF con PKCS#12, Visor de XML..."
+  - type: dropdown
+    id: mecanismo
+    attributes:
+      label: Mecanismo de firma (si corresponde)
+      options:
+        - No aplica
+        - Token PKCS#11
+        - Archivo PKCS#12
+        - Almacén de Windows (CSP/KSP)
+  - type: input
+    id: token
+    attributes:
+      label: Marca y modelo del token y biblioteca PKCS#11 (si corresponde)
+      placeholder: "SafeNet eToken 5110, eTPKCS11.dll"
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducirlo
+      description: Qué hizo, en orden. Si puede, adjunte un archivo de ejemplo sin datos reales.
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Qué esperaba que pasara y qué pasó
+    validations:
+      required: true
+  - type: textarea
+    id: salida
+    attributes:
+      label: Mensaje o salida del programa
+      description: Copie el texto de la "Salida del Proceso" (hay un botón Copiar) o lo que imprimió el .jar, y su código de salida.
+      render: text

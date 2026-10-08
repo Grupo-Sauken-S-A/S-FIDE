@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Reportar una vulnerabilidad de seguridad
+    url: https://github.com/Grupo-Sauken-S-A/S-FIDE/blob/main/SECURITY.md
+    about: No abra un issue público para un problema de seguridad (por ejemplo, una firma inválida que se acepta como válida). Siga el procedimiento de SECURITY.md.
+  - name: Guía de Usuario y Manual Técnico
+    url: https://grupo-sauken-s-a.github.io/S-FIDE/
+    about: Antes de abrir un issue, revise la documentación publicada (incluye las preguntas frecuentes en la ayuda de la aplicación).

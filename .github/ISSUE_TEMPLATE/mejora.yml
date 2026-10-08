@@ -1,0 +1,19 @@
+name: Idea o mejora
+description: Una capacidad nueva o un cambio que haría más fácil el uso
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: necesidad
+    attributes:
+      label: Qué necesita lograr
+      description: Cuente el caso de uso y quién lo haría (una persona con la interfaz gráfica, una aplicación que integra los .jar, etc.).
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Cómo imagina que debería funcionar
+  - type: markdown
+    attributes:
+      value: |
+        Tenga presente la filosofía del proyecto (una capacidad = un programa independiente, sin dependencias entre jars): ver [AGENTS.md](https://github.com/Grupo-Sauken-S-A/S-FIDE/blob/main/AGENTS.md#2-reglas-no-negociables).

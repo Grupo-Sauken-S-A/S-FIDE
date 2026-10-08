@@ -19,7 +19,7 @@ cd S-FIDE
 ./mvnw clean install
 ```
 
-Cada uno de los 15 módulos (ver tabla en `AGENTS.md`) genera su propio jar en su carpeta `target/`. Para armar una carpeta de distribución lista para ejecutar, usá `install.bat` (ver `Leeme.txt`).
+Cada uno de los 15 módulos (ver tabla en `AGENTS.md`) genera su propio jar en su carpeta `target/`. Para armar una carpeta de distribución lista para ejecutar, usá `install.bat` (ver `Leeme.txt`). Los paquetes completos de Windows, Linux y macOS (Apple Silicon e Intel) y el paquete de actualización se arman con `crear-distribucion-zip.ps1`, `crear-distribucion-macos.ps1`/`.sh` y `crear-paquete-actualizacion.ps1`/`.sh` (resumen del proceso en `AGENTS.md`, sección 6).
 
 ## Estructura del repositorio
 
@@ -27,6 +27,9 @@ Cada uno de los 15 módulos (ver tabla en `AGENTS.md`) genera su propio jar en s
 - `doc/` — manual técnico de integración (fuente de verdad de la documentación).
 - `shared-resources/` — único archivo de datos compartido entre módulos en tiempo de **build** (catálogo de drivers de tokens), no una dependencia en tiempo de ejecución.
 - `s_fide_gui/` — interfaz gráfica JavaFX; invoca los demás módulos como procesos externos, nunca como librería.
+- `integration_tests/` — pruebas de punta a punta: lanzan los módulos reales como procesos, firman y verifican con certificados generados al vuelo.
+- `herramientas/` — utilidades de empaquetado que no forman parte del producto (por ejemplo, el armado de los paquetes de macOS).
+- `release-notes/` — el texto de cada GitHub Release (no va en `doc/`: el actualizador rechaza un paquete con archivos que no puede instalar).
 
 ## Convenciones de código
 
@@ -45,6 +48,10 @@ No alcanza con que compile. Si tocaste código de firma o verificación:
 - Corré `./mvnw clean install` del reactor completo — esto ya incluye correr `integration_tests`, que firma y verifica un XML y un PDF reales de punta a punta usando un certificado PKCS#12 autofirmado generado al vuelo (sin ningún token ni contraseña guardada en el repo). Es la única cobertura automatizada del proyecto por ahora — cúbrela si tu cambio toca `XMLSignerPKCS12`, `XMLVerifySignatures`, `PDFSignerPKCS12` o `PDFVerifySignatures`.
 - Si tocaste un módulo que depende de un token PKCS#11 real o del almacén de certificados de Windows, no hay forma de automatizar esa parte (ver `integration_tests/pom.xml` para el porqué) — probalo a mano con hardware real, como siempre.
 - Probá el módulo con un archivo real (XML o PDF de prueba, certificado PKCS#12 de prueba si hace falta) — varios bugs reales de este proyecto solo aparecieron contra archivos/hardware reales, nunca en una prueba puramente teórica.
+
+## Dependencias y seguridad
+
+Los PR de Dependabot que suben versiones menores de bibliotecas se revisan igual que cualquier cambio: hay que compilar el reactor completo y ver que firma y verificación sigan funcionando. Los cambios de versión **mayor** (por ejemplo iText 9, JavaFX 26 o JUnit 6) o de runtime (JDK/JavaFX embebidos) no se mergean sin una decisión previa, porque pueden cambiar el comportamiento de los `.jar` que usan terceros. Antes de cada versión publicada se hace una revisión de seguridad de todas las dependencias (método y resultado en la sección 3.1 del manual técnico; procedimiento en `AGENTS.md`). Si encuentra una vulnerabilidad, **no abra un issue público**: siga [`SECURITY.md`](SECURITY.md).
 
 ## Enviar un cambio
 

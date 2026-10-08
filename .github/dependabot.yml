@@ -1,6 +1,10 @@
 version: 2
 
 updates:
+  # NOTA: los PR de versión MAYOR (iText 9, JavaFX 26, JUnit 6, ...) no se mergean sin una decisión
+  # previa del proyecto (ver CONTRIBUTING.md, "Dependencias y seguridad"). Commons Codec, Woodstox,
+  # Stax2 y Commons Logging se fijan en el pom raíz (dependencyManagement) para que lo que se
+  # distribuye sea siempre la versión revisada por seguridad.
   # Dependencias Maven del reactor completo (pom.xml raíz + los 15 módulos).
   # Dependabot entiende la estructura multi-módulo apuntando a la raíz.
   - package-ecosystem: "maven"
