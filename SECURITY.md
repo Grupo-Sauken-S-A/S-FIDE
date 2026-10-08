@@ -15,7 +15,12 @@ S-FiDE es software de firma digital y verificación de firmas: un problema de se
 
 ## Cómo reportar una vulnerabilidad
 
-**No abras un issue público.** Envía un correo a **soporte@sauken.com.ar** con el asunto que empiece con `[SEGURIDAD]`, incluyendo:
+**No abras un issue público.** Hay dos vías, a elección:
+
+1. **Reporte privado en GitHub:** en la pestaña [Security](https://github.com/Grupo-Sauken-S-A/S-FIDE/security) del repositorio, botón **Report a vulnerability**. Solo lo ven quienes mantienen el proyecto.
+2. **Correo:** a **soporte@sauken.com.ar**, con el asunto que empiece con `[SEGURIDAD]`.
+
+En cualquiera de las dos, incluí:
 
 - Descripción del problema y su impacto (por ejemplo: ¿permite que una firma inválida se reporte como válida? ¿expone material criptográfico? ¿permite ejecutar código arbitrario?).
 - Módulo(s) afectado(s) y versión.
