@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Novedades S-FiDE 1.5.0</title>
+<meta name="description" content="S-FiDE 1.5.0: firma de PDF entre varias personas, visor integrado de PDF y XML, validación de esquemas para comercio exterior, y ahora también para macOS. Cómo actualizar desde la 1.4.0 o instalar desde cero.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --paper:#f7f3ea;
+    --paper-raised:#ffffff;
+    --ink:#1c2a3a;
+    --ink-soft:#4c5a6e;
+    --ink-faint:#7c8798;
+    --accent:#24487d;
+    --accent-soft:#e7ecf4;
+    --teal:#0f5c52;
+    --teal-soft:#e3efec;
+    --border:#e2dbc9;
+    --rule:#c9c0a6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#161c26;
+      --paper-raised:#1e2631;
+      --ink:#eef1f5;
+      --ink-soft:#b7c0cd;
+      --ink-faint:#8993a3;
+      --accent:#7ea1d8;
+      --accent-soft:#26344a;
+      --teal:#6cb6a8;
+      --teal-soft:#1c332f;
+      --border:#323d4b;
+      --rule:#3a4351;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#161c26;
+    --paper-raised:#1e2631;
+    --ink:#eef1f5;
+    --ink-soft:#b7c0cd;
+    --ink-faint:#8993a3;
+    --accent:#7ea1d8;
+    --accent-soft:#26344a;
+    --teal:#6cb6a8;
+    --teal-soft:#1c332f;
+    --border:#323d4b;
+    --rule:#3a4351;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Public Sans", "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:56px 24px 96px;
+  }
+
+  .masthead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding-bottom:18px;
+    border-bottom:2px solid var(--ink);
+    margin-bottom:34px;
+  }
+  .wordmark{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    font-family:"Source Serif 4", Georgia, serif;
+    font-weight:700;
+    font-size:1.25rem;
+    letter-spacing:0.01em;
+    color:var(--ink);
+  }
+  .wordmark .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--teal);
+    display:inline-block;
+    transform:translateY(-2px);
+  }
+  .masthead .org{
+    font-size:0.72rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    font-weight:600;
+  }
+
+  .eyebrow{
+    font-size:0.72rem;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--teal);
+    font-weight:700;
+    margin:0 0 12px;
+  }
+  h1{
+    font-family:"Source Serif 4", Georgia, serif;
+    font-weight:700;
+    font-size:clamp(1.9rem, 4vw, 2.6rem);
+    line-height:1.15;
+    letter-spacing:-0.01em;
+    margin:0 0 14px;
+    text-wrap:balance;
+    color:var(--ink);
+  }
+  .dek{
+    font-size:1.08rem;
+    line-height:1.55;
+    color:var(--ink-soft);
+    max-width:62ch;
+    margin:0 0 20px;
+  }
+  .meta{
+    font-size:0.85rem;
+    color:var(--ink-faint);
+    margin:0 0 40px;
+  }
+
+  .lede{
+    font-size:1.02rem;
+    line-height:1.7;
+    color:var(--ink);
+    max-width:66ch;
+    margin:0 0 36px;
+  }
+  .lede strong{ color:var(--accent); }
+
+  /* Cómo actualizar: lo primero que tiene que ver quien llega acá */
+  .howto{
+    background:var(--paper-raised);
+    border:1px solid var(--border);
+    border-top:4px solid var(--teal);
+    border-radius:4px;
+    padding:28px 28px 26px;
+    margin-bottom:44px;
+  }
+  .howto h2{
+    font-family:"Source Serif 4", Georgia, serif;
+    font-size:1.35rem;
+    font-weight:700;
+    margin:0 0 6px;
+    color:var(--ink);
+  }
+  .howto .sub{
+    font-size:0.92rem;
+    color:var(--ink-soft);
+    margin:0 0 20px;
+    line-height:1.55;
+  }
+  .paths{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+  @media (max-width:640px){
+    .paths{ grid-template-columns:1fr; }
+  }
+  .path{
+    background:var(--paper);
+    border:1px solid var(--border);
+    border-radius:4px;
+    padding:20px 20px 18px;
+  }
+  .path .who{
+    font-size:0.72rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--teal);
+    font-weight:700;
+    margin:0 0 6px;
+  }
+  .path h3{
+    font-family:"Source Serif 4", Georgia, serif;
+    font-size:1.08rem;
+    font-weight:600;
+    margin:0 0 10px;
+    line-height:1.3;
+    color:var(--ink);
+  }
+  .path p, .path li{
+    font-size:0.92rem;
+    line-height:1.6;
+    color:var(--ink-soft);
+  }
+  .path p{ margin:0 0 10px; }
+  .path p:last-child{ margin-bottom:0; }
+  .path ol{ margin:0 0 10px; padding-left:20px; }
+  .path li{ margin:0 0 4px; }
+  .path code, .howto code{
+    font-size:0.86em;
+    background:var(--accent-soft);
+    color:var(--accent);
+    padding:1px 6px;
+    border-radius:3px;
+  }
+  .menu-path{
+    display:inline-block;
+    font-weight:600;
+    color:var(--ink);
+    background:var(--accent-soft);
+    border-radius:3px;
+    padding:2px 8px;
+  }
+
+  .downloads{
+    margin-top:22px;
+    border-top:1px solid var(--rule);
+    padding-top:18px;
+  }
+  .downloads .label{
+    font-size:0.75rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    font-weight:700;
+    margin:0 0 12px;
+  }
+  .dl-grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+  }
+  @media (max-width:640px){
+    .dl-grid{ grid-template-columns:1fr; }
+  }
+  .dl{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    padding:11px 14px;
+    border:1px solid var(--border);
+    border-radius:4px;
+    background:var(--paper);
+    text-decoration:none;
+    color:var(--ink);
+  }
+  .dl:hover{ border-color:var(--accent); }
+  .dl .os{ font-weight:600; font-size:0.93rem; }
+  .dl .file{ font-size:0.76rem; color:var(--ink-faint); word-break:break-all; }
+  .small-note{
+    font-size:0.82rem;
+    color:var(--ink-faint);
+    line-height:1.55;
+    margin:14px 0 0;
+  }
+
+  .section-label{
+    font-size:0.75rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    font-weight:700;
+    margin:0 0 22px;
+    padding-top:28px;
+    border-top:1px solid var(--rule);
+  }
+
+  .features{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:2px;
+    background:var(--border);
+    border:1px solid var(--border);
+    border-radius:2px;
+    overflow:hidden;
+    margin-bottom:44px;
+  }
+  @media (max-width:640px){
+    .features{ grid-template-columns:1fr; }
+  }
+  .feature{
+    background:var(--paper-raised);
+    padding:26px 24px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .feature.wide{ grid-column:1 / -1; }
+  .feature .icon{
+    width:34px;height:34px;
+    border-radius:8px;
+    background:var(--accent-soft);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--accent);
+    flex-shrink:0;
+  }
+  .feature .icon.teal{ background:var(--teal-soft); color:var(--teal); }
+  .feature .icon svg{ width:18px;height:18px; }
+  .feature h3{
+    font-family:"Source Serif 4", Georgia, serif;
+    font-size:1.14rem;
+    font-weight:600;
+    margin:0;
+    color:var(--ink);
+    line-height:1.3;
+  }
+  .feature p{
+    font-size:0.94rem;
+    line-height:1.6;
+    color:var(--ink-soft);
+    margin:0;
+  }
+  .feature .tokens{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:2px;
+  }
+  .feature .tokens span{
+    font-size:0.74rem;
+    font-weight:600;
+    color:var(--accent);
+    background:var(--accent-soft);
+    padding:3px 9px;
+    border-radius:100px;
+  }
+  .badge-new{
+    display:inline-block;
+    font-family:"Public Sans", sans-serif;
+    font-size:0.66rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    font-weight:700;
+    color:var(--teal);
+    background:var(--teal-soft);
+    padding:2px 8px;
+    border-radius:100px;
+    margin-left:8px;
+    vertical-align:middle;
+  }
+
+  .closing{
+    background:var(--paper-raised);
+    border:1px solid var(--border);
+    border-radius:4px;
+    padding:30px 28px;
+    margin-bottom:36px;
+  }
+  .closing p{
+    font-size:0.96rem;
+    line-height:1.65;
+    color:var(--ink-soft);
+    margin:0 0 18px;
+  }
+  .closing p:last-child{ margin-bottom:0; }
+  .cta-row{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    display:inline-block;
+    font-size:0.92rem;
+    font-weight:600;
+    padding:11px 20px;
+    border-radius:3px;
+    text-decoration:none;
+    border:1px solid transparent;
+  }
+  .btn.primary{
+    background:var(--accent);
+    color:#fdfdfc;
+  }
+  .btn.secondary{
+    background:transparent;
+    color:var(--ink);
+    border-color:var(--ink-faint);
+  }
+
+  footer{
+    border-top:1px solid var(--rule);
+    padding-top:20px;
+    font-size:0.8rem;
+    color:var(--ink-faint);
+    line-height:1.6;
+  }
+  footer .fine{ margin-top:6px; }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="masthead">
+    <div class="wordmark">S-FiDE<span class="dot"></span></div>
+    <div class="org">Grupo Sauken S.A.</div>
+  </div>
+
+  <p class="eyebrow">Novedades · Versión 1.5.0</p>
+  <h1>S-FiDE 1.5.0: firma de PDF entre varias personas, visor integrado y ahora también para macOS</h1>
+  <p class="dek">Un mismo documento puede pasar por varias manos, cada una firmando desde su propia computadora, con S-FiDE o con Acrobat Reader. Además, S-FiDE incorpora un visor de PDF y de XML, y llega a los Mac. Un repaso de lo más importante, y cómo actualizar.</p>
+  <p class="meta">Grupo Sauken S.A. — Córdoba, Argentina · Octubre de 2026</p>
+
+  <p class="lede">
+    S-FiDE es el programa gratuito y de código abierto de Grupo Sauken S.A. para firmar y verificar digitalmente documentos XML y PDF con validez legal en Argentina, usando un token criptográfico, un certificado en archivo o el almacén de certificados de Windows. La versión 1.5.0 es la que más se acerca a cómo se firma en la práctica: <strong>documentos que circulan entre varias personas</strong>, con la firma ubicada sobre el propio documento, y disponible en <strong>Windows, Linux y macOS</strong>.
+  </p>
+
+  <section class="howto" aria-labelledby="como-actualizar">
+    <h2 id="como-actualizar">Cómo pasar a la versión 1.5.0</h2>
+    <p class="sub">Depende de la versión que tenga hoy. Para saberlo, abra S-FiDE y mire el menú <span class="menu-path">Ayuda → Versión</span>.</p>
+
+    <div class="paths">
+      <div class="path">
+        <p class="who">Si ya usa la versión 1.4.0</p>
+        <h3>Actualice desde el propio programa</h3>
+        <ol>
+          <li>Abra S-FiDE y vaya al menú <span class="menu-path">Ayuda → Buscar actualizaciones…</span></li>
+          <li>El programa le avisa que hay una versión nueva, le muestra las novedades y le <strong>pide autorización</strong>.</li>
+          <li>Si acepta, descarga la última versión disponible, comprueba que no esté dañada, se cierra, reemplaza sus archivos y vuelve a abrirse solo.</li>
+        </ol>
+        <p>Si algo falla, todo queda como estaba. Sus valores recordados no se tocan. Necesita conexión a Internet.</p>
+      </div>
+
+      <div class="path">
+        <p class="who">Si usa una versión anterior a la 1.4.0</p>
+        <h3>Descargue el ZIP completo e instale normalmente</h3>
+        <ol>
+          <li>Descargue el archivo de su sistema operativo (más abajo).</li>
+          <li>Cree una carpeta propia: <code>C:\S-FiDE</code> en Windows, <code>/opt/S-FiDE</code> en Linux y macOS.</li>
+          <li>Descomprima el contenido <strong>dentro</strong> de esa carpeta y ejecute <code>SFide-GUI.bat</code> (Windows) o <code>SFide-GUI.sh</code> (Linux y macOS).</li>
+        </ol>
+        <p>No hace falta tener Java instalado: viene incluido. Las versiones anteriores a la 1.4.0 no tienen el menú de actualización, por eso este paso es manual por única vez; desde la 1.4.0 en adelante se actualiza desde el programa.</p>
+      </div>
+    </div>
+
+    <div class="downloads">
+      <p class="label">Descargas de la versión 1.5.0</p>
+      <div class="dl-grid">
+        <a class="dl" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/download/v1.5.0/S-FiDE-1.5.0-windows.zip">
+          <span class="os">Windows (64 bits)</span>
+          <span class="file">S-FiDE-1.5.0-windows.zip</span>
+        </a>
+        <a class="dl" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/download/v1.5.0/S-FiDE-1.5.0-linux.zip">
+          <span class="os">Linux (64 bits)</span>
+          <span class="file">S-FiDE-1.5.0-linux.zip</span>
+        </a>
+        <a class="dl" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/download/v1.5.0/S-FiDE-1.5.0-macos-aarch64.tar.gz">
+          <span class="os">macOS con Apple Silicon (M1 o posterior)</span>
+          <span class="file">S-FiDE-1.5.0-macos-aarch64.tar.gz</span>
+        </a>
+        <a class="dl" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/download/v1.5.0/S-FiDE-1.5.0-macos-x64.tar.gz">
+          <span class="os">macOS con procesador Intel</span>
+          <span class="file">S-FiDE-1.5.0-macos-x64.tar.gz</span>
+        </a>
+      </div>
+      <p class="small-note">En una Mac, el menú Apple → «Acerca de este Mac» indica si tiene chip Apple o procesador Intel. Los pasos para abrir S-FiDE en macOS están en el archivo <code>Leeme.txt</code> incluido. Todas las descargas, con sus sumas de verificación (SHA-256), están en la <a href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/latest" style="color:var(--accent)">página de la versión</a>.</p>
+    </div>
+  </section>
+
+  <p class="section-label">Novedades de la versión 1.5.0</p>
+  <div class="features">
+
+    <div class="feature">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <h3>Un PDF, varias firmas, varias personas</h3>
+      <p>Una persona firma y lo deja abierto, otra lo revisa y lo firma, y la última lo cierra. Cada una desde su computadora, con S-FiDE o con Acrobat Reader en cualquier combinación: lo que firma S-FiDE es válido en Acrobat Reader, y a la inversa.</p>
+    </div>
+
+    <div class="feature">
+      <div class="icon teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l-3 3 3 3"/><path d="M9 5l3-3 3 3"/><path d="M15 19l-3 3-3-3"/><path d="M19 9l3 3-3 3"/><path d="M2 12h20"/><path d="M12 2v20"/></svg>
+      </div>
+      <h3>La firma se ubica sobre el propio documento</h3>
+      <p>Se acabaron los números de X e Y: ahora se arrastra el recuadro con el mouse sobre el PDF, como en Acrobat Reader, y se ve el texto real que va a llevar. Se puede elegir la página, el tamaño y firmar dentro de los campos de firma que ya traiga el documento.</p>
+    </div>
+
+    <div class="feature">
+      <div class="icon teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+      </div>
+      <h3>Revisa antes de firmar, y se lo explica en simple</h3>
+      <p>Antes de firmar, S-FiDE revisa el documento y las firmas que ya tiene y se lo cuenta con palabras sencillas. Si alguien ya lo cerró, se lo dice y no firma encima. Y no lo alarma sin motivo: que un certificado haya vencido después de firmar no es un problema.</p>
+    </div>
+
+    <div class="feature">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+      <h3>Visor integrado de PDF y de XML <span class="badge-new">Nuevo</span></h3>
+      <p>Desde el menú Archivo se puede abrir un PDF o un XML para mirarlo, sin modificarlo. El XML se ve con colores y con elementos que se pliegan y despliegan, con las firmas marcadas (quién firmó y qué quedó firmado), y un botón para validarlas.</p>
+    </div>
+
+    <div class="feature">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+      </div>
+      <h3>Comercio exterior: visores oficiales y validación del esquema</h3>
+      <p>Si el XML es un Certificado de Origen o una Declaración Jurada de Origen, un botón abre el visor oficial en el navegador. Y si el documento está completo, «Validar XSD» comprueba su estructura con el esquema oficial, que S-FiDE descarga solo.</p>
+    </div>
+
+    <div class="feature">
+      <div class="icon teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+      </div>
+      <h3>XML con marca «BOM»: ya no falla</h3>
+      <p>Algunos editores, como el Bloc de notas de Windows, agregan al guardar un carácter invisible (el BOM) que impedía firmar. Ahora S-FiDE se lo explica, lo ignora y firma igual, dejando el documento firmado sin esa marca. No afecta a las firmas que el documento ya tuviera.</p>
+    </div>
+
+    <div class="feature wide">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+      </div>
+      <h3>Ahora también para macOS <span class="badge-new">Nuevo</span></h3>
+      <p>Por primera vez, S-FiDE tiene versión para Mac, con un paquete para los equipos con chip Apple (M1 en adelante) y otro para los de procesador Intel. Cada uno trae su propio Java: no hay que instalar nada. Es la primera versión para macOS; si encuentra algún inconveniente, escríbanos a <strong>soporte@sauken.com.ar</strong>.</p>
+      <div class="tokens">
+        <span>Windows</span>
+        <span>Linux</span>
+        <span>macOS · Apple Silicon</span>
+        <span>macOS · Intel</span>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="icon teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3>Más seguridad</h3>
+      <p>Se actualizaron las bibliotecas criptográficas y de soporte a sus versiones más recientes, se revisó toda la cadena de componentes que S-FiDE distribuye y se documentaron las licencias de cada uno.</p>
+    </div>
+
+    <div class="feature">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+      </div>
+      <h3>Al actualizar, un resumen de lo nuevo</h3>
+      <p>La primera vez que cada usuario abre una versión nueva, S-FiDE le muestra un resumen de las novedades, también si se saltó alguna versión. Se puede volver a ver cuando se quiera desde <em>Ayuda → Novedades de esta versión</em>.</p>
+    </div>
+
+  </div>
+
+  <p class="section-label">Lo más importante de S-FiDE</p>
+  <div class="features">
+
+    <div class="feature">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      </div>
+      <h3>Firma con lo que usted ya tiene</h3>
+      <p>Con un token criptográfico (PKCS#11), con un certificado en archivo (PKCS#12) o con el almacén de certificados de Windows, a elección de quien firma. XML y PDF, y verificación de las firmas de cualquier aplicación.</p>
+      <div class="tokens">
+        <span>SafeNet / Thales eToken 5110+</span>
+        <span>mToken CryptoID</span>
+        <span>Feitian ePass2003</span>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="icon teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <h3>Control de vigencia antes de firmar</h3>
+      <p>Antes de aplicar una firma, S-FiDE controla que el certificado no esté revocado y avisa cuando no pudo confirmarlo, para no firmar por error con un certificado que ya no es válido.</p>
+    </div>
+
+    <div class="feature">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </div>
+      <h3>Comercio exterior ALADI / MERCOSUR</h3>
+      <p>Firma de Certificados de Origen Digital y de Declaraciones Juradas de Origen, respetando el orden entre la firma del exportador y la de la entidad habilitada, con una sección de ayuda propia para este trámite.</p>
+    </div>
+
+    <div class="feature">
+      <div class="icon teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+      </div>
+      <h3>Interfaz gráfica y línea de comandos</h3>
+      <p>Una interfaz simple, con ayuda en cada pantalla y una Guía de Usuario con capturas reales; y los mismos programas disponibles por línea de comandos para integrarlos en sistemas propios.</p>
+    </div>
+
+    <div class="feature">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <h3>Portable: sin instalar nada</h3>
+      <p>Trae su propio Java, así que funciona desde una carpeta o desde un pendrive, sin instalar nada en la computadora. Cada usuario guarda sus valores en su carpeta personal.</p>
+    </div>
+
+    <div class="feature">
+      <div class="icon teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      </div>
+      <h3>Gratuito y de código abierto</h3>
+      <p>Software libre, publicado bajo licencia GPL, abierto para quien quiera revisarlo, auditarlo o integrarlo en sus propios sistemas.</p>
+    </div>
+
+  </div>
+
+  <div class="closing">
+    <p><strong style="color:var(--ink)">Si ya usa la versión 1.4.0, actualice desde el menú Ayuda → Buscar actualizaciones.</strong> Si tiene una versión anterior, descargue el ZIP completo e instálelo normalmente, como se explica más arriba.</p>
+    <div class="cta-row">
+      <a class="btn primary" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/latest">Descargar la última versión</a>
+      <a class="btn secondary" href="https://grupo-sauken-s-a.github.io/S-FIDE/manual-usuario-sfide-gui.html">Ver la Guía de Usuario</a>
+      <a class="btn secondary" href="https://grupo-sauken-s-a.github.io/S-FIDE/manual-tecnico-integracion.html">Ver Guía de Integración</a>
+    </div>
+  </div>
+
+  <footer>
+    <div>Grupo Sauken S.A. — Córdoba, Argentina</div>
+    <div class="fine">soporte@sauken.com.ar · www.sauken.com.ar</div>
+  </footer>
+
+</div>
+</body>
+</html>
