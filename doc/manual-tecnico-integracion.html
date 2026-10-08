@@ -411,8 +411,8 @@
       <h1>Manual de Integración S-FiDE</h1>
       <p>Sistema de Firma Digital Extendido — todo lo que un integrador necesita: qué hace cada programa, cómo invocarlo, los tres mecanismos de firma disponibles y cuándo usar cada uno, la especialización de comercio exterior ALADI/MERCOSUR, y las especificaciones completas del producto.</p>
       <div class="meta">
-        <span>Versión del producto: <strong>1.4.0</strong></span>
-        <span>Documento: <strong>02/10/2026</strong></span>
+        <span>Versión del producto: <strong>1.5.0</strong></span>
+        <span>Documento: <strong>08/10/2026</strong></span>
         <span>Licencia: <strong>GNU GPL v2+</strong></span>
       </div>
     </div>
@@ -480,12 +480,17 @@
           <tr><th>Componente</th><th>Versión</th><th>Uso</th><th>Licencia</th></tr>
           <tr><td>BouncyCastle</td><td>1.85</td><td>Primitivos criptográficos, ASN.1, <code>DigestInfo</code></td><td>MIT-like</td></tr>
           <tr><td>iText</td><td>8.0.5</td><td>Firma y verificación PDF</td><td>AGPL v3 / comercial</td></tr>
+          <tr><td>Apache PDFBox</td><td>3.0.5</td><td>Dibujar las páginas de un PDF en la ventana de ubicación de la firma. <strong>Solo <code>s_fide_gui</code></strong>: no firma ni modifica nada, y ningún módulo CLI depende de él</td><td>Apache 2.0</td></tr>
           <tr><td>Apache Santuario (xmlsec)</td><td>4.0.4</td><td>Soporte de firma XML adicional</td><td>Apache 2.0</td></tr>
           <tr><td>JavaFX</td><td>23.0.1</td><td>GUI únicamente</td><td>GPLv2 + Classpath Exception</td></tr>
           <tr><td>SLF4J</td><td>2.0.17</td><td>Fachada de logging</td><td>MIT</td></tr>
           <tr><td>Logback</td><td>1.5.18</td><td>Implementación de logging</td><td>EPL 1.0 / LGPL 2.1</td></tr>
           <tr><td>Apache Maven</td><td>3.9.x</td><td>Build del proyecto</td><td>Apache 2.0</td></tr>
         </table>
+      </div>
+      <div class="callout note">
+        <span class="label">Apache PDFBox (desde 1.5.0)</span>
+        <p>Se usa únicamente en la interfaz gráfica, para mostrar la página sobre la que la persona ubica su firma. Su licencia (Apache 2.0) es compatible con GPLv3, y la cláusula "o posterior" de la licencia de S-FiDE es la que permite combinarlo — mismo razonamiento que para iText. La firma y la verificación siguen haciéndolas los módulos CLI con iText; PDFBox nunca interviene en ellas.</p>
       </div>
       <div class="callout note">
         <span class="label">Compatibilidad de licencias</span>
@@ -689,6 +694,56 @@ cd S-FIDE
         <p>Esta capacidad de verificar SHA-1 es independiente de qué algoritmos usan los propios firmadores de S-FiDE para producir firmas nuevas. El rol de S-FiDE como verificador es validar lo que ya fue firmado, sin importar antigüedad ni herramienta de origen.</p>
       </div>
       <p><strong>Por qué esto es especialmente relevante para COD y DJO</strong> (sección 10): en la práctica, los elementos <code>COD</code>/<code>CODEH</code>/<code>DJO</code>/<code>DJOEH</code> de un mismo documento a veces se firman con software de distintas empresas — un exportador puede usar S-FiDE mientras que la Entidad Habilitada usa otra aplicación (o viceversa), y esas otras aplicaciones pueden seguir usando SHA-1. <code>XMLVerifySignatures</code> tiene que poder validar ambas firmas del mismo documento sin importar cuál de las dos las generó ni con qué algoritmo — es exactamente el escenario que este soporte está pensado para cubrir.</p>
+      <h3>7.7 — Firma de PDF en cadena entre varias personas y compatibilidad con Acrobat (1.5.0)</h3>
+      <p><strong>Escenario que resuelve.</strong> Un documento PDF circula entre varias personas, <strong>en computadoras distintas y sin coordinarse en tiempo real</strong>: una persona lo arma; otra lo revisa, lo firma y lo deja <em>abierto</em>; una tercera revisa el documento ya firmado, valida las firmas anteriores, firma y lo <em>cierra</em>; finalmente una organización lo valida y lo registra. Cada firma es <strong>una ejecución independiente</strong> del firmador (nunca hay dos firmas simultáneas en una misma ejecución), y cada persona puede usar S-FiDE o Acrobat Reader en cualquier combinación: lo que firma S-FiDE es válido para Acrobat y viceversa.</p>
+      <p><strong>Qué hace cada firmador PDF antes de firmar</strong> (en este orden, de lo más barato a lo más costoso; ningún paso reescribe el archivo de entrada):</p>
+      <ol>
+        <li><strong>Lee el documento.</strong> Un PDF ilegible o protegido con contraseña se rechaza con un mensaje en español, sin traza de Java.</li>
+        <li><strong>¿Admite más firmas?</strong> (sin red, sin pedir certificado ni PIN). Un documento está <strong>cerrado</strong> si: (a) tiene una certificación DocMDP de nivel 1 ("no se permite ningún cambio"); (b) una firma lleva el bloqueo de campo que Acrobat aplica con <em>"Bloquear documento después de firmar"</em> (<code>/Lock</code> con <code>Action = All</code> y <code>P = 1</code>, más la referencia <code>FieldMDP</code>); o (c) la última firma de una persona es una <strong>firma de cierre de S-FiDE</strong> (motivo "Firma final: documento cerrado"). Un documento cerrado se rechaza con el nombre de quien lo cerró y la fecha. Nunca se firma encima: hacerlo invalida la firma de quien cerró (comprobado con Acrobat Reader). Los sellos de tiempo agregados <em>después</em> del cierre no lo reabren.</li>
+        <li><strong>Abre el certificado y valida su revocación</strong> (sección 7.5.1).</li>
+        <li><strong>Analiza cada firma anterior e informa; no impide firmar.</strong> Si alguna es inválida se imprime el detalle y la ejecución <strong>continúa</strong>: la decisión de firmar igual es de la persona (la GUI se lo pregunta; el CLI informa y sigue, para no interrumpir a un integrador).</li>
+        <li><strong>Firma</strong>, siempre en modo <em>append</em>: las firmas anteriores quedan intactas.</li>
+        <li><strong>Autocontrol.</strong> Relee el archivo generado y comprueba que se agregó exactamente una firma íntegra y que ninguna firma que estaba intacta dejó de estarlo. Si algo no cuadra, <strong>borra el resultado</strong> y falla con un mensaje claro: es preferible no entregar nada a entregar un documento con firmas dañadas sin aviso.</li>
+      </ol>
+      <p><strong>Qué significa "bloquear" (<code>-l</code>/<code>-k</code>) según el documento.</strong> La razón es técnica: cifrar un PDF exige reescribir todo el archivo (lo que invalida las firmas anteriores), y una certificación DocMDP solo es válida si es la <strong>primera</strong> firma.</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>El documento…</th><th><code>-l true</code> / <code>-k true</code> hace</th></tr>
+          <tr><td><strong>no tiene firmas</strong></td><td>Lo de siempre: certificación DocMDP "sin cambios" + cifrado AES-256. Nadie más podrá firmar.</td></tr>
+          <tr><td><strong>ya tiene firmas</strong></td><td><strong>Firma de cierre:</strong> una firma de aprobación común, sin reescribir el archivo, con el motivo "Firma final: documento cerrado" y el mismo bloqueo de campo que usa Acrobat (<code>/Lock {Action All, P 1}</code> + <code>FieldMDP</code>), de modo que Acrobat también lo muestra como bloqueado. No cifra ni certifica.</td></tr>
+        </table>
+      </div>
+      <p><strong>Protección del contenido (<code>-proteger-contenido true</code>).</strong> Para quien firma <strong>primero</strong> y quiere impedir que se modifique el contenido sin impedir que otras personas sigan firmando: certificación DocMDP de <strong>nivel 2</strong> (se permite completar formularios y firmar), sin cifrado. Solo se acepta como primera firma y no se combina con <code>-l</code>/<code>-k</code>. No cierra el documento. <code>PDFVerifySignatures</code> lo informa como "Contenido protegido contra cambios (admite más firmas)".</p>
+      <p><strong>Cómo se analiza cada firma anterior.</strong></p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Control</th><th>Resultado</th></tr>
+          <tr><td>Integridad y autenticidad de la firma</td><td>Válida / inválida</td></tr>
+          <tr><td>Certificado vigente <strong>en la fecha de la firma</strong></td><td>Un certificado no vigente al firmar invalida la firma</td></tr>
+          <tr><td>Revocación <strong>a la fecha de la firma</strong> (OCSP, con CRL de respaldo)</td><td>Dado de baja <strong>antes</strong> de firmar: invalida la firma. Dado de baja <strong>después</strong>: no la invalida (la firma era válida cuando se aplicó); el motivo y la fecha de baja se informan en el detalle</td></tr>
+          <tr><td>Fecha de la firma</td><td>En orden: sello de tiempo incluido en la firma, hora declarada por el firmante, fecha del campo de firma. Si no hay ninguna, no se controla la vigencia</td></tr>
+          <tr><td>Sello de tiempo del documento (<code>ETSI.RFC3161</code>)</td><td>No cuenta como firma de una persona; respalda la fecha</td></tr>
+          <tr><td>Error al <em>procesar</em> una firma (algoritmo que este programa no sabe verificar)</td><td>"No pudimos comprobarla": <strong>no</strong> equivale a firma inválida</td></tr>
+          <tr><td>Cambios posteriores a la última firma</td><td>Se comparan con el documento tal como estaba al firmar: información de validación (LTV/DSS) → ninguno; comentarios o campos de formulario completados → nota informativa; <strong>contenido de página alterado → alerta</strong>; cualquier cambio sobre un documento bloqueado → alerta; si no se puede comparar → aviso suave</td></tr>
+        </table>
+      </div>
+      <p><strong>Política de mensajes para quien no es técnico.</strong> Hay tres niveles y solo el último usa lenguaje de alerta: <em>informativo</em> (todo bien, o datos de contexto que no afectan la validez, como un certificado vencido o dado de baja después de firmar), <em>aviso suave</em> (no se pudo comprobar algo, por ejemplo sin Internet) y <em>alerta firme</em> (firma realmente inválida: documento modificado después de firmarse, firma dañada, certificado no vigente o ya revocado al firmar). Los mensajes dicen qué pasó, qué significa y qué puede hacer la persona, sin términos como OCSP, CRL, PKCS#7 o DocMDP.</p>
+      <p><strong>Modos de solo lectura</strong> (no firman ni modifican nada):</p>
+      <ul>
+        <li><code>-analizar-documento &lt;archivo.pdf&gt;</code>: imprime el informe en un formato estable, pensado para otro programa. Líneas: <code>ESTADO_DOCUMENTO: ABIERTO|CERRADO</code>, <code>MOTIVO_CIERRE</code>, <code>CANTIDAD_FIRMAS</code>, por cada firma <code>FIRMA: n | VEREDICTO | firmante</code> (o <code>SELLO: ...</code>) seguida de <code>MENSAJE</code>, <code>CAMPO</code>, <code>REVOCACION</code> y <code>NOTA</code>, y luego <code>NOTA_DOCUMENTO</code>, <code>AVISO_DOCUMENTO</code>, <code>PAGINAS</code>, <code>CONTENIDO_PROTEGIDO: SI</code>, <code>CAMPO_VACIO: nombre | página</code> y, solo si hay un problema real, <code>RECOMENDACION</code>. Veredictos: <code>VALIDA</code>, <code>NO_VERIFICABLE</code>, <code>INVALIDA</code>. No necesita certificado ni contraseña.</li>
+        <li><code>-vista-previa-texto</code>: imprime entre <code>TEXTO_FIRMA_INICIO</code> y <code>TEXTO_FIRMA_FIN</code> el texto exacto que llevaría la firma visible (con el nombre real del certificado) y <code>TAMANO_LETRA</code>. Recibe las credenciales del módulo (<code>-c</code>/<code>-p</code> en PKCS#12, <code>-a</code> en Windows, <code>-l</code>/<code>-s</code> y, opcionalmente, <code>-p</code> en PKCS#11) y <code>-t</code>. En PKCS#11 la contraseña es opcional: sin ella se intenta leer el certificado del token sin iniciar sesión, para no gastar un intento de PIN.</li>
+      </ul>
+      <p><strong>Compatibilidad con Acrobat Reader — qué se comprobó con archivos reales.</strong></p>
+      <ul>
+        <li>Una cadena de dos firmas de S-FiDE: Acrobat muestra ambas "sin modificaciones" (la identidad aparece como desconocida solo porque los certificados de prueba no están en su lista de confianza).</li>
+        <li>El cierre de S-FiDE se ve en Acrobat como documento restringido (firmar, comentar y rellenar campos: "No se permite"); la estructura del bloqueo es idéntica, byte a byte, a la que escribe Acrobat.</li>
+        <li>Firmar con S-FiDE sobre un documento bloqueado por Acrobat <strong>invalida</strong> esa firma en Acrobat ("se han realizado cambios que anulan la firma"): por eso se rechaza.</li>
+        <li>Un PDF real firmado con Acrobat y certificados de la AC de la ONTI (vencidos y, uno, dado de baja después de firmar) se analiza correctamente: firmas válidas, certificados vencidos/dados de baja como nota informativa y documento bloqueado reconocido.</li>
+      </ul>
+      <div class="callout warn">
+        <span class="label">Qué NO cubre todavía (limitaciones conocidas)</span>
+        <p>(1) S-FiDE no usa sello de tiempo (TSA) al firmar: la fecha de cada firma es la declarada por el firmante, no respaldada por un tercero. (2) La confianza en el emisor del certificado es solo una heurística (se rechazan certificados autofirmados o de prueba); no hay verificación contra una lista de autoridades certificantes. (3) No se verifica que lo agregado <em>entre</em> una firma y la siguiente sea solo una firma (se controlan los cambios posteriores a la <strong>última</strong>). (4) Los PDF cifrados con restricciones de seguridad no se pueden firmar. (5) RSA-PSS y SHA-3 no se probaron con firmas reales. (6) La firma con token (PKCS#11) y con el almacén de Windows se probó de punta a punta solo en sus pasos previos al certificado; la firma real exige QA con el dispositivo.</p>
+      </div>
     </section>
 
     <section class="chapter" id="s8">
@@ -955,10 +1010,11 @@ java -jar XMLVerifyXSDStructure.jar C:\docs\certificado-origen.xml C:\xsd\esquem
       <p><code>PDFSignerPKCS11</code>, <code>PDFSignerPKCS12</code> y <code>PDFSignerWindowsCSP</code> comparten estas opciones, sin equivalente en los firmadores de XML — un XML no tiene "apariencia visual" ni concepto de página.</p>
       <ul>
         <li><strong>Firma visible vs. invisible.</strong> Sin <code>-x</code>/<code>-y</code> (o en <code>0</code>), la firma es igual de válida criptográficamente pero no se dibuja nada. Con coordenadas, se dibuja un recuadro con firmante, fecha y el texto de <code>-t</code> si se indicó.</li>
-        <li><strong>Sistema de coordenadas.</strong> PDF usa el estándar PostScript: origen <code>(0,0)</code> en la <strong>esquina inferior izquierda</strong> de la página, X crece a la derecha, Y crece <strong>hacia arriba</strong>. <code>-x</code>/<code>-y</code> ubican la esquina <strong>inferior izquierda</strong> del recuadro (160×70 puntos, tamaño fijo) — no es "de abajo a la derecha", es de abajo a la <strong>izquierda</strong>. 1 punto PDF = 1/72 de pulgada. Siempre en la página 1.</li>
-        <li><strong>Texto personalizado (<code>-t</code>).</strong> Se agrega debajo del nombre y la fecha, dentro del mismo recuadro. Sin efecto si la firma es invisible.</li>
+        <li><strong>Sistema de coordenadas.</strong> PDF usa el estándar PostScript: origen <code>(0,0)</code> en la <strong>esquina inferior izquierda</strong> del área visible de la página, X crece a la derecha, Y crece <strong>hacia arriba</strong>. <code>-x</code>/<code>-y</code> ubican la esquina <strong>inferior izquierda</strong> del recuadro. 1 punto PDF = 1/72 de pulgada. Desde 1.5.0 la página se elige con <code>-pagina</code> (por defecto <code>1</code>) y el tamaño con <code>-ancho</code>/<code>-alto</code> (por defecto 160×70 puntos); si la página no existe o el recuadro no entra en ella, el firmador lo informa antes de pedir el certificado. La interfaz gráfica evita calcular todo esto (sección 9.14).</li>
+        <li><strong>Firmar en un campo de firma que ya trae el documento (<code>-campo &lt;nombre&gt;</code>, 1.5.0).</strong> Quien armó el PDF (por ejemplo con Acrobat) puede dejar campos de firma vacíos para cada firmante. Con <code>-campo</code> la firma se dibuja dentro de ese campo —página y lugar los define el campo— en vez de crear uno nuevo. Si no existe o ya está firmado, el mensaje lista los disponibles. <code>-analizar-documento</code> informa los campos vacíos.</li>
+        <li><strong>Texto personalizado (<code>-t</code>).</strong> Se agrega arriba del nombre y la fecha, dentro del mismo recuadro. Sin efecto si la firma es invisible.</li>
         <li><strong>Bloquear el documento (<code>-k</code>/<code>-l true</code>, según el módulo).</strong> Dos efectos, siempre acoplados desde 1.1.1: (1) marca la firma como <strong>certificante</strong> (permiso PDF <code>DocMDP</code> = "sin cambios permitidos" — solo puede haber una por documento, y debe ser la primera), y (2) cifra el PDF en AES-256 restringiendo permisos a solo impresión y lectores de pantalla.</li>
-        <li><strong>Validación de firmas preexistentes.</strong> Los tres firmadores verifican, antes de firmar, que cualquier firma ya presente sea íntegra — si no lo es, no se modifica el archivo.</li>
+        <li><strong>Revisión del documento y de las firmas anteriores antes de firmar (cambió en 1.5.0).</strong> Hasta la 1.4.0, si alguna firma ya presente era inválida, el firmador se negaba a firmar. Ahora <strong>informa y continúa</strong> (la decisión es de la persona), y además rechaza los documentos que ya no admiten firmas. Ver la sección 7.7: orden de los pasos, qué significa "bloquear" cuando el documento ya tiene firmas (<strong>firma de cierre</strong>, que ya no reescribe el archivo), <code>-proteger-contenido</code>, <code>-campo</code> y los modos de solo lectura <code>-analizar-documento</code> y <code>-vista-previa-texto</code>.</li>
       </ul>
       <div class="callout note"><span class="label">Corrección de consistencia — 1.1.1</span><p>Antes, <code>PDFSignerPKCS12</code> solo aplicaba la certificación DocMDP si además la firma era visible; con firma invisible y bloqueo, el PDF quedaba cifrado pero sin certificar. Se corrigió para que los tres firmadores acoplen siempre ambos efectos. También se agregó a <code>PDFSignerWindowsCSP</code> la validación de firmas preexistentes, que antes solo hacían <code>PDFSignerPKCS11</code>/<code>PDFSignerPKCS12</code>.</p></div>
       <div class="callout warn"><span class="label">⚠ Corrección crítica — 1.1.1: firma corrupta al combinar certificación y cifrado</span><p>Antes, los tres firmadores firmaban el PDF sin cifrar y <strong>después</strong> volvían a serializar todo el archivo a través de un <code>PdfWriter</code> cifrado en una segunda pasada — esa pasada no sabe que el campo <code>/Contents</code> de la firma debe quedar exento de cifrado, y lo corrompía (el documento parecía firmado, pero <code>PDFVerifySignatures</code> fallaba con <code>Unknown PdfException</code> al verificarlo). Se corrigió invirtiendo el orden: cifrar primero, firmar después en modo <em>append</em> sobre el archivo ya cifrado. <strong>Este defecto no es nuevo de 1.1.1</strong>: ya estaba presente desde v1.0.0 en <code>PDFSignerPKCS12</code> (bloqueo + firma visible) y en <code>PDFSignerPKCS11</code> (cualquier bloqueo); <code>PDFSignerWindowsCSP</code> es nuevo en 1.1.1. <strong>Si firmó documentos con bloqueo antes de esta corrección, verifíquelos con <code>PDFVerifySignatures</code> y vuelva a firmar los que fallen.</strong></p></div>
@@ -968,7 +1024,9 @@ java -jar XMLVerifyXSDStructure.jar C:\docs\certificado-origen.xml C:\xsd\esquem
         <div class="module-head"><h3>9.8 — PDFSignerPKCS11</h3><span class="module-jar">PDFSignerPKCS11.jar</span></div>
         <p>Firma un PDF con un token PKCS#11 (ver opciones arriba). Firma detached CMS/PKCS#7, con validación previa de firmas existentes.</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar PDFSignerPKCS11.jar -i &lt;pdf&gt; -l &lt;biblioteca&gt; -p &lt;password&gt; -s &lt;slot&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"] [-omitir-revocacion true|false]
+        <pre><code>java -jar PDFSignerPKCS11.jar -i &lt;pdf&gt; -l &lt;biblioteca&gt; -p &lt;password&gt; -s &lt;slot&gt; [-k true|false] [-x pos] [-y pos] [-pagina n] [-ancho w] [-alto h] [-campo nombre] [-proteger-contenido true|false] [-t "texto"] [-omitir-revocacion true|false]
+java -jar PDFSignerPKCS11.jar -analizar-documento &lt;pdf&gt;
+java -jar PDFSignerPKCS11.jar -vista-previa-texto -l &lt;biblioteca&gt; -s &lt;slot&gt; [-p &lt;password&gt;] [-t "texto"]
 java -jar PDFSignerPKCS11.jar [-v | -h | --license | --listar-drivers]</code></pre>
         <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
@@ -978,13 +1036,17 @@ java -jar PDFSignerPKCS11.jar [-v | -h | --license | --listar-drivers]</code></p
             <tr><td><code>-l, --library</code></td><td>Sí</td><td>Biblioteca PKCS#11</td></tr>
             <tr><td><code>-p, --password</code></td><td>Sí</td><td>PIN del token</td></tr>
             <tr><td><code>-s, --slot</code></td><td>Sí</td><td>Número de slot. Desde 1.4.0, si en ese slot no hay un token se lo busca en los demás (ver "Búsqueda automática del slot")</td></tr>
-            <tr><td><code>-k, --lock</code></td><td>No</td><td>Bloquea el documento tras firmar (default <code>false</code>)</td></tr>
+            <tr><td><code>-k, --lock</code></td><td>No</td><td>Bloquea el documento (default <code>false</code>). Sin firmas previas: certificación DocMDP + cifrado. <strong>Con firmas previas (1.5.0): firma de cierre</strong> (sección 7.7)</td></tr>
             <tr><td><code>-x</code> / <code>-y</code></td><td>No</td><td>Posición de firma visible (default <code>0</code>, invisible)</td></tr>
+            <tr><td><code>-pagina</code></td><td>No</td><td>Página de la firma visible (default <code>1</code>; 1.5.0)</td></tr>
+            <tr><td><code>-ancho</code> / <code>-alto</code></td><td>No</td><td>Tamaño del recuadro en puntos (default <code>160</code> / <code>70</code>; 1.5.0)</td></tr>
+            <tr><td><code>-campo</code></td><td>No</td><td>Firma dentro de un campo de firma vacío que ya trae el documento (1.5.0)</td></tr>
+            <tr><td><code>-proteger-contenido</code></td><td>No</td><td>Primera firma: protege el contenido (DocMDP nivel 2) permitiendo más firmas; no se combina con <code>-k</code> (1.5.0)</td></tr>
             <tr><td><code>-t, --text</code></td><td>No</td><td>Texto adicional en la firma visible</td></tr>
           </table>
         </div>
         <div class="field-label">Errores posibles</div>
-        <p class="errlist"><code>La biblioteca PKCS#11 no existe o no es accesible</code> · <code>El token no contiene una clave privada válida</code> · <code>No se encontró una cadena de certificados válida en el token</code> · <code>El token no admite ningún mecanismo de firma RSA-SHA256 compatible</code></p>
+        <p class="errlist"><code>Este documento tiene restricciones de seguridad (…) que impiden agregarle firmas</code> · <code>El documento fue cerrado/bloqueado por [nombre] … y no admite más firmas</code> · <code>El documento tiene N páginas y la página P no existe</code> · <code>El recuadro de la firma no entra en la página P</code> · <code>El campo de firma '[nombre]' no existe en el documento o ya está firmado</code> · <code>No se pudo agregar la firma sin dañar el documento</code> · <code>La biblioteca PKCS#11 no existe o no es accesible</code> · <code>El token no contiene una clave privada válida</code> · <code>No se encontró una cadena de certificados válida en el token</code> · <code>El token no admite ningún mecanismo de firma RSA-SHA256 compatible</code></p>
         <div class="callout note"><span class="label">Certificados de Origen</span><p>Posiciones de convención Grupo Sauken: <code>-x 40 -y 55</code> Exportador, <code>-x 310 -y 55</code> Funcionario Habilitado.</p></div>
         <div class="field-label">Ejemplo</div>
         <pre><code>java -jar PDFSignerPKCS11.jar -i C:\docs\certificado.pdf -l C:\Windows\System32\eTPKCS11.dll -p "MiPIN123" -s 0 -k true -x 40 -y 55 -t "Exportador"</code></pre>
@@ -994,7 +1056,9 @@ java -jar PDFSignerPKCS11.jar [-v | -h | --license | --listar-drivers]</code></p
         <div class="module-head"><h3>9.9 — PDFSignerPKCS12</h3><span class="module-jar">PDFSignerPKCS12.jar</span></div>
         <p>Idéntico al anterior, con archivo PKCS#12 (<code>-c</code>) en vez de <code>-l</code>/<code>-s</code>.</p>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar PDFSignerPKCS12.jar -i &lt;pdf&gt; -c &lt;certificado.p12&gt; -p &lt;password&gt; [-l true|false] [-x pos] [-y pos] [-t "texto"] [-omitir-revocacion true|false]
+        <pre><code>java -jar PDFSignerPKCS12.jar -i &lt;pdf&gt; -c &lt;certificado.p12&gt; -p &lt;password&gt; [-l true|false] [-x pos] [-y pos] [-pagina n] [-ancho w] [-alto h] [-campo nombre] [-proteger-contenido true|false] [-t "texto"] [-omitir-revocacion true|false]
+java -jar PDFSignerPKCS12.jar -analizar-documento &lt;pdf&gt;
+java -jar PDFSignerPKCS12.jar -vista-previa-texto -c &lt;certificado.p12&gt; -p &lt;password&gt; [-t "texto"]
 java -jar PDFSignerPKCS12.jar [-v | -h | --license]</code></pre>
         <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
@@ -1003,8 +1067,12 @@ java -jar PDFSignerPKCS12.jar [-v | -h | --license]</code></pre>
             <tr><td><code>-i, --input</code></td><td>Sí</td><td>Archivo PDF a firmar</td></tr>
             <tr><td><code>-c, --certificate</code></td><td>Sí</td><td>Ruta al archivo del certificado PKCS#12</td></tr>
             <tr><td><code>-p, --password</code></td><td>Sí</td><td>Contraseña del certificado</td></tr>
-            <tr><td><code>-l, --lock</code></td><td>No</td><td>Bloquea el documento tras firmar (default <code>false</code>)</td></tr>
+            <tr><td><code>-l, --lock</code></td><td>No</td><td>Bloquea el documento (default <code>false</code>). Sin firmas previas: certificación DocMDP + cifrado. Con firmas previas: firma de cierre (sección 7.7)</td></tr>
             <tr><td><code>-x</code> / <code>-y</code></td><td>No</td><td>Posición de firma visible (default <code>0</code>, invisible)</td></tr>
+            <tr><td><code>-pagina</code></td><td>No</td><td>Página de la firma visible (default <code>1</code>; 1.5.0)</td></tr>
+            <tr><td><code>-ancho</code> / <code>-alto</code></td><td>No</td><td>Tamaño del recuadro en puntos (default <code>160</code> / <code>70</code>; 1.5.0)</td></tr>
+            <tr><td><code>-campo</code></td><td>No</td><td>Firma dentro de un campo de firma vacío que ya trae el documento (1.5.0)</td></tr>
+            <tr><td><code>-proteger-contenido</code></td><td>No</td><td>Primera firma: protege el contenido (DocMDP nivel 2) permitiendo más firmas; no se combina con <code>-l</code> (1.5.0)</td></tr>
             <tr><td><code>-t, --text</code></td><td>No</td><td>Texto adicional en la firma visible</td></tr>
           </table>
         </div>
@@ -1015,7 +1083,7 @@ java -jar PDFSignerPKCS12.jar [-v | -h | --license]</code></pre>
 
       <div class="module" id="m10">
         <div class="module-head"><h3>9.10 — PDFVerifySignatures</h3><span class="module-jar">PDFVerifySignatures.jar</span></div>
-        <p>Verifica integridad, autenticidad, revocación, y si el PDF fue modificado tras la última firma. Acepta SHA-256 y SHA-1 de cualquier aplicación (sección 7.6).</p>
+        <p>Verifica integridad, autenticidad, vigencia del certificado y revocación <strong>a la fecha de cada firma</strong>, y si el PDF fue modificado tras la última firma. Acepta SHA-256 y SHA-1 de cualquier aplicación (sección 7.6) y entiende documentos firmados por otras aplicaciones, como Acrobat (sección 7.7). Desde 1.5.0 usa el mismo análisis que los firmadores.</p>
         <div class="field-label">Sintaxis</div>
         <pre><code>java -jar PDFVerifySignatures.jar &lt;archivo.pdf&gt; [-simple]
 java -jar PDFVerifySignatures.jar [-version | -ayuda | -licencia]</code></pre>
@@ -1027,6 +1095,8 @@ java -jar PDFVerifySignatures.jar [-version | -ayuda | -licencia]</code></pre>
           </table>
         </div>
         <p>Igual que <code>XMLVerifySignatures</code>: el exit code refleja el resultado de la validación.</p>
+        <div class="callout note"><span class="label">Salida y criterios (cambió en 1.5.0)</span><p>Por cada firma, primero un <strong>resultado en lenguaje simple</strong> (<code>VÁLIDA</code>, <code>VÁLIDA, CON COMPROBACIONES PENDIENTES</code> o <code>NO VÁLIDA</code>) con su explicación y las notas informativas; después los datos técnicos (integridad, fecha, estado de revocación en texto con fecha y motivo de baja si corresponde, firmante, organización, serie, vigencia, emisor, tipo y algoritmo, cadena). Los sellos de tiempo se informan aparte. Al final, el estado del documento: <strong>bloqueado</strong> (reconoce la certificación DocMDP de nivel 1, el bloqueo de campo de Acrobat y la firma de cierre de S-FiDE, e informa quién lo cerró), contenido protegido, encriptado y campos de firma sin firmar. Ya no se imprime "Cubre todo el documento": en una cadena de firmas es normal que las intermedias no cubran todo.</p></div>
+        <div class="callout note"><span class="label">Qué invalida y qué no (cambió en 1.5.0)</span><p><strong>No</strong> invalida: un certificado vencido o dado de baja <em>después</em> de firmar, una revocación no verificable, un sello de tiempo, comentarios o información de validación agregados después. <strong>Sí</strong> invalida: documento modificado después de firmar, firma dañada, certificado no vigente o ya dado de baja en la fecha de la firma, y contenido de página alterado después de la última firma. <strong>Migración 1.4.0 → 1.5.0:</strong> el estado de revocación se imprime ahora como texto (por ejemplo <code>No figura revocado (consulta OCSP)</code>) y no como <code>GOOD</code>/<code>UNKNOWN</code>/<code>REVOKED</code>; el código de salida y las líneas <code>DOCUMENTO VÁLIDO</code> / <code>DOCUMENTO INVÁLIDO</code> no cambian.</p></div>
         <div class="field-label">Errores posibles</div>
         <p class="errlist"><code>El documento no contiene firmas digitales</code> · <code>Certificado revocado al momento de la firma</code> · <code>Certificado no confiable o autofirmado</code></p>
         <div class="field-label">Ejemplo</div>
@@ -1062,7 +1132,9 @@ java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certi
         <p>Equivalente al anterior para PDF (sección 7.3 explica en detalle cuándo conviene esta opción antes que PKCS#11), con las mismas opciones de posición/texto/bloqueo que <code>PDFSignerPKCS11</code>, incluida la validación de firmas preexistentes (agregada en 1.1.1).</p>
         <div class="callout warn"><span class="label">⚠️ No usar para firma desatendida por lotes</span><p>Mismo motivo que en <code>XMLSignerWindowsCSP</code> — ver sección 7.3. Para firmar muchos PDF por CLI sin intervención humana, usar <code>PDFSignerPKCS11</code> o <code>PDFSignerPKCS12</code>.</p></div>
         <div class="field-label">Sintaxis</div>
-        <pre><code>java -jar PDFSignerWindowsCSP.jar -i &lt;pdf&gt; -a &lt;alias o fragmento CN&gt; [-k true|false] [-x pos] [-y pos] [-t "texto"] [-omitir-revocacion true|false]
+        <pre><code>java -jar PDFSignerWindowsCSP.jar -i &lt;pdf&gt; -a &lt;alias o fragmento CN&gt; [-k true|false] [-x pos] [-y pos] [-pagina n] [-ancho w] [-alto h] [-campo nombre] [-proteger-contenido true|false] [-t "texto"] [-omitir-revocacion true|false]
+java -jar PDFSignerWindowsCSP.jar -analizar-documento &lt;pdf&gt;
+java -jar PDFSignerWindowsCSP.jar -vista-previa-texto -a &lt;alias o fragmento CN&gt; [-t "texto"]
 java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]</code></pre>
         <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
@@ -1070,8 +1142,12 @@ java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]<
             <tr><th>Flag</th><th>Obligatorio</th><th>Descripción</th></tr>
             <tr><td><code>-i, --input</code></td><td>Sí</td><td>Archivo PDF a firmar</td></tr>
             <tr><td><code>-a, --alias</code></td><td>Sí</td><td>Alias exacto o fragmento del CN del certificado en el almacén de Windows</td></tr>
-            <tr><td><code>-k, --lock</code></td><td>No</td><td>Bloquea el documento tras firmar (default <code>false</code>)</td></tr>
+            <tr><td><code>-k, --lock</code></td><td>No</td><td>Bloquea el documento (default <code>false</code>). Sin firmas previas: certificación DocMDP + cifrado. Con firmas previas: firma de cierre (sección 7.7)</td></tr>
             <tr><td><code>-x</code> / <code>-y</code></td><td>No</td><td>Posición de firma visible (default <code>0</code>, invisible)</td></tr>
+            <tr><td><code>-pagina</code></td><td>No</td><td>Página de la firma visible (default <code>1</code>; 1.5.0)</td></tr>
+            <tr><td><code>-ancho</code> / <code>-alto</code></td><td>No</td><td>Tamaño del recuadro en puntos (default <code>160</code> / <code>70</code>; 1.5.0)</td></tr>
+            <tr><td><code>-campo</code></td><td>No</td><td>Firma dentro de un campo de firma vacío que ya trae el documento (1.5.0)</td></tr>
+            <tr><td><code>-proteger-contenido</code></td><td>No</td><td>Primera firma: protege el contenido (DocMDP nivel 2) permitiendo más firmas; no se combina con <code>-k</code> (1.5.0)</td></tr>
             <tr><td><code>-t, --text</code></td><td>No</td><td>Texto adicional en la firma visible</td></tr>
           </table>
         </div>
@@ -1104,6 +1180,10 @@ java -jar WindowsCertificateStoreView.jar [-version | -ayuda | -licencia | -list
         <p><strong>Migración:</strong> la primera vez que cada usuario abre 1.4.0, si junto a la instalación hay un <code>sfide-defaults.properties</code> anterior, se importa como punto de partida (no se borra: los demás usuarios lo necesitan para importar el suyo). No se heredan los indicadores de accesos directos, que son de quien los generó.</p></div>
         <div class="callout note"><span class="label">Contraseñas reutilizables durante la sesión (1.4.0)</span><p>Una contraseña usada <strong>con éxito</strong> (el módulo terminó con código <code>0</code>) se recuerda solo en memoria y se copia a los campos de contraseña de las demás pestañas del mismo tipo: las de token PKCS#11 comparten una, las de archivo PKCS#12 otra. Está atada a su credencial — biblioteca y slot del token, o ruta del archivo —: si el usuario cambia de token o de archivo, se olvida; una contraseña nueva que funciona reemplaza a la recordada, y no se pisa lo que el usuario esté escribiendo en otra pestaña. Si una contraseña <strong>recordada</strong> falla, se olvida y no se reenvía sola (con un token, cada intento fallido cuenta contra el bloqueo). Nunca se escribe en disco; <strong>Herramientas → Olvidar contraseñas de esta sesión</strong> la borra a pedido y desaparece al cerrar. Alcance: en Java una contraseña es un <code>String</code> inmutable que no se puede sobrescribir de forma determinística — "olvidar" es soltar toda referencia.</p></div>
         <div class="callout note"><span class="label">Última carpeta usada (1.4.0)</span><p>"Examinar..." abre en la última carpeta de la que se tomó un documento del mismo tipo — XML, PDF o XSD, compartida entre todas las pestañas de ese tipo y entre sesiones (<code>last.dir.xml</code>, <code>last.dir.pdf</code>, <code>last.dir.xsd</code>). El documento firmado se guarda junto al original, así que una carpeta por tipo alcanza para tomar y para encontrar los archivos. También se actualiza al pegar o escribir la ruta de un archivo existente. La carpeta del archivo ya cargado en el campo tiene prioridad; si la recordada ya no existe (pendrive, unidad de red), se ignora sin error.</p></div>
+        <div class="callout note"><span class="label">Novedades de la versión, en el primer arranque de cada usuario (1.5.0)</span><p>La primera vez que <strong>cada usuario</strong> abre una versión nueva, S-FiDE muestra en un cuadro de diálogo un resumen de los cambios y agregados, escrito para personas no técnicas (si hubo un aviso de actualización, el resumen aparece a continuación, al cerrarlo). Si el usuario <strong>saltó versiones</strong> (por ejemplo de la 1.4.0 directamente a una futura 1.6.0) se muestran las novedades de <strong>todas</strong> las versiones intermedias, de la más nueva a la más vieja. Salen de <code>text/NOVEDADES.txt</code> (una sección <code>## versión | título</code> por versión, que conserva todo el historial: <strong>hay que agregar la sección de cada versión nueva antes de publicarla</strong>). El punto de partida es la clave <code>novedades.vistas</code> de <code>sfide-defaults.properties</code> (la última versión cuyas novedades ya se mostraron); si falta se usa la <code>app.version</code> con la que el usuario abrió S-FiDE la vez anterior, y si tampoco existe (configuración de antes de la 1.4.0) se muestra todo el historial. Un usuario nuevo no recibe ningún aviso; la versión se anota antes de mostrar el cuadro para que nunca se repita. <strong>Ayuda → Novedades de esta versión</strong> lo abre a pedido con todo el historial.</p></div>
+        <div class="callout note"><span class="label">Firma de PDF: ubicación visual y revisión previa (1.5.0)</span><p>En las tres pestañas de firma de PDF, "Posición (X,Y)" fue reemplazada por <strong>"Ubicación de la firma → Elegir en el documento…"</strong>: se muestra el PDF (Apache PDFBox) con miniaturas, zoom, el recuadro de la firma que se arrastra y redimensiona con el mouse —con el <strong>texto real</strong> que va a llevar, calculado por el propio firmador con <code>-vista-previa-texto</code>—, las firmas existentes en gris, los campos de firma preparados y, a la derecha, la <strong>revisión del documento</strong> con el estado de cada firma en lenguaje simple. No permite aceptar un recuadro que tape una firma existente ni una ubicación en un documento cerrado; si la posición habitual tapa una firma, el recuadro arranca solo en un lugar libre. Si el PDF no se puede mostrar (por ejemplo, con contraseña), se piden página y medidas a mano. Al presionar Ejecutar, la GUI consulta <code>-analizar-documento</code> (sin certificado ni PIN): un documento <strong>cerrado</strong> se rechaza; si hay firmas con <strong>problemas reales</strong> se pregunta "Firmar de todas formas" (informar y seguir); y al <strong>cerrar</strong> el documento se confirma "Esta será la firma final" (con <em>Cancelar</em> por defecto, porque no se puede deshacer). Las casillas "Cerrar el documento" y "Proteger el contenido" se destildan solas después de cada firma. <strong>La GUI no firma ni analiza por su cuenta</strong>: solo orquesta los mismos <code>.jar</code>.</p></div>
+        <div class="callout note"><span class="label">Una sola operación a la vez (1.5.0)</span><p>Mientras hay una operación en curso (incluida la revisión previa y la consulta de la ventana de ubicación), el botón <strong>Ejecutar</strong> de <strong>todas</strong> las pestañas queda deshabilitado. Cada ejecución de un firmador aplica una sola firma y nunca hay dos a la vez desde la interfaz.</p></div>
+        <div class="callout note"><span class="label">Salida del Proceso rediseñada (1.5.0)</span><p>Es un panel separado de la pantalla principal por un <strong>divisor que se arrastra</strong>. Al <strong>colapsarlo, la pantalla principal recupera el espacio</strong> (antes quedaba un hueco en blanco); al expandirlo vuelve a la altura elegida. Se abre solo cuando llega la primera línea de una operación nueva, pero respeta que la persona lo colapse (ya no se reabre con cada línea); colapsado indica "● hay salida nueva", y con una operación en curso "En curso…". La barra de título tiene los botones <strong>Copiar</strong> (portapapeles), <strong>Guardar…</strong> (archivo <code>.txt</code> en UTF-8) y <strong>Limpiar</strong> (vacía y colapsa). Siempre muestra lo último impreso.</p></div>
         <div class="callout note"><span class="label">Ayuda → Buscar actualizaciones... (1.4.0)</span><p>Consulta GitHub, pide permiso, descarga y verifica, y delega en <code>SFideUpdater.jar</code> (ver 9.15). Al arrancar, si una actualización anterior dejó un resultado, se muestra una sola vez; y mientras alguien actualiza la instalación, S-FiDE no arranca (muestra un aviso) para no iniciarse sobre archivos a medias.</p></div>
         <div class="callout note"><span class="label">Pestañas "Ver Certificado" y número de slot (1.4.0)</span><p>"Ver Certificado de Token" y "Ver Certificado de PKCS#12" suman el botón "Abrir carpeta del .pem". El número de slot dejó de ser obligatorio en las pestañas de token (en blanco equivale a <code>0</code> y los módulos buscan el token si ahí no está), y "Ver Slots de Token" suma el campo opcional "Número de Slot".</p></div>        <div class="callout warn"><span class="label">No es para integración por proceso</span><p>No tiene un contrato de argumentos/exit-code pensado para ser invocada por otro programa. Un integrador debe usar los módulos CLI individuales de esta sección.</p></div>
         <div class="callout note"><span class="label">Instancia única por usuario y por carpeta de instalación</span><p>Al arrancar, se detecta si ese mismo usuario ya tiene otra instancia de la GUI corriendo desde la misma carpeta (dos instalaciones en carpetas distintas sí pueden correr en paralelo, y <strong>usuarios distintos del mismo equipo</strong> — p. ej. en un servidor de escritorio remoto — pueden tener cada uno su instancia a la vez sobre la misma instalación). Si la hay, se informa y la nueva instancia se cierra sin abrir ninguna ventana, sin afectar la ya abierta. Implementado con un <code>FileLock</code> (<code>java.nio.channels</code>) exclusivo sobre <code>sfide-gui-&lt;marca&gt;.lock</code> en la carpeta personal del usuario, no con un flag persistido — el sistema operativo libera el lock automáticamente al terminar el proceso, sea un cierre normal o una caída, sin dejar ningún estado que limpiar a mano. Mecanismo estándar del JDK, igual en Windows/Linux/macOS.</p></div>
@@ -1323,6 +1403,30 @@ exit $RESULT</code></pre>
     <section class="chapter" id="s13">
       <span class="chapter-num">13</span>
       <h2>Historial de versiones</h2>
+      <h3>v1.5.0 (2026-10-08)</h3>
+      <ul>
+        <li><strong>Firma de PDF en cadena entre varias personas, en computadoras distintas y con S-FiDE o Acrobat en cualquier combinación.</strong> Los tres firmadores revisan el documento antes de firmar (¿admite más firmas?, estado de cada firma anterior), informan y continúan ante firmas anteriores inválidas, y comprueban el resultado al terminar. Ver 7.7.</li>
+        <li><strong>Corrección crítica: "bloquear" un documento que ya tenía firmas dañaba las firmas anteriores</strong> (reescribía el archivo para cifrarlo; además una certificación DocMDP solo vale como primera firma). Ahora el bloqueo de un documento ya firmado es una <strong>firma de cierre</strong> que no reescribe nada y que Acrobat reconoce como bloqueo. Reproducido con tres firmas reales antes de corregirlo.</li>
+        <li><strong>Corrección: firmar sobre un documento que otra persona había bloqueado con Acrobat invalidaba su firma.</strong> Ahora se rechaza, con el nombre de quien lo bloqueó.</li>
+        <li><strong>Nuevas opciones de los firmadores de PDF:</strong> <code>-pagina</code>, <code>-ancho</code>, <code>-alto</code>, <code>-campo</code>, <code>-proteger-contenido</code> y los modos de solo lectura <code>-analizar-documento</code> y <code>-vista-previa-texto</code>.</li>
+        <li><strong><code>PDFVerifySignatures</code> más claro y más justo:</strong> resultado en lenguaje simple por firma, vigencia y revocación <strong>a la fecha de la firma</strong> (un certificado dado de baja después de firmar ya no invalida la firma; antes una baja informada por OCSP la invalidaba sin mirar la fecha), reconocimiento de documentos bloqueados con Acrobat, sellos de tiempo, información de validación y comentarios posteriores, y campos sin firmar.</li>
+        <li><strong>GUI:</strong> ubicación de la firma sobre el propio documento (PDFBox), revisión previa con confirmaciones, una operación a la vez, novedades de la versión en el primer arranque de cada usuario (con saltos de versión) y rediseño de la Salida del Proceso. Ver 9.14.</li>
+        <li><strong>Actualización desde 1.4.0 verificada:</strong> el paquete de la 1.5.0 se aplicó con el <code>SFideUpdater.jar</code> real de la 1.4.0 sobre una copia de una instalación 1.4.0 (verificar + aplicar), y el primer arranque posterior mostró el aviso de actualización y las novedades.</li>
+      </ul>
+      <h4>Guía de migración 1.4.0 → 1.5.0</h4>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Qué</th><th>Impacto</th><th>Acción</th></tr>
+          <tr><td>Firmadores de PDF ante una firma anterior inválida</td><td>Antes se negaban a firmar; ahora informan y continúan</td><td>Integraciones que dependían del rechazo: usar <code>-analizar-documento</code> (informe estable) o <code>PDFVerifySignatures</code> antes de firmar</td></tr>
+          <tr><td><code>-l</code>/<code>-k true</code> sobre un PDF que ya tiene firmas</td><td>Antes dañaba las firmas anteriores; ahora es una firma de cierre (sin cifrado)</td><td>Ninguna. Para cifrar, hacerlo en la primera firma</td></tr>
+          <tr><td>Documentos cerrados (DocMDP nivel 1, bloqueo de Acrobat, firma de cierre)</td><td>Se rechazan con código <code>1</code> y un mensaje</td><td>Ninguna</td></tr>
+          <tr><td>Salida de <code>PDFVerifySignatures</code></td><td>Texto nuevo por firma; estado de revocación como texto; se quita "Cubre todo el documento"</td><td>Actualizar quien parseaba esas líneas. Código de salida y líneas <code>DOCUMENTO VÁLIDO/INVÁLIDO</code> sin cambios</td></tr>
+          <tr><td><code>PDFVerifySignatures</code> y certificados dados de baja</td><td>Una baja posterior a la firma ya no invalida</td><td>Ninguna</td></tr>
+          <tr><td>Argumentos nuevos</td><td><code>-pagina</code>, <code>-ancho</code>, <code>-alto</code>, <code>-campo</code>, <code>-proteger-contenido</code> (opcionales)</td><td>Ninguna: los comandos de la 1.4.0 siguen funcionando igual</td></tr>
+          <tr><td><code>sfide-defaults.properties</code></td><td>Clave nueva <code>novedades.vistas</code></td><td>Ninguna (no requiere migración del formato)</td></tr>
+          <tr><td>Instalación</td><td><code>SFide-GUI.jar</code> incluye Apache PDFBox (unos 7 MB más); sin jars ni carpetas nuevas</td><td>Ninguna. La actualización desde 1.4.0 se hace con Ayuda → Buscar actualizaciones</td></tr>
+        </table>
+      </div>
       <h3>v1.4.0 (2026-10-02)</h3>
       <ul>
         <li><strong>Corrección: token no detectado por S-FiDE aunque otros programas lo leen sin problema.</strong> <code>slotListIndex</code> cuenta todos los slots de la biblioteca (con o sin token) y S-FiDE asumía el <code>0</code>; ahora se prueba el slot indicado y, si está vacío, se busca el token en los demás. Errores de acceso traducidos a mensajes claros (contraseña, bloqueo, retiro, biblioteca de 32/64 bits). <code>TokenSlotsView</code> suma el slot opcional. Ver sección 9, "Búsqueda automática del slot".</li>
@@ -1447,6 +1551,10 @@ exit $RESULT</code></pre>
           <tr><td><strong>DigestInfo</strong></td><td>Estructura ASN.1 que envuelve un hash con su identificador de algoritmo</td></tr>
           <tr><td><strong>DJO / DJOEH</strong></td><td>Elementos XML de una Declaración Jurada de Origen, firmados por Exportador / Funcionario Habilitado (sección 10)</td></tr>
           <tr><td><strong>DocMDP</strong></td><td>Permiso PDF aplicado por una firma certificante, restringe qué cambios son válidos después</td></tr>
+          <tr><td><strong>DSS / LTV</strong></td><td>Document Security Store / Long-Term Validation: información de validación que algunas aplicaciones, como Acrobat, agregan a un PDF después de firmarlo para poder comprobar la firma a largo plazo. Agregarla no invalida las firmas</td></tr>
+          <tr><td><strong>FieldMDP / bloqueo de campo</strong></td><td>Marca PDF (<code>/Lock</code> en el campo de firma más la referencia <code>FieldMDP</code>) con la que Acrobat implementa "Bloquear documento después de firmar"; S-FiDE la reconoce y también la escribe al cerrar un documento</td></tr>
+          <tr><td><strong>Firma de cierre</strong></td><td>Última firma de un documento que ya tenía firmas: no reescribe el archivo, lleva el motivo "Firma final: documento cerrado" y el bloqueo de campo. Después de ella el documento no admite más firmas (sección 7.7)</td></tr>
+          <tr><td><strong>Sello de tiempo (TSA)</strong></td><td>Constancia emitida por un tercero de confianza que respalda la fecha de un documento o de una firma (<code>ETSI.RFC3161</code>). S-FiDE los reconoce pero no los genera</td></tr>
           <tr><td><strong>FIPS 140-2/3</strong></td><td>Estándar de seguridad del NIST para módulos criptográficos</td></tr>
           <tr><td><strong>HSM</strong></td><td>Hardware Security Module</td></tr>
           <tr><td><strong>MERCOSUR</strong></td><td>Mercado Común del Sur, subconjunto de países miembro de ALADI</td></tr>
@@ -1467,7 +1575,7 @@ exit $RESULT</code></pre>
     </section>
 
     <footer class="doc-footer">
-      Manual de Integración S-FiDE · Grupo Sauken S.A. · Versión del documento acompaña a S-FiDE v1.4.0
+      Manual de Integración S-FiDE · Grupo Sauken S.A. · Versión del documento acompaña a S-FiDE v1.5.0
     </footer>
   </main>
 </div>

@@ -13,7 +13,7 @@
 #  descompresion de todas las plataformas, a diferencia de Compress-Archive
 #  de Windows PowerShell 5.1, que usa "\").
 #
-#  Uso:  powershell -ExecutionPolicy Bypass -File crear-paquete-actualizacion.ps1 [-Version 1.4.0] [-Salida C:\carpeta]
+#  Uso:  powershell -ExecutionPolicy Bypass -File crear-paquete-actualizacion.ps1 [-Version 1.5.0] [-Salida C:\carpeta]
 #  Sin -Version toma la version del pom.xml raiz. Sin -Salida deja los
 #  archivos en la carpeta "dist-update" del repositorio.
 # ============================================================

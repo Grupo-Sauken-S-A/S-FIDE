@@ -1,4 +1,4 @@
-S-FiDE v1.4.0 - Leeme primero:
+S-FiDE v1.5.0 - Leeme primero:
 
 - IMPORTANTE - Cómo instalar: cree primero una carpeta propia con el nombre que prefiera (por ejemplo
   "C:\S-FiDE") y descomprima el contenido del ZIP DENTRO de esa carpeta. No lo descomprima directamente
@@ -42,6 +42,26 @@ S-FiDE v1.4.0 - Leeme primero:
   integrando S-FiDE en su propia aplicación, no se olvide de realizar las conversiones a UTF-8. En
   "doc/manual-tecnico-integracion.md" hay una sección específica ("Integración desde otras aplicaciones") con
   ejemplos de invocación por línea de comandos, redirección de salida y captura de código de resultado
+
+- Novedades de la versión 1.5.0:
+  - La ubicación de la firma de un PDF se elige sobre el propio documento, como en Acrobat Reader
+    ("Elegir en el documento..."), con el texto real de la firma. Se puede elegir la página y el
+    tamaño, y firmar dentro de los campos de firma que traiga el documento
+  - Varias personas pueden firmar el mismo PDF una después de otra, en computadoras distintas y con
+    S-FiDE o Acrobat Reader en cualquier combinación. Antes de firmar, S-FiDE revisa el documento y
+    las firmas anteriores y lo explica en palabras simples; la última persona puede cerrar el
+    documento. Lo que firma S-FiDE es válido en Acrobat Reader y a la inversa
+  - Corrección importante: cerrar con "Bloquear" un PDF que ya tenía firmas dañaba las firmas
+    anteriores. Ahora se cierra sin tocarlas, y no se firma sobre un documento que otra persona cerró
+  - Solo se hace una operación a la vez, y la "Salida del Proceso" se puede achicar (la pantalla
+    principal recupera el espacio) y tiene botones para copiar, guardar y limpiar su contenido
+  - La primera vez que cada usuario abre una versión nueva ve un resumen de las novedades (también en
+    "Ayuda > Novedades de esta versión"). Desde la 1.4.0 la actualización se instala con "Ayuda >
+    Buscar actualizaciones..."
+  - "Verificar Firmas en PDF" explica cada resultado en palabras simples; un certificado vencido o dado
+    de baja DESPUÉS de firmar ya no se muestra como un problema
+  - Nuevas opciones de línea de comandos de los firmadores de PDF: -pagina, -ancho, -alto, -campo,
+    -proteger-contenido, -analizar-documento y -vista-previa-texto (ver el Manual Técnico)
 
 - Novedades de la versión 1.4.0:
   - Nuevo menú "Ayuda > Buscar actualizaciones...": consulta en GitHub si hay una versión nueva y, solo
@@ -87,9 +107,9 @@ S-FiDE v1.4.0 - Leeme primero:
   - Los campos de la GUI que están vacíos ahora muestran un ejemplo de carga en gris claro (no es un
     valor real, desaparece al escribir)
   - La casilla "Salida simple" de los verificadores ahora se recuerda entre sesiones. En cambio, la
-    posición X/Y de firma visible en PDF y la casilla "Bloquear documento después de firmar" dejaron
-    de recordarse y de compartirse entre pestañas - siempre hay que indicarlas de nuevo en cada firma,
-    igual que el elemento/ID de un XML a firmar
+    posición de la firma visible en PDF y la casilla "Bloquear documento después de firmar" dejaron
+    de recordarse entre sesiones y de compartirse entre pestañas (desde la 1.5.0 la ubicación se
+    mantiene mientras la aplicación está abierta, y las casillas de cierre se destildan solas)
 
 - Novedades de la versión 1.2.0:
   - Los seis módulos que firman (XMLSignerPKCS11, XMLSignerPKCS12, XMLSignerWindowsCSP, PDFSignerPKCS11,

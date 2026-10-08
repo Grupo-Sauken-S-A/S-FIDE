@@ -10,6 +10,14 @@ Opciones:
   -x, --xpos <número>          Coordenada X para el campo de firma (opcional, default: 0)
   -y, --ypos <número>          Coordenada Y para el campo de firma (opcional, default: 0)
   -t, --text <texto>           Texto adicional para el campo de firma (opcional)
+  -pagina, --pagina <número>   Página donde se dibuja la firma visible (opcional, default: 1)
+  -ancho, --ancho <número>     Ancho del recuadro de la firma, en puntos (opcional, default: 160)
+  -alto, --alto <número>       Alto del recuadro de la firma, en puntos (opcional, default: 70)
+  -campo, --campo <nombre>     Firma dentro de un campo de firma vacío que ya trae el documento, en vez de crear
+                               uno nuevo (opcional). -analizar-documento informa los campos disponibles
+  -proteger-contenido <true|false>  Primera firma: protege el contenido del documento pero permite que otras
+                                    personas sigan firmando (opcional, default: false). No se combina con el
+                                    bloqueo del documento
   -omitir-revocacion <true|false>  Fuerza la firma aunque el certificado esté confirmado como revocado
                                     (opcional, default: false). Ver "REVOCACIÓN" más abajo.
 
@@ -17,14 +25,20 @@ Opciones Adicionales
   -v, --version, -version      Muestra la versión del programa
   -h, --help, -ayuda           Muestra esta ayuda
   --license, -licencia         Muestra la licencia del programa
+  -analizar-documento <archivo.pdf>   Solo lectura: informa si el documento admite más firmas y el estado de cada
+                                      firma que ya tiene (formato estable, para otros programas). No firma nada
+  -vista-previa-texto -c <archivo> -p <contraseña> [-t <texto>]
+                               Solo lectura: imprime el texto exacto que llevaría la firma visible
 
 ERRORES POSIBLES:
     - Archivo PDF no existe o no es accesible
     - Certificado PKCS12 no existe o no es accesible
     - Contraseña del certificado incorrecta
     - PDF está cifrado o bloqueado
-    - Coordenadas de firma fuera de los márgenes del documento
-    - Error en validación de firmas existentes
+    - El documento fue cerrado o bloqueado por otra persona y no admite más firmas
+    - La página indicada no existe, o el recuadro de la firma no entra en la página
+    - El campo de firma indicado no existe o ya está firmado
+    - El documento tiene restricciones de seguridad que impiden agregarle firmas
     - Errores en el proceso de firma
     - Parámetros de entrada inválidos o faltantes
 
@@ -36,9 +50,21 @@ EJEMPLOS:
     java -jar PDFSignerPKCS12.jar -i C:/S-FiDE/Ejemplo-ds.pdf -c C:/S-FiDE/test/test-sauken.pfx -p W1far0CBA68 -l true -x 40 -y 55
 
 NOTAS:
-    - El programa verificará y validará todas las firmas existentes antes de agregar una nueva
-    - Se firmará siempre el documento PDF de manera completa y la firma se aplicará en la primer página
+    - El programa revisará el documento y todas las firmas existentes antes de agregar una nueva (ver FIRMAS EN CADENA)
+    - Se firmará siempre el documento PDF de manera completa; la firma visible se aplica en la página indicada
+      con -pagina (por defecto, la primera)
     - El documento resultante incluirá metadatos sobre la firma aplicada
+
+FIRMAS EN CADENA (varias personas, en computadoras distintas):
+    - Antes de firmar se revisa el documento: si fue cerrado (certificación "sin cambios", "Bloquear documento
+      después de firmar" de Acrobat, o una firma final de S-FiDE) no se firma y se informa quién lo cerró
+    - Las firmas anteriores se analizan una por una. Si alguna es inválida se informa, pero se firma igual: la
+      decisión es de quien firma. Un certificado vencido o dado de baja DESPUÉS de firmar no invalida esa firma
+    - Con el bloqueo activado sobre un documento que YA tiene firmas, la firma es una FIRMA DE CIERRE: no reescribe
+      el archivo ni invalida las anteriores, y después el documento no admite más firmas. Sin firmas previas, el
+      bloqueo certifica y cifra el documento (nadie más podrá firmar)
+    - Al terminar se comprueba el resultado: si alguna firma previa quedó dañada, no se entrega ningún archivo
+    - Es válido para Acrobat Reader y viceversa: pueden combinarse firmas de S-FiDE y de Acrobat en el mismo documento
 
 REVOCACIÓN:
     - Antes de firmar, se valida el estado de revocación del certificado (OCSP primero, CRL como respaldo)

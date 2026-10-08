@@ -1,6 +1,6 @@
 # S-FiDE - Guía Rápida
 
-Sistema de Firma Digital Extendida - Versión 1.4.0 - Grupo Sauken S.A.
+Sistema de Firma Digital Extendida - Versión 1.5.0 - Grupo Sauken S.A.
 
 SFide-GUI proporciona una interfaz gráfica de usuario para asignar los parámetros adecuados a
 cada una de las aplicaciones de la plataforma S-FiDE. Las aplicaciones se muestran de manera
@@ -51,15 +51,16 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 
 ## 8. Firmar PDF con Token (PDFSignerPKCS11)
 - Firma documentos PDF usando un token criptográfico
-- Requiere biblioteca PKCS#11, contraseña, número de slot, documento PDF, posición en ejes X e
-  Y para colocar el cuadro con la firma digital, texto adicional para adjuntar a la firma y una
-  opción que permite bloquear o no el documento PDF firmado
+- Requiere biblioteca PKCS#11, contraseña, número de slot y documento PDF. La ubicación de la
+  firma se elige sobre el propio documento ("Elegir en el documento..."), se puede agregar un
+  texto adicional, y dos opciones permiten cerrar el documento con esta firma (si es la última)
+  o proteger su contenido (si es la primera y otras personas deben firmar después)
 
 ## 9. Firmar PDF con PKCS#12 (PDFSignerPKCS12)
 - Firma documentos PDF usando un archivo PKCS#12
-- Requiere archivo PKCS#12, contraseña, documento PDF, posición en ejes X e Y para colocar el
-  cuadro con la firma digital, texto adicional para adjuntar a la firma y una opción que
-  permite bloquear o no el documento PDF firmado
+- Requiere archivo PKCS#12, contraseña y documento PDF. La ubicación de la firma se elige sobre
+  el propio documento ("Elegir en el documento..."), se puede agregar un texto adicional, y dos
+  opciones permiten cerrar el documento con esta firma o proteger su contenido
 
 ## 10. Verificar Firmas en PDF (PDFVerifySignatures)
 - Verifica la validez de firmas en documentos PDF
@@ -86,8 +87,34 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 - Igual que el anterior, pero para documentos PDF. Admite las mismas opciones de posición,
   texto adicional y bloqueo del documento que "Firmar PDF con Token"
 
-## Novedades en la versión 1.4.0
+## Novedades en la versión 1.5.0
 
+- **Ubicación de la firma sobre el propio documento**, como en Acrobat Reader: "Elegir en el
+  documento..." muestra el PDF y se arrastra el recuadro de la firma, con el texto real que va a
+  llevar (su nombre, la fecha y el texto adicional). Ya no hace falta calcular coordenadas.
+  Puede elegir la página y el tamaño, y firmar dentro de los campos de firma que haya dejado
+  preparados quien armó el documento
+- **Firmas en cadena entre varias personas**, en computadoras distintas y con S-FiDE o Acrobat
+  Reader en cualquier combinación. Antes de firmar, S-FiDE revisa el documento y las firmas que
+  ya tiene y se lo explica en palabras simples. Si una firma anterior tiene un problema real se
+  le avisa y usted decide si firma igual; si el documento ya fue cerrado, se le explica quién
+  lo cerró
+- **Cerrar el documento con la firma final** y **proteger el contenido** (para la primera
+  firma): ver la ayuda ("?") junto a "Ubicación de la firma". La casilla de cerrar se destilda
+  sola después de cada firma, y se pide confirmación antes de cerrar
+- **Solo se hace una operación a la vez**: mientras una está en curso, el botón Ejecutar de todas
+  las pantallas queda deshabilitado
+- **Salida del Proceso rediseñada**: al colapsarla, la pantalla principal recupera el espacio; se
+  puede ajustar su altura arrastrando el divisor; y tiene botones para Copiar, Guardar y Limpiar
+- **Novedades al actualizar**: la primera vez que usted abre una versión nueva se muestra un
+  resumen de los cambios (también está en "Ayuda > Novedades de esta versión")
+- **Verificar Firmas en PDF** explica cada resultado en palabras simples: un certificado que
+  venció, o fue dado de baja, DESPUÉS de firmar ya no se muestra como un problema, y se
+  reconocen los documentos bloqueados con Acrobat
+- **Corrección importante**: cerrar con "Bloquear" un documento que ya tenía firmas dañaba las
+  firmas anteriores. Ahora se cierra sin tocarlas
+
+## Novedades en la versión 1.4.0
 - **Ayuda > Buscar actualizaciones...**: consulta en GitHub si hay una versión nueva y, solo si
   usted lo acepta, la descarga, la verifica, reemplaza los archivos de la instalación y vuelve a
   abrir S-FiDE. Todo o nada: si algo falla, queda como estaba. Si otro usuario del equipo tiene

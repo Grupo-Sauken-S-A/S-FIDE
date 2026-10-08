@@ -104,7 +104,7 @@ public final class SFideUpdater {
     private static String resolveVersion() {
         String v = SFideUpdater.class.getPackage() != null
                 ? SFideUpdater.class.getPackage().getImplementationVersion() : null;
-        return v != null ? v : "1.4.0";
+        return v != null ? v : "1.5.0";
     }
 
     public static void main(String[] args) {

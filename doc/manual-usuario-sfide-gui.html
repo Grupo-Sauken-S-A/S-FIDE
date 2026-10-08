@@ -262,8 +262,8 @@
       <h1>Guía de Usuario S-FiDE GUI</h1>
       <p>Cómo usar la interfaz gráfica de S-FiDE para firmar y verificar documentos XML y PDF, paso a paso, con capturas reales de la propia aplicación. Pensada para quien usa el programa haciendo clic, no para quien integra los módulos por línea de comandos — para eso está el <a href="manual-tecnico-integracion.html">Manual Técnico de Integración</a>.</p>
       <div class="meta">
-        <span>Versión del producto: <strong>1.4.0</strong></span>
-        <span>Documento: <strong>02/10/2026</strong></span>
+        <span>Versión del producto: <strong>1.5.0</strong></span>
+        <span>Documento: <strong>08/10/2026</strong></span>
       </div>
     </div>
 
@@ -297,7 +297,8 @@
       <h3>Sus datos son suyos: la carpeta personal de S-FiDE</h3>
       <p>Lo que S-FiDE recuerda (rutas, número de slot, últimas carpetas usadas, tamaño de la ventana, etc.) y los certificados <code>.pem</code> que usted extraiga se guardan en <strong>su carpeta personal</strong>: <code>C:\Users\su-usuario\S-FiDE</code> en Windows (<code>~/S-FiDE</code> en Linux/macOS) — no en la carpeta donde está instalado el programa. Por eso, si varias personas usan el mismo equipo (a la vez o por turnos), cada una tiene sus propios valores, y todas pueden tener S-FiDE abierto al mismo tiempo sobre la misma instalación. No hace falta que usted cree esa carpeta: la crea S-FiDE. La primera vez que abre la versión 1.4.0 se importan sus valores de la versión anterior, si los había.</p>
       <h3>Cómo actualizar S-FiDE</h3>
-      <p>Desde la versión 1.4.0, use <strong>Ayuda → Buscar actualizaciones...</strong> (ver la sección "La ventana de Ayuda"). Para pasar de una versión anterior a la 1.4.0 (que todavía no tiene ese menú), descargue el ZIP completo y descomprímalo como se explicó arriba.</p>    </section>
+      <p>Desde la versión 1.4.0, use <strong>Ayuda → Buscar actualizaciones...</strong> (ver la sección "La ventana de Ayuda"). Para pasar de una versión anterior a la 1.4.0 (que todavía no tiene ese menú), descargue el ZIP completo y descomprímalo como se explicó arriba.</p>
+      <p>La primera vez que usted abre una versión nueva, S-FiDE le muestra un <strong>resumen de las novedades</strong> en un cuadro de diálogo. Si se actualizó saltando versiones (por ejemplo, de la 1.4.0 a una versión posterior a la 1.5.0), el resumen incluye las novedades de todas las versiones intermedias. Cada usuario del equipo lo ve una sola vez, y puede volver a abrirlo cuando quiera desde <strong>Ayuda → Novedades de esta versión</strong>.</p>    </section>
 
     <section class="chapter" id="s3">
       <span class="chapter-num">03</span>
@@ -310,7 +311,7 @@
       <ul>
         <li><strong>Panel lateral (izquierda):</strong> los 13 módulos disponibles, agrupados por ícono según lo que hacen — ⊙/▤ para "ver" información, ✎ para firmar, ✓ para verificar, ⧉ para los módulos exclusivos de Windows. Los tres módulos de Windows CSP/KSP solo aparecen en esta lista si S-FiDE corre sobre Windows.</li>
         <li><strong>Formulario del módulo elegido (centro):</strong> una breve descripción arriba, los campos que ese módulo necesita, y el botón <strong>Ejecutar</strong>.</li>
-        <li><strong>Salida del Proceso (abajo):</strong> un panel colapsable que se expande solo cuando hay un resultado que mostrar — ahí aparece exactamente lo que el programa imprime, éxito o error, además de un pequeño diálogo emergente ("Estado del Proceso" / "Error") con el mismo resultado.</li>
+        <li><strong>Salida del Proceso (abajo):</strong> el panel donde aparece exactamente lo que el programa imprime, éxito o error, además de un pequeño diálogo emergente ("Estado del Proceso" / "Error") con el mismo resultado. Se abre solo cuando empieza una operación, y usted puede <strong>colapsarlo</strong> con la flecha de su barra de título: al hacerlo, la pantalla principal recupera todo ese espacio (si llega salida nueva mientras está colapsado, la barra lo avisa con "● hay salida nueva"). Cuando está abierto se le puede <strong>cambiar la altura arrastrando</strong> la línea que lo separa de la pantalla principal. Los botones de su barra de título sirven para <strong>Copiar</strong> toda la salida al portapapeles, <strong>Guardar…</strong> en un archivo de texto y <strong>Limpiar</strong> (vacía la salida y la colapsa). Mientras hay una operación en curso, el botón <strong>Ejecutar</strong> de todas las pantallas queda deshabilitado y la barra muestra "En curso…": solo se hace una operación a la vez.</li>
       </ul>
       <p>S-FiDE recuerda entre sesiones, sin que tenga que volver a escribirlos: la ruta de la biblioteca PKCS#11 o el archivo PKCS#12, el número de slot, la <strong>última carpeta usada para documentos XML, PDF y XSD</strong> (el botón "Examinar..." abre directamente ahí), el alias del almacén de Windows, la casilla "Salida simple" de los verificadores, el tamaño y posición de la ventana, y el último módulo que tenía abierto (reabre ahí directamente). <strong>Nunca guarda ninguna contraseña en disco</strong> — esos campos siempre arrancan vacíos al abrir el programa. Tampoco recuerda la posición X/Y de firma visible en PDF ni la opción "Bloquear documento después de firmar": a propósito, siempre hay que indicarlas de nuevo en cada firma, igual que el elemento/ID de un XML a firmar.</p>
       <div class="callout note">
@@ -465,7 +466,7 @@
 
       <div class="module" id="g8">
         <div class="module-head"><h3>8. Firmar PDF con Token</h3><span class="module-num">PDFSignerPKCS11</span></div>
-        <p class="desc">Firma digitalmente un documento PDF con la clave privada de un token criptográfico, usando SHA-256. La firma puede ser invisible o mostrarse en un recuadro con firmante, fecha y texto personalizado en coordenadas específicas de la primera página, y opcionalmente puede bloquear el documento contra modificaciones posteriores (certificación + cifrado).</p>
+        <p class="desc">Firma digitalmente un documento PDF con la clave privada de un token criptográfico, usando SHA-256. La firma puede ser invisible o mostrarse en un recuadro con firmante, fecha y texto personalizado, en el lugar que usted elija sobre el propio documento. Antes de firmar, S-FiDE revisa el documento y las firmas que ya tiene; la última persona que firma puede cerrarlo para que no admita más firmas. Ver "Un documento, varias firmas" más abajo.</p>
         <figure class="shot">
           <img src="img/manual-usuario/08_firmar_pdf_con_token.png" alt="Pantalla Firmar PDF con Token">
         </figure>
@@ -473,13 +474,15 @@
         <ul>
           <li><strong>Biblioteca PKCS#11</strong>, <strong>Contraseña</strong>, <strong>Número de Slot:</strong> igual que en los módulos de token XML.</li>
           <li><strong>Archivo PDF:</strong> el documento a firmar.</li>
-          <li><strong>Posición (X,Y):</strong> deje ambos en <code>0</code> para una firma invisible (igual de válida, pero no se dibuja nada); indique coordenadas para una firma visible. El origen <code>(0,0)</code> es la esquina <strong>inferior izquierda</strong> de la página, y esas coordenadas ubican la esquina inferior izquierda del recuadro de firma. El botón <strong>"?"</strong> junto al campo explica el sistema de coordenadas en detalle, con las posiciones recomendadas para comercio exterior (Exportador y Funcionario Habilitado).</li>
-          <li><strong>Texto personalizado:</strong> se agrega debajo del nombre del firmante y la fecha; no tiene efecto si la firma es invisible.</li>
-          <li><strong>Bloquear documento después de firmar:</strong> certifica el PDF ("sin cambios permitidos") y lo cifra en AES-256. Solo puede haber una firma certificante por documento, y debe ser la primera — si planea agregar más firmas después, no la marque en la primera.</li>
+          <li><strong>Ubicación de la firma:</strong> presione <strong>"Elegir en el documento…"</strong> y se abre el PDF tal como se ve en pantalla. Arrastre el recuadro azul hasta el lugar donde quiere la firma y cámbiele el tamaño con sus bordes: dentro se ve el texto real que va a llevar (su nombre, la fecha y el texto personalizado). Puede cambiar de página con las miniaturas o los botones, acercar o alejar, y usar el menú "Posiciones sugeridas" para las posiciones de comercio exterior (Exportador y Funcionario Habilitado). A la derecha ve las firmas que el documento ya tiene, con su estado explicado en palabras simples, y los campos de firma que haya dejado preparados quien armó el documento (con un botón "Firmar aquí" para cada uno). La ventana no le deja tapar una firma que ya existe. Si quiere una firma que no se vea en el documento, tilde <strong>"Firma invisible"</strong>: es igual de válida. El botón <strong>"?"</strong> explica todo esto con más detalle.</li>
+          <li><strong>Texto personalizado:</strong> se agrega arriba del nombre del firmante y la fecha, dentro del mismo recuadro; no tiene efecto si la firma es invisible.</li>
+          <li><strong>Cerrar el documento con esta firma (firma final):</strong> úsela solo si es la última persona que va a firmar. Después, el documento no admite más firmas y cualquier cambio hace que las firmas dejen de ser válidas; Acrobat Reader también lo muestra como bloqueado. Antes de firmar se le pide confirmación. Se destilda sola después de cada firma.</li>
+          <li><strong>Proteger el contenido (permite que otras personas sigan firmando):</strong> úsela en la <em>primera</em> firma si quiere que nadie pueda modificar el contenido, pero otras personas todavía tienen que firmar. No se puede usar junto con "Cerrar el documento".</li>
         </ul>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
         <p class="oklist"><code>Éxito</code> — crea <code>&lt;nombre&gt;-signed.pdf</code> junto al original. Si el token necesitó un mecanismo de hash alternativo, se lo informa igual sin que tenga que hacer nada al respecto. Antes de firmar, valida que el certificado no esté revocado — ver el recuadro de "Firmar XML con Token".</p>
-        <p class="errlist"><code>Error</code> — PDF o biblioteca inexistente, el PDF ya está encriptado, alguna firma preexistente del PDF no es válida, el token no tiene clave privada o cadena de certificados válida, el certificado está revocado, o error al acceder a la clave.</p>
+        <p class="oklist"><code>Antes de firmar</code> — S-FiDE revisa el documento. Si ya fue cerrado por otra persona, no se firma y se le explica quién lo cerró. Si alguna firma anterior tiene un problema real (por ejemplo, el documento se modificó después de que esa persona firmó), se le muestra el detalle y usted decide si firma igual o cancela. Que un certificado haya vencido, o haya sido dado de baja, <em>después</em> de firmar no se considera un problema.</p>
+        <p class="errlist"><code>Error</code> — PDF o biblioteca inexistente, el documento está cerrado o protegido con restricciones de seguridad, el token no tiene clave privada o cadena de certificados válida, el certificado está revocado, o error al acceder a la clave.</p>
       </div>
 
       <div class="module" id="g9">
@@ -492,20 +495,20 @@
         <p>Los mismos que "Firmar PDF con Token", cambiando biblioteca/slot por <strong>Archivo PKCS#12</strong> y <strong>Contraseña</strong> del certificado.</p>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
         <p class="oklist"><code>Éxito</code> — mismo resultado que "Firmar PDF con Token". Antes de firmar, valida revocación con diálogo de confirmación si no se puede determinar — ver el recuadro en "Firmar XML con PKCS#12".</p>
-        <p class="errlist"><code>Error</code> — PDF o certificado inexistente, PDF ya encriptado, firma preexistente inválida, certificado sin clave privada o cadena válida, o certificado revocado.</p>
+        <p class="errlist"><code>Error</code> — PDF o certificado inexistente, documento cerrado o protegido con restricciones de seguridad, certificado sin clave privada o cadena válida, o certificado revocado.</p>
       </div>
 
       <div class="module" id="g10">
         <div class="module-head"><h3>10. Verificar Firmas en PDF</h3><span class="module-num">PDFVerifySignatures</span></div>
-        <p class="desc">Verifica la integridad criptográfica de cada firma de un PDF, si cubre todo el documento o solo una versión anterior, si está bloqueado/cifrado, y el estado de revocación del certificado firmante (OCSP con reintento por CRL) contra la fecha de firma. Admite firmas hechas con SHA-256 y también SHA-1 (compatibilidad con documentos antiguos).</p>
+        <p class="desc">Verifica la integridad de cada firma de un PDF, si el certificado estaba vigente y no estaba dado de baja <strong>en la fecha en que se firmó</strong>, si el documento se modificó después de la última firma, y si está bloqueado o cifrado. Entiende los documentos firmados con otros programas, como Acrobat Reader, y admite firmas SHA-256 y también SHA-1 (documentos antiguos).</p>
         <figure class="shot">
           <img src="img/manual-usuario/10_verificar_firmas_en_pdf.png" alt="Pantalla Verificar Firmas en PDF">
         </figure>
         <p class="field-label">Campos</p>
         <p>Igual que "Verificar Firmas en XML": <strong>Archivo PDF</strong> y la casilla <strong>Salida simple</strong>.</p>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
-        <p class="oklist"><code>Éxito</code> — por cada firma: cobertura, integridad, fecha, revocación, firmante, organización, vigencia, emisor y algoritmo; al final, si el documento está bloqueado y/o encriptado.</p>
-        <p class="errlist"><code>Documento inválido</code> — alguna firma no es válida, el certificado estaba revocado al momento de firmar, es un certificado no confiable/autofirmado, o no se pudo obtener el certificado firmante.</p>
+        <p class="oklist"><code>Éxito</code> — por cada firma, primero un resultado en palabras simples (<strong>VÁLIDA</strong>, <strong>VÁLIDA, CON COMPROBACIONES PENDIENTES</strong> —por ejemplo, si no hay Internet para consultar al emisor del certificado— o <strong>NO VÁLIDA</strong>) con su explicación, y después los datos técnicos: integridad, fecha, estado del certificado, firmante, organización, vigencia, emisor y algoritmo. Al final, el estado del documento: si está bloqueado (y por quién), si su contenido está protegido, si está encriptado y qué campos de firma quedaron sin firmar. Un certificado que venció o fue dado de baja <em>después</em> de firmar se menciona como dato, sin invalidar la firma.</p>
+        <p class="errlist"><code>Documento inválido</code> — una firma no es válida: el documento se modificó después de firmarse, la firma está dañada, el certificado no estaba vigente o ya estaba dado de baja cuando se firmó, es un certificado no confiable/autofirmado, o se alteró el contenido de una página después de la última firma.</p>
         <p class="errlist"><code>Error</code> — el documento no contiene ninguna firma digital.</p>
       </div>
 
@@ -565,6 +568,18 @@
           <span class="label">No usar para firmar muchos documentos seguidos</span>
           <p>Mismo motivo que en la versión XML: Windows puede pedir el PIN por diálogo en cada documento. Para firmar muchos PDF sin intervención, use "Firmar PDF con Token" o "Firmar PDF con PKCS#12".</p>
         </div>
+      </div>
+      <h3>Un documento, varias firmas</h3>
+      <p>Un mismo PDF puede pasar por varias personas, cada una en su computadora, firmando a su turno. Cada persona puede usar S-FiDE o Acrobat Reader: <strong>lo que firma S-FiDE es válido en Acrobat Reader, y a la inversa</strong>.</p>
+      <ol>
+        <li><strong>Quien arma el documento</strong> lo guarda como PDF (opcionalmente, con campos de firma preparados para cada firmante) y se lo envía a la primera persona que debe firmar. Si esa primera persona quiere impedir que cambien el contenido pero otros todavía deben firmar, tilda <em>"Proteger el contenido"</em>.</li>
+        <li><strong>Cada firmante intermedio</strong> abre la pestaña de firma de PDF, elige el documento y presiona <em>"Elegir en el documento…"</em>: ahí revisa el documento y el estado de las firmas anteriores, ubica su firma en un lugar libre y la aplica con <em>Ejecutar</em>. Guarda el archivo firmado (<code>…-signed.pdf</code>) y se lo envía a la persona siguiente. No tilda nada más.</li>
+        <li><strong>La última persona</strong> hace lo mismo y, además, tilda <em>"Cerrar el documento con esta firma"</em>. S-FiDE le pide confirmación porque no se puede deshacer. El documento queda cerrado: no admite más firmas, y cualquier cambio posterior invalida las firmas.</li>
+        <li><strong>Quien recibe el documento final</strong> (por ejemplo, un organismo) lo revisa con <em>"Verificar Firmas en PDF"</em>: ve el resultado de cada firma en palabras simples y que el documento está bloqueado.</li>
+      </ol>
+      <div class="callout note">
+        <span class="label">Si S-FiDE le avisa algo antes de firmar</span>
+        <p>"El documento está cerrado" significa que otra persona ya lo cerró: ya no se pueden agregar firmas (hacerlo invalidaría la firma de quien lo cerró). Si le avisa que una firma anterior <strong>no es válida</strong>, conviene consultar con quien le envió el documento antes de firmar; si decide continuar, su firma se agrega igual, pero la firma señalada seguirá sin ser válida.</p>
       </div>
     </section>
 
@@ -628,6 +643,8 @@
         <li>Necesita conexión a Internet y permiso de escritura sobre la carpeta de instalación (si no lo tiene, se lo informa: ejecútelo como administrador). Si su red usa un proxy, S-FiDE usa el configurado en Windows.</li>
         <li>Si una versión no trae paquete de actualización automática (por ejemplo, si cambia el Java embebido), se lo explica y le ofrece abrir la página de descargas para instalar la versión completa a mano.</li>
       </ul>
+      <h3>Novedades de la versión</h3>
+      <p>La primera vez que usted abre una versión nueva de S-FiDE se muestra automáticamente un cuadro de diálogo con los cambios y agregados, escrito en palabras simples. Si se actualizó saltando versiones, incluye las novedades de todas las versiones intermedias. Aparece una sola vez por usuario; para volver a verlo (con el historial completo) use <strong>Ayuda → Novedades de esta versión</strong>.</p>
       <h3>Acerca de</h3>
       <p>Fuera de la ventana de Ayuda, el menú <strong>Ayuda → Acerca de</strong> abre un diálogo aparte con la descripción de S-FiDE, la versión instalada, los enlaces al sitio de Grupo Sauken, al repositorio en GitHub y a la página del proyecto en GitHub Pages, y la licencia (GNU GPL v2 o posterior).</p>
       <figure class="shot">
@@ -646,6 +663,11 @@
         <tr><td>Windows me pide el PIN en cada documento</td><td>Es esperable con los módulos CSP/KSP — no hay forma de evitarlo. Para firmar varios documentos sin interrupciones, use el módulo equivalente de Token o PKCS#12.</td></tr>
         <tr><td>No encuentro el archivo firmado</td><td>Queda en la misma carpeta que el archivo original (ver la tabla de la sección anterior) — no en la carpeta de instalación de S-FiDE.</td></tr>
         <tr><td>No encuentro el .pem que extraje</td><td>Queda en su carpeta personal de S-FiDE (<code>C:\Users\su-usuario\S-FiDE</code>), no junto al token/archivo de origen. Use el botón "Abrir carpeta del .pem" de las pestañas "Ver Certificado".</td></tr>
+        <tr><td>S-FiDE dice que el documento "está cerrado" y no me deja firmar</td><td>Otra persona ya lo cerró con su firma final, o lo bloqueó con Acrobat Reader ("Bloquear documento después de firmar"): ya no admite más firmas. Pídale a esa persona una versión que no esté cerrada.</td></tr>
+        <tr><td>En la ventana de ubicación, "Usar esta ubicación" no se puede presionar</td><td>El recuadro está tapando una firma que ya existe: muévalo a un lugar libre. También ocurre si el documento está cerrado.</td></tr>
+        <tr><td>La ventana de ubicación no muestra el documento</td><td>Probablemente el PDF está protegido con una contraseña o dañado. S-FiDE le pide entonces la página y las medidas a mano (en puntos; una hoja A4 mide 595 × 842).</td></tr>
+        <tr><td>El botón Ejecutar está deshabilitado</td><td>Hay otra operación en curso (la barra de "Salida del Proceso" muestra "En curso…"). Espere a que termine: solo se hace una operación a la vez.</td></tr>
+        <tr><td>Colapsé la "Salida del Proceso" y no veo el resultado</td><td>Se abre sola al empezar la próxima operación; mientras tanto, la flecha de su barra de título la vuelve a expandir. Si llegó salida nueva, la barra lo indica con "● hay salida nueva".</td></tr>
         <tr><td>La actualización dice que hay archivos en uso</td><td>Otro usuario del equipo tiene S-FiDE abierto desde la misma carpeta. Pídale que lo cierre y vuelva a intentar.</td></tr>
         <tr><td>Cada usuario del equipo ve valores distintos (rutas, carpetas)</td><td>Es lo esperado desde la 1.4.0: lo que S-FiDE recuerda es por usuario.</td></tr>
         <tr><td>El programa dice que un archivo "no existe"</td><td>Use siempre el botón "Examinar..." para elegir el archivo en vez de escribir la ruta a mano — evita errores de tipeo.</td></tr>

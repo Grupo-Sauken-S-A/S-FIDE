@@ -12,3 +12,18 @@ Para verificar firmas en un documento PDF:
 
 Opcional:
   -simple      Muestra solo la información básica de la validación
+
+Qué informa:
+  Por cada firma, primero un resultado en lenguaje simple (VÁLIDA, VÁLIDA CON COMPROBACIONES PENDIENTES o NO VÁLIDA)
+  con su explicación, y después los datos técnicos. Al final, el estado del documento: si está bloqueado (y por
+  quién), si su contenido está protegido, si está encriptado y los campos de firma que quedaron sin firmar.
+
+Qué invalida y qué no:
+  - NO invalida: un certificado vencido o dado de baja DESPUÉS de firmar, una revocación que no se pudo comprobar
+    (por ejemplo sin Internet), un sello de tiempo, o comentarios e información de validación agregados después.
+  - SÍ invalida: un documento modificado después de firmarse, una firma dañada, un certificado que ya no era
+    vigente o ya estaba dado de baja en la fecha de la firma, o el contenido de una página alterado después de la
+    última firma.
+  - Entiende documentos firmados por otras aplicaciones, como Acrobat Reader.
+
+Código de salida: 0 si todas las firmas son válidas, 1 si alguna no lo es.

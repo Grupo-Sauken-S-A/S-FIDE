@@ -326,15 +326,17 @@ public final class UpdateController {
      * vez: el actualizador corre después de que la aplicación se cerró, así
      * que esta es la primera oportunidad de contarle al usuario cómo salió.
      */
-    public void showPendingResult() {
+    public void showPendingResult(Runnable afterClosing) {
         Path file = UserDataDirectory.get().resolve(UpdateService.RESULT_FILE_NAME);
         if (!Files.isRegularFile(file)) {
+            afterClosing.run();
             return;
         }
         Properties p = new Properties();
         try (Reader r = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             p.load(r);
         } catch (IOException | IllegalArgumentException e) {
+            afterClosing.run();
             return;
         } finally {
             try {
@@ -361,6 +363,9 @@ public final class UpdateController {
         }
         alert.initOwner(owner);
         alert.setTitle("Actualización de S-FiDE");
+        // Lo que sigue (el resumen de novedades) se muestra recién cuando la persona cierra este aviso, para
+        // que no se apilen dos ventanas a la vez.
+        alert.setOnHidden(e -> afterClosing.run());
         alert.show();
     }
 

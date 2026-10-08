@@ -56,9 +56,9 @@ import com.itextpdf.kernel.pdf.PdfName;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.signatures.*;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import com.sauken.s_fide.pdf_verify_signatures.validation.RevocationValidator;
-import com.sauken.s_fide.pdf_verify_signatures.validation.RevocationValidator.RevocationStatus;
+import com.sauken.s_fide.pdf_verify_signatures.validation.PdfDocumentAnalyzer;
 import java.io.*;
+import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.*;
 import java.util.*;
@@ -67,7 +67,7 @@ import java.nio.charset.StandardCharsets;
 
 public class PDFVerifySignatures {
     private static final Logger LOGGER = Logger.getLogger(PDFVerifySignatures.class.getName());
-    private static final String VERSION = "S-FIDE PDFVerifySignatures v1.4.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE PDFVerifySignatures v1.5.0 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT;
     private static final String HELP_TEXT;
     private static final String SEPARATOR = "\n----------------------------------------\n";
@@ -148,103 +148,137 @@ public class PDFVerifySignatures {
     }
 
     private static void verifyPDFSignatures(String pdfPath) throws IOException {
+        PdfDocumentAnalyzer.Analisis analisis;
+        try {
+            analisis = PdfDocumentAnalyzer.analizar(Paths.get(pdfPath), true);
+        } catch (PdfDocumentAnalyzer.DocumentoIlegibleException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+
+        if (analisis.firmas().isEmpty()) {
+            throw new IllegalArgumentException("El documento no contiene firmas digitales.");
+        }
+
+        boolean hasErrors = analisis.hayProblemas();
+        boolean firmasInvalidas = analisis.firmas().stream()
+                .anyMatch(f -> f.veredicto() == PdfDocumentAnalyzer.Veredicto.INVALIDA);
+        boolean comprobacionesIncompletas = analisis.firmas().stream()
+                .anyMatch(f -> f.veredicto() == PdfDocumentAnalyzer.Veredicto.NO_VERIFICABLE);
+
         try (PdfReader reader = new PdfReader(pdfPath);
              PdfDocument pdfDoc = new PdfDocument(reader)) {
 
             SignatureUtil signUtil = new SignatureUtil(pdfDoc);
-            List<String> names = signUtil.getSignatureNames();
 
-            if (names.isEmpty()) {
-                throw new IllegalArgumentException("El documento no contiene firmas digitales.");
-            }
-
-            boolean hasErrors = false;
-            for (int i = 0; i < names.size(); i++) {
-                if (i > 0) {
+            for (PdfDocumentAnalyzer.FirmaPrevia firma : analisis.firmas()) {
+                if (firma.numero() > 1) {
                     System.out.println(SEPARATOR);
                 }
+                System.out.println((firma.esSelloDeTiempo() ? "Verificando sello de tiempo #" : "Verificando firma #")
+                        + firma.numero() + ":");
+                System.out.println("Resultado: " + etiqueta(firma));
+                System.out.println(firma.mensaje());
+                for (String nota : firma.notas()) {
+                    System.out.println("Nota: " + nota);
+                }
 
-                String name = names.get(i);
-                System.out.println("Verificando firma #" + (i + 1) + ":");
-
-                try {
-                    boolean isValid = verifySignature(signUtil, name);
-                    hasErrors |= !isValid;
-                } catch (Exception e) {
-                    LOGGER.severe("Error verificando firma " + name + ": " + e.getMessage());
-                    System.out.println("Error en firma " + name + ": " + e.getMessage());
-                    hasErrors = true;
+                if (firma.esSelloDeTiempo()) {
+                    System.out.println("Fecha del sello: " + fechaLegible(firma.fecha()));
+                } else {
+                    hasErrors |= imprimirDetalle(signUtil, firma);
                 }
             }
 
             System.out.println("\n=== RESULTADO FINAL ===");
+            switch (analisis.cambios().nivel()) {
+                case INFORMATIVO -> System.out.println("Nota: " + analisis.cambios().mensaje());
+                case AVISO, ALERTA -> System.out.println("Aviso: " + analisis.cambios().mensaje());
+                case NINGUNO -> {
+                }
+            }
+
             if (hasErrors) {
-                System.out.println("DOCUMENTO INVÁLIDO: Una o más firmas no son válidas.");
+                System.out.println(firmasInvalidas || !analisis.hayProblemas()
+                        ? "DOCUMENTO INVÁLIDO: Una o más firmas no son válidas."
+                        : "DOCUMENTO INVÁLIDO: El documento fue modificado después de la última firma.");
             } else {
                 System.out.println("DOCUMENTO VÁLIDO: Todas las firmas son válidas.");
+                if (comprobacionesIncompletas) {
+                    System.out.println("Algunas comprobaciones no pudieron completarse (vea el detalle de cada firma). "
+                            + "Eso no invalida el documento.");
+                }
             }
 
             System.out.println("\nEstado del documento:");
-            System.out.println("- Documento bloqueado: " + (isCertified(pdfDoc) ? "Sí" : "No"));
+            boolean cerrado = analisis.estado() == PdfDocumentAnalyzer.Estado.CERRADO;
+            System.out.println("- Documento bloqueado: " + (cerrado ? "Sí" : "No"));
+            if (cerrado) {
+                System.out.println("  " + analisis.motivoCierre());
+            }
+            if (analisis.contenidoProtegido()) {
+                System.out.println("- Contenido protegido contra cambios (admite más firmas): Sí");
+            }
             System.out.println("- Documento encriptado: " + (reader.isEncrypted() ? "Sí" : "No"));
+            if (!analisis.camposVacios().isEmpty()) {
+                System.out.println("- Campos de firma todavía sin firmar: " + analisis.camposVacios().stream()
+                        .map(PdfDocumentAnalyzer.CampoVacio::nombre).collect(java.util.stream.Collectors.joining(", ")));
+            }
 
             System.exit(hasErrors ? 1 : 0);
         }
     }
 
-    /**
-     * El documento está "bloqueado" cuando tiene una certificación DocMDP (la que aplican
-     * PDFSignerPKCS11/PKCS12/WindowsCSP con "-l true"/"Bloquear documento"). Esa marca vive en
-     * el diccionario /Perms/DocMDP del catálogo del PDF, no en si el PdfDocument se abrió para
-     * escritura — comprobar pdfDoc.getWriter() (como se hacía antes) siempre daba "Sí" porque
-     * este módulo solo abre el PDF en modo lectura.
-     */
-    private static boolean isCertified(PdfDocument pdfDoc) {
-        PdfDictionary perms = pdfDoc.getCatalog().getPdfObject().getAsDictionary(PdfName.Perms);
-        return perms != null && perms.getAsDictionary(PdfName.DocMDP) != null;
+    private static String etiqueta(PdfDocumentAnalyzer.FirmaPrevia firma) {
+        return switch (firma.veredicto()) {
+            case VALIDA -> "VÁLIDA";
+            // Si la firma está íntegra solo falta una comprobación externa (vigencia, revocación): no es un problema.
+            case NO_VERIFICABLE -> firma.integra() ? "VÁLIDA, CON COMPROBACIONES PENDIENTES"
+                    : "NO SE PUDO COMPROBAR";
+            case INVALIDA -> "NO VÁLIDA";
+        };
     }
 
-    private static boolean verifySignature(SignatureUtil signUtil, String name)
-            throws GeneralSecurityException, IOException {
-        PdfPKCS7 pkcs7 = signUtil.readSignatureData(name);
+    private static String fechaLegible(Date fecha) {
+        return new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(fecha);
+    }
 
-        boolean coversWholeDoc = signUtil.signatureCoversWholeDocument(name);
-        System.out.println("Cubre todo el documento: " + (coversWholeDoc ? "Sí" : "No"));
+    /**
+     * Imprime los datos técnicos de una firma de persona. Devuelve {@code true} si el certificado debe
+     * rechazarse por ser claramente de prueba o autofirmado (regla que ya tenía este verificador).
+     */
+    private static boolean imprimirDetalle(SignatureUtil signUtil, PdfDocumentAnalyzer.FirmaPrevia firma) {
+        System.out.println("Integridad de firma: " + (firma.integra() ? "Válida"
+                : firma.veredicto() == PdfDocumentAnalyzer.Veredicto.NO_VERIFICABLE ? "No comprobable" : "Inválida"));
+        if (firma.fecha() != null) {
+            System.out.println("Fecha de firma: " + fechaLegible(firma.fecha()));
+        }
+        if (firma.detalleRevocacion() != null) {
+            System.out.println("Estado de revocación: " + firma.detalleRevocacion());
+        }
 
-        boolean integrityValid = pkcs7.verifySignatureIntegrityAndAuthenticity();
-        System.out.println("Integridad de firma: " + (integrityValid ? "Válida" : "Inválida"));
-        if (!integrityValid) return false;
-
-        X509Certificate signingCert = pkcs7.getSigningCertificate();
-        if (signingCert == null) {
-            System.out.println("Error: No se pudo obtener el certificado firmante");
+        PdfPKCS7 pkcs7;
+        try {
+            pkcs7 = signUtil.readSignatureData(firma.campo());
+        } catch (RuntimeException e) {
             return false;
         }
 
-        // Verificar emisor
-        String issuerCN = extractCN(signingCert.getIssuerX500Principal().getName());
-        if (issuerCN.isEmpty() || issuerCN.toLowerCase().contains("self signed") ||
-                issuerCN.toLowerCase().contains("localhost")) {
-            System.out.println("\nADVERTENCIA: Certificado no confiable o autofirmado");
-            System.out.println("Este certificado podría haber sido generado para uso interno o para realizar pruebas");
-            return false;
-        }
-
-        Date signDate = pkcs7.getSignDate().getTime();
-        System.out.println("Fecha de firma: " + signDate);
-
-        RevocationStatus revocationStatus = RevocationValidator.checkCertificateRevocation(signingCert, signDate);
-        System.out.println("Estado de revocación: " + revocationStatus);
-        if (revocationStatus == RevocationStatus.REVOKED) {
-            System.out.println("Error: Certificado revocado al momento de la firma");
-            return false;
+        boolean certificadoNoConfiable = false;
+        X509Certificate cert = pkcs7.getSigningCertificate();
+        if (firma.integra() && cert != null) {
+            String issuerCN = extractCN(cert.getIssuerX500Principal().getName());
+            if (issuerCN.isEmpty() || issuerCN.toLowerCase().contains("self signed")
+                    || issuerCN.toLowerCase().contains("localhost")) {
+                System.out.println("\nADVERTENCIA: Certificado no confiable o autofirmado");
+                System.out.println("Este certificado podría haber sido generado para uso interno o para realizar pruebas");
+                certificadoNoConfiable = true;
+            }
         }
 
         if (!simpleOutput) {
             printSignatureInfo(pkcs7);
         }
-
-        return true;
+        return certificadoNoConfiable;
     }
 
     private static void printSignatureInfo(PdfPKCS7 pkcs7) {

@@ -38,7 +38,21 @@
 
 ## DocMDP (Document Modification Detection and Prevention)
 - Permiso de PDF que, aplicado por una firma certificante, restringe qué cambios son válidos
-  después de firmar. Se activa con la opción "Bloquear documento después de firmar"
+  después de firmar. Solo puede aplicarlo la primera firma de un documento
+
+## Firma de cierre (firma final)
+- La última firma de un documento que ya tenía firmas. No modifica las anteriores y, después de
+  ella, el documento no admite más firmas. Acrobat Reader también lo muestra como bloqueado. Se
+  activa con la opción "Cerrar el documento con esta firma (firma final)"
+
+## Campo de firma
+- Lugar marcado en un PDF para que alguien firme ahí (por ejemplo, el que deja preparado quien
+  arma el documento con Acrobat). S-FiDE puede firmar dentro de un campo de firma vacío
+
+## Sello de tiempo
+- Constancia que emite un tercero de confianza para respaldar la fecha de un documento o de una
+  firma. S-FiDE los reconoce al revisar un PDF, pero no los genera: la fecha de sus firmas es la
+  del reloj del equipo de quien firma
 
 ## FIPS 140-2 / 140-3
 - Estándar de seguridad del NIST (EE.UU.) para módulos criptográficos, con niveles de 1 a 4.

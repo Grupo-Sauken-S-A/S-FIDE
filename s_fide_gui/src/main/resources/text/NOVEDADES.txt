@@ -1,0 +1,43 @@
+# Novedades de S-FiDE
+#
+# Una sección por versión, de la más nueva a la más vieja. Este archivo conserva TODO el historial a
+# propósito: quien actualiza saltando versiones (por ejemplo de la 1.4.0 directamente a una futura 1.6.0)
+# ve las novedades de todas las versiones intermedias. Está escrito para personas que no son técnicas.
+#
+# Formato:  "## versión | título"  /  una línea de resumen (opcional)  /  "### grupo"  /  "- novedad"
+
+## 1.5.0 | Firmar PDF es más fácil, y varias personas pueden firmar el mismo documento
+Esta versión permite que un documento PDF circule entre varias personas, cada una firmando a su turno desde su propia computadora, aunque algunas usen S-FiDE y otras Acrobat Reader. Lo que firma S-FiDE es válido en Acrobat Reader, y a la inversa.
+
+### Nuevo
+- Elegir dónde queda la firma mirando el propio documento, como en Acrobat Reader: se arrastra el recuadro y se le cambia el tamaño con el mouse. Se terminaron los números de X e Y (siguen disponibles para quien los prefiera).
+- El recuadro muestra el texto real que va a llevar la firma: su nombre, la fecha y el texto personalizado.
+- Se puede firmar en cualquier página del documento, con el tamaño de recuadro que se quiera.
+- Si quien armó el documento dejó campos de firma preparados, se puede firmar dentro del campo que corresponde.
+- Antes de firmar, S-FiDE revisa el documento y las firmas que ya tiene, y se lo explica en palabras simples. Si una firma anterior tiene un problema real, se le avisa y usted decide si firma igual.
+- Una persona puede cerrar el documento con su firma final: después no admite más firmas, y Acrobat Reader también lo muestra como bloqueado. Si alguien ya lo cerró, S-FiDE se lo explica y no firma encima.
+- Nueva opción para la primera firma: proteger el contenido del documento permitiendo que otras personas sigan firmando.
+- Si se actualiza S-FiDE, la primera vez que lo abre ve este resumen de novedades.
+
+### Mejoras
+- Los avisos sobre firmas anteriores ya no asustan sin motivo: que un certificado haya vencido, o haya sido dado de baja, después de que la persona firmó no afecta esa firma y se muestra solo como dato informativo. Solo se destaca una firma realmente inválida, por ejemplo porque el documento se modificó después de firmarse.
+- Solo se hace una operación a la vez: mientras una está en curso, el botón Ejecutar de todas las pantallas queda deshabilitado.
+- La Salida del Proceso se puede achicar para dejar más lugar a la pantalla principal, y tiene botones para copiar, guardar y limpiar su contenido.
+- La verificación de firmas en PDF explica mejor cada resultado, reconoce los documentos bloqueados con Acrobat y los sellos de tiempo, y avisa de los campos de firma que quedaron sin firmar.
+
+### Correcciones
+- Cerrar un documento que ya tenía firmas con "Bloquear" dejaba dañadas las firmas anteriores. Ahora se cierra sin tocarlas.
+- Un documento que otra persona había bloqueado con Acrobat podía firmarse igual, lo que invalidaba la firma de esa persona. Ahora S-FiDE lo impide y explica por qué.
+- S-FiDE se negaba a firmar si el documento tenía una firma anterior inválida. Ahora informa y deja la decisión a quien firma.
+- Ante un documento protegido con restricciones, el mensaje ahora explica qué hacer.
+
+## 1.4.0 | Actualizaciones desde el propio programa y datos de cada usuario
+### Nuevo
+- Ayuda, Buscar actualizaciones: S-FiDE avisa cuando hay una versión nueva, la descarga, verifica que sea auténtica y la instala. Si algo sale mal, vuelve atrás sin dejar la instalación a medias.
+- Cada usuario guarda su configuración y los certificados que exporta en su propia carpeta personal, y la carpeta de instalación puede ser compartida o de solo lectura.
+- Las contraseñas se recuerdan solo mientras el programa está abierto y nunca se guardan en el disco.
+- Se recuerdan las últimas carpetas usadas para elegir documentos.
+- Los programas que extraen certificados ahora los guardan en un archivo .pem en la carpeta personal e informan si el certificado está dado de baja.
+
+### Mejoras
+- Con tokens: si el token no está en el lugar indicado, S-FiDE lo busca solo en los otros lugares, y si hay varios no prueba la contraseña en ninguno para no bloquearlos.

@@ -51,6 +51,8 @@
 package com.sauken.s_fide.s_fide_gui.utils;
 
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextArea;
@@ -94,6 +96,116 @@ public final class GUIUtils {
 
     private GUIUtils() {
         // Constructor privado para evitar instanciación
+    }
+
+    // --- Una sola operación a la vez ---
+    //
+    // Cada ejecución de un programa de firma aplica UNA firma, y nunca debe haber dos corriendo a la vez
+    // desde la interfaz (por ejemplo, firmar el mismo documento desde dos pestañas). Mientras hay una
+    // operación en curso, todos los botones "Ejecutar" quedan deshabilitados (ver busyProperty()). Se
+    // cuenta en vez de usar un simple verdadero/falso porque algunas operaciones encadenan varias
+    // ejecuciones (revisión previa, verificación de revocación y firma) y la espera dura hasta la última.
+
+    private static final ReadOnlyBooleanWrapper busy = new ReadOnlyBooleanWrapper(false);
+    private static int busyCount;
+
+    /** Verdadero mientras hay una operación en curso; los botones "Ejecutar" se deshabilitan con esto. */
+    public static ReadOnlyBooleanProperty busyProperty() {
+        return busy.getReadOnlyProperty();
+    }
+
+    /** Marca el comienzo de una operación. Cada llamada debe tener su {@link #endBusy()}. */
+    public static void beginBusy() {
+        enHiloDeLaInterfaz(() -> {
+            busyCount++;
+            busy.set(true);
+        });
+    }
+
+    /** Marca el fin de una operación iniciada con {@link #beginBusy()}. */
+    public static void endBusy() {
+        enHiloDeLaInterfaz(() -> {
+            busyCount = Math.max(0, busyCount - 1);
+            busy.set(busyCount > 0);
+        });
+    }
+
+    private static void enHiloDeLaInterfaz(Runnable accion) {
+        if (Platform.isFxApplicationThread()) {
+            accion.run();
+        } else {
+            Platform.runLater(accion);
+        }
+    }
+
+    /** Envuelve la acción final de una operación para que, al terminar, se libere la espera global. */
+    private static IntConsumer conEsperaGlobal(IntConsumer alTerminar) {
+        beginBusy();
+        return codigo -> {
+            endBusy();
+            if (alTerminar != null) {
+                alTerminar.accept(codigo);
+            }
+        };
+    }
+
+    /** Resultado de ejecutar un programa de forma sincrónica: código de salida y todo lo que imprimió. */
+    public record SalidaDeProceso(int codigo, List<String> lineas, boolean agotoTiempo) {
+    }
+
+    /**
+     * Ejecuta un jar de S-FiDE y espera su resultado, sin mostrar nada en pantalla: sirve para las consultas de
+     * solo lectura (análisis de un documento, vista previa del texto de una firma). Bloquea el hilo que lo
+     * llama: no usar desde el hilo de la interfaz. La salida se lee mientras se espera, nunca después, para
+     * que un programa que imprima mucho no quede bloqueado escribiendo.
+     */
+    public static SalidaDeProceso ejecutarYCapturar(String jarName, String[] args, int segundosMaximos) {
+        Path jarPath = Paths.get(System.getProperty("user.dir"), jarName + ".jar");
+        if (!jarPath.toFile().exists()) {
+            return new SalidaDeProceso(1, List.of("Error: No se encuentra el archivo " + jarPath), false);
+        }
+
+        List<String> command = new ArrayList<>();
+        command.add(JAVA_EXECUTABLE);
+        command.add("-Dfile.encoding=UTF-8");
+        command.add("-Dsun.jnu.encoding=UTF-8");
+        command.add("-Dconsole.encoding=UTF-8");
+        command.add("-jar");
+        command.add(jarPath.toString());
+        command.addAll(Arrays.asList(args));
+
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        processBuilder.redirectErrorStream(true);
+        processBuilder.environment().put("LANG", "es_ES.UTF-8");
+        processBuilder.environment().put("LC_ALL", "es_ES.UTF-8");
+
+        List<String> lineas = java.util.Collections.synchronizedList(new ArrayList<>());
+        try {
+            Process process = processBuilder.start();
+            Thread lector = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(process.getInputStream(), "UTF-8"))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        lineas.add(line);
+                    }
+                } catch (IOException ignored) {
+                    // Pasa si el proceso se destruye a la fuerza por tiempo agotado más abajo.
+                }
+            }, "lector-" + jarName);
+            lector.setDaemon(true);
+            lector.start();
+
+            if (!process.waitFor(segundosMaximos, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                lector.join(2000);
+                return new SalidaDeProceso(1, new ArrayList<>(lineas), true);
+            }
+            lector.join(5000);
+            return new SalidaDeProceso(process.exitValue(), new ArrayList<>(lineas), false);
+        } catch (Exception e) {
+            return new SalidaDeProceso(1, List.of("Error ejecutando " + jarName + ": " + e.getMessage()), false);
+        }
     }
 
     public static void showError(String titulo, String mensaje) {
@@ -149,10 +261,11 @@ public final class GUIUtils {
      * real, nunca ante un timeout, un error de arranque, o una validación de
      * revocación fallida.
      */
-    public static void executeCommand(String jarName, String[] args, TextArea outputTextArea, IntConsumer onExit) {
+    public static void executeCommand(String jarName, String[] args, TextArea outputTextArea, IntConsumer alTerminar) {
         if (jarName == null || args == null || outputTextArea == null) {
             throw new IllegalArgumentException("Parámetros no válidos para la ejecución del comando");
         }
+        final IntConsumer onExit = conEsperaGlobal(alTerminar);
 
         CompletableFuture.runAsync(() -> {
             Path jarPath = Paths.get(System.getProperty("user.dir"), jarName + ".jar");
@@ -285,10 +398,11 @@ public final class GUIUtils {
      * confirmación aceptada).
      */
     public static void executeSignCommandWithRevocationCheck(
-            String jarName, String[] checkArgs, String[] signArgs, TextArea outputTextArea, IntConsumer onExit) {
+            String jarName, String[] checkArgs, String[] signArgs, TextArea outputTextArea, IntConsumer alTerminar) {
         if (jarName == null || checkArgs == null || signArgs == null || outputTextArea == null) {
             throw new IllegalArgumentException("Parámetros no válidos para la ejecución del comando");
         }
+        final IntConsumer onExit = conEsperaGlobal(alTerminar);
 
         CompletableFuture.runAsync(() -> {
             RevocationCheckOutcome outcome = runRevocationCheck(jarName, checkArgs);

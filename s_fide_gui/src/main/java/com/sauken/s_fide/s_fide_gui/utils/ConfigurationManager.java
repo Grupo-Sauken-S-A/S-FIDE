@@ -10,6 +10,7 @@ import javafx.util.Duration;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -42,6 +43,8 @@ public class ConfigurationManager {
     static final int CURRENT_SCHEMA = 2;
     private static final String SCHEMA_KEY = "config.schema";
     private static final String APP_VERSION_KEY = "app.version";
+    /** Última versión cuyas novedades ya se le mostraron a este usuario. */
+    private static final String WHATS_NEW_KEY = "novedades.vistas";
 
     /**
      * Claves del archivo de la instalación (versiones anteriores) que NO se
@@ -53,6 +56,9 @@ public class ConfigurationManager {
     private static ConfigurationManager instance;
     private final Path configFilePath;
     private final Properties properties;
+    private String versionAlIniciar;
+    private boolean usuarioNuevo;
+    private boolean configuracionDeVersionMasNueva;
     private final PauseTransition saveDebounce;
 
     private final StringProperty pkcs11LibraryPath = new SimpleStringProperty("");
@@ -152,6 +158,11 @@ public class ConfigurationManager {
             }
         }
 
+        // Antes de que este arranque pise "app.version" con la versión actual, se recuerda con qué versión
+        // se usó S-FiDE la vez anterior: es lo que permite avisarle al usuario qué cambió (ver novedadesPendientes).
+        versionAlIniciar = properties.getProperty(APP_VERSION_KEY);
+        usuarioNuevo = !existed && !migratedFromInstallation;
+
         // Un archivo sin config.schema es de una versión anterior a 1.4.0 (esquema 1).
         int storedSchema = parseSchema(properties.getProperty(SCHEMA_KEY), (existed || migratedFromInstallation) ? 1 : CURRENT_SCHEMA);
         boolean changed = false;
@@ -163,6 +174,7 @@ public class ConfigurationManager {
             // vieja): se respeta tal cual y no se rebaja el esquema, para no perder sus claves.
             System.out.println("Aviso: la configuración fue escrita por una versión más nueva de S-FiDE (esquema "
                     + storedSchema + "); se conserva sin cambios.");
+            configuracionDeVersionMasNueva = true;
             return;
         }
         if (!AppInfo.version().equals(properties.getProperty(APP_VERSION_KEY))) {
@@ -173,6 +185,54 @@ public class ConfigurationManager {
             properties.setProperty(SCHEMA_KEY, String.valueOf(CURRENT_SCHEMA));
             saveConfiguration();
         }
+    }
+
+    /** Qué novedades hay que mostrar en este arranque: si corresponde avisar y desde qué versión viene el usuario. */
+    public record NovedadesPendientes(boolean avisar, Optional<String> desde) {
+    }
+
+    /**
+     * Decide si hay que avisarle al usuario que su versión cambió. Por usuario, no por instalación: cada
+     * persona lo ve la primera vez que abre una versión nueva.
+     * <ul>
+     *   <li>Usuario nuevo (sin configuración propia ni heredada): no hay nada que contar.</li>
+     *   <li>Si ya se le mostraron las novedades de alguna versión, se parte de esa.</li>
+     *   <li>Si no, se parte de la versión con la que usó S-FiDE la última vez; y si no se sabe (viene de una
+     *   versión anterior a 1.4.0, que no la anotaba), se parte de "desconocida": se le muestra todo el historial.</li>
+     * </ul>
+     * Quién decide qué novedades corresponden entre esas dos versiones, saltos incluidos, es {@code ReleaseNotes}.
+     */
+    static NovedadesPendientes decidirNovedades(boolean usuarioNuevo, String vistas, String versionAlIniciar,
+                                                String versionActual) {
+        if (versionActual == null || versionActual.isBlank() || "desconocida".equals(versionActual)) {
+            return new NovedadesPendientes(false, Optional.empty());
+        }
+        Optional<String> desde;
+        if (vistas != null && !vistas.isBlank()) {
+            desde = Optional.of(vistas.trim());
+        } else if (usuarioNuevo) {
+            return new NovedadesPendientes(false, Optional.empty());
+        } else {
+            desde = versionAlIniciar == null || versionAlIniciar.isBlank()
+                    ? Optional.empty() : Optional.of(versionAlIniciar.trim());
+        }
+        return new NovedadesPendientes(!versionActual.equals(desde.orElse(null)), desde);
+    }
+
+    public NovedadesPendientes novedadesPendientes() {
+        return decidirNovedades(usuarioNuevo, properties.getProperty(WHATS_NEW_KEY), versionAlIniciar,
+                AppInfo.version());
+    }
+
+    /** Anota que a este usuario ya se le mostraron las novedades de la versión instalada. */
+    public synchronized void marcarNovedadesVistas() {
+        String actual = AppInfo.version();
+        if (configuracionDeVersionMasNueva || "desconocida".equals(actual)
+                || actual.equals(properties.getProperty(WHATS_NEW_KEY))) {
+            return;
+        }
+        properties.setProperty(WHATS_NEW_KEY, actual);
+        saveConfiguration();
     }
 
     private static void loadInto(Properties target, Path file) {

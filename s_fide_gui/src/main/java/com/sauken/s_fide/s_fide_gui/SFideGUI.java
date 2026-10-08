@@ -50,11 +50,16 @@
 
 package com.sauken.s_fide.s_fide_gui;
 
+import com.sauken.s_fide.s_fide_gui.update.ReleaseNotes;
 import com.sauken.s_fide.s_fide_gui.update.UpdateController;
+import com.sauken.s_fide.s_fide_gui.update.WhatsNewDialog;
 import com.sauken.s_fide.s_fide_gui.utils.AppInfo;
+import com.sauken.s_fide.s_fide_gui.utils.OutputPanel;
 import com.sauken.s_fide.s_fide_gui.utils.GUIUtils;
 import com.sauken.s_fide.s_fide_gui.validators.ModuleValidator;
 import com.sauken.s_fide.s_fide_gui.utils.ConfigurationManager;
+import com.sauken.s_fide.s_fide_gui.pdf.PdfPreflight;
+import com.sauken.s_fide.s_fide_gui.pdf.PdfSigningPanel;
 import com.sauken.s_fide.s_fide_gui.utils.SessionPasswordStore;
 import com.sauken.s_fide.s_fide_gui.utils.SingleInstanceGuard;
 import com.sauken.s_fide.s_fide_gui.utils.TokenProfileCatalog;
@@ -110,6 +115,7 @@ public class SFideGUI extends Application {
     private static final String VERSION = "S-FIDE GUI v" + VERSION_NUMBER + " - Grupo Sauken S.A.";
     private static final String CSS_FILE = "css/styles.css";
     private static final String HELP_FILE = "text/HELP.txt";
+    private static final String RELEASE_NOTES_FILE = "text/NOVEDADES.txt";
     private static final String LICENSE_FILE = "text/LICENSE.txt";
     private static final String FAQ_FILE = "text/FAQ.txt";
     private static final String GLOSARIO_FILE = "text/GLOSARIO.txt";
@@ -129,10 +135,12 @@ public class SFideGUI extends Application {
     };
 
     private TextArea sharedOutputArea;
+    private OutputPanel outputPanel;
     private ExecutorService executorService;
     private Stage primaryStage;
     private String licenseText;
     private String helpText;
+    private String releaseNotesText;
     private String faqText;
     private String glosarioText;
     private String comexText;
@@ -156,6 +164,7 @@ public class SFideGUI extends Application {
             });
 
             helpText = loadTextResource(HELP_FILE, "Archivo de ayuda");
+            releaseNotesText = loadTextResource(RELEASE_NOTES_FILE, "Archivo de novedades");
             faqText = loadTextResource(FAQ_FILE, "Archivo de FAQ");
             licenseText = loadTextResource(LICENSE_FILE, "Archivo de licencia");
             glosarioText = loadTextResource(GLOSARIO_FILE, "Archivo de glosario");
@@ -482,12 +491,14 @@ public class SFideGUI extends Application {
         root.setStyle("-fx-background-color: #f5f5f5;");
 
         Node mainLayout = createMainLayout();
-        VBox.setVgrow(mainLayout, Priority.ALWAYS);
+        // Pantalla principal arriba y salida abajo, con un divisor: al colapsar la salida, la pantalla
+        // principal recupera todo el espacio.
+        SplitPane contenido = createOutputPanel().montarDebajoDe(mainLayout);
+        VBox.setVgrow(contenido, Priority.ALWAYS);
 
         root.getChildren().addAll(
                 createMenuBar(),
-                mainLayout,
-                createOutputPane(),
+                contenido,
                 createControlBox()
         );
 
@@ -500,8 +511,48 @@ public class SFideGUI extends Application {
         executorService.submit(this::createDocShortcutsIfNeeded);
 
         // Si una actualización anterior dejó un resultado, se le cuenta al usuario una sola vez.
-        Platform.runLater(updateController::showPendingResult);
+        Platform.runLater(() -> updateController.showPendingResult(this::showWhatsNewIfUpdated));
         executorService.submit(UpdateController::cleanLeftovers);
+    }
+
+    /**
+     * Primer arranque de cada usuario con una versión nueva: se le cuentan, en un cuadro de diálogo, los cambios
+     * y agregados. Si se saltó versiones (por ejemplo, de la 1.4.0 a una 1.6.0) se incluyen las de todas las
+     * intermedias. Se anota como visto antes de mostrarlo, para que nunca se repita aunque algo falle.
+     */
+    private void showWhatsNewIfUpdated() {
+        try {
+            ConfigurationManager.NovedadesPendientes pendientes = configManager.novedadesPendientes();
+            if (!pendientes.avisar()) {
+                configManager.marcarNovedadesVistas();
+                return;
+            }
+            List<ReleaseNotes.Entrada> entradas = ReleaseNotes.desde(
+                    ReleaseNotes.parse(releaseNotesText), pendientes.desde(), AppInfo.version());
+            configManager.marcarNovedadesVistas();
+            if (!entradas.isEmpty()) {
+                WhatsNewDialog.mostrar(primaryStage, entradas, AppInfo.version(), pendientes.desde(), false,
+                        this::openInBrowser);
+            }
+        } catch (RuntimeException e) {
+            // Un problema con las novedades nunca debe impedir usar el programa.
+            System.err.println("No se pudieron mostrar las novedades: " + e.getMessage());
+        }
+    }
+
+    /** Menú Ayuda: todo el historial de novedades, a pedido. */
+    private void showReleaseNotesHistory() {
+        List<ReleaseNotes.Entrada> entradas = ReleaseNotes.desde(
+                ReleaseNotes.parse(releaseNotesText), java.util.Optional.empty(), AppInfo.version());
+        if (entradas.isEmpty()) {
+            Alert alerta = new Alert(Alert.AlertType.INFORMATION, "No hay novedades registradas para esta versión.");
+            alerta.setHeaderText(null);
+            alerta.initOwner(primaryStage);
+            alerta.showAndWait();
+            return;
+        }
+        WhatsNewDialog.mostrar(primaryStage, entradas, AppInfo.version(), java.util.Optional.empty(), true,
+                this::openInBrowser);
     }
 
     /**
@@ -1299,6 +1350,9 @@ public class SFideGUI extends Application {
         button.setDefaultButton(true);
         button.getStyleClass().add("execute");
         button.setTooltip(new Tooltip("Ejecutar operación"));
+        // Una sola operación a la vez: mientras otra está en curso (en cualquier pestaña) no se puede lanzar
+        // otra. Cada ejecución de un programa de firma aplica una firma y no deben superponerse.
+        button.disableProperty().bind(GUIUtils.busyProperty());
         return button;
     }
 
@@ -1573,6 +1627,8 @@ public class SFideGUI extends Application {
 
         MenuItem updatesMenuItem = new MenuItem("Buscar actualizaciones...");
         updatesMenuItem.setOnAction(e -> Platform.runLater(updateController::checkInteractively));
+        MenuItem whatsNewMenuItem = new MenuItem("Novedades de esta versión");
+        whatsNewMenuItem.setOnAction(e -> Platform.runLater(this::showReleaseNotesHistory));
 
         helpMenu.getItems().addAll(
                 versionMenuItem,
@@ -1580,6 +1636,7 @@ public class SFideGUI extends Application {
                 helpMenuItem,
                 new SeparatorMenuItem(),
                 updatesMenuItem,
+                whatsNewMenuItem,
                 new SeparatorMenuItem(),
                 aboutMenuItem
         );
@@ -1588,37 +1645,16 @@ public class SFideGUI extends Application {
         return menuBar;
     }
 
-    private TitledPane createOutputPane() {
-        sharedOutputArea = new TextArea();
-        sharedOutputArea.setEditable(false);
-        sharedOutputArea.setWrapText(true);
-        if (isLowResolution()) {
-            sharedOutputArea.setPrefRowCount(8);
-        }
-        else {
-            sharedOutputArea.setPrefRowCount(10);
-        }
-        sharedOutputArea.setStyle("-fx-font-family: 'Consolas', monospace; -fx-control-inner-background: white;");
+    /**
+     * La salida de los procesos vive en su propio panel (ver {@link OutputPanel}): se colapsa y expande, se le
+     * ajusta la altura arrastrando un divisor, y tiene botones para copiar, guardar y limpiar.
+     */
+    private OutputPanel createOutputPanel() {
+        outputPanel = new OutputPanel(() -> primaryStage, isLowResolution());
+        sharedOutputArea = outputPanel.area();
         System.setProperty("file.encoding", "UTF-8");
         System.setProperty("sun.jnu.encoding", "UTF-8");
-
-        TitledPane outputPane = new TitledPane("Salida del Proceso", sharedOutputArea);
-        outputPane.setCollapsible(true);
-        outputPane.setExpanded(false);
-        if (isLowResolution()) {
-            outputPane.setPrefHeight(150);
-        }
-        else {
-            outputPane.setPrefHeight(190);
-        }
-
-        sharedOutputArea.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null && !newValue.isEmpty() && !outputPane.isExpanded()) {
-                outputPane.setExpanded(true);
-            }
-        });
-
-        return outputPane;
+        return outputPanel;
     }
 
     private HBox createControlBox() {
@@ -1644,7 +1680,7 @@ public class SFideGUI extends Application {
 
     private void clearOutput() {
         try {
-            sharedOutputArea.clear();
+            outputPanel.limpiar();
             System.out.println("Área de salida limpiada");
         } catch (Exception e) {
             System.err.println("Error al limpiar el área de salida: " + e.getMessage());
@@ -2557,14 +2593,13 @@ public class SFideGUI extends Application {
         TextField slotNumber = createNumericTextField(SLOT_PROMPT_OPTIONAL);
         slotNumber.textProperty().bindBidirectional(configManager.pkcs11SlotNumberProperty());
         TextField pdfPath = createDocumentPathField("C:\\Documentos\\factura.pdf", ConfigurationManager.DirectoryKind.PDF);
-        TextField xPos = createNumericTextField("40");
-        TextField yPos = createNumericTextField("55");
-        xPos.setPrefWidth(190);
-        yPos.setPrefWidth(190);
-        HBox positionBox = new HBox(20);
-        positionBox.getChildren().addAll(xPos, yPos);
         TextField customText = createTextField("Certificado de Origen");
-        CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
+        // Para la vista previa del texto de la firma NO se envía la contraseña del token: así consultarla no
+        // gasta ningún intento de PIN (con un token cada intento fallido cuenta para el bloqueo).
+        PdfSigningPanel firma = new PdfSigningPanel("PDFSignerPKCS11", pdfPath::getText, customText::getText,
+                () -> pkcs11LibPath.getText().isBlank() ? null
+                        : List.of("-l", pkcs11LibPath.getText().trim(), "-s", slotOrDefault(slotNumber.getText())),
+                () -> primaryStage);
         OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(pdfPath);
 
         Button browseLib = createBrowseButton();
@@ -2583,17 +2618,15 @@ public class SFideGUI extends Application {
                     pass,
                     slotNumber.getText(),
                     pdfPathValue,
-                    xPos.getText(),
-                    yPos.getText(),
+                    firma.pedido(),
                     customText.getText(),
-                    lockDocument.isSelected(),
                     exitCode -> {
                         opener.onExecutionResult(pdfPathValue, exitCode);
                         passwordOutcome.accept(exitCode);
+                        firma.despuesDeFirmar();
                     }
             );
-            clearInputFields(pdfPath, xPos, yPos, customText);
-            lockDocument.setSelected(false);
+            clearInputFields(pdfPath, customText);
         }));
 
         addToGrid(grid, 0, "Biblioteca PKCS#11:", pkcs11LibPath, browseLib);
@@ -2602,17 +2635,18 @@ public class SFideGUI extends Application {
         addToGrid(grid, 3, "Número de Slot:", slotNumber, null);
         addToGrid(grid, 4, "Archivo PDF:", pdfPath, browsePDF);
         addButtonToRow(grid, 4, opener.button);
-        addToGrid(grid, 5, "Posición (X,Y):", positionBox, null);
-        addButtonToRow(grid, 5, createFieldHelpButton("Posición de la firma visible (X, Y)", pdfPositionHelpText));
+        addToGrid(grid, 5, "Ubicación de la firma:", firma.nodoUbicacion(), null);
+        addButtonToRow(grid, 5, createFieldHelpButton("Ubicación de la firma visible", pdfPositionHelpText));
         addToGrid(grid, 6, "Texto personalizado:", customText, null);
-        grid.add(lockDocument, 1, 7);
+        grid.add(firma.nodoOpciones(), 1, 7);
         addExecuteButton(grid, execute, 8);
 
         VBox content = createTabContent(
                 "Firma digitalmente un documento PDF con la clave privada de un token criptográfico, usando "
                         + "SHA-256. La firma puede ser invisible o mostrarse en un recuadro con firmante, fecha "
-                        + "y texto personalizado en coordenadas específicas de la primera página, y opcionalmente "
-                        + "puede bloquear el documento contra modificaciones posteriores (certificación + cifrado).",
+                        + "y texto personalizado, en el lugar que usted elija sobre el propio documento. Antes de "
+                        + "firmar se revisa el documento y las firmas que ya tiene; la última persona puede cerrarlo "
+                        + "para que no admita más firmas.",
                 grid
         );
 
@@ -2628,14 +2662,11 @@ public class SFideGUI extends Application {
         pkcs12Path.textProperty().bindBidirectional(configManager.pkcs12FilePathProperty());
         PasswordField password = createSessionPasswordField("Contraseña del archivo", SessionPasswordStore.Kind.PKCS12);
         TextField pdfPath = createDocumentPathField("C:\\Documentos\\factura.pdf", ConfigurationManager.DirectoryKind.PDF);
-        TextField xPos = createNumericTextField("40");
-        TextField yPos = createNumericTextField("55");
-        xPos.setPrefWidth(190);
-        yPos.setPrefWidth(190);
-        HBox positionBox = new HBox(20);
-        positionBox.getChildren().addAll(xPos, yPos);
         TextField customText = createTextField("Certificado de Origen");
-        CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
+        PdfSigningPanel firma = new PdfSigningPanel("PDFSignerPKCS12", pdfPath::getText, customText::getText,
+                () -> pkcs12Path.getText().isBlank() || password.getText().isEmpty() ? null
+                        : List.of("-c", pkcs12Path.getText().trim(), "-p", password.getText()),
+                () -> primaryStage);
         OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(pdfPath);
 
         Button browsePKCS12 = createBrowseButton();
@@ -2653,27 +2684,25 @@ public class SFideGUI extends Application {
                     pkcs12Path.getText(),
                     pass,
                     pdfPathValue,
-                    xPos.getText(),
-                    yPos.getText(),
+                    firma.pedido(),
                     customText.getText(),
-                    lockDocument.isSelected(),
                     exitCode -> {
                         opener.onExecutionResult(pdfPathValue, exitCode);
                         passwordOutcome.accept(exitCode);
+                        firma.despuesDeFirmar();
                     }
             );
-            clearInputFields(pdfPath, xPos, yPos, customText);
-            lockDocument.setSelected(false);
+            clearInputFields(pdfPath, customText);
         }));
 
         addToGrid(grid, 0, "Archivo PKCS#12:", pkcs12Path, browsePKCS12);
         addToGrid(grid, 1, "Contraseña:", password, null);
         addToGrid(grid, 2, "Archivo PDF:", pdfPath, browsePDF);
         addButtonToRow(grid, 2, opener.button);
-        addToGrid(grid, 3, "Posición (X,Y):", positionBox, null);
-        addButtonToRow(grid, 3, createFieldHelpButton("Posición de la firma visible (X, Y)", pdfPositionHelpText));
+        addToGrid(grid, 3, "Ubicación de la firma:", firma.nodoUbicacion(), null);
+        addButtonToRow(grid, 3, createFieldHelpButton("Ubicación de la firma visible", pdfPositionHelpText));
         addToGrid(grid, 4, "Texto personalizado:", customText, null);
-        grid.add(lockDocument, 1, 5);
+        grid.add(firma.nodoOpciones(), 1, 5);
         addExecuteButton(grid, execute, 6);
 
         VBox content = createTabContent(
@@ -2886,10 +2915,8 @@ public class SFideGUI extends Application {
             String password,
             String slotNumber,
             String pdfPath,
-            String xPos,
-            String yPos,
+            PdfSigningPanel.Pedido pedido,
             String customText,
-            boolean lock,
             IntConsumer onExit) {
         try {
             validateRequiredField("biblioteca PKCS#11", libPath);
@@ -2898,23 +2925,22 @@ public class SFideGUI extends Application {
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("PDFSignerPKCS11");
             if (result.valid()) {
                 Platform.runLater(() -> sharedOutputArea.clear());
-                String[] args = {
+                List<String> args = new ArrayList<>(List.of(
                         "-i", pdfPath,
                         "-l", libPath,
                         "-p", password,
-                        "-s", slotOrDefault(slotNumber),
-                        "-x", xPos,
-                        "-y", yPos,
-                        "-k", String.valueOf(lock)
-                };
+                        "-s", slotOrDefault(slotNumber)));
+                args.addAll(pedido.argumentosDeUbicacion());
+                args.addAll(List.of("-k", String.valueOf(pedido.cerrar())));
+                agregarOpcionesDeFirmaPdf(args, pedido, customText);
 
-                if (customText != null && !customText.trim().isEmpty()) {
-                    args = Arrays.copyOf(args, args.length + 2);
-                    args[args.length - 2] = "-t";
-                    args[args.length - 1] = customText;
-                }
-
-                GUIUtils.executeCommand("PDFSignerPKCS11", args, sharedOutputArea, onExit);
+                // No hay verificación de revocación previa con token (un segundo PIN gastaría un intento): el
+                // propio firmador valida la revocación de su certificado antes de firmar.
+                PdfPreflight.revisar(primaryStage, new PdfPreflight.Pedido("PDFSignerPKCS11", pdfPath, pedido.cerrar()),
+                        sharedOutputArea,
+                        () -> GUIUtils.executeCommand("PDFSignerPKCS11", args.toArray(new String[0]),
+                                sharedOutputArea, onExit),
+                        onExit);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
@@ -2930,10 +2956,8 @@ public class SFideGUI extends Application {
             String pkcs12Path,
             String password,
             String pdfPath,
-            String xPos,
-            String yPos,
+            PdfSigningPanel.Pedido pedido,
             String customText,
-            boolean lock,
             IntConsumer onExit) {
         try {
             validateRequiredField("archivo PKCS#12", pkcs12Path);
@@ -2943,23 +2967,20 @@ public class SFideGUI extends Application {
 
             if (result.valid()) {
                 Platform.runLater(() -> sharedOutputArea.clear());
-                String[] args = {
+                List<String> args = new ArrayList<>(List.of(
                         "-i", pdfPath,
                         "-c", pkcs12Path,
-                        "-p", password,
-                        "-x", xPos,
-                        "-y", yPos,
-                        "-l", String.valueOf(lock)
-                };
-
-                if (customText != null && !customText.trim().isEmpty()) {
-                    args = Arrays.copyOf(args, args.length + 2);
-                    args[args.length - 2] = "-t";
-                    args[args.length - 1] = customText;
-                }
+                        "-p", password));
+                args.addAll(pedido.argumentosDeUbicacion());
+                args.addAll(List.of("-l", String.valueOf(pedido.cerrar())));
+                agregarOpcionesDeFirmaPdf(args, pedido, customText);
 
                 String[] checkArgs = {"-verificar-revocacion", pkcs12Path, password};
-                GUIUtils.executeSignCommandWithRevocationCheck("PDFSignerPKCS12", checkArgs, args, sharedOutputArea, onExit);
+                PdfPreflight.revisar(primaryStage, new PdfPreflight.Pedido("PDFSignerPKCS12", pdfPath, pedido.cerrar()),
+                        sharedOutputArea,
+                        () -> GUIUtils.executeSignCommandWithRevocationCheck("PDFSignerPKCS12", checkArgs,
+                                args.toArray(new String[0]), sharedOutputArea, onExit),
+                        onExit);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }
@@ -2968,6 +2989,16 @@ public class SFideGUI extends Application {
         } catch (Exception e) {
             handleError("Error al firmar PDF con PKCS#12", e);
             Platform.runLater(() -> sharedOutputArea.appendText("\nError: " + e.getMessage()));
+        }
+    }
+
+    /** Opciones de firma comunes a los tres firmadores de PDF: protección del contenido y texto personalizado. */
+    private static void agregarOpcionesDeFirmaPdf(List<String> args, PdfSigningPanel.Pedido pedido, String customText) {
+        if (pedido.proteger()) {
+            args.addAll(List.of("-proteger-contenido", "true"));
+        }
+        if (customText != null && !customText.trim().isEmpty()) {
+            args.addAll(List.of("-t", customText));
         }
     }
 
@@ -3093,14 +3124,10 @@ public class SFideGUI extends Application {
         TextField aliasField = createTextField("Juan Pérez");
         aliasField.textProperty().bindBidirectional(configManager.windowsCertAliasProperty());
         TextField pdfPath = createDocumentPathField("C:\\Documentos\\factura.pdf", ConfigurationManager.DirectoryKind.PDF);
-        TextField xPos = createNumericTextField("40");
-        TextField yPos = createNumericTextField("55");
-        xPos.setPrefWidth(190);
-        yPos.setPrefWidth(190);
-        HBox positionBox = new HBox(20);
-        positionBox.getChildren().addAll(xPos, yPos);
         TextField customText = createTextField("Certificado de Origen");
-        CheckBox lockDocument = new CheckBox("Bloquear documento después de firmar");
+        PdfSigningPanel firma = new PdfSigningPanel("PDFSignerWindowsCSP", pdfPath::getText, customText::getText,
+                () -> aliasField.getText().isBlank() ? null : List.of("-a", aliasField.getText().trim()),
+                () -> primaryStage);
         OpenGeneratedDocumentButton opener = new OpenGeneratedDocumentButton(pdfPath);
 
         Button listCerts = new Button("Ver certificados");
@@ -3116,23 +3143,23 @@ public class SFideGUI extends Application {
             executePDFSignerWindowsCSP(
                     aliasField.getText(),
                     pdfPathValue,
-                    xPos.getText(),
-                    yPos.getText(),
+                    firma.pedido(),
                     customText.getText(),
-                    lockDocument.isSelected(),
-                    exitCode -> opener.onExecutionResult(pdfPathValue, exitCode)
+                    exitCode -> {
+                        opener.onExecutionResult(pdfPathValue, exitCode);
+                        firma.despuesDeFirmar();
+                    }
             );
-            clearInputFields(pdfPath, xPos, yPos, customText);
-            lockDocument.setSelected(false);
+            clearInputFields(pdfPath, customText);
         }));
 
         addToGrid(grid, 0, "Alias / Nombre (CN):", aliasField, listCerts);
         addToGrid(grid, 1, "Archivo PDF:", pdfPath, browsePDF);
         addButtonToRow(grid, 1, opener.button);
-        addToGrid(grid, 2, "Posición (X,Y):", positionBox, null);
-        addButtonToRow(grid, 2, createFieldHelpButton("Posición de la firma visible (X, Y)", pdfPositionHelpText));
+        addToGrid(grid, 2, "Ubicación de la firma:", firma.nodoUbicacion(), null);
+        addButtonToRow(grid, 2, createFieldHelpButton("Ubicación de la firma visible", pdfPositionHelpText));
         addToGrid(grid, 3, "Texto personalizado:", customText, null);
-        grid.add(lockDocument, 1, 4);
+        grid.add(firma.nodoOpciones(), 1, 4);
         addExecuteButton(grid, execute, 5);
 
         VBox content = createTabContent(
@@ -3189,10 +3216,8 @@ public class SFideGUI extends Application {
     private void executePDFSignerWindowsCSP(
             String alias,
             String pdfPath,
-            String xPos,
-            String yPos,
+            PdfSigningPanel.Pedido pedido,
             String customText,
-            boolean lock,
             IntConsumer onExit) {
         try {
             validateRequiredField("alias o nombre del certificado", alias);
@@ -3201,22 +3226,19 @@ public class SFideGUI extends Application {
             ModuleValidator.ValidationResult result = ModuleValidator.validateJarFile("PDFSignerWindowsCSP");
             if (result.valid()) {
                 Platform.runLater(() -> sharedOutputArea.clear());
-                String[] args = {
+                List<String> args = new ArrayList<>(List.of(
                         "-i", pdfPath,
-                        "-a", alias,
-                        "-x", xPos,
-                        "-y", yPos,
-                        "-k", String.valueOf(lock)
-                };
-
-                if (customText != null && !customText.trim().isEmpty()) {
-                    args = Arrays.copyOf(args, args.length + 2);
-                    args[args.length - 2] = "-t";
-                    args[args.length - 1] = customText;
-                }
+                        "-a", alias));
+                args.addAll(pedido.argumentosDeUbicacion());
+                args.addAll(List.of("-k", String.valueOf(pedido.cerrar())));
+                agregarOpcionesDeFirmaPdf(args, pedido, customText);
 
                 String[] checkArgs = {"-verificar-revocacion", alias};
-                GUIUtils.executeSignCommandWithRevocationCheck("PDFSignerWindowsCSP", checkArgs, args, sharedOutputArea, onExit);
+                PdfPreflight.revisar(primaryStage, new PdfPreflight.Pedido("PDFSignerWindowsCSP", pdfPath, pedido.cerrar()),
+                        sharedOutputArea,
+                        () -> GUIUtils.executeSignCommandWithRevocationCheck("PDFSignerWindowsCSP", checkArgs,
+                                args.toArray(new String[0]), sharedOutputArea, onExit),
+                        onExit);
             } else {
                 Platform.runLater(() -> ModuleValidator.showValidationError(result));
             }

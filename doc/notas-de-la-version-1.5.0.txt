@@ -1,0 +1,52 @@
+S-FiDE 1.5.0 - Firmar PDF es más fácil, y varias personas pueden firmar el mismo documento
+
+(Este texto es el cuerpo del Release de GitHub. El actualizador de la versión 1.4.0 lo muestra, tal cual, al pedir
+autorización para instalar: por eso es texto plano y de menos de 4000 caracteres.)
+
+--------------------------------------------------------------------------------
+
+QUÉ HAY DE NUEVO
+
+* Elegir dónde queda la firma mirando el propio documento, como en Acrobat Reader: se arrastra el recuadro con el
+  mouse y se muestra el texto real que va a llevar (su nombre, la fecha y el texto adicional). Se terminaron los
+  números de X e Y. Puede elegir la página y el tamaño, y firmar dentro de los campos de firma que haya dejado
+  preparados quien armó el documento.
+
+* Varias personas pueden firmar el mismo PDF una después de otra, en computadoras distintas y con S-FiDE o Acrobat
+  Reader en cualquier combinación. Lo que firma S-FiDE es válido en Acrobat Reader, y a la inversa.
+
+* Antes de firmar, S-FiDE revisa el documento y las firmas que ya tiene, y se lo explica en palabras simples. Si
+  una firma anterior tiene un problema real se le avisa y usted decide si firma igual. Que un certificado haya
+  vencido, o haya sido dado de baja, DESPUÉS de firmar ya no se presenta como un problema.
+
+* La última persona puede cerrar el documento con su firma final: después no admite más firmas, y Acrobat Reader
+  también lo muestra como bloqueado. También hay una opción para la primera firma: proteger el contenido
+  permitiendo que otras personas sigan firmando.
+
+* Solo se hace una operación a la vez. La "Salida del Proceso" se puede achicar para dejar más lugar a la pantalla
+  principal, y tiene botones para copiar, guardar y limpiar su contenido.
+
+* La primera vez que cada usuario abre esta versión ve un resumen de las novedades.
+
+* "Verificar Firmas en PDF" explica cada resultado en palabras simples y reconoce los documentos bloqueados con
+  Acrobat.
+
+CORRECCIONES IMPORTANTES
+
+* Cerrar con "Bloquear" un PDF que ya tenía firmas dañaba las firmas anteriores. Ahora se cierra sin tocarlas.
+* S-FiDE firmaba encima de un documento que otra persona había bloqueado con Acrobat, lo que invalidaba la firma de
+  esa persona. Ahora lo impide y explica por qué.
+* S-FiDE se negaba a firmar si una firma anterior era inválida. Ahora informa y deja la decisión a quien firma.
+
+CÓMO ACTUALIZAR
+
+* Si usa la versión 1.4.0: abra "Ayuda > Buscar actualizaciones...". S-FiDE le pide autorización, descarga la
+  actualización, comprueba que no esté dañada, se cierra, reemplaza sus archivos y vuelve a abrirse solo. Si algo
+  falla, queda todo como estaba. Su configuración no se toca.
+* Si usa una versión anterior a la 1.4.0: descargue el ZIP completo de su sistema operativo y descomprímalo en una
+  carpeta propia (instrucciones en el archivo Leeme.txt).
+
+LÍMITES CONOCIDOS
+
+* S-FiDE no usa sello de tiempo al firmar: la fecha de cada firma es la del reloj del equipo de quien firma.
+* La firma con token y con el almacén de certificados de Windows requiere probarse con el dispositivo real.

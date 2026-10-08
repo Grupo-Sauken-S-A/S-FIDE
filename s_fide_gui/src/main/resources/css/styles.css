@@ -429,3 +429,30 @@
     -fx-padding: 8px 12px;
     -fx-background-radius: 6px;
 }
+/* Salida del proceso: botones de su barra de título y divisor con la pantalla principal */
+.output-header-button {
+    -fx-font-size: 11px;
+    -fx-padding: 2px 9px 2px 9px;
+    -fx-background-color: #D6E7E7;
+    -fx-text-fill: #063C3C;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.output-header-button:hover {
+    -fx-background-color: #FFFFFF;
+}
+
+.output-header-button:disabled {
+    -fx-opacity: 0.45;
+}
+
+.output-split {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.output-split > .split-pane-divider {
+    -fx-background-color: transparent;
+    -fx-padding: 3px;
+}

@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.sauken.s_fide</groupId>
         <artifactId>s_fide_parent</artifactId>
-        <version>1.4.0</version>
+        <version>1.5.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -70,6 +70,14 @@
             <artifactId>javafx-graphics</artifactId>
             <version>${javafx.version}</version>
             <classifier>mac</classifier>
+        </dependency>
+
+        <!-- Vista previa del PDF para elegir la posición de la firma (solo en la interfaz gráfica:
+             los firmadores siguen siendo jars independientes y no dependen de esto) -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.5</version>
         </dependency>
 
         <!-- Testing (lógica pura de la GUI: contraseñas de sesión, comparación de versiones, etc.) -->

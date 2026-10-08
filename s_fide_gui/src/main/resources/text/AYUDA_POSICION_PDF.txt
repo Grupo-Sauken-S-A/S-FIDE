@@ -1,20 +1,46 @@
-# Posición de la firma visible (X, Y)
+# Ubicación de la firma visible
 
-## Si deja ambos campos en 0 (o vacíos)
+## Cómo se elige
 
-La firma es igual de válida, pero no se dibuja nada en el documento - es una firma "invisible". Sirve para firmar sin marcar visualmente el PDF.
+Haga clic en **Elegir en el documento…**. Se abre el documento tal como se ve en pantalla: arrastre el recuadro azul hasta el lugar donde quiere que quede la firma. Con los bordes y las esquinas del recuadro puede cambiar su tamaño. Dentro del recuadro se ve el texto que va a llevar la firma: su nombre, la fecha y el texto personalizado si escribió uno.
 
-## Cómo funciona el sistema de coordenadas de PDF
+Es lo mismo que hacer al firmar con Acrobat Reader: usted ve el lugar y lo marca. También puede hacer clic en cualquier punto de la página para colocar el recuadro ahí, y usar las flechas del teclado para moverlo de a poquito (con Mayús, de a diez).
 
-PDF usa el sistema estándar de PostScript: el origen (0,0) es la **esquina inferior izquierda** de la página. El eje X crece hacia la derecha, el eje Y crece **hacia arriba** (no hacia abajo, como en pantalla). Un punto PDF equivale a 1/72 de pulgada - una hoja A4 mide aproximadamente 595×842 puntos, y una carta US 612×792.
+Cuando termine, haga clic en **Usar esta ubicación**. La ubicación elegida queda resumida en la pestaña, y recién se aplica cuando usted presiona **Ejecutar**.
 
-X e Y ubican la esquina **inferior izquierda** del recuadro de firma, que mide 160×70 puntos (tamaño fijo). El recuadro se dibuja siempre en la **página 1** del documento, con el nombre del firmante, la fecha, y el texto personalizado si indicó uno.
+## Qué muestra la ventana
 
-## Comercio exterior ALADI/MERCOSUR: posiciones recomendadas
+- **Las firmas que el documento ya tiene**, marcadas en gris sobre la página, y a la derecha su estado explicado en palabras simples. Una tilde verde significa que la firma está en orden. Si una firma tiene un problema real —por ejemplo, el documento se modificó después de que esa persona firmó— se avisa claramente y se le recomienda consultar con quien le envió el documento. Datos que no afectan la validez (como que un certificado venció después de firmar) aparecen solo en "Ver detalle", sin alarmas.
+- **Los campos de firma preparados**, si quien armó el documento dejó lugares marcados para cada firmante. Aparecen con borde azul punteado: haga clic en el suyo y la firma se dibuja dentro de ese campo.
+- **Las páginas**, en miniatura a la izquierda. Puede firmar en cualquier página.
+- **El zoom**: botones + y −, "Ajustar al ancho", "Página completa", o la tecla Ctrl con la rueda del mouse.
 
-Convención de Grupo Sauken para Certificados de Origen no preferenciales, pensada para que ambas firmas queden una al lado de la otra en la parte inferior de la página, sin superponerse:
+El recuadro no puede tapar una firma que ya existe: si lo intenta, la ventana se lo indica y no le deja continuar hasta que lo mueva a un lugar libre.
 
-- **Firma del Exportador:** X = 40, Y = 55
-- **Firma del Funcionario Habilitado:** X = 310, Y = 55
+## Si el documento ya tiene firmas
 
-Puede usar estas mismas posiciones para Declaraciones Juradas de Origen (DJO/DJOEH) si quiere mantener el mismo criterio visual.
+Antes de firmar, el programa revisa el documento y las firmas anteriores. Si el documento fue cerrado por otra persona (con "Cerrar el documento" o con "Bloquear documento después de firmar" de Acrobat), no admite más firmas y se le explica quién lo cerró. Si alguna firma anterior no es válida, se le informa y usted decide si firma igual o cancela.
+
+## Firma invisible
+
+Si tilda **Firma invisible**, la firma es igual de válida pero no se dibuja nada en el documento.
+
+## Cerrar el documento o proteger el contenido
+
+- **Cerrar el documento con esta firma (firma final)**: úselo solo si es la última persona que va a firmar. Después, el documento no admite más firmas y cualquier cambio hace que las firmas dejen de ser válidas.
+- **Proteger el contenido (permite que otras personas sigan firmando)**: úselo en la primera firma si quiere evitar que modifiquen el contenido pero otras personas todavía tienen que firmar. Solo se puede usar en la primera firma del documento.
+
+Después de cada firma estas dos opciones se destildan solas, para que nadie cierre un documento sin querer.
+
+## Si el documento no se puede mostrar
+
+Si el documento está protegido con una contraseña o está dañado, no se puede mostrar. En ese caso la ventana le pide la página y las medidas a mano. Las medidas son en puntos (1 punto = 1/72 de pulgada): una hoja A4 mide 595 × 842 puntos, y una carta de Estados Unidos 612 × 792. X se mide desde el borde izquierdo de la hoja e Y desde el borde inferior; el recuadro predeterminado mide 160 × 70.
+
+## Comercio exterior ALADI/MERCOSUR: posiciones sugeridas
+
+En la ventana, el menú **Posiciones sugeridas** coloca el recuadro según la convención de Grupo Sauken para Certificados de Origen no preferenciales, pensada para que ambas firmas queden una al lado de la otra en la parte inferior de la página, sin superponerse:
+
+- **Firma del Exportador:** abajo a la izquierda (X = 40, Y = 55)
+- **Firma del Funcionario Habilitado:** abajo, a la derecha (X = 310, Y = 55)
+
+Puede usar las mismas posiciones para Declaraciones Juradas de Origen (DJO/DJOEH).

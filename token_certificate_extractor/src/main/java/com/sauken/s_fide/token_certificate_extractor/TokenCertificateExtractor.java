@@ -70,7 +70,7 @@ import java.util.List;
 import java.util.Map;
 
 public class TokenCertificateExtractor {
-    private static final String VERSION = "S-FIDE TokenCertificateExtractor v1.4.0 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE TokenCertificateExtractor v1.5.0 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT;
     private static final String HELP_TEXT;
 

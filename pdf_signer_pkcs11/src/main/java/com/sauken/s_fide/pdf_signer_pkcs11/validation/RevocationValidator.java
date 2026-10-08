@@ -75,6 +75,7 @@ import java.security.cert.X509CRLEntry;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -98,11 +99,30 @@ public class RevocationValidator {
         private final RevocationStatus estado;
         private final String metodo;
         private final String detalle;
+        private final Date fechaRevocacion;
+        private final String motivoRevocacion;
 
         public Resultado(RevocationStatus estado, String metodo, String detalle) {
+            this(estado, metodo, detalle, null, null);
+        }
+
+        public Resultado(RevocationStatus estado, String metodo, String detalle,
+                         Date fechaRevocacion, String motivoRevocacion) {
             this.estado = estado;
             this.metodo = metodo;
             this.detalle = detalle;
+            this.fechaRevocacion = fechaRevocacion;
+            this.motivoRevocacion = motivoRevocacion;
+        }
+
+        /** Momento en que la autoridad dio de baja el certificado; null si no está revocado o no se informó. */
+        public Date getFechaRevocacion() {
+            return fechaRevocacion;
+        }
+
+        /** Motivo de la baja (por ejemplo "keyCompromise"); null si no se informó. */
+        public String getMotivoRevocacion() {
+            return motivoRevocacion;
         }
 
         public RevocationStatus getEstado() {
@@ -123,6 +143,16 @@ public class RevocationValidator {
     private static final String TRUST_STORE_PASSWORD = "changeit";
 
     public static Resultado validarAntesDeFirmar(X509Certificate cert) {
+        return validarAntesDeFirmar(cert, null);
+    }
+
+    /**
+     * Igual que {@link #validarAntesDeFirmar(X509Certificate)}, pero si el certificado emisor
+     * viene embebido en la cadena de una firma existente se lo puede pasar en
+     * {@code emisorSugerido}: la consulta OCSP lo necesita y, sin esto, solo se lo busca en
+     * el almacén de confianza de Java, donde no están las autoridades certificantes locales.
+     */
+    public static Resultado validarAntesDeFirmar(X509Certificate cert, X509Certificate emisorSugerido) {
         try {
             if (!isInternetAvailable()) {
                 return new Resultado(RevocationStatus.UNKNOWN, null, "sin conexión a Internet");
@@ -136,7 +166,12 @@ public class RevocationValidator {
                         "el certificado no publica una URL de OCSP ni de CRL");
             }
 
-            X509Certificate issuerCert = ocspUrls.isEmpty() ? null : getIssuerCertificate(cert);
+            X509Certificate issuerCert = null;
+            if (!ocspUrls.isEmpty()) {
+                boolean sugeridoEsEmisor = emisorSugerido != null
+                        && emisorSugerido.getSubjectX500Principal().equals(cert.getIssuerX500Principal());
+                issuerCert = sugeridoEsEmisor ? emisorSugerido : getIssuerCertificate(cert);
+            }
 
             for (String ocspUrl : ocspUrls) {
                 Resultado r = checkOCSP(cert, issuerCert, ocspUrl);
@@ -157,6 +192,23 @@ public class RevocationValidator {
         } catch (Exception e) {
             return new Resultado(RevocationStatus.UNKNOWN, null, "error al validar: " + e.getMessage());
         }
+    }
+
+    /** Motivo de baja según RFC 5280 (mismo código en OCSP y en CRL), en palabras comunes. */
+    private static String motivoLegible(int codigo) {
+        return switch (codigo) {
+            case 0 -> "sin especificar";
+            case 1 -> "clave comprometida";
+            case 2 -> "clave de la autoridad certificante comprometida";
+            case 3 -> "cambio de afiliación del titular";
+            case 4 -> "certificado reemplazado por otro";
+            case 5 -> "cese de operaciones";
+            case 6 -> "suspendido temporalmente";
+            case 8 -> "quitado de la lista de revocados";
+            case 9 -> "privilegios retirados";
+            case 10 -> "clave de la autoridad de atributos comprometida";
+            default -> "código " + codigo;
+        };
     }
 
     private static boolean isInternetAvailable() {
@@ -296,8 +348,10 @@ public class RevocationValidator {
             CertificateStatus certStatus = responses[0].getCertStatus();
             if (certStatus == null) {
                 return new Resultado(RevocationStatus.GOOD, "OCSP", null);
-            } else if (certStatus instanceof RevokedStatus) {
-                return new Resultado(RevocationStatus.REVOKED, "OCSP", "el certificado está revocado");
+            } else if (certStatus instanceof RevokedStatus revoked) {
+                String motivo = revoked.hasRevocationReason() ? motivoLegible(revoked.getRevocationReason()) : null;
+                return new Resultado(RevocationStatus.REVOKED, "OCSP", "el certificado está revocado",
+                        revoked.getRevocationTime(), motivo);
             }
             return new Resultado(RevocationStatus.UNKNOWN, "OCSP", null);
         } catch (Exception e) {
@@ -316,7 +370,10 @@ public class RevocationValidator {
                 X509CRL crl = (X509CRL) cf.generateCRL(in);
                 X509CRLEntry entry = crl.getRevokedCertificate(cert.getSerialNumber());
                 if (entry != null) {
-                    return new Resultado(RevocationStatus.REVOKED, "CRL", "el certificado está revocado");
+                    String motivo = entry.getRevocationReason() != null
+                            ? motivoLegible(entry.getRevocationReason().ordinal()) : null;
+                    return new Resultado(RevocationStatus.REVOKED, "CRL", "el certificado está revocado",
+                            entry.getRevocationDate(), motivo);
                 }
                 return new Resultado(RevocationStatus.GOOD, "CRL", null);
             } catch (Exception e) {
