@@ -173,11 +173,12 @@ public final class WhatsNewDialog {
             return "Estos son los cambios y agregados de cada versión, de la más nueva a la más vieja.";
         }
         if (desde.isPresent() && entradas.size() > 1) {
-            return "Usted venía usando la versión " + desde.get() + ". Como se pasó directamente a la "
+            return "Su S-FiDE fue actualizado: usted venía usando la versión " + desde.get() + ". Como se pasó directamente a la "
                     + versionActual + ", acá están las novedades de todas las versiones intermedias.";
         }
         if (desde.isPresent()) {
-            return "Usted venía usando la versión " + desde.get() + ". Este es el resumen de lo que cambió:";
+            return "Su S-FiDE fue actualizado: usted venía usando la versión " + desde.get() + " y ahora usa la "
+                    + versionActual + ". Este es el resumen de lo que cambió:";
         }
         return "Este es el resumen de lo que trae S-FiDE:";
     }

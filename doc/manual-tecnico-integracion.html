@@ -412,7 +412,7 @@
       <p>Sistema de Firma Digital Extendido — todo lo que un integrador necesita: qué hace cada programa, cómo invocarlo, los tres mecanismos de firma disponibles y cuándo usar cada uno, la especialización de comercio exterior ALADI/MERCOSUR, y las especificaciones completas del producto.</p>
       <div class="meta">
         <span>Versión del producto: <strong>1.5.0</strong></span>
-        <span>Documento: <strong>08/10/2026</strong></span>
+        <span>Documento: <strong>20/10/2026</strong></span>
         <span>Licencia: <strong>GNU GPL v2+</strong></span>
       </div>
     </div>
@@ -553,7 +553,7 @@
       <ul>
         <li>Repositorio: <a href="https://github.com/Grupo-Sauken-S-A/S-FIDE">github.com/Grupo-Sauken-S-A/S-FIDE</a></li>
         <li>Proyecto Maven multi-módulo (15 módulos), un <code>pom.xml</code> raíz agregador.</li>
-        <li>Versionado <a href="https://semver.org/">SemVer</a>. Tags publicados: <code>v1.0.0</code>, <code>v1.1.1</code>, <code>v1.2.0</code>, <code>v1.3.0</code>, <code>v1.4.0</code>, <code>v1.5.0</code> (actual).</li>
+        <li>Versionado <a href="https://semver.org/">SemVer</a>. Tags publicados: <code>v1.0.0</code>, <code>v1.1.1</code>, <code>v1.2.0</code>, <code>v1.3.0</code>, <code>v1.4.0</code>, <code>v1.5.0</code> (última publicada), <code>v1.5.1</code> (en desarrollo, sin publicar).</li>
       </ul>
       <p>Compilar desde el código fuente:</p>
       <pre><code>git clone https://github.com/Grupo-Sauken-S-A/S-FIDE.git
@@ -715,7 +715,7 @@ cd S-FIDE
         <p>Al poco de publicarse esta funcionalidad se detectó, con hardware real (token ePass2004 y un certificado real de AC-ONTI), que la validación <strong>siempre</strong> caía en "no se pudo determinar" — incluso con certificados vigentes y no revocados, que <code>XMLVerifySignatures</code> sí validaba correctamente por OCSP sobre el mismo certificado. La causa: BouncyCastle a veces extrae la URL de OCSP/CRL con un prefijo literal <code>[CONTEXT N]</code> pegado adelante (una particularidad de ciertas codificaciones ASN.1 con tag implícito); sin quitarlo, la URL queda inválida y la consulta HTTP falla antes de llegar al servidor. <code>XMLVerifySignatures</code>/<code>PDFVerifySignatures</code> ya sabían limpiar ese prefijo desde siempre; se había perdido al reutilizar esa lógica para validar <em>antes</em> de firmar. Corregido restaurando el saneo en los seis módulos firmadores — verificado de nuevo con el mismo token real, ahora informa correctamente el estado <code>GOOD</code>.</p>
       </div>
 
-      <h3>7.5.2 — Vigencia y aptitud del certificado antes de firmar (sin publicar)</h3>
+      <h3>7.5.2 — Vigencia y aptitud del certificado antes de firmar (1.5.1, sin publicar)</h3>
       <p><strong>Otras comprobaciones previas, además de la vigencia</strong> (<code>CertificateValidity.exigirApto</code> y <code>avisar</code>):</p>
       <table>
         <thead><tr><th>Comprobación</th><th>Resultado</th></tr></thead>
@@ -1532,6 +1532,14 @@ exit $RESULT</code></pre>
     <section class="chapter" id="s13">
       <span class="chapter-num">13</span>
       <h2>Historial de versiones</h2>
+      <h3>v1.5.1 (en desarrollo, sin publicar)</h3>
+      <ul>
+        <li><strong>Un certificado vencido o todavía no vigente ya no puede firmar</strong> en ninguno de los seis firmadores (antes firmaba sin avisar); tampoco uno de autoridad certificante ni uno cuyo uso no incluye firma. Sin argumento para omitirlo. Ver la sección 7.5.2.</li>
+        <li><strong>Avisos que no impiden firmar:</strong> certificado de la cadena vencido, clave RSA menor de 2048 bits, algoritmo MD5/MD2.</li>
+        <li><strong>Con varios certificados en el token o en el PKCS#12</strong> se firma con el primero vigente (antes, siempre el primero).</li>
+        <li><strong>Los listados muestran una línea <code>Estado:</code></strong> (vigente, vencido, aún no vigente) en <code>TokenSlotsView</code>, los dos extractores, <code>WindowsCertificateStoreView</code> y <code>-listar-certificados</code> de los firmadores CSP.</li>
+        <li><strong>Guía de migración 1.5.0 → 1.5.1:</strong> quien automatice firmas con un certificado vencido o de uso inadecuado ahora recibirá código de salida <code>1</code>; el resto del contrato de línea de comandos no cambió.</li>
+      </ul>
       <h3>v1.5.0 (2026-10-08)</h3>
       <ul>
         <li><strong>Firma de PDF en cadena entre varias personas, en computadoras distintas y con S-FiDE o Acrobat en cualquier combinación.</strong> Los tres firmadores revisan el documento antes de firmar (¿admite más firmas?, estado de cada firma anterior), informan y continúan ante firmas anteriores inválidas, y comprueban el resultado al terminar. Ver 7.7.</li>
@@ -1714,7 +1722,7 @@ exit $RESULT</code></pre>
     </section>
 
     <footer class="doc-footer">
-      Manual de Integración S-FiDE · Grupo Sauken S.A. · Versión del documento acompaña a S-FiDE v1.5.0
+      Manual de Integración S-FiDE · Grupo Sauken S.A. · Versión del documento acompaña a S-FiDE v1.5.1 (en desarrollo)
     </footer>
   </main>
 </div>

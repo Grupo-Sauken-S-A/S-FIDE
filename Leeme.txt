@@ -1,4 +1,4 @@
-S-FiDE v1.5.0 - Leeme primero:
+S-FiDE v1.5.1 - Leeme primero:
 
 - IMPORTANTE - Cómo instalar: cree primero una carpeta propia con el nombre que prefiera (se recomienda
   "C:\S-FiDE" en Windows y "/opt/S-FiDE" en Linux y macOS) y descomprima el contenido del ZIP DENTRO de esa carpeta. No lo descomprima directamente
@@ -57,6 +57,16 @@ S-FiDE v1.5.0 - Leeme primero:
   "doc/manual-tecnico-integracion.md" hay una sección específica ("Integración desde otras aplicaciones") con
   ejemplos de invocación por línea de comandos, redirección de salida y captura de código de resultado
 
+- Novedades de la versión 1.5.1:
+  - Los programas de firma ya no firman con un certificado vencido, ni con uno que todavía no empezó
+    a valer, ni con uno que no sirve para firmar documentos (de autoridad certificante, o emitido
+    solo para cifrar): se niegan con un mensaje claro y código de salida 1, sin generar archivo.
+    No hay forma de omitir esta comprobación
+  - Si el token o el archivo tiene más de un certificado, se firma con el primero que esté vigente
+  - Los listados de certificados (token, archivo, almacén de Windows) muestran una línea "Estado:"
+    (vigente, vencido o aún no vigente)
+  - Se advierte, sin impedir la firma, si un certificado de la cadena está vencido o si la clave es
+    más débil de lo recomendable
 - Novedades de la versión 1.5.0:
   - La ubicación de la firma de un PDF se elige sobre el propio documento, como en Acrobat Reader
     ("Elegir en el documento..."), con el texto real de la firma. Se puede elegir la página y el

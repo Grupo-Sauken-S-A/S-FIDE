@@ -2,7 +2,7 @@
 
 **Sistema de Firma Digital Extendido**
 Grupo Sauken S.A. — Córdoba, Argentina
-Versión del documento: acompaña a S-FiDE v1.5.0 — 08/10/2026
+Versión del documento: acompaña a S-FiDE v1.5.1 (en desarrollo, sin publicar) — 20/10/2026
 
 ---
 
@@ -153,7 +153,7 @@ S-FiDE se distribuye bajo la **Licencia Pública General GNU (GNU GPL), versión
 
 - **Repositorio:** [github.com/Grupo-Sauken-S-A/S-FIDE](https://github.com/Grupo-Sauken-S-A/S-FIDE)
 - **Organización:** proyecto Maven multi-módulo (15 módulos) con un `pom.xml` raíz de tipo `pom` (agregador) y un módulo por capacidad.
-- **Versionado:** [SemVer](https://semver.org/). Tags publicados: `v1.0.0` (primer release estable), `v1.1.1` (QA de hardware y de código completa, validada contra los tres modelos de token más usados en Argentina), `v1.2.0` (validación de revocación antes de firmar, diálogo de confirmación en la GUI), `v1.3.0` (pestaña Documentación, instancia única, ayudas contextuales), `v1.4.0` (búsqueda automática del slot del token, configuración y certificados `.pem` por usuario, reutilización de contraseñas durante la sesión, última carpeta usada, actualización desde GitHub), `v1.5.0` (versión actual: firma de PDF en cadena entre varias personas y ubicación visual de la firma, visor interno de PDF y XML, XML con marca BOM, paquetes para macOS, revisión de seguridad y licencias de terceros).
+- **Versionado:** [SemVer](https://semver.org/). Tags publicados: `v1.0.0` (primer release estable), `v1.1.1` (QA de hardware y de código completa, validada contra los tres modelos de token más usados en Argentina), `v1.2.0` (validación de revocación antes de firmar, diálogo de confirmación en la GUI), `v1.3.0` (pestaña Documentación, instancia única, ayudas contextuales), `v1.4.0` (búsqueda automática del slot del token, configuración y certificados `.pem` por usuario, reutilización de contraseñas durante la sesión, última carpeta usada, actualización desde GitHub), `v1.5.0` (última versión publicada: firma de PDF en cadena entre varias personas y ubicación visual de la firma, visor interno de PDF y XML, XML con marca BOM, paquetes para macOS, revisión de seguridad y licencias de terceros) y `v1.5.1` (en desarrollo, todavía sin publicar: vigencia y aptitud del certificado antes de firmar).
 - **Compilar desde el código fuente:**
   ```bash
   git clone https://github.com/Grupo-Sauken-S-A/S-FIDE.git
@@ -310,7 +310,7 @@ Desde la versión 1.2.0, los seis módulos que aplican una firma digital (`XMLSi
 
 > **Corrección (1.2.0):** al poco de publicarse esta funcionalidad se detectó, con hardware real (token ePass2004 y un certificado real de AC-ONTI), que la validación **siempre** caía en "no se pudo determinar" — incluso con certificados vigentes y no revocados, que `XMLVerifySignatures` sí validaba correctamente por OCSP sobre el mismo certificado. La causa: BouncyCastle a veces extrae la URL de OCSP/CRL de la extensión del certificado con un prefijo literal `[CONTEXT N]` pegado adelante (una particularidad de ciertas codificaciones ASN.1 con tag implícito); sin quitarlo, la URL queda inválida y la consulta HTTP falla antes de llegar al servidor. `XMLVerifySignatures`/`PDFVerifySignatures` ya sabían limpiar ese prefijo desde siempre; se había perdido al reutilizar esa misma lógica para validar *antes* de firmar. Corregido restaurando el saneo en los seis módulos firmadores — verificado de nuevo con el mismo token real, ahora informa correctamente el estado `GOOD`.
 
-### 7.5.2 Vigencia y aptitud del certificado antes de firmar (sin publicar)
+### 7.5.2 Vigencia y aptitud del certificado antes de firmar (1.5.1, sin publicar)
 
 **Otras comprobaciones previas, además de la vigencia** (`CertificateValidity.exigirApto` y `avisar`):
 
@@ -1353,6 +1353,14 @@ powershell -ExecutionPolicy Bypass -File crear-paquete-actualizacion.ps1 [-Versi
 ---
 
 ## 13. Historial de versiones
+
+### v1.5.1 (en desarrollo, sin publicar)
+
+- **Un certificado vencido o todavía no vigente ya no puede firmar** en ninguno de los seis firmadores (antes firmaba sin avisar); tampoco uno de autoridad certificante ni uno cuyo uso no incluye firma. Sin argumento para omitirlo. Ver [7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar).
+- **Avisos que no impiden firmar:** certificado de la cadena vencido, clave RSA menor de 2048 bits, algoritmo MD5/MD2.
+- **Con varios certificados en el token o en el PKCS#12** se firma con el primero vigente (antes, siempre el primero).
+- **Los listados muestran una línea `Estado:`** (vigente, vencido, aún no vigente) en `TokenSlotsView`, los dos extractores, `WindowsCertificateStoreView` y `-listar-certificados` de los firmadores CSP.
+- **Guía de migración 1.5.0 → 1.5.1:** quien automatice firmas con un certificado vencido o de uso inadecuado ahora recibirá código de salida `1`; el resto del contrato de línea de comandos no cambió.
 
 ### v1.5.0 (2026-10-08)
 

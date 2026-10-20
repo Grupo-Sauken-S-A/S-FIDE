@@ -4,7 +4,7 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), y el versionado sigue [SemVer](https://semver.org/lang/es/).
 
-## [Sin publicar]
+## [1.5.1] — sin publicar
 
 ### Corregido
 - **Un certificado vencido (o que todavía no empezó a valer) podía firmar sin ningún aviso** (`XMLSignerPKCS11`, `XMLSignerPKCS12`, `XMLSignerWindowsCSP`, `PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`). Ahora los seis comprueban las fechas de validez antes de consultar la revocación y antes de pedir la clave privada, y se niegan a firmar con un mensaje claro y código de salida `1`, sin generar archivo. No hay argumento para omitir esta comprobación. La consulta previa de la GUI (`-verificar-revocacion`) también la aplica. Ver sección 7.5.2 del manual técnico.

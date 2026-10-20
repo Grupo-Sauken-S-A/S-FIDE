@@ -6,6 +6,18 @@
 #
 # Formato:  "## versión | título"  /  una línea de resumen (opcional)  /  "### grupo"  /  "- novedad"
 
+## 1.5.1 | S-FiDE ya no deja firmar con un certificado vencido
+Esta versión revisa su certificado antes de firmar y le avisa con claridad si no se puede usar.
+
+### Correcciones
+- Antes, un certificado vencido podía firmar sin ningún aviso, y el documento firmado no era aceptado después. Ahora S-FiDE no firma con un certificado vencido (ni con uno que todavía no empezó a valer) y le explica cuándo venció. Vale para XML y PDF, con token, con archivo de certificado y con el almacén de Windows.
+- Tampoco firma con un certificado que no sirve para firmar documentos, por ejemplo uno emitido solo para cifrar, o el de una autoridad certificante.
+- Si su token o su archivo de certificado tiene más de un certificado (por ejemplo el viejo vencido y el renovado), S-FiDE usa el que está vigente en lugar de tomar siempre el primero.
+
+### Mejoras
+- Las pantallas que muestran los certificados (Ver Slots de Token, Ver Certificado de Token y de archivo, Ver Certificados de Windows) ahora indican si cada certificado está vigente o vencido, y hasta cuándo.
+- Antes de firmar, S-FiDE le avisa (sin impedirle firmar) si el certificado de la autoridad certificante que lo emitió está vencido, o si su certificado usa una clave más débil de lo recomendable.
+
 ## 1.5.0 | Firmar PDF es más fácil, y varias personas pueden firmar el mismo documento
 Esta versión permite que un documento PDF circule entre varias personas, cada una firmando a su turno desde su propia computadora, aunque algunas usen S-FiDE y otras Acrobat Reader. Lo que firma S-FiDE es válido en Acrobat Reader, y a la inversa.
 
