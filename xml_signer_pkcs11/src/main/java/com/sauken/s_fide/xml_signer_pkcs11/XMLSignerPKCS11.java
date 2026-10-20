@@ -71,6 +71,7 @@ import javax.xml.crypto.dsig.dom.*;
 import javax.xml.crypto.dsig.keyinfo.*;
 import javax.xml.crypto.dsig.spec.*;
 import javax.xml.xpath.*;
+import com.sauken.s_fide.xml_signer_pkcs11.validation.ClockCheck;
 import com.sauken.s_fide.xml_signer_pkcs11.validation.RevocationValidator;
 
 public class XMLSignerPKCS11 {
@@ -343,6 +344,7 @@ public class XMLSignerPKCS11 {
             X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
 
             // Antes de pedir la clave privada: con un certificado vencido no hay nada que firmar.
+            ClockCheck.avisar(outputStream::println);
             CertificateValidity.exigirApto(cert);
             CertificateValidity.avisar(keyStore.getCertificateChain(alias), outputStream::println);
 

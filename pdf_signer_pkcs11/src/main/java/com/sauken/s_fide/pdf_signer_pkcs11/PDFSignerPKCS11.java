@@ -57,6 +57,7 @@ import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.signatures.*;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import com.sauken.s_fide.pdf_signer_pkcs11.validation.PdfDocumentAnalyzer;
+import com.sauken.s_fide.pdf_signer_pkcs11.validation.ClockCheck;
 import com.sauken.s_fide.pdf_signer_pkcs11.validation.RevocationValidator;
 import java.io.*;
 import java.nio.file.Files;
@@ -706,6 +707,7 @@ public class PDFSignerPKCS11 {
                 throw new GeneralSecurityException("Error: " + Pkcs11Access.describeFailure(e, params.libraryPath()));
             }
 
+            ClockCheck.avisar(System.out::println);
             CertificateValidity.exigirApto((X509Certificate) chain[0]);
             CertificateValidity.avisar(chain, System.out::println);
 

@@ -61,6 +61,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import com.sauken.s_fide.xml_signer_windows_csp.validation.ClockCheck;
 import com.sauken.s_fide.xml_signer_windows_csp.validation.RevocationValidator;
 import javax.xml.crypto.dsig.*;
 import javax.xml.crypto.dsig.dom.DOMSignContext;
@@ -288,6 +289,7 @@ public class XMLSignerWindowsCSP {
         String alias = resolveAlias(keyStore, aliasOrFragment);
         X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
 
+        ClockCheck.avisar(outputStream::println);
         CertificateValidity.exigirApto(cert);
         CertificateValidity.avisar(keyStore.getCertificateChain(alias), outputStream::println);
 

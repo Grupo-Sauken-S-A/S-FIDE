@@ -16,6 +16,7 @@ Esta versión revisa su certificado antes de firmar y le avisa con claridad si n
 
 ### Mejoras
 - Las pantallas que muestran los certificados (Ver Slots de Token, Ver Certificado de Token y de archivo, Ver Certificados de Windows) ahora indican si cada certificado está vigente o vencido, y hasta cuándo.
+- Si el reloj de su computadora está muy atrasado o adelantado respecto de la hora real, S-FiDE se lo avisa antes de firmar (sin impedirle firmar), porque de ese reloj dependen la vigencia del certificado y la fecha de la firma.
 - Antes de firmar, S-FiDE le avisa (sin impedirle firmar) si el certificado de la autoridad certificante que lo emitió está vencido, o si su certificado usa una clave más débil de lo recomendable.
 
 ## 1.5.0 | Firmar PDF es más fácil, y varias personas pueden firmar el mismo documento

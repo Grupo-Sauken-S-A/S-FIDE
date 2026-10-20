@@ -57,6 +57,7 @@ import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.signatures.*;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import com.sauken.s_fide.pdf_signer_windows_csp.validation.PdfDocumentAnalyzer;
+import com.sauken.s_fide.pdf_signer_windows_csp.validation.ClockCheck;
 import com.sauken.s_fide.pdf_signer_windows_csp.validation.RevocationValidator;
 
 import java.io.*;
@@ -553,6 +554,7 @@ public class PDFSignerWindowsCSP {
 
         KeyStore keyStore = loadWindowsKeyStore();
         String alias = resolveAlias(keyStore, params.alias());
+        ClockCheck.avisar(System.out::println);
         CertificateValidity.exigirApto((X509Certificate) keyStore.getCertificate(alias));
         PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, null);
         Certificate[] chain = keyStore.getCertificateChain(alias);

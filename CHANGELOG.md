@@ -11,6 +11,7 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 - **Los listados no decían que el certificado estaba vencido.** `TokenSlotsView`, `TokenCertificateExtractor`, `PKCS12CertificateExtractor`, `WindowsCertificateStoreView` y `-listar-certificados` de los firmadores CSP muestran ahora una línea `Estado:` (vigente, vencido o aún no vigente).
 - **Con más de un certificado en el token o en el archivo PKCS#12, el firmador tomaba siempre el primero**, aunque estuviera vencido y hubiera uno renovado. Ahora firma con el primero que tiene clave privada y está vigente.
 - **Los firmadores ahora también se niegan a firmar con un certificado de autoridad certificante o cuyo uso (`keyUsage`) no incluye firma digital ni no repudio** (por ejemplo, uno emitido solo para cifrar). Y **advierten**, sin impedir la firma, si un certificado de la cadena está vencido, si la clave RSA es menor de 2048 bits o si el certificado usa MD5/MD2.
+- **Aviso de reloj desfasado.** Los seis firmadores comparan el reloj de la computadora con la cabecera `Date` de una respuesta HTTPS y advierten si la diferencia supera los 5 minutos (la vigencia del certificado y la fecha de la firma dependen de ese reloj). Nunca impide firmar, y sin Internet no dice nada. Clase `ClockCheck` duplicada en los seis firmadores.
 - Clase `CertificateValidity` duplicada en diez módulos; prueba `CertificadoVencidoTest` en `integration_tests`.
 
 ## [1.5.0] — 2026-10-08

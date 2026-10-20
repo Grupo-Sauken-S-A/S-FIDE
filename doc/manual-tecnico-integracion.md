@@ -320,6 +320,7 @@ Desde la versión 1.2.0, los seis módulos que aplican una firma digital (`XMLSi
 | El **uso de la clave** (`keyUsage`) no incluye firma digital ni no repudio (p. ej. solo cifrado) | **Bloquea**: *"...no está habilitado para firmar documentos..."*. Un certificado sin la extensión se acepta, como hacen los verificadores. |
 | Un certificado de la **cadena** (autoridad certificante) vencido o aún no vigente | **Advierte** y firma: *"ADVERTENCIA: el certificado de la autoridad certificante «...» venció el ..."*. Solo se revisa la cadena que informa el token, el archivo o el almacén de Windows. |
 | Clave **RSA menor de 2048 bits** o certificado emitido con MD5/MD2 | **Advierte** y firma. |
+| **Reloj de la computadora** desfasado más de 5 minutos respecto de la cabecera `Date` de una respuesta HTTPS (`www.google.com`, o `www.cloudflare.com` si falla) | **Advierte** y firma (`ClockCheck`, duplicada en los seis firmadores). Sin Internet no dice nada; demora a lo sumo 4 s sin conexión. |
 
 Los usos adicionales (`extendedKeyUsage`) no se exigen: las autoridades emiten certificados de firma con combinaciones muy variadas y bloquear por eso rechazaría certificados válidos.
 

@@ -95,6 +95,7 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
   y con el almacén de Windows.
 - Si el token o el archivo tiene más de un certificado, se usa el que está vigente.
 - Las pantallas que muestran certificados indican si cada uno está vigente o vencido.
+- Se avisa, sin impedir la firma, si el reloj de la computadora está muy desfasado (si hay Internet).
 - Se avisa, sin impedir la firma, si la autoridad certificante que emitió el certificado está
   vencida o si la clave es más débil de lo recomendable.
 

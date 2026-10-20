@@ -65,6 +65,8 @@ S-FiDE v1.5.1 - Leeme primero:
   - Si el token o el archivo tiene más de un certificado, se firma con el primero que esté vigente
   - Los listados de certificados (token, archivo, almacén de Windows) muestran una línea "Estado:"
     (vigente, vencido o aún no vigente)
+  - Se advierte, sin impedir la firma, si el reloj de la computadora difiere más de 5 minutos de la hora
+    real de Internet (si hay conexión)
   - Se advierte, sin impedir la firma, si un certificado de la cadena está vencido o si la clave es
     más débil de lo recomendable
 - Novedades de la versión 1.5.0:

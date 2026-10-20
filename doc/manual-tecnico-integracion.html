@@ -724,6 +724,7 @@ cd S-FIDE
           <tr><td>El <strong>uso de la clave</strong> (<code>keyUsage</code>) no incluye firma digital ni no repudio (p. ej. solo cifrado)</td><td><strong>Bloquea</strong>: <em>"...no está habilitado para firmar documentos..."</em>. Un certificado sin la extensión se acepta, como hacen los verificadores.</td></tr>
           <tr><td>Un certificado de la <strong>cadena</strong> (autoridad certificante) vencido o aún no vigente</td><td><strong>Advierte</strong> y firma: <em>"ADVERTENCIA: el certificado de la autoridad certificante «...» venció el ..."</em>. Solo se revisa la cadena que informa el token, el archivo o el almacén de Windows.</td></tr>
           <tr><td>Clave <strong>RSA menor de 2048 bits</strong> o certificado emitido con MD5/MD2</td><td><strong>Advierte</strong> y firma.</td></tr>
+          <tr><td><strong>Reloj de la computadora</strong> desfasado más de 5 minutos respecto de la cabecera <code>Date</code> de una respuesta HTTPS (<code>www.google.com</code>, o <code>www.cloudflare.com</code> si falla)</td><td><strong>Advierte</strong> y firma (<code>ClockCheck</code>, duplicada en los seis firmadores). Sin Internet no dice nada; demora a lo sumo 4 s sin conexión.</td></tr>
         </tbody>
       </table>
       <p>Los usos adicionales (<code>extendedKeyUsage</code>) no se exigen: las autoridades emiten certificados de firma con combinaciones muy variadas y bloquear por eso rechazaría certificados válidos.</p>

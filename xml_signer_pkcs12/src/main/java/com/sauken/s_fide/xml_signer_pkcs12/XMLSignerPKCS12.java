@@ -71,6 +71,7 @@ import javax.xml.crypto.dsig.dom.*;
 import javax.xml.crypto.dsig.keyinfo.*;
 import javax.xml.crypto.dsig.spec.*;
 import javax.xml.xpath.*;
+import com.sauken.s_fide.xml_signer_pkcs12.validation.ClockCheck;
 import com.sauken.s_fide.xml_signer_pkcs12.validation.RevocationValidator;
 
 public class XMLSignerPKCS12 {
@@ -290,6 +291,7 @@ public class XMLSignerPKCS12 {
             PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
             X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
 
+            ClockCheck.avisar(outputStream::println);
             CertificateValidity.exigirApto(cert);
             CertificateValidity.avisar(keyStore.getCertificateChain(alias), outputStream::println);
 
