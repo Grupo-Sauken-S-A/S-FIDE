@@ -310,9 +310,11 @@ public class PDFSignerPKCS11 {
         Security.addProvider(provider);
         try {
             KeyStore keyStore = loadKeyStore(password, libraryPath);
-            String alias = keyStore.aliases().nextElement();
+            String alias = CertificateValidity.elegirAlias(keyStore);
             Certificate[] chain = keyStore.getCertificateChain(alias);
             X509Certificate cert = (X509Certificate) chain[0];
+
+            CertificateValidity.exigirVigente(cert);
 
             RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
             System.out.println("ESTADO_REVOCACION: " + resultado.getEstado());
@@ -387,7 +389,7 @@ public class PDFSignerPKCS11 {
 
                 try {
                     KeyStore keyStore = loadKeyStore(params.password(), params.libraryPath());
-                    String alias = keyStore.aliases().nextElement();
+                    String alias = CertificateValidity.elegirAlias(keyStore);
 
                     if (!keyStore.isKeyEntry(alias)) {
                         errorStream.println("Error: El token no contiene una clave privada válida");
@@ -397,6 +399,13 @@ public class PDFSignerPKCS11 {
                     Certificate[] chain = keyStore.getCertificateChain(alias);
                     if (chain == null || chain.length == 0) {
                         errorStream.println("Error: No se encontró una cadena de certificados válida en el token");
+                        return false;
+                    }
+
+                    try {
+                        CertificateValidity.exigirVigente((X509Certificate) chain[0]);
+                    } catch (IllegalArgumentException e) {
+                        errorStream.println("Error: " + e.getMessage());
                         return false;
                     }
 
@@ -553,7 +562,7 @@ public class PDFSignerPKCS11 {
                             + "contraseña. " + Pkcs11Access.describeFailure(e, libraryPath));
                 }
             }
-            String alias = keyStore.aliases().nextElement();
+            String alias = CertificateValidity.elegirAlias(keyStore);
             X500Principal subjectDN = ((X509Certificate) keyStore.getCertificate(alias)).getSubjectX500Principal();
 
             System.out.println("TEXTO_FIRMA_INICIO");
@@ -686,7 +695,7 @@ public class PDFSignerPKCS11 {
 
             try {
                 KeyStore keyStore = loadKeyStore(params.password(), params.libraryPath());
-                alias = keyStore.aliases().nextElement();
+                alias = CertificateValidity.elegirAlias(keyStore);
                 privateKey = (PrivateKey) keyStore.getKey(alias, params.password().toCharArray());
                 chain = keyStore.getCertificateChain(alias);
                 X509Certificate cert = (X509Certificate) chain[0];
@@ -696,6 +705,8 @@ public class PDFSignerPKCS11 {
             } catch (Exception e) {
                 throw new GeneralSecurityException("Error: " + Pkcs11Access.describeFailure(e, params.libraryPath()));
             }
+
+            CertificateValidity.exigirVigente((X509Certificate) chain[0]);
 
             validarRevocacionAntesDeFirmar((X509Certificate) chain[0], params.omitirRevocacion());
 

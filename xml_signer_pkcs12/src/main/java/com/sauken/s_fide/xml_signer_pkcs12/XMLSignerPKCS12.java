@@ -169,8 +169,10 @@ public class XMLSignerPKCS12 {
             throw new IllegalArgumentException("El archivo no es un PKCS#12 válido o la contraseña es incorrecta");
         }
 
-        String alias = keyStore.aliases().nextElement();
+        String alias = CertificateValidity.elegirAlias(keyStore);
         X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+
+        CertificateValidity.exigirVigente(cert);
 
         RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
         outputStream.println("ESTADO_REVOCACION: " + resultado.getEstado());
@@ -284,9 +286,11 @@ public class XMLSignerPKCS12 {
             }
 
             // Obtener la clave privada y el certificado
-            String alias = keyStore.aliases().nextElement();
+            String alias = CertificateValidity.elegirAlias(keyStore);
             PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
             X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+
+            CertificateValidity.exigirVigente(cert);
 
             validarRevocacionAntesDeFirmar(cert, omitirRevocacion);
 

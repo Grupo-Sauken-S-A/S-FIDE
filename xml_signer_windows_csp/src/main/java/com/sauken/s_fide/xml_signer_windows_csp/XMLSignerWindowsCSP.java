@@ -200,6 +200,8 @@ public class XMLSignerWindowsCSP {
         String alias = resolveAlias(keyStore, aliasOrFragment);
         X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
 
+        CertificateValidity.exigirVigente(cert);
+
         RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
         outputStream.println("ESTADO_REVOCACION: " + resultado.getEstado());
         if (resultado.getDetalle() != null) {
@@ -239,6 +241,7 @@ public class XMLSignerWindowsCSP {
             if (cert != null) {
                 outputStream.println("  Subject: " + cert.getSubjectX500Principal().getName());
                 outputStream.println("  Válido hasta: " + cert.getNotAfter());
+                outputStream.println("  Estado: " + CertificateValidity.describir(cert));
                 outputStream.println("  Tiene clave privada: " + keyStore.isKeyEntry(alias));
             }
             outputStream.println();
@@ -283,8 +286,11 @@ public class XMLSignerWindowsCSP {
 
         KeyStore keyStore = loadWindowsKeyStore();
         String alias = resolveAlias(keyStore, aliasOrFragment);
-        PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, null);
         X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+
+        CertificateValidity.exigirVigente(cert);
+
+        PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, null);
 
         validarRevocacionAntesDeFirmar(cert, omitirRevocacion);
 

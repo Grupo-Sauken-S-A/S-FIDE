@@ -263,6 +263,7 @@ public class TokenCertificateExtractor {
                 .append("Número de Serie: ").append(cert.getSerialNumber()).append("\n")
                 .append("Válido desde: ").append(cert.getNotBefore()).append("\n")
                 .append("Válido hasta: ").append(cert.getNotAfter()).append("\n")
+                .append("Estado: ").append(CertificateValidity.describir(cert)).append("\n")
                 .append("Algoritmo de Firma: ").append(cert.getSigAlgName());
 
         System.out.println(info.toString());

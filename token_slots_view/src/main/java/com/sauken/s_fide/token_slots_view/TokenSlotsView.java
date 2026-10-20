@@ -303,6 +303,7 @@ public class TokenSlotsView {
                 standardOutput.println(" Emisor: " + x509Cert.getIssuerX500Principal().getName());
                 standardOutput.println(" Válido desde: " + x509Cert.getNotBefore());
                 standardOutput.println(" Válido hasta: " + x509Cert.getNotAfter());
+                standardOutput.println(" Estado: " + CertificateValidity.describir(x509Cert));
                 standardOutput.println(" Número de serie: " + x509Cert.getSerialNumber());
             } else {
                 standardOutput.println(" Tipo de certificado: " + cert.getType());

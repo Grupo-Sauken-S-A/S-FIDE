@@ -173,6 +173,7 @@ public class WindowsCertificateStoreView {
                 outputStream.println("  Emisor: " + cert.getIssuerX500Principal().getName());
                 outputStream.println("  Válido desde: " + cert.getNotBefore());
                 outputStream.println("  Válido hasta: " + cert.getNotAfter());
+                outputStream.println("  Estado: " + CertificateValidity.describir(cert));
                 outputStream.println("  Número de serie: " + cert.getSerialNumber().toString(16));
                 outputStream.println("  Tiene clave privada: " + keyStore.isKeyEntry(alias));
             } else {

@@ -310,6 +310,24 @@ Desde la versión 1.2.0, los seis módulos que aplican una firma digital (`XMLSi
 
 > **Corrección (1.2.0):** al poco de publicarse esta funcionalidad se detectó, con hardware real (token ePass2004 y un certificado real de AC-ONTI), que la validación **siempre** caía en "no se pudo determinar" — incluso con certificados vigentes y no revocados, que `XMLVerifySignatures` sí validaba correctamente por OCSP sobre el mismo certificado. La causa: BouncyCastle a veces extrae la URL de OCSP/CRL de la extensión del certificado con un prefijo literal `[CONTEXT N]` pegado adelante (una particularidad de ciertas codificaciones ASN.1 con tag implícito); sin quitarlo, la URL queda inválida y la consulta HTTP falla antes de llegar al servidor. `XMLVerifySignatures`/`PDFVerifySignatures` ya sabían limpiar ese prefijo desde siempre; se había perdido al reutilizar esa misma lógica para validar *antes* de firmar. Corregido restaurando el saneo en los seis módulos firmadores — verificado de nuevo con el mismo token real, ahora informa correctamente el estado `GOOD`.
 
+### 7.5.2 Vigencia del certificado antes de firmar (sin publicar)
+
+Los seis módulos que aplican una firma digital comprueban, **antes** de consultar la revocación y antes de pedir la clave privada, que el certificado esté dentro de sus fechas de validez (comparando con el reloj de la computadora). Es una comprobación distinta de la revocación: un certificado puede no estar revocado y, aun así, haber vencido, y entonces no sirve para firmar. Antes de esta comprobación un certificado vencido firmaba sin ningún aviso.
+
+| Estado del certificado | Comportamiento |
+|---|---|
+| **Vigente** | Se sigue con la revocación y la firma. |
+| **Vencido** | **No se firma.** Mensaje: *"El certificado de firma venció el dd/MM/aaaa HH:mm. No se puede firmar con un certificado vencido: renueve el certificado o use otro que esté vigente."* Código de salida `1`, sin generar ningún archivo. |
+| **Todavía no vigente** | **No se firma**, con un mensaje equivalente que además sugiere revisar la fecha de la computadora. |
+
+A diferencia de la revocación, **no existe un argumento para omitir esta comprobación** (`-omitir-revocacion` no la afecta): una firma hecha con un certificado fuera de vigencia nunca se puede dar por buena.
+
+- **Consulta previa de la GUI** (`-verificar-revocacion`, PKCS#12 y Windows CSP/KSP): también termina con código `1` y el mismo mensaje, de modo que la interfaz lo muestra antes de preguntar nada sobre la revocación.
+- **PDF con token o archivo PKCS#12:** además de al firmar, la comprobación se hace en la validación previa del firmador, antes de procesar el documento.
+- **Elección del certificado en PKCS#11 y PKCS#12:** si el token o el archivo contiene más de un certificado con clave privada (por ejemplo, el anterior vencido y el renovado), se firma con el **primero que esté vigente**; si hay uno solo, o ninguno vigente, se usa el primero y el error informa el motivo real. En Windows CSP/KSP el certificado lo elige la persona (alias o fragmento del CN) y solo se verifica su vigencia.
+- **Listados:** `TokenSlotsView`, `TokenCertificateExtractor`, `PKCS12CertificateExtractor`, `WindowsCertificateStoreView` y `-listar-certificados` de los firmadores CSP muestran una línea `Estado:` — `VIGENTE (vence el ...)`, `VENCIDO - no sirve para firmar (venció el ...)` o `AÚN NO VIGENTE - ...`. Los extractores siguen exportando el `.pem` aunque esté vencido (solo informan).
+- **Implementación:** clase `CertificateValidity`, duplicada e idéntica salvo la línea `package` en los diez módulos que muestran o usan certificados (los seis firmadores, `TokenSlotsView`, `TokenCertificateExtractor`, `PKCS12CertificateExtractor`, `WindowsCertificateStoreView`). Prueba: `CertificadoVencidoTest` en `integration_tests`.
+
 ### 7.6 Compatibilidad con firmas SHA-1 de aplicaciones de terceros
 
 S-FiDE **firma** exclusivamente con SHA-256 (no ofrece SHA-1 como opción al firmar: es una decisión deliberada, SHA-1 se considera criptográficamente débil para firmar documentos nuevos). Sin embargo, sus verificadores (`XMLVerifySignatures`, `XMLVerifyXSDStructure`, `PDFVerifySignatures`) están diseñados para validar **cualquier firma digital conforme al estándar**, sin importar qué aplicación la haya generado ni con qué algoritmo de hash — incluyendo firmas **SHA-1**, habituales en documentos firmados años atrás con software de terceros ya discontinuado.

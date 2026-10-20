@@ -185,8 +185,10 @@ public class XMLSignerPKCS11 {
         Security.addProvider(provider);
 
         KeyStore keyStore = loadKeyStore(password, pkcs11LibraryPath);
-        String alias = keyStore.aliases().nextElement();
+        String alias = CertificateValidity.elegirAlias(keyStore);
         X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+
+        CertificateValidity.exigirVigente(cert);
 
         RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
         outputStream.println("ESTADO_REVOCACION: " + resultado.getEstado());
@@ -337,9 +339,13 @@ public class XMLSignerPKCS11 {
             Security.addProvider(provider);
 
             KeyStore keyStore = loadKeyStore(password, pkcs11LibraryPath);
-            String alias = keyStore.aliases().nextElement();
-            PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
+            String alias = CertificateValidity.elegirAlias(keyStore);
             X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+
+            // Antes de pedir la clave privada: con un certificado vencido no hay nada que firmar.
+            CertificateValidity.exigirVigente(cert);
+
+            PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
 
             validarRevocacionAntesDeFirmar(cert, omitirRevocacion);
 

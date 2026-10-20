@@ -334,7 +334,7 @@ public class PDFSignerPKCS12 {
                     return false;
                 }
 
-                String alias = ks.aliases().nextElement();
+                String alias = CertificateValidity.elegirAlias(ks);
                 if (!ks.isKeyEntry(alias)) {
                     logger.log(Level.SEVERE, "El certificado no contiene una clave privada");
                     return false;
@@ -343,6 +343,13 @@ public class PDFSignerPKCS12 {
                 Certificate[] chain = ks.getCertificateChain(alias);
                 if (chain == null || chain.length == 0) {
                     logger.log(Level.SEVERE, "No se encontró una cadena de certificados válida");
+                    return false;
+                }
+
+                try {
+                    CertificateValidity.exigirVigente((X509Certificate) chain[0]);
+                } catch (IllegalArgumentException e) {
+                    logger.log(Level.SEVERE, e.getMessage());
                     return false;
                 }
 
@@ -462,7 +469,7 @@ public class PDFSignerPKCS12 {
         try (InputStream certStream = Files.newInputStream(path)) {
             KeyStore ks = KeyStore.getInstance("PKCS12");
             ks.load(certStream, password.toCharArray());
-            String alias = ks.aliases().nextElement();
+            String alias = CertificateValidity.elegirAlias(ks);
             X500Principal subjectDN = ((X509Certificate) ks.getCertificateChain(alias)[0]).getSubjectX500Principal();
 
             System.out.println("TEXTO_FIRMA_INICIO");
@@ -497,9 +504,11 @@ public class PDFSignerPKCS12 {
             KeyStore ks = KeyStore.getInstance("PKCS12");
             ks.load(certStream, password.toCharArray());
 
-            String alias = ks.aliases().nextElement();
+            String alias = CertificateValidity.elegirAlias(ks);
             Certificate[] chain = ks.getCertificateChain(alias);
             X509Certificate cert = (X509Certificate) chain[0];
+
+            CertificateValidity.exigirVigente(cert);
 
             RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
             System.out.println("ESTADO_REVOCACION: " + resultado.getEstado());
@@ -563,12 +572,14 @@ public class PDFSignerPKCS12 {
             KeyStore ks = KeyStore.getInstance("PKCS12");
             ks.load(certStream, params.password().toCharArray());
 
-            alias = ks.aliases().nextElement();
+            alias = CertificateValidity.elegirAlias(ks);
             privateKey = (PrivateKey) ks.getKey(alias, params.password().toCharArray());
             chain = ks.getCertificateChain(alias);
 
             X509Certificate cert = (X509Certificate) chain[0];
             subjectDN = cert.getSubjectX500Principal();
+
+            CertificateValidity.exigirVigente(cert);
 
             validarRevocacionAntesDeFirmar(cert, params.omitirRevocacion());
         }

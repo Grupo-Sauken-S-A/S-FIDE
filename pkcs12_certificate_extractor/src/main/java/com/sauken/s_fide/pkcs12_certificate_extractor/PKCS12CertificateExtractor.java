@@ -229,6 +229,7 @@ public class PKCS12CertificateExtractor {
                     Número de Serie: %s
                     Válido desde: %s
                     Válido hasta: %s
+                    Estado: %s
                     Algoritmo de Firma: %s""".formatted(
                     alias,
                     certificate.getSubjectX500Principal(),
@@ -236,6 +237,7 @@ public class PKCS12CertificateExtractor {
                     certificate.getSerialNumber(),
                     certificate.getNotBefore(),
                     certificate.getNotAfter(),
+                    CertificateValidity.describir(certificate),
                     certificate.getSigAlgName());
         }
     }

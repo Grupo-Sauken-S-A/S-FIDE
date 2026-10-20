@@ -215,6 +215,7 @@ public class PDFSignerWindowsCSP {
             if (cert != null) {
                 System.out.println("  Subject: " + cert.getSubjectX500Principal().getName());
                 System.out.println("  Válido hasta: " + cert.getNotAfter());
+                System.out.println("  Estado: " + CertificateValidity.describir(cert));
                 System.out.println("  Tiene clave privada: " + keyStore.isKeyEntry(alias));
             }
             System.out.println();
@@ -486,6 +487,8 @@ public class PDFSignerWindowsCSP {
         Certificate[] chain = keyStore.getCertificateChain(alias);
         X509Certificate cert = (X509Certificate) chain[0];
 
+        CertificateValidity.exigirVigente(cert);
+
         RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
         System.out.println("ESTADO_REVOCACION: " + resultado.getEstado());
         if (resultado.getDetalle() != null) {
@@ -550,6 +553,7 @@ public class PDFSignerWindowsCSP {
 
         KeyStore keyStore = loadWindowsKeyStore();
         String alias = resolveAlias(keyStore, params.alias());
+        CertificateValidity.exigirVigente((X509Certificate) keyStore.getCertificate(alias));
         PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, null);
         Certificate[] chain = keyStore.getCertificateChain(alias);
         if (privateKey == null || chain == null || chain.length == 0) {
