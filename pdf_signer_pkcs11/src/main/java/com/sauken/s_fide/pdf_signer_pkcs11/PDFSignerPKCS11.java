@@ -314,7 +314,7 @@ public class PDFSignerPKCS11 {
             Certificate[] chain = keyStore.getCertificateChain(alias);
             X509Certificate cert = (X509Certificate) chain[0];
 
-            CertificateValidity.exigirVigente(cert);
+            CertificateValidity.exigirApto(cert);
 
             RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
             System.out.println("ESTADO_REVOCACION: " + resultado.getEstado());
@@ -403,7 +403,7 @@ public class PDFSignerPKCS11 {
                     }
 
                     try {
-                        CertificateValidity.exigirVigente((X509Certificate) chain[0]);
+                        CertificateValidity.exigirApto((X509Certificate) chain[0]);
                     } catch (IllegalArgumentException e) {
                         errorStream.println("Error: " + e.getMessage());
                         return false;
@@ -706,7 +706,8 @@ public class PDFSignerPKCS11 {
                 throw new GeneralSecurityException("Error: " + Pkcs11Access.describeFailure(e, params.libraryPath()));
             }
 
-            CertificateValidity.exigirVigente((X509Certificate) chain[0]);
+            CertificateValidity.exigirApto((X509Certificate) chain[0]);
+            CertificateValidity.avisar(chain, System.out::println);
 
             validarRevocacionAntesDeFirmar((X509Certificate) chain[0], params.omitirRevocacion());
 

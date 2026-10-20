@@ -94,6 +94,33 @@ class CertificadoVencidoTest {
     }
 
     @Test
+    void certificadoSoloParaCifrarNoFirma() throws Exception {
+        verificarRechazo(generarP12("cifrado.p12", "2026/01/01 00:00:00", "-validity", "3650", "-ext", "KeyUsage=keyEncipherment"),
+                "no está habilitado para firmar");
+    }
+
+    @Test
+    void certificadoDeAutoridadCertificanteNoFirma() throws Exception {
+        verificarRechazo(generarP12("ac.p12", "2026/01/01 00:00:00", "-validity", "3650", "-ext", "BasicConstraints:critical=ca:true"),
+                "autoridad certificante");
+    }
+
+    @Test
+    void certificadoConUsoDeFirmaSiFirmaYUnaClaveCortaAdvierte() throws Exception {
+        Datos cert = generarP12("firma.p12", "2026/01/01 00:00:00", "-validity", "3650", "-ext", "KeyUsage=digitalSignature,nonRepudiation");
+        ProcesoSupport.Resultado r = ProcesoSupport.ejecutarModulo(tempDir, XML_FIRMADOR,
+                cert.archivo().toString(), cert.password(), escribirXml().toString(), "");
+        assertEquals(0, r.exitCode(), r.salida());
+        assertFalse(r.salida().contains("ADVERTENCIA: la clave"), r.salida());
+
+        Datos corta = generarP12("corta.p12", "2026/01/01 00:00:00", "-validity", "3650", "-keysize", "1024");
+        ProcesoSupport.Resultado r2 = ProcesoSupport.ejecutarModulo(tempDir, XML_FIRMADOR,
+                corta.archivo().toString(), corta.password(), escribirXml().toString(), "");
+        assertEquals(0, r2.exitCode(), r2.salida());
+        assertTrue(r2.salida().contains("RSA de 1024 bits"), r2.salida());
+    }
+
+    @Test
     void certificadoVigenteSiFirma() throws Exception {
         String password = ProcesoSupport.generarP12(tempDir, tempDir.resolve("vigente.p12"), "Vigente");
         Path xml = escribirXml();
@@ -138,15 +165,23 @@ class CertificadoVencidoTest {
     private record Datos(Path archivo, String password) {
     }
 
-    private Datos generarP12(String nombre, String inicio) throws Exception {
+    private Datos generarP12(String nombre, String inicio, String... extra) throws Exception {
         Path destino = tempDir.resolve(nombre);
         String password = "Pw" + Long.toHexString(System.nanoTime());
         Path keytool = Path.of(System.getProperty("java.home"), "bin", "keytool");
-        ProcesoSupport.Resultado r = ProcesoSupport.ejecutar(List.of(
+        List<String> comando = new java.util.ArrayList<>(List.of(
                 keytool.toString(), "-genkeypair", "-alias", "sfide-test", "-keyalg", "RSA",
-                "-keysize", "2048", "-validity", "365", "-startdate", inicio, "-keystore", destino.toString(),
+                "-startdate", inicio, "-keystore", destino.toString(),
                 "-storetype", "PKCS12", "-storepass", password, "-keypass", password,
-                "-dname", "CN=Prueba de vigencia, O=Grupo Sauken S.A., C=AR"), tempDir);
+                "-dname", "CN=Prueba de vigencia, O=Grupo Sauken S.A., C=AR"));
+        comando.addAll(List.of(extra));
+        if (!comando.contains("-validity")) {
+            comando.addAll(List.of("-validity", "365"));
+        }
+        if (!comando.contains("-keysize")) {
+            comando.addAll(List.of("-keysize", "2048"));
+        }
+        ProcesoSupport.Resultado r = ProcesoSupport.ejecutar(comando, tempDir);
         if (r.exitCode() != 0) {
             fail("keytool no pudo generar el certificado de prueba: " + r.salida());
         }

@@ -54,10 +54,17 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 /**
  * Vigencia (fechas de validez) de un certificado, comprobada ANTES de usarlo
@@ -130,6 +137,92 @@ final class CertificateValidity {
             case VIGENTE -> {
             }
         }
+    }
+
+    /**
+     * Comprobación completa previa a firmar: vigencia y, además, que el
+     * certificado esté habilitado para firmar documentos. Es lo que llaman
+     * los firmadores; {@link #exigirVigente} queda para quien solo necesite
+     * la vigencia.
+     *
+     * @throws IllegalArgumentException con un mensaje listo para mostrar
+     */
+    static void exigirApto(X509Certificate cert) {
+        exigirVigente(cert);
+        exigirUsoDeFirma(cert);
+    }
+
+    /**
+     * Un certificado emitido solo para cifrar, o el de una autoridad
+     * certificante, no sirve para firmar un documento: el programa que lo
+     * verifique lo va a rechazar. Si el certificado no declara su uso
+     * (extensión ausente) se acepta, como hacen los verificadores.
+     */
+    static void exigirUsoDeFirma(X509Certificate cert) {
+        if (cert.getBasicConstraints() >= 0) {
+            throw new IllegalArgumentException("El certificado seleccionado es el de una autoridad certificante, "
+                    + "no el de una persona u organización: no sirve para firmar documentos. Elija su certificado "
+                    + "personal.");
+        }
+        boolean[] uso = cert.getKeyUsage();
+        if (uso == null) {
+            return;
+        }
+        boolean firma = uso.length > 0 && uso[0];
+        boolean noRepudio = uso.length > 1 && uso[1];
+        if (!firma && !noRepudio) {
+            throw new IllegalArgumentException("El certificado seleccionado no está habilitado para firmar "
+                    + "documentos (fue emitido para otro uso, por ejemplo cifrar). Elija otro certificado.");
+        }
+    }
+
+    /**
+     * Avisos que no impiden firmar: un certificado de la cadena (autoridad
+     * certificante) vencido o aún no vigente, una clave RSA corta o un
+     * algoritmo de firma débil. La cadena es la que informa el token, el
+     * archivo o el almacén de Windows; si trae solo el certificado de la
+     * persona, no hay nada más que comprobar acá.
+     */
+    static List<String> advertencias(Certificate[] cadena) {
+        List<String> avisos = new ArrayList<>();
+        if (cadena == null || cadena.length == 0 || !(cadena[0] instanceof X509Certificate propio)) {
+            return avisos;
+        }
+        for (int i = 1; i < cadena.length; i++) {
+            if (cadena[i] instanceof X509Certificate ac) {
+                switch (estado(ac)) {
+                    case VENCIDO -> avisos.add("el certificado de la autoridad certificante «" + nombre(ac)
+                            + "» venció el " + fecha(ac.getNotAfter())
+                            + "; las firmas hechas con esta cadena pueden no ser aceptadas");
+                    case AUN_NO_VIGENTE -> avisos.add("el certificado de la autoridad certificante «" + nombre(ac)
+                            + "» todavía no es válido (empieza el " + fecha(ac.getNotBefore()) + ")");
+                    case VIGENTE -> {
+                    }
+                }
+            }
+        }
+        if (propio.getPublicKey() instanceof RSAPublicKey rsa && rsa.getModulus().bitLength() < 2048) {
+            avisos.add("la clave del certificado es RSA de " + rsa.getModulus().bitLength()
+                    + " bits, menor que los 2048 que hoy se consideran seguros");
+        }
+        String algoritmo = propio.getSigAlgName().toUpperCase(Locale.ROOT);
+        if (algoritmo.startsWith("MD5") || algoritmo.startsWith("MD2")) {
+            avisos.add("el certificado fue emitido con un algoritmo débil (" + propio.getSigAlgName() + ")");
+        }
+        return avisos;
+    }
+
+    /** Entrega cada aviso de {@link #advertencias} a quien firma, ya redactado como advertencia. */
+    static void avisar(Certificate[] cadena, Consumer<String> salida) {
+        for (String aviso : advertencias(cadena)) {
+            salida.accept("ADVERTENCIA: " + aviso + ". Se continúa con la firma.");
+        }
+    }
+
+    private static String nombre(X509Certificate cert) {
+        String rfc = cert.getSubjectX500Principal().getName();
+        Matcher m = Pattern.compile("(?:^|,)CN=((?:\\\\.|[^,\\\\])*)").matcher(rfc);
+        return m.find() ? m.group(1).replace("\\", "") : rfc;
     }
 
     /**

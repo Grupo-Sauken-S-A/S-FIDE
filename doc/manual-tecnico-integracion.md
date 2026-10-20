@@ -310,7 +310,18 @@ Desde la versión 1.2.0, los seis módulos que aplican una firma digital (`XMLSi
 
 > **Corrección (1.2.0):** al poco de publicarse esta funcionalidad se detectó, con hardware real (token ePass2004 y un certificado real de AC-ONTI), que la validación **siempre** caía en "no se pudo determinar" — incluso con certificados vigentes y no revocados, que `XMLVerifySignatures` sí validaba correctamente por OCSP sobre el mismo certificado. La causa: BouncyCastle a veces extrae la URL de OCSP/CRL de la extensión del certificado con un prefijo literal `[CONTEXT N]` pegado adelante (una particularidad de ciertas codificaciones ASN.1 con tag implícito); sin quitarlo, la URL queda inválida y la consulta HTTP falla antes de llegar al servidor. `XMLVerifySignatures`/`PDFVerifySignatures` ya sabían limpiar ese prefijo desde siempre; se había perdido al reutilizar esa misma lógica para validar *antes* de firmar. Corregido restaurando el saneo en los seis módulos firmadores — verificado de nuevo con el mismo token real, ahora informa correctamente el estado `GOOD`.
 
-### 7.5.2 Vigencia del certificado antes de firmar (sin publicar)
+### 7.5.2 Vigencia y aptitud del certificado antes de firmar (sin publicar)
+
+**Otras comprobaciones previas, además de la vigencia** (`CertificateValidity.exigirApto` y `avisar`):
+
+| Comprobación | Resultado |
+|---|---|
+| El certificado es de una **autoridad certificante** (`basicConstraints` CA) | **Bloquea**: *"...es el de una autoridad certificante... no sirve para firmar documentos."* |
+| El **uso de la clave** (`keyUsage`) no incluye firma digital ni no repudio (p. ej. solo cifrado) | **Bloquea**: *"...no está habilitado para firmar documentos..."*. Un certificado sin la extensión se acepta, como hacen los verificadores. |
+| Un certificado de la **cadena** (autoridad certificante) vencido o aún no vigente | **Advierte** y firma: *"ADVERTENCIA: el certificado de la autoridad certificante «...» venció el ..."*. Solo se revisa la cadena que informa el token, el archivo o el almacén de Windows. |
+| Clave **RSA menor de 2048 bits** o certificado emitido con MD5/MD2 | **Advierte** y firma. |
+
+Los usos adicionales (`extendedKeyUsage`) no se exigen: las autoridades emiten certificados de firma con combinaciones muy variadas y bloquear por eso rechazaría certificados válidos.
 
 Los seis módulos que aplican una firma digital comprueban, **antes** de consultar la revocación y antes de pedir la clave privada, que el certificado esté dentro de sus fechas de validez (comparando con el reloj de la computadora). Es una comprobación distinta de la revocación: un certificado puede no estar revocado y, aun así, haber vencido, y entonces no sirve para firmar. Antes de esta comprobación un certificado vencido firmaba sin ningún aviso.
 

@@ -200,7 +200,7 @@ public class XMLSignerWindowsCSP {
         String alias = resolveAlias(keyStore, aliasOrFragment);
         X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
 
-        CertificateValidity.exigirVigente(cert);
+        CertificateValidity.exigirApto(cert);
 
         RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
         outputStream.println("ESTADO_REVOCACION: " + resultado.getEstado());
@@ -288,7 +288,8 @@ public class XMLSignerWindowsCSP {
         String alias = resolveAlias(keyStore, aliasOrFragment);
         X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
 
-        CertificateValidity.exigirVigente(cert);
+        CertificateValidity.exigirApto(cert);
+        CertificateValidity.avisar(keyStore.getCertificateChain(alias), outputStream::println);
 
         PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, null);
 

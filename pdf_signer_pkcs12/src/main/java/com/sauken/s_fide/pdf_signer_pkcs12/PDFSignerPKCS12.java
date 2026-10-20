@@ -347,7 +347,7 @@ public class PDFSignerPKCS12 {
                 }
 
                 try {
-                    CertificateValidity.exigirVigente((X509Certificate) chain[0]);
+                    CertificateValidity.exigirApto((X509Certificate) chain[0]);
                 } catch (IllegalArgumentException e) {
                     logger.log(Level.SEVERE, e.getMessage());
                     return false;
@@ -508,7 +508,7 @@ public class PDFSignerPKCS12 {
             Certificate[] chain = ks.getCertificateChain(alias);
             X509Certificate cert = (X509Certificate) chain[0];
 
-            CertificateValidity.exigirVigente(cert);
+            CertificateValidity.exigirApto(cert);
 
             RevocationValidator.Resultado resultado = RevocationValidator.validarAntesDeFirmar(cert);
             System.out.println("ESTADO_REVOCACION: " + resultado.getEstado());
@@ -579,7 +579,8 @@ public class PDFSignerPKCS12 {
             X509Certificate cert = (X509Certificate) chain[0];
             subjectDN = cert.getSubjectX500Principal();
 
-            CertificateValidity.exigirVigente(cert);
+            CertificateValidity.exigirApto(cert);
+            CertificateValidity.avisar(chain, aviso -> logger.log(Level.WARNING, aviso));
 
             validarRevocacionAntesDeFirmar(cert, params.omitirRevocacion());
         }
