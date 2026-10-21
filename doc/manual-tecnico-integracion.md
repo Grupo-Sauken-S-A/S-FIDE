@@ -2,7 +2,7 @@
 
 **Sistema de Firma Digital Extendido**
 Grupo Sauken S.A. — Córdoba, Argentina
-Versión del documento: acompaña a S-FiDE v1.5.1 (en desarrollo, sin publicar) — 20/10/2026
+Versión del documento: acompaña a S-FiDE v1.5.1 — 21/10/2026
 
 ---
 
@@ -43,7 +43,7 @@ Versión del documento: acompaña a S-FiDE v1.5.1 (en desarrollo, sin publicar) 
 
 ## 1. Introducción y filosofía
 
-> **¿Ya integraste S-FiDE 1.5.0?** El contrato de línea de comandos no cambió. Lo único que cambia en la 1.5.1 es que los seis firmadores terminan con código `1`, sin generar archivo, ante un certificado vencido, no vigente todavía, de autoridad certificante o sin uso de firma (antes firmaban igual con uno vencido); no hay argumento para omitirlo. Pueden además imprimir líneas `ADVERTENCIA:` (reloj, cadena, clave corta) sin cambiar el código de salida, y los listados agregan una línea `Estado:`. Ver [7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar).
+> **¿Ya integraste S-FiDE 1.5.0?** El contrato de línea de comandos no cambió. Lo único que cambia en la 1.5.1 es que los seis firmadores terminan con código `1`, sin generar archivo, ante un certificado vencido, no vigente todavía, de autoridad certificante o sin uso de firma (antes firmaban igual con uno vencido); no hay argumento para omitirlo. Pueden además imprimir líneas `ADVERTENCIA:` (reloj, cadena, clave corta) sin cambiar el código de salida, y los listados agregan una línea `Estado:`. Ver [7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151).
 
 > **¿Ya integraste S-FiDE 1.4.0?** El contrato de línea de comandos no cambió y todo lo nuevo es opcional, pero hay casos puntuales en los que cambió el comportamiento de un jar que ya usabas (sobre todo los firmadores de PDF y `PDFVerifySignatures`). Antes de actualizar, revisá la [sección 7.9](#79-compatibilidad-con-integraciones-existentes-de-140-a-150) y la *Guía de migración 1.4.0 → 1.5.0* de la [sección 13](#13-historial-de-versiones).
 
@@ -157,7 +157,7 @@ S-FiDE se distribuye bajo la **Licencia Pública General GNU (GNU GPL), versión
 
 - **Repositorio:** [github.com/Grupo-Sauken-S-A/S-FIDE](https://github.com/Grupo-Sauken-S-A/S-FIDE)
 - **Organización:** proyecto Maven multi-módulo (15 módulos) con un `pom.xml` raíz de tipo `pom` (agregador) y un módulo por capacidad.
-- **Versionado:** [SemVer](https://semver.org/). Tags publicados: `v1.0.0` (primer release estable), `v1.1.1` (QA de hardware y de código completa, validada contra los tres modelos de token más usados en Argentina), `v1.2.0` (validación de revocación antes de firmar, diálogo de confirmación en la GUI), `v1.3.0` (pestaña Documentación, instancia única, ayudas contextuales), `v1.4.0` (búsqueda automática del slot del token, configuración y certificados `.pem` por usuario, reutilización de contraseñas durante la sesión, última carpeta usada, actualización desde GitHub), `v1.5.0` (última versión publicada: firma de PDF en cadena entre varias personas y ubicación visual de la firma, visor interno de PDF y XML, XML con marca BOM, paquetes para macOS, revisión de seguridad y licencias de terceros) y `v1.5.1` (en desarrollo, todavía sin publicar: vigencia y aptitud del certificado antes de firmar).
+- **Versionado:** [SemVer](https://semver.org/). Tags publicados: `v1.0.0` (primer release estable), `v1.1.1` (QA de hardware y de código completa, validada contra los tres modelos de token más usados en Argentina), `v1.2.0` (validación de revocación antes de firmar, diálogo de confirmación en la GUI), `v1.3.0` (pestaña Documentación, instancia única, ayudas contextuales), `v1.4.0` (búsqueda automática del slot del token, configuración y certificados `.pem` por usuario, reutilización de contraseñas durante la sesión, última carpeta usada, actualización desde GitHub), `v1.5.0` (firma de PDF en cadena: firma de PDF en cadena entre varias personas y ubicación visual de la firma, visor interno de PDF y XML, XML con marca BOM, paquetes para macOS, revisión de seguridad y licencias de terceros) y `v1.5.1` (versión actual: un certificado vencido o no apto ya no puede firmar, aviso de reloj desfasado y vigencia visible en los listados).
 - **Compilar desde el código fuente:**
   ```bash
   git clone https://github.com/Grupo-Sauken-S-A/S-FIDE.git
@@ -314,7 +314,7 @@ Desde la versión 1.2.0, los seis módulos que aplican una firma digital (`XMLSi
 
 > **Corrección (1.2.0):** al poco de publicarse esta funcionalidad se detectó, con hardware real (token ePass2004 y un certificado real de AC-ONTI), que la validación **siempre** caía en "no se pudo determinar" — incluso con certificados vigentes y no revocados, que `XMLVerifySignatures` sí validaba correctamente por OCSP sobre el mismo certificado. La causa: BouncyCastle a veces extrae la URL de OCSP/CRL de la extensión del certificado con un prefijo literal `[CONTEXT N]` pegado adelante (una particularidad de ciertas codificaciones ASN.1 con tag implícito); sin quitarlo, la URL queda inválida y la consulta HTTP falla antes de llegar al servidor. `XMLVerifySignatures`/`PDFVerifySignatures` ya sabían limpiar ese prefijo desde siempre; se había perdido al reutilizar esa misma lógica para validar *antes* de firmar. Corregido restaurando el saneo en los seis módulos firmadores — verificado de nuevo con el mismo token real, ahora informa correctamente el estado `GOOD`.
 
-### 7.5.2 Vigencia y aptitud del certificado antes de firmar (1.5.1, sin publicar)
+### 7.5.2 Vigencia y aptitud del certificado antes de firmar (1.5.1)
 
 **Otras comprobaciones previas, además de la vigencia** (`CertificateValidity.exigirApto` y `avisar`):
 
@@ -659,7 +659,7 @@ java -jar XMLSignerPKCS11.jar <Biblioteca PKCS#11> <Contraseña> <Número de slo
 java -jar XMLSignerPKCS11.jar [-version | -ayuda | -licencia | -listar-drivers]
 ```
 
-Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
+Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
 
 **Parámetros:**
 
@@ -699,7 +699,7 @@ java -jar XMLSignerPKCS12.jar <certificado.p12> <password> <archivo.xml> <elemen
 java -jar XMLSignerPKCS12.jar [-version | -ayuda | -licencia]
 ```
 
-Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
+Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
 
 **Parámetros:**
 
@@ -853,7 +853,7 @@ java -jar PDFSignerPKCS11.jar -vista-previa-texto -l <lib-pkcs11> -s <slot> [-p 
 java -jar PDFSignerPKCS11.jar [-v | -h | --license | --listar-drivers]
 ```
 
-Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
+Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
 
 **Parámetros:**
 
@@ -896,7 +896,7 @@ java -jar PDFSignerPKCS12.jar -vista-previa-texto -c <certificado.p12> -p <passw
 java -jar PDFSignerPKCS12.jar [-v | -h | --license]
 ```
 
-Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
+Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
 
 **Parámetros:**
 
@@ -969,7 +969,7 @@ java -jar XMLSignerWindowsCSP.jar <Alias o fragmento del Subject CN> <Archivo XM
 java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certificados]
 ```
 
-Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
+Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
 
 **Parámetros:**
 
@@ -1004,7 +1004,7 @@ java -jar PDFSignerWindowsCSP.jar -vista-previa-texto -a <alias o fragmento CN> 
 java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]
 ```
 
-Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
+Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
 
 **Parámetros:**
 
@@ -1359,9 +1359,9 @@ powershell -ExecutionPolicy Bypass -File crear-paquete-actualizacion.ps1 [-Versi
 
 ## 13. Historial de versiones
 
-### v1.5.1 (en desarrollo, sin publicar)
+### v1.5.1 (2026-10-21)
 
-- **Un certificado vencido o todavía no vigente ya no puede firmar** en ninguno de los seis firmadores (antes firmaba sin avisar); tampoco uno de autoridad certificante ni uno cuyo uso no incluye firma. Sin argumento para omitirlo. Ver [7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar).
+- **Un certificado vencido o todavía no vigente ya no puede firmar** en ninguno de los seis firmadores (antes firmaba sin avisar); tampoco uno de autoridad certificante ni uno cuyo uso no incluye firma. Sin argumento para omitirlo. Ver [7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151).
 - **Avisos que no impiden firmar:** certificado de la cadena vencido, clave RSA menor de 2048 bits, algoritmo MD5/MD2.
 - **Con varios certificados en el token o en el PKCS#12** se firma con el primero vigente (antes, siempre el primero).
 - **Los listados muestran una línea `Estado:`** (vigente, vencido, aún no vigente) en `TokenSlotsView`, los dos extractores, `WindowsCertificateStoreView` y `-listar-certificados` de los firmadores CSP.
