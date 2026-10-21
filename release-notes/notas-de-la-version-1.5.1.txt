@@ -1,0 +1,53 @@
+S-FiDE 1.5.1 - Ya no se puede firmar con un certificado vencido, y el programa avisa si algo no está bien antes de firmar
+
+(Este texto es el cuerpo del Release de GitHub. El actualizador de la versión 1.5.0 muestra solo sus primeros 4000
+caracteres al pedir autorización para instalar: por eso lo esencial va al principio, en texto plano. Debajo de la
+línea de guiones empieza el cuerpo; al publicar se le agrega la tabla de descargas con sus SHA-256.)
+
+--------------------------------------------------------------------------------
+
+QUÉ HAY DE NUEVO
+
+* CORRECCIÓN IMPORTANTE: antes, S-FiDE podía firmar con un certificado vencido sin ningún aviso, y el documento
+  firmado no era aceptado después. Ahora comprueba las fechas de validez antes de firmar y, si el certificado venció
+  (o todavía no empezó a valer), no firma y le dice cuándo venció. Vale para XML y PDF, con token, con archivo de
+  certificado (PKCS#12) y con el almacén de Windows. No hay forma de saltear esta comprobación.
+* Tampoco firma con el certificado de una autoridad certificante ni con uno emitido solo para cifrar. Si su token o
+  su archivo tiene más de un certificado (por ejemplo el viejo vencido y el renovado), usa el que está vigente.
+* Aviso de reloj: si hay Internet, S-FiDE compara el reloj de la computadora con la hora real y le avisa antes de
+  firmar si la diferencia es grande (la vigencia del certificado y la fecha de la firma dependen de ese reloj). Es
+  solo un aviso: no impide firmar, y sin Internet no dice nada.
+* Las pantallas que muestran certificados (Ver Slots de Token, Ver Certificado de Token y de PKCS#12, Ver
+  Certificados de Windows) indican ahora si cada certificado está vigente o vencido, y hasta cuándo.
+* Antes de firmar también se advierte, sin impedirlo, si el certificado de la autoridad certificante está vencido o
+  si la clave es más débil de lo recomendable.
+* La primera vez que abre esta versión, S-FiDE le muestra un cuadro que dice que fue actualizado, con las novedades.
+
+SEGURIDAD
+
+* Se repitió la revisión de todos los componentes que se distribuyen: ninguno tiene avisos de seguridad conocidos.
+  Se actualizaron Commons Codec, Stax2, Commons Logging y otras bibliotecas, y se eliminó un mensaje técnico que la
+  firma de PDF con Windows podía mostrar. Pendiente: pasar el Java embebido (23, sin soporte) a la versión 25 con
+  soporte largo.
+
+CÓMO ACTUALIZAR
+
+* Desde la 1.4.0 o la 1.5.0: "Ayuda > Buscar actualizaciones...". S-FiDE pide autorización, descarga, verifica,
+  reemplaza sus archivos y se reabre. Si algo falla, queda todo como estaba. Su configuración no se toca.
+* Desde una versión anterior: descargue el ZIP completo de su sistema. Instalación recomendada: C:\S-FiDE en
+  Windows, /opt/S-FiDE en Linux y macOS (instrucciones en Leeme.txt).
+
+PARA INTEGRADORES (los .jar)
+
+* El contrato no cambia: mismos argumentos y código de salida 0 o 1. Lo único que cambia es el comportamiento ante
+  un certificado no apto: los seis firmadores (XML y PDF; PKCS#11, PKCS#12 y Windows CSP/KSP) terminan con código 1,
+  sin generar archivo, si el certificado está vencido, no es válido todavía, es de una autoridad certificante o su
+  uso no incluye firma. -omitir-revocacion no afecta esta comprobación. La consulta -verificar-revocacion de la
+  interfaz gráfica también falla con ese mensaje.
+* Los listados de certificados agregan una línea "Estado:". Los firmadores pueden imprimir líneas ADVERTENCIA: (reloj,
+  cadena, clave corta) sin cambiar el código de salida. Detalle: sección 7.5.2 del manual técnico.
+
+LÍMITES CONOCIDOS
+
+* S-FiDE no usa sello de tiempo al firmar: la fecha de cada firma es la del reloj del equipo de quien firma.
+* El paquete de macOS todavía no se probó en un Mac real: si algo no anda, avísenos.

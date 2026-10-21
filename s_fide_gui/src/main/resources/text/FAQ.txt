@@ -205,3 +205,21 @@
   sistemas receptores rechazan el archivo por su causa. S-FiDE la ignora y firma igual: el documento
   firmado queda sin ella y su archivo original no se modifica. No afecta a las firmas que el documento
   ya tuviera. Si el archivo está guardado en UTF-16, S-FiDE le pide volver a guardarlo como UTF-8.
+
+## 19. S-FiDE dice que mi certificado venció (o "todavía no es válido") y no firma, ¿qué hago?
+- Es lo correcto: un documento firmado con un certificado vencido no sería aceptado por quien lo reciba.
+  S-FiDE comprueba las fechas de su certificado antes de firmar y, si no está vigente, se lo explica y no
+  genera ningún archivo.
+- Para ver cuál es la situación de cada certificado use "Ver Slots de Token", "Ver Certificado de Token" o
+  "de PKCS#12" y "Ver Certificados de Windows": la línea "Estado" dice si está vigente, vencido o aún no
+  vigente, y hasta cuándo. Si el vencido es el suyo, renuévelo ante su autoridad certificante.
+- Si su token o su archivo tiene más de un certificado (por ejemplo, el viejo y el renovado), S-FiDE usa el
+  que está vigente. Si dice "todavía no es válido" y usted sabe que ya corresponde, revise la fecha y la hora
+  de la computadora.
+- Tampoco firma con el certificado de una autoridad certificante ni con uno emitido solo para cifrar.
+
+## 20. Apareció una ADVERTENCIA sobre el reloj de la computadora, ¿es un error?
+- No impide firmar. Si hay conexión a Internet, S-FiDE compara el reloj de la computadora con la hora real y
+  avisa si la diferencia supera los 5 minutos, porque la vigencia del certificado y la fecha de la firma se
+  calculan con ese reloj. Conviene corregir la fecha y la hora de la computadora antes de seguir firmando.
+- Sin conexión a Internet no se hace esta comprobación y no se muestra ningún aviso.

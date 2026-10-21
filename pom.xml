@@ -51,6 +51,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
             <!-- Bibliotecas que llegan como dependencia de otras (PDFBox, Santuario): se fijan aca para
                  que la version que se distribuye sea siempre la revisada por seguridad, y no la que
                  declare por defecto la biblioteca que las trae -->

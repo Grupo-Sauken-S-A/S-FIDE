@@ -274,7 +274,7 @@
       <p>Además, el menú <strong>Archivo</strong> abre un <strong>visor interno</strong> de PDF y de XML (ver «Abrir un documento para mirarlo»). Esta guía recorre cada una de esas 13 pantallas con capturas reales de la aplicación: qué hace cada una, qué significa cada campo, y qué puede pasar al presionar "Ejecutar" — tanto si todo sale bien como los mensajes más comunes cuando algo falta o está mal.</p>
       <div class="callout note">
         <span class="label">Nota sobre las capturas</span>
-        <p>Las capturas de esta guía se hicieron sin un token ni certificado real conectado, por eso los formularios aparecen vacíos o con datos de ejemplo. Los mensajes de error y de éxito que se describen en cada sección son los mensajes reales que imprime cada programa — algunos con captura real (como "Ver Certificados de Windows", que no necesita ningún dato para ejecutarse), y el resto tomados textualmente de la documentación técnica del producto.</p>
+        <p>Las capturas de esta guía son de la versión 1.5.1 y se hicieron con tokens criptográficos reales conectados (uno de ellos con un certificado ya vencido, para mostrar cómo S-FiDE lo informa), con un certificado de prueba en archivo y con el almacén de certificados de Windows. Los formularios quedan con los campos vacíos después de cada ejecución, tal como los verá usted; las contraseñas nunca se muestran. Los mensajes de error y de éxito que se describen en cada sección son los mensajes reales que imprime cada programa: algunos con captura real y el resto tomados textualmente de la documentación técnica del producto.</p>
       </div>
     </section>
 
@@ -327,6 +327,14 @@
       <p>Con <strong>Archivo → Abrir PDF…</strong> o <strong>Archivo → Abrir XML…</strong> puede ver un documento dentro de S-FiDE, sin firmarlo ni modificarlo. El PDF se muestra página por página, con zoom, y al costado una <strong>revisión de sus firmas</strong> en palabras simples. El XML se muestra como un árbol con colores, donde puede plegar y desplegar los elementos como en un navegador, buscar texto y copiar un elemento (clic derecho); las <strong>firmas digitales aparecen marcadas</strong> (✎ quién firmó, ✔ qué elementos quedaron firmados). Esas marcas son solo informativas: para comprobar que una firma es válida use el botón <strong>Validar firmas</strong> de la misma ventana, cuyo resultado aparece en la Salida del Proceso.</p>
       <p>El botón <strong>Validar firmas</strong> solo aparece si el documento tiene firmas. Si el XML es un COD o una DJO completo (firmado en sus dos partes) y declara de dónde bajar su esquema, aparece también <strong>Validar XSD</strong>: comprueba la estructura del documento con el esquema oficial, que S-FiDE descarga solo (nunca se le pide el archivo). Si no se puede conseguir el esquema, no se valida nada.</p>
       <p>Si el XML es un <strong>Certificado de Origen Digital</strong> o una <strong>Declaración Jurada de Origen</strong>, aparece además un botón azul, <strong>Visor de COD</strong> o <strong>Visor de DJO</strong>, que abre en su navegador el visor oficial. Esos visores no pueden recibir un archivo de su computadora, así que al abrirse tendrá que cargar allí el documento. En un PDF, el botón <strong>Ver en visor externo</strong> lo abre con el programa que su equipo use para PDF (o con el navegador, si no tiene ninguno).</p>
+      <figure class="shot">
+        <img src="img/manual-usuario/20_visor_pdf.png" alt="Visor interno de PDF, con la revisión de las firmas al costado">
+        <figcaption>Captura real — visor de PDF: páginas con zoom y, al costado, la revisión de cada firma en palabras simples</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="img/manual-usuario/21_visor_xml.png" alt="Visor interno de XML, con colores y las firmas marcadas">
+        <figcaption>Captura real — visor de XML: árbol con colores, elementos plegables y firmas marcadas</figcaption>
+      </figure>
       <p>S-FiDE recuerda entre sesiones, sin que tenga que volver a escribirlos: la ruta de la biblioteca PKCS#11 o el archivo PKCS#12, el número de slot, la <strong>última carpeta usada para documentos XML, PDF y XSD</strong> (el botón "Examinar..." abre directamente ahí), el alias del almacén de Windows, la casilla "Salida simple" de los verificadores, el tamaño y posición de la ventana, y el último módulo que tenía abierto (reabre ahí directamente). <strong>Nunca guarda ninguna contraseña en disco</strong> — esos campos siempre arrancan vacíos al abrir el programa. Tampoco recuerda la posición X/Y de firma visible en PDF ni la opción "Bloquear documento después de firmar": a propósito, siempre hay que indicarlas de nuevo en cada firma, igual que el elemento/ID de un XML a firmar.</p>
       <div class="callout note">
         <span class="label">Contraseñas durante la sesión</span>
@@ -343,6 +351,11 @@
         <p class="desc">Muestra el contenido de cada entrada de un token PKCS#11: el número de slot que el resto de los módulos necesita como parámetro, y si hay un certificado presente, de quién es y su vigencia. Es la manera de distinguir, en tokens donde conviven un certificado vencido y su renovación en entradas distintas del mismo dispositivo —algo frecuente con las autoridades certificantes—, cuál es cuál antes de usarlo para firmar.</p>
         <figure class="shot">
           <img src="img/manual-usuario/01_ver_slots_de_token.png" alt="Pantalla Ver Slots de Token">
+        </figure>
+        <p>Cada certificado indica en la línea <em>Estado</em> si está <strong>vigente</strong>, <strong>vencido</strong> o <strong>aún no vigente</strong>, y hasta cuándo. Así se ve un token cuyo único certificado ya venció: S-FiDE no podrá firmar con él.</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/14_ver_slots_certificado_vencido.png" alt="Ver Slots de Token mostrando un certificado con Estado VENCIDO">
+          <figcaption>Captura real — un certificado vencido se muestra como "VENCIDO - no sirve para firmar", con la fecha en que venció</figcaption>
         </figure>
         <p class="field-label">Campos</p>
         <ul>
@@ -402,6 +415,11 @@
         <figure class="shot">
           <img src="img/manual-usuario/04_firmar_xml_con_token.png" alt="Pantalla Firmar XML con Token">
         </figure>
+        <p>Si el certificado del token está vencido, S-FiDE no firma y lo explica antes de tocar el documento:</p>
+        <figure class="shot">
+          <img src="img/manual-usuario/15_firmar_xml_certificado_vencido.png" alt="Firmar XML con Token con un certificado vencido: el programa se niega a firmar y explica cuándo venció">
+          <figcaption>Captura real — con un certificado vencido no se genera ningún archivo firmado; lo mismo ocurre con todos los módulos de firma</figcaption>
+        </figure>
         <p class="field-label">Campos</p>
         <ul>
           <li><strong>Biblioteca PKCS#11</strong>, <strong>Contraseña</strong>, <strong>Número de Slot:</strong> igual que en los módulos de token anteriores.</li>
@@ -430,7 +448,7 @@
         </ul>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
         <p class="oklist"><code>Éxito</code> — mismo resultado que "Firmar XML con Token": <code>&lt;nombre&gt;-signed.xml</code> junto al original.</p>
-        <p class="errlist"><code>Error</code> — archivo PKCS#12 o XML inexistente, PKCS#12 inválido o contraseña incorrecta, PKCS#12 sin certificado, elemento inexistente, certificado revocado, o las mismas reglas de firma (elemento ya firmado, orden CODEH/DJOEH) que el módulo anterior.</p>
+        <p class="errlist"><code>Error</code> — archivo PKCS#12 o XML inexistente, PKCS#12 inválido o contraseña incorrecta, PKCS#12 sin certificado, elemento inexistente, certificado vencido, todavía no válido, no apto para firmar o revocado, o las mismas reglas de firma (elemento ya firmado, orden CODEH/DJOEH) que el módulo anterior.</p>
         <div class="callout note">
           <span class="label">Validación de revocación antes de firmar (con diálogo de confirmación)</span>
           <p>Antes de firmar, la GUI consulta el estado de revocación del certificado. Si no está revocado, firma directo, sin interrumpir. Si <strong>no se pudo determinar</strong> (sin Internet, o el certificado no publica OCSP/CRL), aparece un diálogo: <em>"No se pudo confirmar que el certificado no esté revocado. ¿Desea firmar de todas formas?"</em> — "Aceptar" firma igual, "Cancelar" no firma nada. Si el certificado está <strong>confirmado como revocado</strong>, no se firma y no hay ningún diálogo ni forma de forzarlo desde la GUI. Este mismo comportamiento (con diálogo) también aplica a "Firmar PDF con PKCS#12" y a los dos módulos de Windows CSP/KSP — los módulos de token (PKCS#11) son la única excepción, ver la nota en "Firmar XML con Token".</p>
@@ -510,7 +528,7 @@
         <p>Los mismos que "Firmar PDF con Token", cambiando biblioteca/slot por <strong>Archivo PKCS#12</strong> y <strong>Contraseña</strong> del certificado.</p>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
         <p class="oklist"><code>Éxito</code> — mismo resultado que "Firmar PDF con Token". Antes de firmar, valida revocación con diálogo de confirmación si no se puede determinar — ver el recuadro en "Firmar XML con PKCS#12".</p>
-        <p class="errlist"><code>Error</code> — PDF o certificado inexistente, documento cerrado o protegido con restricciones de seguridad, certificado sin clave privada o cadena válida, o certificado revocado.</p>
+        <p class="errlist"><code>Error</code> — PDF o certificado inexistente, documento cerrado o protegido con restricciones de seguridad, certificado sin clave privada o cadena válida, o certificado vencido, todavía no válido, no apto para firmar o revocado.</p>
       </div>
 
       <div class="module" id="g10">
@@ -571,14 +589,14 @@
         </figure>
         <p class="field-label">Campos</p>
         <p>Los mismos que "Firmar PDF con Token", cambiando biblioteca/contraseña/slot por el campo <strong>Alias / Nombre (CN)</strong> del módulo anterior.</p>
-        <p>Todos los campos son opcionales salvo el alias. Así se ve, en una captura real, el aviso que aparece si se presiona "Ejecutar" dejándolo vacío:</p>
+        <p>Todos los campos son opcionales salvo el alias. Antes de firmar, S-FiDE comprueba el certificado elegido: así se ve, en una captura real, lo que ocurre si el certificado está vencido (no se firma y se explica cuándo venció):</p>
         <figure class="shot">
-          <img src="img/manual-usuario/13b_firmar_pdf_windows_csp_error_validacion.png" alt="Aviso de error mostrando que el campo alias o nombre del certificado es requerido, con el diálogo de error y el mensaje en el panel de salida">
-          <figcaption>Captura real — S-FiDE valida los campos obligatorios antes de ejecutar nada</figcaption>
+          <img src="img/manual-usuario/13b_firmar_pdf_windows_csp_error_validacion.png" alt="Aviso de error mostrando que el certificado elegido está vencido, con el diálogo de error y el mensaje en el panel de salida">
+          <figcaption>Captura real — S-FiDE comprueba que el certificado esté vigente antes de firmar (y valida los campos obligatorios antes de ejecutar nada)</figcaption>
         </figure>
         <p class="field-label">Qué puede pasar al presionar Ejecutar</p>
         <p class="oklist"><code>Éxito</code> — mismo resultado que "Firmar PDF con Token". Antes de firmar, valida revocación con diálogo de confirmación si no se puede determinar — ver el recuadro en "Firmar XML con PKCS#12".</p>
-        <p class="errlist"><code>Error</code> — el campo alias es requerido (validado antes de ejecutar nada, ver captura), no se encontró o hay más de un certificado que coincide, PDF ya encriptado, firma preexistente inválida, certificado revocado, más los errores de acceso al almacén de Windows del módulo anterior.</p>
+        <p class="errlist"><code>Error</code> — el campo alias es requerido (validado antes de ejecutar nada, ver captura), no se encontró o hay más de un certificado que coincide, PDF ya encriptado, firma preexistente inválida, certificado vencido, todavía no válido, no apto para firmar o revocado, más los errores de acceso al almacén de Windows del módulo anterior.</p>
         <div class="callout warn">
           <span class="label">No usar para firmar muchos documentos seguidos</span>
           <p>Mismo motivo que en la versión XML: Windows puede pedir el PIN por diálogo en cada documento. Para firmar muchos PDF sin intervención, use "Firmar PDF con Token" o "Firmar PDF con PKCS#12".</p>
@@ -586,10 +604,20 @@
       </div>
       <h3>Un documento, varias firmas</h3>
       <p>Un mismo PDF puede pasar por varias personas, cada una en su computadora, firmando a su turno. Cada persona puede usar S-FiDE o Acrobat Reader: <strong>lo que firma S-FiDE es válido en Acrobat Reader, y a la inversa</strong>.</p>
+      <figure class="shot">
+        <img src="img/manual-usuario/18_ubicar_la_firma.png" alt="Ventana Ubicar la firma en el documento, con el PDF, el recuadro de la firma y la revisión del documento">
+        <figcaption>Captura real — "Elegir en el documento…": se arrastra el recuadro de la firma sobre el propio PDF</figcaption>
+      </figure>
       <ol>
         <li><strong>Quien arma el documento</strong> lo guarda como PDF (opcionalmente, con campos de firma preparados para cada firmante) y se lo envía a la primera persona que debe firmar. Si esa primera persona quiere impedir que cambien el contenido pero otros todavía deben firmar, tilda <em>"Proteger el contenido"</em>.</li>
         <li><strong>Cada firmante intermedio</strong> abre la pestaña de firma de PDF, elige el documento y presiona <em>"Elegir en el documento…"</em>: ahí revisa el documento y el estado de las firmas anteriores, ubica su firma en un lugar libre y la aplica con <em>Ejecutar</em>. Guarda el archivo firmado (<code>…-signed.pdf</code>) y se lo envía a la persona siguiente. No tilda nada más.</li>
         <li><strong>La última persona</strong> hace lo mismo y, además, tilda <em>"Cerrar el documento con esta firma"</em>. S-FiDE le pide confirmación porque no se puede deshacer. El documento queda cerrado: no admite más firmas, y cualquier cambio posterior invalida las firmas.</li>
+        <li class="nota-captura">Al tildar <em>"Cerrar el documento con esta firma"</em> y presionar Ejecutar, S-FiDE pide confirmación:
+          <figure class="shot">
+            <img src="img/manual-usuario/19_firma_final_confirmacion.png" alt="Confirmación de la firma final del documento">
+            <figcaption>Captura real — la firma final no se puede deshacer, por eso se pide confirmación (Cancelar es la opción por defecto)</figcaption>
+          </figure>
+        </li>
         <li><strong>Quien recibe el documento final</strong> (por ejemplo, un organismo) lo revisa con <em>"Verificar Firmas en PDF"</em>: ve el resultado de cada firma en palabras simples y que el documento está bloqueado.</li>
       </ol>
       <div class="callout note">
@@ -660,6 +688,10 @@
       </ul>
       <h3>Novedades de la versión</h3>
       <p>La primera vez que usted abre una versión nueva de S-FiDE se muestra automáticamente un cuadro de diálogo con los cambios y agregados, escrito en palabras simples. Si se actualizó saltando versiones, incluye las novedades de todas las versiones intermedias. Aparece una sola vez por usuario; para volver a verlo (con el historial completo) use <strong>Ayuda → Novedades de esta versión</strong>.</p>
+      <figure class="shot">
+        <img src="img/manual-usuario/16_novedades_primer_arranque.png" alt="Cuadro S-FiDE se actualizó, con las novedades de la versión">
+        <figcaption>Captura real — el cuadro que se muestra una sola vez, la primera vez que cada usuario abre una versión nueva</figcaption>
+      </figure>
       <h3>Acerca de</h3>
       <p>Fuera de la ventana de Ayuda, el menú <strong>Ayuda → Acerca de</strong> abre un diálogo aparte con la descripción de S-FiDE, la versión instalada, los enlaces al sitio de Grupo Sauken, al repositorio en GitHub y a la página del proyecto en GitHub Pages, la licencia (GNU GPL v2 o posterior) y la lista de los componentes de otros autores que S-FiDE incluye, con sus licencias.</p>
       <figure class="shot">
@@ -676,6 +708,9 @@
         <tr><td>Otro programa lee mi token pero S-FiDE dice "error al acceder al token"</td><td>Revise el mensaje: si dice que la biblioteca es de 32 bits, indique la de 64 bits (en Windows, <code>C:\Windows\System32</code>). Si dice que no se detectó ningún token, verifique que esté insertado, que la biblioteca sea la de su marca/modelo y que ningún otro programa lo esté usando en forma exclusiva.</td></tr>
         <tr><td>No sé el alias/CN de mi certificado de Windows</td><td>Corra "Ver Certificados de Windows" primero, o use el botón "Ver certificados" en el propio formulario de firma.</td></tr>
         <tr><td>Windows me pide el PIN en cada documento</td><td>Es esperable con los módulos CSP/KSP — no hay forma de evitarlo. Para firmar varios documentos sin interrupciones, use el módulo equivalente de Token o PKCS#12.</td></tr>
+        <tr><td>S-FiDE dice que el certificado venció, o que todavía no es válido, y no firma</td><td>Es lo correcto: un documento firmado con un certificado vencido no sería aceptado. Corra "Ver Slots de Token", "Ver Certificado de Token o de PKCS#12" o "Ver Certificados de Windows": la línea <em>Estado</em> de cada certificado dice si está vigente, vencido o aún no vigente. Si el vencido es el suyo, renuévelo ante su autoridad certificante; si su token o archivo tiene además uno renovado, S-FiDE usa solo el vigente. Si el certificado figura como "todavía no válido" y usted sabe que ya corresponde, revise la fecha y hora de la computadora.</td></tr>
+        <tr><td>Aparece una <em>ADVERTENCIA</em> sobre el reloj de la computadora</td><td>S-FiDE compara el reloj con la hora real de Internet (si hay conexión) y avisa si la diferencia supera los 5 minutos, porque de ese reloj dependen la vigencia del certificado y la fecha de la firma. No impide firmar, pero conviene corregir la fecha y hora de Windows antes de seguir.</td></tr>
+        <tr><td>Aparece una ADVERTENCIA sobre la autoridad certificante o la clave del certificado</td><td>Es informativa y no impide firmar: el certificado de la autoridad que emitió el suyo está vencido, o su clave es más débil de lo recomendable. Consulte con su autoridad certificante.</td></tr>
         <tr><td>No encuentro el archivo firmado</td><td>Queda en la misma carpeta que el archivo original (ver la tabla de la sección anterior) — no en la carpeta de instalación de S-FiDE.</td></tr>
         <tr><td>No encuentro el .pem que extraje</td><td>Queda en su carpeta personal de S-FiDE (<code>C:\Users\su-usuario\S-FiDE</code>), no junto al token/archivo de origen. Use el botón "Abrir carpeta del .pem" de las pestañas "Ver Certificado".</td></tr>
         <tr><td>S-FiDE dice que el documento "está cerrado" y no me deja firmar</td><td>Otra persona ya lo cerró con su firma final, o lo bloqueó con Acrobat Reader ("Bloquear documento después de firmar"): ya no admite más firmas. Pídale a esa persona una versión que no esté cerrada.</td></tr>

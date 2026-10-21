@@ -43,6 +43,8 @@ Versión del documento: acompaña a S-FiDE v1.5.1 (en desarrollo, sin publicar) 
 
 ## 1. Introducción y filosofía
 
+> **¿Ya integraste S-FiDE 1.5.0?** El contrato de línea de comandos no cambió. Lo único que cambia en la 1.5.1 es que los seis firmadores terminan con código `1`, sin generar archivo, ante un certificado vencido, no vigente todavía, de autoridad certificante o sin uso de firma (antes firmaban igual con uno vencido); no hay argumento para omitirlo. Pueden además imprimir líneas `ADVERTENCIA:` (reloj, cadena, clave corta) sin cambiar el código de salida, y los listados agregan una línea `Estado:`. Ver [7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar).
+
 > **¿Ya integraste S-FiDE 1.4.0?** El contrato de línea de comandos no cambió y todo lo nuevo es opcional, pero hay casos puntuales en los que cambió el comportamiento de un jar que ya usabas (sobre todo los firmadores de PDF y `PDFVerifySignatures`). Antes de actualizar, revisá la [sección 7.9](#79-compatibilidad-con-integraciones-existentes-de-140-a-150) y la *Guía de migración 1.4.0 → 1.5.0* de la [sección 13](#13-historial-de-versiones).
 
 > **¿Ya tenías una integración funcionando contra S-FiDE 1.0.0?** Casi todo lo agregado en 1.1.1 es aditivo y no requiere ningún cambio de tu lado — pero hay un puñado de casos puntuales donde cambió el comportamiento de un jar que ya usabas. Antes de actualizar, revisá la **[Guía de migración desde 1.0.0](#guía-de-migración-desde-100)** al final de la [sección 13](#13-historial-de-versiones).
@@ -96,13 +98,13 @@ Cada `.jar` de distribución incluye (empaquetadas dentro) las bibliotecas que u
 | iText (`kernel`, `io`, `commons`, `sign`, `forms`, `layout`, `pdfa`, `pdfua`, `barcodes`, `svg`, `styled-xml-parser`, `hyph`, `font-asian`, `bouncy-castle-adapter`/`connector`) | 8.0.5 | Los cuatro módulos de PDF (`PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`, `PDFVerifySignatures`): firma y verificación | **AGPL v3** (o licencia comercial de Apryse). `hyph` y `font-asian` traen datos de terceros bajo licencias propias de cada archivo |
 | Bouncy Castle (`bcprov`, `bcpkix`, `bcutil`, `bctls`-jdk18on) | 1.86 | Todos los módulos de firma y verificación, y los extractores de certificados | Bouncy Castle Licence (tipo MIT) |
 | Apache Santuario (`xmlsec`) | 4.0.4 | `XMLSignerPKCS11` | Apache License 2.0 |
-| Apache Commons Codec | 1.22.1 | `XMLSignerPKCS11` (dependencia de Santuario) | Apache License 2.0 |
+| Apache Commons Codec | 1.23.0 | `XMLSignerPKCS11` (dependencia de Santuario) | Apache License 2.0 |
 | Woodstox (`woodstox-core`) | 7.3.0 | `XMLSignerPKCS11` (dependencia de Santuario) | Apache License 2.0 |
-| Stax2 API | 4.3.1 | `XMLSignerPKCS11` (dependencia de Woodstox) | BSD de 2 cláusulas |
+| Stax2 API | 4.3.2 | `XMLSignerPKCS11` (dependencia de Woodstox) | BSD de 2 cláusulas |
 | SLF4J (`slf4j-api`; `slf4j-simple` en `PDFVerifySignatures`) | 2.0.20 | Módulos de PDF | MIT |
 | Logback (`logback-classic`, `logback-core`) | 1.6.5 | `PDFSignerPKCS11` y `PDFSignerPKCS12` | EPL 2.0 **o** LGPL 2.1 (a elección; S-FiDE usa la LGPL 2.1, compatible con la GPL) |
 | Apache PDFBox (`pdfbox`, `fontbox`, `pdfbox-io`) | 3.0.8 | **Solo `s_fide_gui`**: dibuja las páginas del PDF (ubicación de la firma y visor). No firma ni modifica nada, y ningún módulo CLI depende de él. Incluye la Adobe Glyph List, un perfil de color ICC de dominio público (CC0) y partes de TwelveMonkeys ImageIO, con los avisos que detalla su archivo `NOTICE` | Apache License 2.0 |
-| Apache Commons Logging | 1.3.6 | `s_fide_gui` (dependencia de PDFBox) | Apache License 2.0 |
+| Apache Commons Logging | 1.4.0 | `s_fide_gui` (dependencia de PDFBox) | Apache License 2.0 |
 | JavaFX (`javafx-base`, `controls`, `fxml`, `graphics`) | 23.0.1 | `s_fide_gui`; el paquete completo trae el SDK de cada plataforma | GPL v2 con *Classpath Exception* (OpenJFX) |
 | OpenJDK (runtime de Java embebido) | 23.0.1 | Todos los módulos; el paquete completo trae un runtime por plataforma | GPL v2 con *Classpath Exception*; trae además los avisos de sus propios componentes de terceros |
 
@@ -132,6 +134,8 @@ Antes de publicar la 1.5.0 se revisó la seguridad de **todo lo que se distribuy
 | Jackson | — | — | — | **No forma parte de S-FiDE:** ningún jar contiene clases de `com.fasterxml.jackson` |
 | JavaFX | 23.0.1 | 23.0.1 | ninguno | **Atención:** JavaFX 23 es una línea sin soporte; la línea con soporte largo es JavaFX 25 (acompaña a JDK 25 LTS). Decisión pendiente |
 | OpenJDK (runtime embebido) | 23.0.1 | 23.0.1 | no cubierto por OSV | **Atención:** JDK 23 no es una versión de soporte largo y ya terminó su ciclo de vida (su última actualización fue la 23.0.2), por lo que no recibe correcciones de seguridad. Se recomienda pasar el runtime a **JDK 25 (LTS)** con JavaFX 25. Decisión pendiente |
+
+**Repetición de la revisión para la 1.5.1 (2026-10-21).** Se repitió el mismo método sobre las 34 combinaciones de artefacto y versión que distribuyen los jars (OSV, con el control positivo de Bouncy Castle 1.78, que devolvió sus cuatro avisos): **ninguna tiene avisos**. Cambios: Commons Codec 1.22.1 → **1.23.0**, Stax2 API 4.3.1 → **4.3.2** y Commons Logging 1.3.6 → **1.4.0** (llegan como dependencia; se fijan en el `pom.xml` padre); y se corrigió un hallazgo propio: `PDFSignerWindowsCSP` incluía `slf4j-api` 1.7.36 (que traía iText) sin proveedor, lo que imprimía un aviso técnico de SLF4J a quien firmaba; ahora se fija la 2.0.20 en el `pom.xml` padre y el módulo agrega `slf4j-nop` 2.0.20 (sin avisos conocidos). Bouncy Castle 1.86, Logback 1.6.5, PDFBox 3.0.8, Santuario 4.0.4 y Woodstox 7.3.0 siguen siendo las últimas versiones estables. **Siguen pendientes de decisión** JDK 25 LTS con JavaFX 25 y iText 9.x (9.8.0).
 
 **Alcance y límites.** OSV reúne los avisos publicados (GitHub Security Advisories y otras fuentes) y no cubre el JDK; la revisión no reemplaza un análisis completo contra el NVD ni al escáner del cliente, que conviene volver a correr sobre la versión publicada. **Pendientes que requieren decisión:** migrar a JDK 25 LTS y JavaFX 25 (cambia los runtimes de todas las plataformas, incluido macOS) y evaluar iText 9.x. Esta revisión se repite **antes de cada release** (ver `AGENTS.md`).
 
@@ -655,7 +659,7 @@ java -jar XMLSignerPKCS11.jar <Biblioteca PKCS#11> <Contraseña> <Número de slo
 java -jar XMLSignerPKCS11.jar [-version | -ayuda | -licencia | -listar-drivers]
 ```
 
-Antes de firmar, valida el estado de revocación del certificado — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
+Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
 
 **Parámetros:**
 
@@ -695,7 +699,7 @@ java -jar XMLSignerPKCS12.jar <certificado.p12> <password> <archivo.xml> <elemen
 java -jar XMLSignerPKCS12.jar [-version | -ayuda | -licencia]
 ```
 
-Antes de firmar, valida el estado de revocación del certificado — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
+Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
 
 **Parámetros:**
 
@@ -849,7 +853,7 @@ java -jar PDFSignerPKCS11.jar -vista-previa-texto -l <lib-pkcs11> -s <slot> [-p 
 java -jar PDFSignerPKCS11.jar [-v | -h | --license | --listar-drivers]
 ```
 
-Antes de firmar, valida el estado de revocación del certificado — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
+Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
 
 **Parámetros:**
 
@@ -892,7 +896,7 @@ java -jar PDFSignerPKCS12.jar -vista-previa-texto -c <certificado.p12> -p <passw
 java -jar PDFSignerPKCS12.jar [-v | -h | --license]
 ```
 
-Antes de firmar, valida el estado de revocación del certificado — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
+Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
 
 **Parámetros:**
 
@@ -965,7 +969,7 @@ java -jar XMLSignerWindowsCSP.jar <Alias o fragmento del Subject CN> <Archivo XM
 java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certificados]
 ```
 
-Antes de firmar, valida el estado de revocación del certificado — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
+Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
 
 **Parámetros:**
 
@@ -1000,7 +1004,7 @@ java -jar PDFSignerWindowsCSP.jar -vista-previa-texto -a <alias o fragmento CN> 
 java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]
 ```
 
-Antes de firmar, valida el estado de revocación del certificado — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
+Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar ([sección 7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151-sin-publicar): un certificado vencido nunca firma) y valida su estado de revocación — ver [sección 7.5.1](#751-validación-de-revocación-antes-de-firmar). No firma si el certificado está confirmado como revocado, salvo que se indique `-omitir-revocacion true`.
 
 **Parámetros:**
 
@@ -1041,7 +1045,7 @@ java -jar WindowsCertificateStoreView.jar [-version | -ayuda | -licencia | -list
 
 No recibe parámetros obligatorios: ejecutado sin argumentos, lista directamente los certificados disponibles (no requiere contraseña ni configuración, a diferencia de `TokenSlotsView`, ya que el acceso al almacén "Personal" del usuario actual lo administra Windows).
 
-**Salida:** por cada certificado del almacén, alias, sujeto (incluye el CN), emisor, período de validez, número de serie en hexadecimal, y si tiene clave privada asociada (`KeyStore.isKeyEntry`) — solo esas entradas son utilizables para firmar. Es habitual que convivan en el mismo almacén un certificado vencido y su renovación posterior; conviene revisar "Válido hasta" antes de elegir cuál usar, igual que con `TokenSlotsView` y los tokens PKCS#11 (sección 9.1).
+**Salida:** por cada certificado del almacén, alias, sujeto (incluye el CN), emisor, período de validez y su estado (vigente, vencido o aún no vigente; desde 1.5.1), número de serie en hexadecimal, y si tiene clave privada asociada (`KeyStore.isKeyEntry`) — solo esas entradas son utilizables para firmar. Es habitual que convivan en el mismo almacén un certificado vencido y su renovación posterior; conviene revisar "Válido hasta" antes de elegir cuál usar, igual que con `TokenSlotsView` y los tokens PKCS#11 (sección 9.1).
 
 **Relación con `-listar-certificados` en los firmadores:** `XMLSignerWindowsCSP`/`PDFSignerWindowsCSP` ya traían (desde la 1.1.1 original) un flag `-listar-certificados` con el mismo propósito, pensado como ayuda rápida dentro de esos mismos módulos. `WindowsCertificateStoreView` no lo reemplaza — es, en cambio, el mismo tipo de capacidad elevada a módulo propio de primera clase (con su propia pestaña en la GUI), consistente con cómo `TokenSlotsView` existe aparte de los firmadores PKCS#11 en lugar de que cada uno duplique su propia función de listado.
 

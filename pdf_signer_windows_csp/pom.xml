@@ -47,6 +47,19 @@
             <version>${itext.version}</version>
         </dependency>
 
+        <!-- iText trae slf4j-api 1.7 sin proveedor y eso imprime un aviso tecnico a quien firma: se fija la 2.x
+             revisada y se agrega el proveedor nulo (esta aplicacion no escribe registros) -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
         <!-- Bouncy Castle (para BouncyCastleDigest usado por iText) -->
         <dependency>
             <groupId>org.bouncycastle</groupId>

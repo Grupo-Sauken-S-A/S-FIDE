@@ -421,6 +421,10 @@
       <span class="chapter-num">01</span>
       <h2>Introducción y filosofía</h2>
       <div class="callout note">
+        <span class="label">¿Ya integraste S-FiDE 1.5.0?</span>
+        <p>El contrato de línea de comandos no cambió. Lo único que cambia en la 1.5.1 es que los seis firmadores terminan con código <code>1</code>, sin generar archivo, ante un certificado vencido, no vigente todavía, de autoridad certificante o sin uso de firma (antes firmaban igual con uno vencido); no hay argumento para omitirlo. Pueden además imprimir líneas <code>ADVERTENCIA:</code> (reloj, cadena, clave corta) sin cambiar el código de salida, y los listados agregan una línea <code>Estado:</code>. Ver la sección 7.5.2.</p>
+      </div>
+      <div class="callout note">
         <span class="label">¿Ya integraste S-FiDE 1.4.0?</span>
         <p>El contrato de línea de comandos no cambió y todo lo nuevo es opcional, pero hay casos puntuales en los que cambió el comportamiento de un jar que ya usabas (sobre todo los firmadores de PDF y <code>PDFVerifySignatures</code>). Antes de actualizar, revisá la sección 7.9 y la <em>Guía de migración 1.4.0 → 1.5.0</em> de la sección 13.</p>
       </div>
@@ -486,13 +490,13 @@
           <tr><td>iText (<code>kernel</code>, <code>io</code>, <code>commons</code>, <code>sign</code>, <code>forms</code>, <code>layout</code>, <code>pdfa</code>, <code>pdfua</code>, <code>barcodes</code>, <code>svg</code>, <code>styled-xml-parser</code>, <code>hyph</code>, <code>font-asian</code>, <code>bouncy-castle-adapter</code>/<code>connector</code>)</td><td>8.0.5</td><td>Los cuatro módulos de PDF (<code>PDFSignerPKCS11</code>, <code>PDFSignerPKCS12</code>, <code>PDFSignerWindowsCSP</code>, <code>PDFVerifySignatures</code>): firma y verificación</td><td><strong>AGPL v3</strong> (o licencia comercial de Apryse). <code>hyph</code> y <code>font-asian</code> traen datos de terceros bajo licencias propias de cada archivo</td></tr>
           <tr><td>Bouncy Castle (<code>bcprov</code>, <code>bcpkix</code>, <code>bcutil</code>, <code>bctls</code>-jdk18on)</td><td>1.86</td><td>Todos los módulos de firma y verificación, y los extractores de certificados</td><td>Bouncy Castle Licence (tipo MIT)</td></tr>
           <tr><td>Apache Santuario (<code>xmlsec</code>)</td><td>4.0.4</td><td><code>XMLSignerPKCS11</code></td><td>Apache License 2.0</td></tr>
-          <tr><td>Apache Commons Codec</td><td>1.22.1</td><td><code>XMLSignerPKCS11</code> (dependencia de Santuario)</td><td>Apache License 2.0</td></tr>
+          <tr><td>Apache Commons Codec</td><td>1.23.0</td><td><code>XMLSignerPKCS11</code> (dependencia de Santuario)</td><td>Apache License 2.0</td></tr>
           <tr><td>Woodstox (<code>woodstox-core</code>)</td><td>7.3.0</td><td><code>XMLSignerPKCS11</code> (dependencia de Santuario)</td><td>Apache License 2.0</td></tr>
-          <tr><td>Stax2 API</td><td>4.3.1</td><td><code>XMLSignerPKCS11</code> (dependencia de Woodstox)</td><td>BSD de 2 cláusulas</td></tr>
+          <tr><td>Stax2 API</td><td>4.3.2</td><td><code>XMLSignerPKCS11</code> (dependencia de Woodstox)</td><td>BSD de 2 cláusulas</td></tr>
           <tr><td>SLF4J (<code>slf4j-api</code>; <code>slf4j-simple</code> en <code>PDFVerifySignatures</code>)</td><td>2.0.20</td><td>Módulos de PDF</td><td>MIT</td></tr>
           <tr><td>Logback (<code>logback-classic</code>, <code>logback-core</code>)</td><td>1.6.5</td><td><code>PDFSignerPKCS11</code> y <code>PDFSignerPKCS12</code></td><td>EPL 2.0 <strong>o</strong> LGPL 2.1 (a elección; S-FiDE usa la LGPL 2.1, compatible con la GPL)</td></tr>
           <tr><td>Apache PDFBox (<code>pdfbox</code>, <code>fontbox</code>, <code>pdfbox-io</code>)</td><td>3.0.8</td><td><strong>Solo <code>s_fide_gui</code></strong>: dibuja las páginas del PDF (ubicación de la firma y visor). No firma ni modifica nada, y ningún módulo CLI depende de él. Incluye la Adobe Glyph List, un perfil de color ICC de dominio público (CC0) y partes de TwelveMonkeys ImageIO, con los avisos que detalla su archivo <code>NOTICE</code></td><td>Apache License 2.0</td></tr>
-          <tr><td>Apache Commons Logging</td><td>1.3.6</td><td><code>s_fide_gui</code> (dependencia de PDFBox)</td><td>Apache License 2.0</td></tr>
+          <tr><td>Apache Commons Logging</td><td>1.4.0</td><td><code>s_fide_gui</code> (dependencia de PDFBox)</td><td>Apache License 2.0</td></tr>
           <tr><td>JavaFX (<code>javafx-base</code>, <code>controls</code>, <code>fxml</code>, <code>graphics</code>)</td><td>23.0.1</td><td><code>s_fide_gui</code>; el paquete completo trae el SDK de cada plataforma</td><td>GPL v2 con <em>Classpath Exception</em> (OpenJFX)</td></tr>
           <tr><td>OpenJDK (runtime de Java embebido)</td><td>23.0.1</td><td>Todos los módulos; el paquete completo trae un runtime por plataforma</td><td>GPL v2 con <em>Classpath Exception</em>; trae además los avisos de sus propios componentes de terceros</td></tr>
         </table>
@@ -528,6 +532,7 @@
           <tr><td>OpenJDK (runtime embebido)</td><td>23.0.1</td><td>23.0.1</td><td>no cubierto por OSV</td><td><strong>Atención:</strong> JDK 23 no es una versión de soporte largo y ya terminó su ciclo de vida (su última actualización fue la 23.0.2), por lo que no recibe correcciones de seguridad. Se recomienda pasar el runtime a <strong>JDK 25 (LTS)</strong> con JavaFX 25. Decisión pendiente</td></tr>
         </table>
       </div>
+      <p><strong>Repetición de la revisión para la 1.5.1 (2026-10-21).</strong> Se repitió el mismo método sobre las 34 combinaciones de artefacto y versión que distribuyen los jars (OSV, con el control positivo de Bouncy Castle 1.78, que devolvió sus cuatro avisos): <strong>ninguna tiene avisos</strong>. Cambios: Commons Codec 1.22.1 → <strong>1.23.0</strong>, Stax2 API 4.3.1 → <strong>4.3.2</strong> y Commons Logging 1.3.6 → <strong>1.4.0</strong> (llegan como dependencia; se fijan en el <code>pom.xml</code> padre); y se corrigió un hallazgo propio: <code>PDFSignerWindowsCSP</code> incluía <code>slf4j-api</code> 1.7.36 (que traía iText) sin proveedor, lo que imprimía un aviso técnico de SLF4J a quien firmaba; ahora se fija la 2.0.20 en el <code>pom.xml</code> padre y el módulo agrega <code>slf4j-nop</code> 2.0.20 (sin avisos conocidos). Bouncy Castle 1.86, Logback 1.6.5, PDFBox 3.0.8, Santuario 4.0.4 y Woodstox 7.3.0 siguen siendo las últimas versiones estables. <strong>Siguen pendientes de decisión</strong> JDK 25 LTS con JavaFX 25 y iText 9.x (9.8.0).</p>
       <div class="callout note">
         <span class="label">Alcance y límites</span>
         <p>OSV reúne los avisos publicados (GitHub Security Advisories y otras fuentes) y no cubre el JDK; la revisión no reemplaza un análisis completo contra el NVD ni al escáner del cliente, que conviene volver a correr sobre la versión publicada. <strong>Pendientes que requieren decisión:</strong> migrar a JDK 25 LTS y JavaFX 25 (cambia los runtimes de todas las plataformas, incluido macOS) y evaluar iText 9.x. Esta revisión se repite <strong>antes de cada release</strong> (ver <code>AGENTS.md</code>).</p>
@@ -1012,7 +1017,7 @@ java -jar PKCS12CertificateExtractor.jar [-version | -ayuda | -licencia]</code><
         <div class="field-label">Sintaxis</div>
         <pre><code>java -jar XMLSignerPKCS11.jar &lt;biblioteca&gt; &lt;contraseña&gt; &lt;slot&gt; &lt;archivo.xml&gt; &lt;elemento&gt; [-omitir-revocacion true|false]
 java -jar XMLSignerPKCS11.jar [-version | -ayuda | -licencia | -listar-drivers]</code></pre>
-        <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
+        <p>Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar (sección 7.5.2: un certificado vencido nunca firma) y valida su estado de revocación — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
           <table>
             <tr><th>Parámetro</th><th>Obligatorio</th><th>Descripción</th></tr>
@@ -1037,7 +1042,7 @@ java -jar XMLSignerPKCS11.jar [-version | -ayuda | -licencia | -listar-drivers]<
         <div class="field-label">Sintaxis</div>
         <pre><code>java -jar XMLSignerPKCS12.jar &lt;certificado.p12&gt; &lt;password&gt; &lt;archivo.xml&gt; &lt;elemento&gt; [-omitir-revocacion true|false]
 java -jar XMLSignerPKCS12.jar [-version | -ayuda | -licencia]</code></pre>
-        <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
+        <p>Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar (sección 7.5.2: un certificado vencido nunca firma) y valida su estado de revocación — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
           <table>
             <tr><th>Parámetro</th><th>Obligatorio</th><th>Descripción</th></tr>
@@ -1142,7 +1147,7 @@ java -jar XMLVerifyXSDStructure.jar C:\docs\certificado-origen.xml C:\xsd\esquem
 java -jar PDFSignerPKCS11.jar -analizar-documento &lt;pdf&gt;
 java -jar PDFSignerPKCS11.jar -vista-previa-texto -l &lt;biblioteca&gt; -s &lt;slot&gt; [-p &lt;password&gt;] [-t "texto"]
 java -jar PDFSignerPKCS11.jar [-v | -h | --license | --listar-drivers]</code></pre>
-        <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
+        <p>Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar (sección 7.5.2: un certificado vencido nunca firma) y valida su estado de revocación — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
           <table>
             <tr><th>Flag</th><th>Obligatorio</th><th>Descripción</th></tr>
@@ -1174,7 +1179,7 @@ java -jar PDFSignerPKCS11.jar [-v | -h | --license | --listar-drivers]</code></p
 java -jar PDFSignerPKCS12.jar -analizar-documento &lt;pdf&gt;
 java -jar PDFSignerPKCS12.jar -vista-previa-texto -c &lt;certificado.p12&gt; -p &lt;password&gt; [-t "texto"]
 java -jar PDFSignerPKCS12.jar [-v | -h | --license]</code></pre>
-        <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
+        <p>Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar (sección 7.5.2: un certificado vencido nunca firma) y valida su estado de revocación — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
           <table>
             <tr><th>Flag</th><th>Obligatorio</th><th>Descripción</th></tr>
@@ -1225,7 +1230,7 @@ java -jar PDFVerifySignatures.jar C:\docs\certificado-signed.pdf -simple</code><
         <div class="field-label">Sintaxis</div>
         <pre><code>java -jar XMLSignerWindowsCSP.jar &lt;alias o fragmento del CN&gt; &lt;archivo.xml&gt; &lt;elemento&gt; [-omitir-revocacion true|false]
 java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certificados]</code></pre>
-        <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
+        <p>Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar (sección 7.5.2: un certificado vencido nunca firma) y valida su estado de revocación — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
           <table>
             <tr><th>Parámetro</th><th>Obligatorio</th><th>Descripción</th></tr>
@@ -1250,7 +1255,7 @@ java -jar XMLSignerWindowsCSP.jar [-version | -ayuda | -licencia | -listar-certi
 java -jar PDFSignerWindowsCSP.jar -analizar-documento &lt;pdf&gt;
 java -jar PDFSignerWindowsCSP.jar -vista-previa-texto -a &lt;alias o fragmento CN&gt; [-t "texto"]
 java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]</code></pre>
-        <p>Antes de firmar, valida el estado de revocación del certificado — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
+        <p>Antes de firmar, comprueba que el certificado esté vigente y sea apto para firmar (sección 7.5.2: un certificado vencido nunca firma) y valida su estado de revocación — ver sección 7.5.1. No firma si está confirmado como revocado, salvo <code>-omitir-revocacion true</code>.</p>
         <div class="table-wrap">
           <table>
             <tr><th>Flag</th><th>Obligatorio</th><th>Descripción</th></tr>
@@ -1278,7 +1283,7 @@ java -jar PDFSignerWindowsCSP.jar [-v | -h | --license | --listar-certificados]<
 java -jar WindowsCertificateStoreView.jar [-version | -ayuda | -licencia | -listar-certificados]</code></pre>
         <p>No recibe parámetros obligatorios: ejecutado sin argumentos, lista directamente los certificados disponibles — no requiere contraseña ni configuración, a diferencia de <code>TokenSlotsView</code>.</p>
         <div class="field-label">Salida</div>
-        <p>Por cada certificado: alias, sujeto (incluye el CN), emisor, período de validez, número de serie en hexadecimal, y si tiene clave privada asociada — solo esas entradas son utilizables para firmar. Es habitual que convivan un certificado vencido y su renovación posterior; conviene revisar "Válido hasta" antes de elegir cuál usar.</p>
+        <p>Por cada certificado: alias, sujeto (incluye el CN), emisor, período de validez y su estado (vigente, vencido o aún no vigente; desde 1.5.1), número de serie en hexadecimal, y si tiene clave privada asociada — solo esas entradas son utilizables para firmar. Es habitual que convivan un certificado vencido y su renovación posterior; conviene revisar "Válido hasta" antes de elegir cuál usar.</p>
         <div class="callout note"><span class="label">Relación con <code>-listar-certificados</code></span><p><code>XMLSignerWindowsCSP</code>/<code>PDFSignerWindowsCSP</code> ya traían ese flag con el mismo propósito, como ayuda rápida dentro de esos mismos módulos. <code>WindowsCertificateStoreView</code> no lo reemplaza — es esa misma capacidad elevada a módulo propio de primera clase, con su propia pestaña en la GUI, igual que <code>TokenSlotsView</code> existe aparte de los firmadores PKCS#11.</p></div>
         <div class="field-label">Ejemplo</div>
         <pre><code>java -jar WindowsCertificateStoreView.jar</code></pre>
