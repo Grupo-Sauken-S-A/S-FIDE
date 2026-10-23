@@ -19,7 +19,7 @@
         <main.class>com.sauken.s_fide.s_fide_gui.SFideGUI</main.class>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <javafx.version>23.0.1</javafx.version>
+        <javafx.version>26.0.2</javafx.version>
         <java.version>23</java.version>
         <maven.compiler.source>23</maven.compiler.source>
         <maven.compiler.target>23</maven.compiler.target>
