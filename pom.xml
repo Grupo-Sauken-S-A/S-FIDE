@@ -15,11 +15,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>23.0.1</javafx.version>
         <java.version>23</java.version>
-        <bouncycastle.version>1.86</bouncycastle.version>
+        <bouncycastle.version>1.87</bouncycastle.version>
         <itext.version>8.0.5</itext.version>
         <xmlsec.version>4.0.4</xmlsec.version>
         <slf4j.version>2.0.20</slf4j.version>
-        <logback.version>1.6.5</logback.version>
+        <logback.version>1.6.6</logback.version>
         <pdfbox.version>3.0.8</pdfbox.version>
         <commons-codec.version>1.23.0</commons-codec.version>
         <woodstox.version>7.3.0</woodstox.version>
