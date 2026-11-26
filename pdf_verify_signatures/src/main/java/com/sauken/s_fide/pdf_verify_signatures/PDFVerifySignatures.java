@@ -98,6 +98,10 @@ public class PDFVerifySignatures {
             System.setErr(new PrintStream(System.err, true, "UTF-8"));
             mensajesDeUnaLinea();
 
+            if (args.length > 0 && Lote.esOpcionDeLote(args[0])) {
+                System.exit(ejecutarLote(args));
+            }
+
             if (args.length == 0) {
                 showHelp();
                 throw new IllegalArgumentException("No se proporcionaron argumentos.");
@@ -139,17 +143,32 @@ public class PDFVerifySignatures {
 
     /**
      * Los avisos internos se escriben en una sola línea, sin la fecha ni el nombre de la clase que agrega el
-     * formato habitual de Java. Se llama después de configurar UTF-8, para que usen esa misma salida.
+     * formato habitual de Java. Se usa la salida de error vigente en cada momento, para que en un lote vayan
+     * al registro del documento.
      */
     private static void mensajesDeUnaLinea() {
-        for (Handler handler : Logger.getLogger("").getHandlers()) {
-            handler.setFormatter(new java.util.logging.Formatter() {
-                @Override
-                public String format(LogRecord registro) {
-                    return "Advertencia: " + registro.getMessage() + System.lineSeparator();
-                }
-            });
+        Logger raiz = Logger.getLogger("");
+        for (Handler handler : raiz.getHandlers()) {
+            raiz.removeHandler(handler);
         }
+        raiz.addHandler(new Handler() {
+            @Override
+            public void publish(LogRecord registro) {
+                if (isLoggable(registro)) {
+                    System.err.println("Advertencia: " + registro.getMessage());
+                }
+            }
+
+            @Override
+            public void flush() {
+                System.err.flush();
+            }
+
+            @Override
+            public void close() {
+                flush();
+            }
+        });
     }
 
     private static void showHelp() {
@@ -174,11 +193,14 @@ public class PDFVerifySignatures {
             throw new IllegalArgumentException("El documento no contiene firmas digitales.");
         }
 
+        System.exit(informar(pdfPath, analisis) ? 1 : 0);
+    }
+
+    /** Escribe el informe de las firmas y el estado del documento; devuelve si el documento no es válido. */
+    private static boolean informar(String pdfPath, PdfDocumentAnalyzer.Analisis analisis) throws IOException {
         boolean hasErrors = analisis.hayProblemas();
-        boolean firmasInvalidas = analisis.firmas().stream()
-                .anyMatch(f -> f.veredicto() == PdfDocumentAnalyzer.Veredicto.INVALIDA);
-        boolean comprobacionesIncompletas = analisis.firmas().stream()
-                .anyMatch(f -> f.veredicto() == PdfDocumentAnalyzer.Veredicto.NO_VERIFICABLE);
+        boolean firmasInvalidas = hayFirmasInvalidas(analisis);
+        boolean comprobacionesIncompletas = hayComprobacionesPendientes(analisis);
 
         try (PdfReader reader = new PdfReader(pdfPath);
              PdfDocument pdfDoc = new PdfDocument(reader)) {
@@ -239,8 +261,68 @@ public class PDFVerifySignatures {
                         .map(PdfDocumentAnalyzer.CampoVacio::nombre).collect(java.util.stream.Collectors.joining(", ")));
             }
 
-            System.exit(hasErrors ? 1 : 0);
+            return hasErrors;
         }
+    }
+
+    private static boolean hayFirmasInvalidas(PdfDocumentAnalyzer.Analisis analisis) {
+        return analisis.firmas().stream().anyMatch(f -> f.veredicto() == PdfDocumentAnalyzer.Veredicto.INVALIDA);
+    }
+
+    private static boolean hayComprobacionesPendientes(PdfDocumentAnalyzer.Analisis analisis) {
+        return analisis.firmas().stream().anyMatch(f -> f.veredicto() == PdfDocumentAnalyzer.Veredicto.NO_VERIFICABLE);
+    }
+
+    // ------------------------------------------------------------------------------------------------ por lotes
+
+    private static int ejecutarLote(String[] args) {
+        String numeroDeVersion = VERSION.replaceAll(".* v(\\S+) .*", "$1");
+        LoteVerificacion.Pedido pedido;
+        try {
+            pedido = LoteVerificacion.analizarArgumentos(args, true, false);
+        } catch (IllegalArgumentException e) {
+            return Lote.rechazarArgumentos("PDFVerifySignatures", numeroDeVersion, System.out, System.err,
+                    e.getMessage());
+        }
+        simpleOutput = pedido.simple();
+        return Lote.ejecutar("PDFVerifySignatures", numeroDeVersion, "pdf", pedido.opciones(), System.out, System.err,
+                PDFVerifySignatures::verificarDelLote);
+    }
+
+    private static Lote.Resultado verificarDelLote(Lote.Documento documento) {
+        String ruta = documento.ruta().toString();
+        PdfDocumentAnalyzer.Analisis analisis;
+        try {
+            analisis = PdfDocumentAnalyzer.analizar(documento.ruta(), true);
+        } catch (PdfDocumentAnalyzer.DocumentoIlegibleException e) {
+            return Lote.Resultado.error("DOCUMENTO_MAL_FORMADO", e.getMessage());
+        }
+        if (analisis.firmas().isEmpty()) {
+            return Lote.Resultado.de(Lote.Estado.SIN_FIRMAS, "SIN_FIRMAS",
+                    "El documento no contiene firmas digitales.");
+        }
+        boolean invalido;
+        try {
+            invalido = informar(ruta, analisis);
+        } catch (IOException e) {
+            return Lote.Resultado.error("ARCHIVO_ILEGIBLE", "No se puede leer el archivo.");
+        }
+        if (invalido) {
+            if (hayFirmasInvalidas(analisis) || !analisis.hayProblemas()) {
+                String detalle = analisis.firmas().stream()
+                        .filter(f -> f.veredicto() == PdfDocumentAnalyzer.Veredicto.INVALIDA)
+                        .map(PdfDocumentAnalyzer.FirmaPrevia::mensaje).findFirst()
+                        .orElse("Una o más firmas no son válidas.");
+                return Lote.Resultado.de(Lote.Estado.NO_VALIDO, "FIRMA_NO_VALIDA", detalle);
+            }
+            return Lote.Resultado.de(Lote.Estado.NO_VALIDO, "MODIFICADO_DESPUES_DE_FIRMAR",
+                    "El documento fue modificado después de la última firma.");
+        }
+        if (hayComprobacionesPendientes(analisis)) {
+            return Lote.Resultado.de(Lote.Estado.VALIDO_CON_OBSERVACIONES, "COMPROBACION_PENDIENTE",
+                    "Las firmas son válidas, pero algunas comprobaciones no pudieron completarse.");
+        }
+        return Lote.Resultado.de(Lote.Estado.VALIDO, "OK", "");
     }
 
     private static String etiqueta(PdfDocumentAnalyzer.FirmaPrevia firma) {

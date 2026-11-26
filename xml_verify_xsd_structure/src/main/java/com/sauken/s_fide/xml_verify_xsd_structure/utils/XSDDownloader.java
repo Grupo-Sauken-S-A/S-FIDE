@@ -79,15 +79,6 @@ public class XSDDownloader {
     private static final String ALADI_DOMAIN_DISPLAY = "https://www.codaladi.org/";
     private static final String ALADI_FALLBACK_BASE = "https://cod.certificadoorigen.com.ar/";
 
-    private static final PrintStream errorStream;
-
-    static {
-        try {
-            errorStream = new PrintStream(System.err, true, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("Error al configurar la codificación de errores");
-        }
-    }
 
     public static String extractXSDUrlFromXML(Document doc) {
         // Obtener el elemento raíz
@@ -219,7 +210,7 @@ public class XSDDownloader {
     private static void advertirDescarga(Set<String> yaImpresas, String urlStr, IOException e) {
         String advertencia = "Advertencia: No se pudo descargar de " + urlStr + ": " + mensajeAmigable(e);
         if (yaImpresas.add(advertencia)) {
-            errorStream.println(advertencia);
+            System.err.println(advertencia);
         }
     }
 
@@ -331,7 +322,7 @@ public class XSDDownloader {
 
     private static void checkInternetConnection() throws IOException {
         if (!InternetConnectivityChecker.isInternetAvailable()) {
-            errorStream.println("Error: No hay conexión a Internet disponible");
+            System.err.println("Error: No hay conexión a Internet disponible");
             throw new IOException("No hay conexión a Internet disponible");
         }
     }

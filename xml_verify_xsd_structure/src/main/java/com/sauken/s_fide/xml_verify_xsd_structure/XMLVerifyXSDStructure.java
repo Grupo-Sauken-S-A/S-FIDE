@@ -69,34 +69,30 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import javax.xml.crypto.dsig.SignedInfo;
 import javax.xml.crypto.dsig.DigestMethod;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.xml.crypto.dsig.SignatureMethod;
 
 public class XMLVerifyXSDStructure {
     private static final String VERSION = "S-FIDE XMLVerifyXSDStructure v1.6.0 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT;
     private static final String HELP_TEXT;
-    private static PrintStream errorStream;
 
     static {
         LICENSE_TEXT = readResourceFile("/LICENSE.txt");
         HELP_TEXT = readResourceFile("/HELP.txt");
-        try {
-            errorStream = new PrintStream(System.err, true, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            System.err.println("Error al configurar la codificación de errores");
-        }
     }
 
     private static String readResourceFile(String resourcePath) {
         try (InputStream is = XMLVerifyXSDStructure.class.getResourceAsStream(resourcePath)) {
             if (is == null) {
-                errorStream.println("No se pudo encontrar el recurso: " + resourcePath);
+                System.err.println("No se pudo encontrar el recurso: " + resourcePath);
                 return "Error: Archivo de recurso no encontrado";
             }
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            errorStream.println("Error al leer el archivo de recurso: " + resourcePath);
+            System.err.println("Error al leer el archivo de recurso: " + resourcePath);
             return "Error al leer el archivo de recurso";
         }
     }
@@ -107,7 +103,7 @@ public class XMLVerifyXSDStructure {
             out.println(HELP_TEXT);
             out.flush();
         } catch (UnsupportedEncodingException e) {
-            errorStream.println("Error mostrando ayuda: " + e.getMessage());
+            System.err.println("Error mostrando ayuda: " + e.getMessage());
         }
     }
 
@@ -142,6 +138,10 @@ public class XMLVerifyXSDStructure {
             System.setProperty("javax.xml.accessExternalDTD", "all");
             System.setProperty("xml.catalog.files", "catalog.xml");
 
+            if (args.length > 0 && Lote.esOpcionDeLote(args[0])) {
+                System.exit(ejecutarLote(args));
+            }
+
             if (args.length == 1) {
                 switch (args[0].toLowerCase()) {
                     case "-version":
@@ -165,7 +165,7 @@ public class XMLVerifyXSDStructure {
             }
 
             if (args.length > 2) {
-                errorStream.println("Error: Número incorrecto de argumentos.");
+                System.err.println("Error: Número incorrecto de argumentos.");
                 System.exit(1);
             }
 
@@ -174,7 +174,7 @@ public class XMLVerifyXSDStructure {
 
             File xmlFileObj = new File(xmlFile);
             if (!xmlFileObj.exists()) {
-                errorStream.println("Error: El archivo XML no existe: " + xmlFile);
+                System.err.println("Error: El archivo XML no existe: " + xmlFile);
                 System.exit(1);
             }
 
@@ -185,7 +185,7 @@ public class XMLVerifyXSDStructure {
                 xsdFile = args[1];
                 File xsdFileObj = new File(xsdFile);
                 if (!xsdFileObj.exists()) {
-                    errorStream.println("Error: El archivo XSD no existe: " + xsdFile);
+                    System.err.println("Error: El archivo XSD no existe: " + xsdFile);
                     System.exit(1);
                 }
 
@@ -207,11 +207,11 @@ public class XMLVerifyXSDStructure {
                     File downloadedXsd = XSDDownloader.downloadXSD(xsdUrl);
                     xsdFile = downloadedXsd.getPath();
                 } catch (IOException e) {
-                    errorStream.println("Error al descargar el XSD: " + e.getMessage());
+                    System.err.println("Error al descargar el XSD: " + e.getMessage());
                     System.exit(1);
                 }
             } else {
-                errorStream.println("Error: No se encontró referencia a esquema XSD en el XML y no se proporcionó archivo XSD.");
+                System.err.println("Error: No se encontró referencia a esquema XSD en el XML y no se proporcionó archivo XSD.");
                 System.exit(1);
             }
 
@@ -228,13 +228,125 @@ public class XMLVerifyXSDStructure {
                 System.out.println("El documento XML es válido y todas las firmas parecen correctas. Este proceso no realiza validación de revocación de las firmas digitales aplicadas.");
                 System.exit(0);
             } else {
-                errorStream.println("Se encontraron errores en la validación del documento XML.");
+                System.err.println("Se encontraron errores en la validación del documento XML.");
                 System.exit(1);
             }
 
         } catch (Exception e) {
-            errorStream.println("Error: " + e.getMessage());
+            System.err.println("Error: " + e.getMessage());
             System.exit(1);
+        }
+    }
+
+    // ------------------------------------------------------------------------------------------------ por lotes
+
+    private static int ejecutarLote(String[] args) {
+        String numeroDeVersion = VERSION.replaceAll(".* v(\\S+) .*", "$1");
+        LoteVerificacion.Pedido pedido;
+        try {
+            pedido = LoteVerificacion.analizarArgumentos(args, false, true);
+        } catch (IllegalArgumentException e) {
+            return Lote.rechazarArgumentos("XMLVerifyXSDStructure", numeroDeVersion, System.out, System.err,
+                    e.getMessage());
+        }
+        return Lote.ejecutar("XMLVerifyXSDStructure", numeroDeVersion, "xml", pedido.opciones(), System.out,
+                System.err, new ValidacionPorLote(pedido.esquema()));
+    }
+
+    /** Valida cada documento contra el esquema indicado o, si no se indicó, contra el que declara cada uno. */
+    private static final class ValidacionPorLote implements Lote.Tarea {
+        private final String esquemaIndicado;
+        /** Cada esquema declarado se descarga una sola vez por lote; {@code null} si no se pudo. */
+        private final Map<String, String> descargados = new HashMap<>();
+
+        private ValidacionPorLote(String esquemaIndicado) {
+            this.esquemaIndicado = esquemaIndicado;
+        }
+
+        @Override
+        public void acceder() {
+            if (esquemaIndicado != null && !new File(esquemaIndicado).isFile()) {
+                throw new Lote.Corte("XSD", "El archivo XSD no existe: " + esquemaIndicado);
+            }
+        }
+
+        @Override
+        public Lote.Resultado procesar(Lote.Documento documento) {
+            XmlBom.reiniciarAviso();
+            String ruta = documento.ruta().toString();
+            Document doc;
+            try {
+                doc = loadAndRegisterDocument(ruta);
+            } catch (Exception e) {
+                return Lote.Resultado.error("DOCUMENTO_MAL_FORMADO",
+                        "No se pudo leer el documento XML. Verifique que sea un XML válido en UTF-8.");
+            }
+
+            String esquema = esquemaIndicado;
+            if (esquema == null) {
+                String url = XSDDownloader.extractXSDUrlFromXML(doc);
+                if (url == null) {
+                    return Lote.Resultado.error("XSD_NO_REFERENCIADO", "El documento no declara un esquema XSD y no "
+                            + "se indicó un archivo XSD.");
+                }
+                if (!descargados.containsKey(url)) {
+                    System.out.println("Descargando XSD desde: " + url);
+                    descargados.put(url, descargar(url));
+                }
+                esquema = descargados.get(url);
+                if (esquema == null) {
+                    return Lote.Resultado.error("XSD_NO_DESCARGADO", "No se pudo descargar el esquema " + url + ".");
+                }
+            }
+
+            if (!esquemaUtilizable(esquema)) {
+                return Lote.Resultado.error("XSD_NO_VALIDO", "No se pudo usar el archivo XSD: no es un esquema válido.");
+            }
+            try {
+                System.out.println("Validando estructura XML contra XSD...");
+                boolean estructura = validateXMLAgainstXSD(ruta, esquema);
+                System.out.println("Verificando firmas digitales...");
+                boolean sinFirmas = doc.getElementsByTagNameNS(XMLSignature.XMLNS, "Signature").getLength() == 0;
+                boolean firmas = verifyXMLSignatures(ruta);
+                if (!estructura) {
+                    return Lote.Resultado.de(Lote.Estado.NO_VALIDO, "ESTRUCTURA_NO_VALIDA",
+                            "El documento no cumple con la estructura del esquema XSD.");
+                }
+                if (sinFirmas) {
+                    return Lote.Resultado.de(Lote.Estado.SIN_FIRMAS, "SIN_FIRMAS",
+                            "El documento XML no contiene firmas digitales.");
+                }
+                if (!firmas) {
+                    return Lote.Resultado.de(Lote.Estado.NO_VALIDO, "FIRMA_NO_VALIDA",
+                            "Una o más firmas no son válidas.");
+                }
+                return Lote.Resultado.de(Lote.Estado.VALIDO, "OK",
+                        "Estructura y firmas correctas. No se comprueba la revocación de los certificados.");
+            } catch (Exception e) {
+                return Lote.Resultado.error("ERROR_INESPERADO", "No se pudo validar el documento.");
+            }
+        }
+
+        private static String descargar(String url) {
+            try {
+                return XSDDownloader.downloadXSD(url).getPath();
+            } catch (IOException e) {
+                System.err.println("Error al descargar el XSD: " + e.getMessage());
+                return null;
+            }
+        }
+
+        private static boolean esquemaUtilizable(String archivo) {
+            try {
+                SchemaFactory fabrica = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+                fabrica.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "all");
+                fabrica.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "all");
+                fabrica.newSchema(new StreamSource(new File(archivo)));
+                return true;
+            } catch (SAXException e) {
+                System.err.println("Error al procesar el archivo XSD: " + e.getMessage());
+                return false;
+            }
         }
     }
 
@@ -248,7 +360,7 @@ public class XMLVerifyXSDStructure {
             Source schemaSource = new StreamSource(new File(xsdFile));
             schema = schemaFactory.newSchema(schemaSource);
         } catch (SAXException e) {
-            errorStream.println("Error al procesar el archivo XSD: " + e.getMessage());
+            System.err.println("Error al procesar el archivo XSD: " + e.getMessage());
             return false;
         }
 
@@ -263,7 +375,7 @@ public class XMLVerifyXSDStructure {
             Source xmlSource = new StreamSource(new File(xmlFile));
             validator.validate(xmlSource);
         } catch (SAXException e) {
-            errorStream.println("Error de validación XML: " + e.getMessage());
+            System.err.println("Error de validación XML: " + e.getMessage());
             return false;
         }
 

@@ -78,6 +78,10 @@ public class XMLVerifySignatures {
             File.separator + "lib" + File.separator + "security" + File.separator + "cacerts";
     private static final String TRUST_STORE_PASSWORD = "changeit";
     private static boolean simpleOutput = false;
+    // Estado que usa el lote para resumir cada documento.
+    private static boolean estadoDeRevocacionObtenido;
+    private static boolean certificadoRevocado;
+    private static int firmasSinComprobar;
 
     static {
         LICENSE_TEXT = readResourceFile("/LICENSE.txt");
@@ -101,6 +105,9 @@ public class XMLVerifySignatures {
         try {
             System.setOut(new PrintStream(System.out, true, "UTF-8"));
             System.setErr(new PrintStream(System.err, true, "UTF-8"));
+            if (args.length > 0 && Lote.esOpcionDeLote(args[0])) {
+                System.exit(ejecutarLote(args));
+            }
             processArguments(args);
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -187,30 +194,9 @@ public class XMLVerifySignatures {
                 return false;
             }
 
-            boolean hasGraveErrors = false;
-            for (int i = 0; i < signatureNodes.getLength(); i++) {
-                if (i > 0) {
-                    System.out.println("\n----------------------------------------\n");
-                }
-
-                Node signatureNode = signatureNodes.item(i);
-                try {
-                    boolean signatureValid = verifySignature(doc, signatureNode, i + 1);
-                    if (!signatureValid) {
-                        hasGraveErrors = true;
-                    }
-                } catch (Exception e) {
-                    System.out.println("Error al validar la firma #" + (i + 1) + ": " + e.getMessage());
-                    hasGraveErrors = true;
-                }
-            }
-
-            System.out.println("\n========== RESULTADO FINAL ==========");
-            if (hasGraveErrors) {
-                System.out.println("DOCUMENTO INVÁLIDO: Una o más firmas contienen errores graves.");
+            if (verificarCadaFirma(doc, signatureNodes) > 0) {
                 System.exit(1);
             } else {
-                System.out.println("DOCUMENTO VÁLIDO: Todas las firmas son válidas.");
                 System.exit(0);
             }
 
@@ -219,6 +205,87 @@ public class XMLVerifySignatures {
         } catch (Exception e) {
             throw new IllegalArgumentException("Error al procesar el archivo XML: " + e.getMessage());
         }
+    }
+
+    /** Verifica e informa cada firma, con el resultado final; devuelve cuántas no son válidas. */
+    private static int verificarCadaFirma(Document doc, NodeList signatureNodes) {
+        int invalidas = 0;
+        for (int i = 0; i < signatureNodes.getLength(); i++) {
+            if (i > 0) {
+                System.out.println("\n----------------------------------------\n");
+            }
+
+            Node signatureNode = signatureNodes.item(i);
+            estadoDeRevocacionObtenido = false;
+            try {
+                boolean signatureValid = verifySignature(doc, signatureNode, i + 1);
+                if (!signatureValid) {
+                    invalidas++;
+                }
+            } catch (Exception e) {
+                System.out.println("Error al validar la firma #" + (i + 1) + ": " + e.getMessage());
+                invalidas++;
+            }
+            if (!estadoDeRevocacionObtenido) {
+                firmasSinComprobar++;
+            }
+        }
+
+        System.out.println("\n========== RESULTADO FINAL ==========");
+        if (invalidas > 0) {
+            System.out.println("DOCUMENTO INVÁLIDO: Una o más firmas contienen errores graves.");
+        } else {
+            System.out.println("DOCUMENTO VÁLIDO: Todas las firmas son válidas.");
+        }
+        return invalidas;
+    }
+
+    // ------------------------------------------------------------------------------------------------ por lotes
+
+    private static int ejecutarLote(String[] args) {
+        String numeroDeVersion = VERSION.replaceAll(".* v(\\S+) .*", "$1");
+        LoteVerificacion.Pedido pedido;
+        try {
+            pedido = LoteVerificacion.analizarArgumentos(args, true, false);
+        } catch (IllegalArgumentException e) {
+            return Lote.rechazarArgumentos("XMLVerifySignatures", numeroDeVersion, System.out, System.err,
+                    e.getMessage());
+        }
+        simpleOutput = pedido.simple();
+        return Lote.ejecutar("XMLVerifySignatures", numeroDeVersion, "xml", pedido.opciones(), System.out, System.err,
+                XMLVerifySignatures::verificarDelLote);
+    }
+
+    private static Lote.Resultado verificarDelLote(Lote.Documento documento) {
+        XmlBom.reiniciarAviso();
+        Document doc;
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            configureDocumentBuilderFactory(dbf);
+            doc = loadXMLDocument(documento.ruta().toString(), dbf);
+            registerIdAttributes(doc.getDocumentElement());
+        } catch (Exception e) {
+            return Lote.Resultado.error("DOCUMENTO_MAL_FORMADO",
+                    "No se pudo leer el documento XML. Verifique que sea un XML válido en UTF-8.");
+        }
+        NodeList firmas = doc.getElementsByTagNameNS(XMLSignature.XMLNS, "Signature");
+        if (firmas.getLength() == 0) {
+            return Lote.Resultado.de(Lote.Estado.SIN_FIRMAS, "SIN_FIRMAS",
+                    "El documento XML no contiene firmas digitales.");
+        }
+        firmasSinComprobar = 0;
+        certificadoRevocado = false;
+        int invalidas = verificarCadaFirma(doc, firmas);
+        if (invalidas > 0) {
+            return Lote.Resultado.de(Lote.Estado.NO_VALIDO, "FIRMA_NO_VALIDA", (invalidas == 1
+                    ? "Hay 1 firma que no es válida" : "Hay " + invalidas + " firmas que no son válidas")
+                    + (certificadoRevocado ? " (certificado revocado)." : "."));
+        }
+        if (firmasSinComprobar > 0) {
+            return Lote.Resultado.de(Lote.Estado.VALIDO_CON_OBSERVACIONES, "COMPROBACION_PENDIENTE",
+                    "Las firmas son válidas, pero no se pudo comprobar la revocación de algún certificado.");
+        }
+        return Lote.Resultado.de(Lote.Estado.VALIDO, "OK", "");
     }
 
     private static void configureDocumentBuilderFactory(DocumentBuilderFactory dbf) {
@@ -488,7 +555,13 @@ public class XMLVerifySignatures {
         return false;
     }
 
+    private static void anotarRevocacion(RevocationResult result) {
+        estadoDeRevocacionObtenido = result.getStatus() != RevocationValidator.RevocationStatus.UNKNOWN;
+        certificadoRevocado |= result.getStatus() == RevocationValidator.RevocationStatus.REVOKED;
+    }
+
     private static void printRevocationResult(RevocationResult result) {
+        anotarRevocacion(result);
         System.out.println("  Estado de revocación (" + result.getMethod() + "): " +
                 (result.getStatus() == RevocationValidator.RevocationStatus.GOOD ? "VÁLIDO" :
                         result.getStatus() == RevocationValidator.RevocationStatus.REVOKED ? "REVOCADO" : "DESCONOCIDO"));
@@ -578,6 +651,7 @@ public class XMLVerifySignatures {
     }
 
     private static void printSimpleRevocationResult(RevocationResult result) {
+        anotarRevocacion(result);
         String status = switch (result.getStatus()) {
             case GOOD -> "Válido";
             case REVOKED -> "REVOCADO";

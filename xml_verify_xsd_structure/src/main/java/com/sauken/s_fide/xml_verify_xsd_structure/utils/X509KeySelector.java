@@ -60,15 +60,6 @@ import java.security.*;
 import java.security.cert.X509Certificate;
 
 public class X509KeySelector extends KeySelector {
-    private static final PrintStream errorStream;
-
-    static {
-        try {
-            errorStream = new PrintStream(System.err, true, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("Error al configurar la codificación de errores");
-        }
-    }
 
     @Override
     public KeySelectorResult select(KeyInfo keyInfo, Purpose purpose,
@@ -76,7 +67,7 @@ public class X509KeySelector extends KeySelector {
             throws KeySelectorException {
 
         if (keyInfo == null) {
-            errorStream.println("Error: No se encontró información de clave (KeyInfo)");
+            System.err.println("Error: No se encontró información de clave (KeyInfo)");
             throw new KeySelectorException("No se encontró KeyInfo");
         }
 
@@ -108,12 +99,12 @@ public class X509KeySelector extends KeySelector {
                         };
                     }
                 } catch (KeyException e) {
-                    errorStream.println("Error al obtener la clave pública del KeyValue: " + e.getMessage());
+                    System.err.println("Error al obtener la clave pública del KeyValue: " + e.getMessage());
                 }
             }
         }
 
-        errorStream.println("Error: No se encontró una clave válida para el algoritmo: " + method.getAlgorithm());
+        System.err.println("Error: No se encontró una clave válida para el algoritmo: " + method.getAlgorithm());
         throw new KeySelectorException("No se encontró una clave válida");
     }
 
@@ -135,7 +126,7 @@ public class X509KeySelector extends KeySelector {
                 algorithm.toLowerCase().contains("rsa-sha256");
 
         if (!isValidAlgorithm) {
-            errorStream.println("Advertencia: Algoritmo no soportado: " + algorithm);
+            System.err.println("Advertencia: Algoritmo no soportado: " + algorithm);
             return false;
         }
 

@@ -61,7 +61,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Stream;
 
 import static com.sauken.s_fide.integration_tests.ProcesoSupport.ejecutarModulo;
@@ -87,27 +86,9 @@ class LotePdfTest {
 
     // ------------------------------------------------------------------------------------------------ apoyo
 
-    /** Un PDF válido de dos páginas A4, armado a mano. */
     private Path pdf(String nombre) throws IOException {
-        List<String> objetos = List.of(
-                "<< /Type /Catalog /Pages 2 0 R >>",
-                "<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>",
-                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << >> >>",
-                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << >> >>");
-        StringBuilder texto = new StringBuilder("%PDF-1.7\n");
-        List<Integer> posiciones = new ArrayList<>();
-        for (int i = 0; i < objetos.size(); i++) {
-            posiciones.add(texto.length());
-            texto.append(i + 1).append(" 0 obj\n").append(objetos.get(i)).append("\nendobj\n");
-        }
-        int xref = texto.length();
-        texto.append("xref\n0 5\n0000000000 65535 f \n");
-        for (int posicion : posiciones) {
-            texto.append(String.format(Locale.ROOT, "%010d 00000 n \n", posicion));
-        }
-        texto.append("trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n").append(xref).append("\n%%EOF\n");
         Path archivo = dir.resolve(nombre);
-        Files.writeString(archivo, texto, StandardCharsets.US_ASCII);
+        Files.writeString(archivo, PdfMinimo.contenido(), StandardCharsets.US_ASCII);
         return archivo;
     }
 

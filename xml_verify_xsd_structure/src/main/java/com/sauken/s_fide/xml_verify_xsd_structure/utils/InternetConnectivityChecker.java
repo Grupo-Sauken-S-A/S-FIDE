@@ -58,15 +58,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 public class InternetConnectivityChecker {
-    private static final PrintStream errorStream;
-
-    static {
-        try {
-            errorStream = new PrintStream(System.err, true, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("Error al configurar la codificación de errores");
-        }
-    }
 
     public static boolean isInternetAvailable() {
         try {
@@ -76,7 +67,7 @@ public class InternetConnectivityChecker {
             int responseCode = connection.getResponseCode();
             return (responseCode == HttpURLConnection.HTTP_OK);
         } catch (Exception e) {
-            errorStream.println("Error al verificar la conexión a Internet: " + e.getMessage());
+            System.err.println("Error al verificar la conexión a Internet: " + e.getMessage());
             return false;
         }
     }

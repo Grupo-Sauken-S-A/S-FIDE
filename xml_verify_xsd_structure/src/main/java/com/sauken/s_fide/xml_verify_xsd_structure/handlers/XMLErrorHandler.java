@@ -61,15 +61,6 @@ import java.util.List;
 
 public class XMLErrorHandler implements ErrorHandler {
     private final List<SAXParseException> errors = new ArrayList<>();
-    private static final PrintStream errorStream;
-
-    static {
-        try {
-            errorStream = new PrintStream(System.err, true, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("Error al configurar la codificación de errores");
-        }
-    }
 
     @Override
     public void warning(SAXParseException exception) {
@@ -79,13 +70,13 @@ public class XMLErrorHandler implements ErrorHandler {
     @Override
     public void error(SAXParseException exception) {
         errors.add(exception);
-        errorStream.println("Error: " + exception.getMessage());
+        System.err.println("Error: " + exception.getMessage());
     }
 
     @Override
     public void fatalError(SAXParseException exception) throws SAXException {
         errors.add(exception);
-        errorStream.println("Error Fatal: " + exception.getMessage());
+        System.err.println("Error Fatal: " + exception.getMessage());
         throw exception;
     }
 
@@ -95,9 +86,9 @@ public class XMLErrorHandler implements ErrorHandler {
 
     public void printMessages() {
         if (!errors.isEmpty()) {
-            errorStream.println("\nSe encontraron " + errors.size() + " errores:");
+            System.err.println("\nSe encontraron " + errors.size() + " errores:");
             for (SAXParseException error : errors) {
-                errorStream.println("Línea " + error.getLineNumber() + ", Columna " +
+                System.err.println("Línea " + error.getLineNumber() + ", Columna " +
                         error.getColumnNumber() + ": " + error.getMessage());
             }
         }
