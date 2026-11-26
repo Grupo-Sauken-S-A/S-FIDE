@@ -11,6 +11,9 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 - **S-FiDE GUI:** pestaña **Por lote** en esas siete opciones: se elige una carpeta, «Revisar» muestra lo que el programa de firma informa sin firmar, y se ve el avance documento por documento, con cancelación, reintento de los fallidos e informe.
 - Herramienta `herramientas/CompatibilidadCli.java`: compara salidas, códigos y archivos de los programas contra una versión publicada (175 casos). Pruebas `LoteXmlTest`, `LotePdfTest`, `LoteVerificacionTest`, `LoteCopiasTest`, `BatchProtocolTest` y `BatchFolderTest`.
 
+### Seguridad
+- **Dependencias:** Bouncy Castle 1.86 → **1.87** (corrige 12 CVE según sus notas), iText 8.0.5 → **8.0.6** (versión de seguridad: vectores de inicialización del cifrado y validación de revisiones de firma) y Logback 1.6.5 → **1.6.8**. OSV y GitHub no informaban avisos sobre las versiones anteriores: las correcciones se detectaron leyendo las notas de cada fabricante. **Pendiente de decisión:** el runtime JDK 23/JavaFX 23 no tiene soporte (ver CVE-2026-91403) y se recomienda JDK 25 LTS. Ver sección 3.1 del manual técnico.
+
 ### Limitaciones conocidas
 - La firma por lotes **con token físico no se probó** (sin dispositivo disponible): falta comprobar el ingreso único del PIN, el retiro del token a mitad de un lote y si algún token pide el PIN en cada firma.
 

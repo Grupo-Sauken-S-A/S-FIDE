@@ -57,4 +57,4 @@ No se consideran problemas de seguridad los bugs funcionales sin impacto en la c
 
 ## Revisión de seguridad de cada versión
 
-Antes de publicar cada versión se revisan las dependencias y los runtimes que se distribuyen (consulta de vulnerabilidades conocidas, versiones más nuevas disponibles, contenido real de los `.jar` y versión que se carga en ejecución). El resultado de la última revisión, con su método y los puntos que quedan pendientes de decisión, está en la sección 3.1 del [Manual Técnico](doc/manual-tecnico-integracion.md#31-revisión-de-seguridad-de-dependencias-150-2026-10-08).
+Antes de publicar cada versión se revisan las dependencias y los runtimes que se distribuyen (consulta de vulnerabilidades conocidas, versiones más nuevas disponibles, contenido real de los `.jar` y versión que se carga en ejecución). El resultado de la última revisión, con su método y los puntos que quedan pendientes de decisión, está en la sección 3.1 del [Manual Técnico](doc/manual-tecnico-integracion.md#31-revisión-de-seguridad-de-dependencias).

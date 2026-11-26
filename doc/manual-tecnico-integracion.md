@@ -93,18 +93,18 @@ La distribución final embebe su propio runtime de Java y su propio SDK de JavaF
 
 ## 3. Software de terceros y dependencias
 
-Cada `.jar` de distribución incluye (empaquetadas dentro) las bibliotecas que usa, y el paquete completo trae además el runtime de Java y el SDK de JavaFX. Lo que sigue lista **todo lo que se distribuye**, con la licencia que declara cada proyecto (versiones de 1.5.0, verificadas contra los metadatos de cada artefacto):
+Cada `.jar` de distribución incluye (empaquetadas dentro) las bibliotecas que usa, y el paquete completo trae además el runtime de Java y el SDK de JavaFX. Lo que sigue lista **todo lo que se distribuye**, con la licencia que declara cada proyecto (versiones de 1.6.0, verificadas contra los metadatos de cada artefacto):
 
 | Componente | Versión | Dónde se usa | Licencia |
 |---|---|---|---|
-| iText (`kernel`, `io`, `commons`, `sign`, `forms`, `layout`, `pdfa`, `pdfua`, `barcodes`, `svg`, `styled-xml-parser`, `hyph`, `font-asian`, `bouncy-castle-adapter`/`connector`) | 8.0.5 | Los cuatro módulos de PDF (`PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`, `PDFVerifySignatures`): firma y verificación | **AGPL v3** (o licencia comercial de Apryse). `hyph` y `font-asian` traen datos de terceros bajo licencias propias de cada archivo |
-| Bouncy Castle (`bcprov`, `bcpkix`, `bcutil`, `bctls`-jdk18on) | 1.86 | Todos los módulos de firma y verificación, y los extractores de certificados | Bouncy Castle Licence (tipo MIT) |
+| iText (`kernel`, `io`, `commons`, `sign`, `forms`, `layout`, `pdfa`, `pdfua`, `barcodes`, `svg`, `styled-xml-parser`, `hyph`, `font-asian`, `bouncy-castle-adapter`/`connector`) | 8.0.6 | Los cuatro módulos de PDF (`PDFSignerPKCS11`, `PDFSignerPKCS12`, `PDFSignerWindowsCSP`, `PDFVerifySignatures`): firma y verificación | **AGPL v3** (o licencia comercial de Apryse). `hyph` y `font-asian` traen datos de terceros bajo licencias propias de cada archivo |
+| Bouncy Castle (`bcprov`, `bcpkix`, `bcutil`, `bctls`-jdk18on) | 1.87 | Todos los módulos de firma y verificación, y los extractores de certificados | Bouncy Castle Licence (tipo MIT) |
 | Apache Santuario (`xmlsec`) | 4.0.4 | `XMLSignerPKCS11` | Apache License 2.0 |
 | Apache Commons Codec | 1.23.0 | `XMLSignerPKCS11` (dependencia de Santuario) | Apache License 2.0 |
 | Woodstox (`woodstox-core`) | 7.3.0 | `XMLSignerPKCS11` (dependencia de Santuario) | Apache License 2.0 |
 | Stax2 API | 4.3.2 | `XMLSignerPKCS11` (dependencia de Woodstox) | BSD de 2 cláusulas |
-| SLF4J (`slf4j-api`; `slf4j-simple` en `PDFVerifySignatures`) | 2.0.20 | Módulos de PDF | MIT |
-| Logback (`logback-classic`, `logback-core`) | 1.6.5 | `PDFSignerPKCS11` y `PDFSignerPKCS12` | EPL 2.0 **o** LGPL 2.1 (a elección; S-FiDE usa la LGPL 2.1, compatible con la GPL) |
+| SLF4J (`slf4j-api`; `slf4j-simple` en `PDFVerifySignatures`; `slf4j-nop` en `PDFSignerWindowsCSP`) | 2.0.20 | Módulos de PDF | MIT |
+| Logback (`logback-classic`, `logback-core`) | 1.6.8 | `PDFSignerPKCS11` y `PDFSignerPKCS12` | EPL 2.0 **o** LGPL 2.1 (a elección; S-FiDE usa la LGPL 2.1, compatible con la GPL) |
 | Apache PDFBox (`pdfbox`, `fontbox`, `pdfbox-io`) | 3.0.8 | **Solo `s_fide_gui`**: dibuja las páginas del PDF (ubicación de la firma y visor). No firma ni modifica nada, y ningún módulo CLI depende de él. Incluye la Adobe Glyph List, un perfil de color ICC de dominio público (CC0) y partes de TwelveMonkeys ImageIO, con los avisos que detalla su archivo `NOTICE` | Apache License 2.0 |
 | Apache Commons Logging | 1.4.0 | `s_fide_gui` (dependencia de PDFBox) | Apache License 2.0 |
 | JavaFX (`javafx-base`, `controls`, `fxml`, `graphics`) | 23.0.1 | `s_fide_gui`; el paquete completo trae el SDK de cada plataforma | GPL v2 con *Classpath Exception* (OpenJFX) |
@@ -120,7 +120,29 @@ Las carpetas `xsd/` y `test/` del paquete completo contienen esquemas y document
 
 **Nota sobre compatibilidad de licencias:** iText 8.x se distribuye bajo AGPL v3 (o licencia comercial de Apryse). Los archivos fuente de S-FiDE están licenciados bajo **GPLv2 "o cualquier versión posterior"** — esa cláusula "o posterior" es la que habilita la compatibilidad de combinación con AGPLv3 (§13 de la AGPLv3 permite explícitamente la combinación con código bajo GPLv3). No es necesario ningún trámite adicional para usar S-FiDE tal como se distribuye; un integrador que quiera **modificar y redistribuir** los módulos que usan iText debe tener en cuenta los términos de AGPL v3 para esa parte específica.
 
-### 3.1 Revisión de seguridad de dependencias (1.5.0, 2026-10-08)
+### 3.1 Revisión de seguridad de dependencias
+
+#### 1.6.0 (2026-11-26)
+
+Mismo método que en las revisiones anteriores (descrito más abajo, en la de la 1.5.0), sobre las 36 combinaciones de artefacto y versión que distribuyen los jars. Se agregaron la consulta a la base de avisos de GitHub y la **lectura de las notas del fabricante de cada versión más nueva**, que resultó indispensable: ni OSV ni GitHub informaban ningún aviso sobre las versiones de la 1.5.1 (los controles positivos sí devolvieron avisos), y sin embargo Bouncy Castle e iText habían publicado correcciones de seguridad.
+
+| Componente | En 1.5.1 | Ahora | Avisos conocidos (OSV y GitHub) | Resultado |
+|---|---|---|---|---|
+| Bouncy Castle (`bcprov`/`bcpkix`/`bcutil`/`bctls`) | 1.86 | **1.87** | ninguno | Actualizado. La 1.87 (11/11/2026) corrige 12 CVE según [sus notas](https://github.com/bcgit/bc-java/blob/main/docs/releasenotes.md), entre ellas CVE-2026-103605 (un PKCS#12 armado a propósito podía ocupar al programa durante mucho tiempo) y CVE-2026-103611 (lo mismo con nombres X.500 dentro de una firma todavía no verificada). En ejecución carga `BC 1.87` |
+| iText | 8.0.5 | **8.0.6** | ninguno | Actualizado. [Versión de seguridad](https://github.com/itext/itext-java/releases/tag/8.0.6) (16/11/2026), sin CVE publicadas: reemplaza un generador aleatorio inseguro de los vectores de inicialización del cifrado (S-FiDE cifra con AES-256 al bloquear un documento) y corrige dos formas de eludir la validación de revisiones de una firma. En ejecución carga `8.0.6` |
+| Logback | 1.6.5 | **1.6.8** | ninguno | Actualizado. La 1.6.6 corrige un problema al recibir eventos por red, una función que S-FiDE no usa |
+| SLF4J, Apache PDFBox, Apache Santuario, Woodstox, Stax2 API, Commons Codec, Commons Logging | sin cambios | — | ninguno | Ya eran las últimas versiones estables (versiones en la tabla de arriba) |
+| Jackson | — | — | — | **No forma parte de S-FiDE:** ningún jar contiene clases de `com.fasterxml.jackson` |
+| JavaFX | 23.0.1 | 23.0.1 | ninguno | **Atención:** línea sin soporte. Decisión pendiente |
+| OpenJDK (runtime embebido) | 23.0.1 | 23.0.1 | no cubierto por OSV | **Atención:** JDK 23 terminó su soporte en marzo de 2025. En octubre de 2026 se publicó [CVE-2026-91403](https://nvd.nist.gov/vuln/detail/CVE-2026-91403) (componente de conexiones seguras TLS, gravedad 9,1 sobre 10), que alcanza a las versiones con soporte hasta 25.0.5 y 27.0.1. El aviso no menciona a JDK 23 porque no se evalúan versiones sin soporte: **no puede darse por seguro que no la afecte**. S-FiDE usa TLS como cliente (actualizador, descarga de esquemas XSD, revocación por HTTPS y control del reloj). Se recomienda pasar a **JDK 25 (LTS)**, en una actualización posterior a la 25.0.5, con JavaFX 25. Decisión pendiente |
+
+**Verificación después de actualizar:** el reactor completo (169 pruebas, sin fallas; 2 omitidas porque requieren un PDF real) y `herramientas/CompatibilidadCli.java` (175 casos): la salida de la comparación contra la 1.5.1 es idéntica antes y después de cambiar las bibliotecas. La versión 1.87 de Bouncy Castle es más estricta con datos mal formados (por ejemplo, rechaza un sello de tiempo cuya hora firmada contradiga la que declara). **Falta comprobar en Acrobat Reader** los PDF firmados con iText 8.0.6.
+
+**Pendientes que requieren decisión:** JDK 25 LTS con JavaFX 25 (cambia los runtimes de todas las plataformas, incluido macOS) y iText 9.x (9.8.1 al momento de la revisión; salto mayor con cambios de API en la firma).
+
+**Alcance y límites.** OSV y GitHub reúnen avisos publicados y no cubren el JDK; los datos de Java salen del [NVD](https://nvd.nist.gov) porque los sitios de Oracle y OpenJDK no admitieron la consulta automática. La revisión no reemplaza el análisis del escáner del cliente, que conviene volver a correr sobre la versión publicada. Se repite **antes de cada release** (ver `AGENTS.md`).
+
+#### 1.5.0 (2026-10-08) y 1.5.1 (2026-10-21)
 
 Antes de publicar la 1.5.0 se revisó la seguridad de **todo lo que se distribuye**, a raíz de un informe de un escáner de composición de software hecho sobre la 1.3.0 (que señalaba Bouncy Castle 1.78, Jackson 2.17.0 y Logback 1.2.13). **Método:** (1) se listaron todas las bibliotecas que cada `.jar` incluye realmente (dependencias de ejecución que resuelve Maven) más los runtimes embebidos; (2) se consultó la base pública de vulnerabilidades [OSV](https://osv.dev) para cada artefacto y versión, con un control positivo (las versiones viejas del informe sí devolvieron avisos, así que la consulta funciona); (3) se compararon con las últimas versiones publicadas en Maven Central; (4) se inspeccionaron los jars generados y se verificó **en ejecución** qué versión se carga.
 
@@ -138,8 +160,6 @@ Antes de publicar la 1.5.0 se revisó la seguridad de **todo lo que se distribuy
 | OpenJDK (runtime embebido) | 23.0.1 | 23.0.1 | no cubierto por OSV | **Atención:** JDK 23 no es una versión de soporte largo y ya terminó su ciclo de vida (su última actualización fue la 23.0.2), por lo que no recibe correcciones de seguridad. Se recomienda pasar el runtime a **JDK 25 (LTS)** con JavaFX 25. Decisión pendiente |
 
 **Repetición de la revisión para la 1.5.1 (2026-10-21).** Se repitió el mismo método sobre las 34 combinaciones de artefacto y versión que distribuyen los jars (OSV, con el control positivo de Bouncy Castle 1.78, que devolvió sus cuatro avisos): **ninguna tiene avisos**. Cambios: Commons Codec 1.22.1 → **1.23.0**, Stax2 API 4.3.1 → **4.3.2** y Commons Logging 1.3.6 → **1.4.0** (llegan como dependencia; se fijan en el `pom.xml` padre); y se corrigió un hallazgo propio: `PDFSignerWindowsCSP` incluía `slf4j-api` 1.7.36 (que traía iText) sin proveedor, lo que imprimía un aviso técnico de SLF4J a quien firmaba; ahora se fija la 2.0.20 en el `pom.xml` padre y el módulo agrega `slf4j-nop` 2.0.20 (sin avisos conocidos). Bouncy Castle 1.86, Logback 1.6.5, PDFBox 3.0.8, Santuario 4.0.4 y Woodstox 7.3.0 siguen siendo las últimas versiones estables. **Siguen pendientes de decisión** JDK 25 LTS con JavaFX 25 y iText 9.x (9.8.0).
-
-**Alcance y límites.** OSV reúne los avisos publicados (GitHub Security Advisories y otras fuentes) y no cubre el JDK; la revisión no reemplaza un análisis completo contra el NVD ni al escáner del cliente, que conviene volver a correr sobre la versión publicada. **Pendientes que requieren decisión:** migrar a JDK 25 LTS y JavaFX 25 (cambia los runtimes de todas las plataformas, incluido macOS) y evaluar iText 9.x. Esta revisión se repite **antes de cada release** (ver `AGENTS.md`).
 
 ---
 
@@ -1489,6 +1509,7 @@ powershell -ExecutionPolicy Bypass -File crear-paquete-actualizacion.ps1 [-Versi
 - **Operaciones por lotes** en los dos firmadores XML y PDF con token y PKCS#12, los dos verificadores y el validador XSD: `-lote`, `-revisar`, `-informe` y `-log`. Ver [7.11](#711-operaciones-por-lotes-160).
 - **S-FiDE GUI:** pestaña **Por lote** en esas siete opciones.
 - **Guía de migración 1.5.1 → 1.6.0:** quien lea el resultado de `PDFSignerPKCS12` desde `stderr` debe leerlo desde `stdout` (los textos y el código de salida no cambiaron; los errores siguen en `stderr`). `PDFSignerPKCS11` y `PDFVerifySignatures` escriben cada error en una sola línea, sin fecha ni nombre de clase. `PDFSignerPKCS12`, con una contraseña incorrecta, dice «Contraseña incorrecta o archivo PKCS#12 inválido». El resto del contrato de línea de comandos no cambió.
+- **Revisión de seguridad de dependencias:** Bouncy Castle 1.87, iText 8.0.6 y Logback 1.6.8; siguen pendientes de decisión JDK 25 LTS con JavaFX 25 y iText 9.x. Ver la [sección 3.1](#31-revisión-de-seguridad-de-dependencias).
 
 ### v1.5.1 (2026-10-21)
 
@@ -1509,7 +1530,7 @@ powershell -ExecutionPolicy Bypass -File crear-paquete-actualizacion.ps1 [-Versi
 - **Visor interno de documentos en la GUI** (Archivo → Abrir PDF… / Abrir XML…), con marcado de firmas, botones de visor externo (COD/DJO y PDF) y "Validar XSD". Ver [sección 7.8](#78-visor-interno-de-documentos-pdf-y-xml-150). Apertura de enlaces y documentos con `HostServices` (multiplataforma) y todo diálogo con ventana propietaria.
 - **macOS (Apple Silicon e Intel):** un paquete completo por procesador (`S-FiDE-<versión>-macos-aarch64.tar.gz` y `-macos-x64.tar.gz`, macOS 12 o posterior), con runtimes `macos-aarch64`/`macos-x64`, lanzador que elige el runtime y quita la cuarentena de Gatekeeper, menú en la barra del sistema, `SFide-GUI.command` y actualizador adaptado. Ver la sección 12. **Todavía no se probó en un Mac real.**
 - **XML con marca BOM** (`XMLSignerPKCS11`/`PKCS12`/`WindowsCSP`, `XMLVerifySignatures`, `XMLVerifyXSDStructure`): se informa, se ignora y los firmadores generan el documento sin ella; además se corrige el error `nextSibling cannot be null` al firmar el último elemento de su padre. Ver la [sección 7.10](#710-xml-con-marca-bom-y-xml-compacto-150).
-- **Revisión de seguridad de dependencias:** Bouncy Castle 1.86, Logback 1.6.5, SLF4J 2.0.20, Apache PDFBox 3.0.8 y las demás bibliotecas fijadas en el `pom.xml` padre; pendiente de decisión pasar JDK 23/JavaFX 23 (sin soporte) a JDK 25 LTS. Ver la [sección 3.1](#31-revisión-de-seguridad-de-dependencias-150-2026-10-08).
+- **Revisión de seguridad de dependencias:** Bouncy Castle 1.86, Logback 1.6.5, SLF4J 2.0.20, Apache PDFBox 3.0.8 y las demás bibliotecas fijadas en el `pom.xml` padre; pendiente de decisión pasar JDK 23/JavaFX 23 (sin soporte) a JDK 25 LTS. Ver la [sección 3.1](#31-revisión-de-seguridad-de-dependencias).
 - **Compatibilidad para integradores consolidada** en la [sección 7.9](#79-compatibilidad-con-integraciones-existentes-de-140-a-150) y licencias de terceros completas en la [sección 3](#3-software-de-terceros-y-dependencias).
 - **El paquete de actualización rechaza ahora, al armarlo, cualquier archivo que el actualizador no pueda instalar** (en `doc/` solo `.html`, `.md` e imágenes): un `.txt` en `doc/` habría hecho fallar la actualización de 1.4.0 a 1.5.0. El cuerpo del Release vive en `release-notes/`.
 - **Actualización desde 1.4.0 verificada:** el paquete de la 1.5.0 se aplicó con el `SFideUpdater.jar` real de la 1.4.0 sobre una copia de una instalación 1.4.0 (verificar + aplicar), y el primer arranque posterior mostró el aviso de actualización y las novedades.

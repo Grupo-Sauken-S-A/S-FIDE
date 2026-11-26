@@ -17,6 +17,9 @@ Ahora puede trabajar con muchos documentos juntos, ingresando la contraseña una
 - Por seguridad, un lote hace una sola cosa: no se mezclan certificados de origen con declaraciones juradas, y nunca se reemplaza un documento que ya estaba firmado.
 - Si cierra documentos PDF por lote, S-FiDE le pide confirmación porque no se puede deshacer.
 
+### Seguridad
+- Se actualizaron los componentes de firma y verificación con las correcciones de seguridad más recientes de sus autores.
+
 ## 1.5.1 | S-FiDE ya no deja firmar con un certificado vencido
 Esta versión revisa su certificado antes de firmar y le avisa con claridad si no se puede usar.
 
