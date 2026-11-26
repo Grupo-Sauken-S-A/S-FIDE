@@ -57,6 +57,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextArea;
 import java.io.*;
+import com.sauken.s_fide.s_fide_gui.batch.BatchProcess;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -540,7 +541,51 @@ public final class GUIUtils {
         }
     }
 
+    /**
+     * La línea de comandos para ejecutar un programa de S-FiDE con el Java de la aplicación, o {@code null} si
+     * su jar no está en la carpeta de instalación.
+     */
+    public static List<String> comandoDeModulo(String jarName, List<String> argumentos) {
+        Path jarPath = Paths.get(System.getProperty("user.dir"), jarName + ".jar");
+        if (!jarPath.toFile().exists()) {
+            return null;
+        }
+        List<String> command = new ArrayList<>(List.of(JAVA_EXECUTABLE, "-Dfile.encoding=UTF-8",
+                "-Dsun.jnu.encoding=UTF-8", "-Dconsole.encoding=UTF-8", "-Dstdout.encoding=UTF-8",
+                "-Dstderr.encoding=UTF-8", "-jar", jarPath.toString()));
+        command.addAll(argumentos);
+        return command;
+    }
+
+    /**
+     * Consulta la revocación del certificado una sola vez antes de un lote, con las mismas reglas que al firmar
+     * un documento: si está revocado no se sigue; si no se puede comprobar, se pregunta.
+     */
+    public static void confirmarRevocacion(String jarName, String[] checkArgs, TextArea salida, Runnable seguir) {
+        beginBusy();
+        CompletableFuture.runAsync(() -> {
+            RevocationCheckOutcome outcome = runRevocationCheck(jarName, checkArgs);
+            Platform.runLater(() -> {
+                endBusy();
+                if (!outcome.ranOk()) {
+                    salida.clear();
+                    salida.appendText(outcome.rawOutput() + "\n");
+                    showCommandResult(1);
+                } else if ("REVOKED".equals(outcome.estado())) {
+                    showAlert(Alert.AlertType.ERROR, "Certificado revocado",
+                            "El certificado de firma está revocado. No se puede firmar desde la interfaz gráfica.");
+                } else if (!"UNKNOWN".equals(outcome.estado()) || confirmarSiNo("Revocación no verificable",
+                        "No se pudo confirmar que el certificado no esté revocado"
+                                + (outcome.detalle() != null ? " (" + outcome.detalle() + ")" : "") + ".\n\n"
+                                + "¿Desea firmar de todas formas?")) {
+                    seguir.run();
+                }
+            });
+        }, executorService);
+    }
+
     public static void shutdown() {
+        BatchProcess.cancelarTodos();
         if (!executorService.isShutdown()) {
             executorService.shutdownNow();
         }

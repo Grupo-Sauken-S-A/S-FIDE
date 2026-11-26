@@ -63,6 +63,7 @@ import com.sauken.s_fide.s_fide_gui.pdf.PdfPreflight;
 import com.sauken.s_fide.s_fide_gui.pdf.PdfSigningPanel;
 import com.sauken.s_fide.s_fide_gui.utils.SessionPasswordStore;
 import com.sauken.s_fide.s_fide_gui.utils.SingleInstanceGuard;
+import com.sauken.s_fide.s_fide_gui.batch.BatchPanel;
 import com.sauken.s_fide.s_fide_gui.utils.TokenProfileCatalog;
 import com.sauken.s_fide.s_fide_gui.utils.UserDataDirectory;
 import javafx.application.Application;
@@ -107,6 +108,8 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.IntConsumer;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class SFideGUI extends Application {
     // Sale del pom (recurso filtrado s-fide-version.properties): una sola fuente de verdad.
@@ -1464,7 +1467,100 @@ public class SFideGUI extends Application {
         }
     }
 
-    private VBox createTabContent(String description, GridPane grid) {
+    /** Las dos formas de usar una opción: de a un documento (como siempre) o una carpeta entera. */
+    private TabPane pestanas(GridPane unDocumento, GridPane porLote) {
+        Tab individual = new Tab("Un documento", unDocumento);
+        individual.disableProperty().bind(BatchPanel.enCursoProperty());
+        Tab lote = new Tab("Por lote", porLote);
+        TabPane pestanas = new TabPane(individual, lote);
+        pestanas.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        return pestanas;
+    }
+
+    private BatchPanel crearPanelDeLote(BatchPanel.Modulo modulo) {
+        // El área de salida se crea después que las pestañas: se pide recién al usarla.
+        return new BatchPanel(modulo, configManager, () -> primaryStage, () -> sharedOutputArea);
+    }
+
+    /** Campo de contraseña de la pestaña "Por lote", que muestra siempre lo mismo que el de "Un documento". */
+    private PasswordField contrasenaVinculada(PasswordField original, String ayuda) {
+        PasswordField campo = createPasswordField(ayuda);
+        campo.textProperty().bindBidirectional(original.textProperty());
+        return campo;
+    }
+
+    private TextField campoVinculado(TextField original) {
+        TextField campo = createTextField(original.getPromptText());
+        campo.textProperty().bindBidirectional(original.textProperty());
+        return campo;
+    }
+
+    private static String faltante(TextField campo, String nombre) {
+        return campo.getText() == null || campo.getText().isBlank() ? "Complete el campo \"" + nombre + "\"." : null;
+    }
+
+    private static String primeroQueFalta(String... avisos) {
+        for (String aviso : avisos) {
+            if (aviso != null) {
+                return aviso;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Qué hacer con la contraseña de la sesión cuando termina un lote: se recuerda si algo quedó firmado (sirvió
+     * para acceder al certificado) y se olvida si el lote se detuvo por ella. Otros errores no la afectan.
+     */
+    private Supplier<Consumer<BatchPanel.Fin>> contrasenaDelLote(SessionPasswordStore.Kind tipo, PasswordField campo) {
+        return () -> {
+            IntConsumer resultado = sessionPasswordOutcome(tipo, campo.getText());
+            return fin -> {
+                if (fin.firmados() > 0) {
+                    resultado.accept(0);
+                } else if ("CONTRASENA".equals(fin.corte()) || "TOKEN_BLOQUEADO".equals(fin.corte())) {
+                    resultado.accept(1);
+                }
+            };
+        };
+    }
+
+    /** Argumentos de un lote de firma de PDF, a partir de lo elegido en la pantalla. */
+    private List<String> argumentosDeLotePdf(List<String> credencial, String opcionDeCierre,
+                                             PdfSigningPanel.Pedido pedido, String texto) {
+        List<String> argumentos = new ArrayList<>(credencial);
+        argumentos.addAll(pedido.argumentosDeUbicacion());
+        argumentos.addAll(List.of(opcionDeCierre, String.valueOf(pedido.cerrar())));
+        agregarOpcionesDeFirmaPdf(argumentos, pedido, texto);
+        return argumentos;
+    }
+
+    /** Cerrar muchos documentos no se puede deshacer: se pide confirmación, con Cancelar como opción de Enter. */
+    private void confirmarCierreDelLote(boolean cerrar, int cantidad, Runnable seguir) {
+        if (!cerrar) {
+            seguir.run();
+            return;
+        }
+        ButtonType aceptar = new ButtonType("Firmar y cerrar", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelar = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
+        Alert alerta = new Alert(Alert.AlertType.WARNING, "", aceptar, cancelar);
+        alerta.initOwner(primaryStage);
+        alerta.setTitle("Cerrar los documentos");
+        alerta.setHeaderText("Se van a cerrar " + cantidad + (cantidad == 1 ? " documento" : " documentos"));
+        Label explicacion = new Label("Después no admitirán más firmas, y cualquier cambio posterior hará que las "
+                + "firmas dejen de ser válidas. Esto no se puede deshacer.\n\nSi otras personas todavía tienen que "
+                + "firmarlos, cancele y desmarque la opción de cerrar.");
+        explicacion.setWrapText(true);
+        explicacion.setMaxWidth(420);
+        alerta.getDialogPane().setContent(explicacion);
+        ((Button) alerta.getDialogPane().lookupButton(aceptar)).setDefaultButton(false);
+        ((Button) alerta.getDialogPane().lookupButton(cancelar)).setDefaultButton(true);
+        if (alerta.showAndWait().filter(boton -> boton == aceptar).isPresent()) {
+            seguir.run();
+        }
+    }
+
+    private VBox createTabContent(String description, Node cuerpo) {
         VBox content = new VBox(10);
         content.getStyleClass().add("content-card");
         content.setPadding(new Insets(12));
@@ -1475,7 +1571,7 @@ public class SFideGUI extends Application {
 
         Separator separator = new Separator();
 
-        content.getChildren().addAll(descLabel, separator, grid);
+        content.getChildren().addAll(descLabel, separator, cuerpo);
         return content;
     }
 
@@ -2227,6 +2323,8 @@ public class SFideGUI extends Application {
         nav.getStyleClass().add("sidebar-nav");
         nav.getItems().addAll(modules);
         nav.setCellFactory(lv -> createModuleNavCell(nav));
+        // Mientras hay un lote en curso no se cambia de opción: se perdería de vista su avance y "Cancelar".
+        nav.disableProperty().bind(BatchPanel.enCursoProperty());
         nav.setPrefWidth(250);
         nav.setMinWidth(200);
 
@@ -2468,6 +2566,30 @@ public class SFideGUI extends Application {
         addButtonToRow(grid, 5, createFieldHelpButton("Elemento XML (ID) a Firmar", xmlElementHelpText));
         addExecuteButton(grid, execute, 6);
 
+        TextField loteLib = campoVinculado(pkcs11LibPath);
+        PasswordField loteClave = contrasenaVinculada(password, "Contraseña del token");
+        TextField loteSlot = campoVinculado(slotNumber);
+        TextField loteUri = campoVinculado(uri);
+        Button loteBuscarLib = createBrowseButton();
+        loteBuscarLib.setOnAction(e -> Platform.runLater(() -> selectLibraryFile(loteLib)));
+        Supplier<String> loteElemento = () -> loteUri.getText() == null ? "" : loteUri.getText().trim();
+        BatchPanel lote = crearPanelDeLote(new BatchPanel.Modulo("XMLSignerPKCS11", "xml", true,
+                ConfigurationManager.DirectoryKind.XML,
+                () -> primeroQueFalta(faltante(loteLib, "Biblioteca PKCS#11"), faltante(loteClave, "Contraseña")),
+                () -> List.of(loteLib.getText(), loteClave.getText(), slotOrDefault(loteSlot.getText()),
+                        loteElemento.get()),
+                // Para revisar no se envía la contraseña del token: así no se gasta ningún intento de PIN.
+                () -> List.of(loteLib.getText(), "", slotOrDefault(loteSlot.getText()), loteElemento.get()),
+                null, contrasenaDelLote(SessionPasswordStore.Kind.PKCS11, loteClave), null));
+        GridPane grillaLote = createStandardGridPane();
+        addToGrid(grillaLote, 0, "Biblioteca PKCS#11:", loteLib, loteBuscarLib);
+        grillaLote.add(createDriverSelectorBox(loteLib), 1, 1);
+        addToGrid(grillaLote, 2, "Contraseña:", loteClave, null);
+        addToGrid(grillaLote, 3, "Número de Slot:", loteSlot, null);
+        addToGrid(grillaLote, 4, "Elemento XML (ID) a Firmar:", loteUri, null);
+        addButtonToRow(grillaLote, 4, createFieldHelpButton("Elemento XML (ID) a Firmar", xmlElementHelpText));
+        lote.agregarA(grillaLote, 5);
+
         VBox content = createTabContent(
                 "Firma digitalmente un documento XML con la clave privada de un token criptográfico, usando "
                         + "SHA-256. Puede firmar el documento completo, o solo un elemento/párrafo específico "
@@ -2475,7 +2597,7 @@ public class SFideGUI extends Application {
                         + "XML— que además es la que usan los documentos de comercio exterior ALADI/MERCOSUR "
                         + "(Certificados de Origen Digital, Declaraciones Juradas de Origen), cuyas firmas van "
                         + "embebidas sobre elementos puntuales del documento y no sobre el XML completo.",
-                grid
+                pestanas(grid, grillaLote)
         );
 
         tab.setContent(content);
@@ -2521,12 +2643,34 @@ public class SFideGUI extends Application {
         addButtonToRow(grid, 3, createFieldHelpButton("Elemento XML (ID) a Firmar", xmlElementHelpText));
         addExecuteButton(grid, execute, 4);
 
+        TextField loteP12 = campoVinculado(pkcs12Path);
+        PasswordField loteClave = contrasenaVinculada(password, "Contraseña del archivo");
+        TextField loteUri = campoVinculado(uri);
+        Button loteBuscarP12 = createBrowseButton();
+        loteBuscarP12.setOnAction(e -> Platform.runLater(() -> selectPKCS12File(loteP12)));
+        Supplier<String> loteElemento = () -> loteUri.getText() == null ? "" : loteUri.getText().trim();
+        BatchPanel lote = crearPanelDeLote(new BatchPanel.Modulo("XMLSignerPKCS12", "xml", true,
+                ConfigurationManager.DirectoryKind.XML,
+                () -> primeroQueFalta(faltante(loteP12, "Archivo PKCS#12"), faltante(loteClave, "Contraseña")),
+                () -> List.of(loteP12.getText(), loteClave.getText(), loteElemento.get()),
+                () -> List.of(loteP12.getText(), "", loteElemento.get()),
+                (cantidad, seguir) -> GUIUtils.confirmarRevocacion("XMLSignerPKCS12",
+                        new String[]{"-verificar-revocacion", loteP12.getText(), loteClave.getText()},
+                        sharedOutputArea, seguir),
+                contrasenaDelLote(SessionPasswordStore.Kind.PKCS12, loteClave), null));
+        GridPane grillaLote = createStandardGridPane();
+        addToGrid(grillaLote, 0, "Archivo PKCS#12:", loteP12, loteBuscarP12);
+        addToGrid(grillaLote, 1, "Contraseña:", loteClave, null);
+        addToGrid(grillaLote, 2, "Elemento XML (ID) a Firmar:", loteUri, null);
+        addButtonToRow(grillaLote, 2, createFieldHelpButton("Elemento XML (ID) a Firmar", xmlElementHelpText));
+        lote.agregarA(grillaLote, 3);
+
         VBox content = createTabContent(
                 "Firma digitalmente un documento XML con SHA-256, igual que la versión con token, pero usando "
                         + "un archivo de certificado PKCS#12 (.p12/.pfx) en lugar de hardware — ideal para "
                         + "pruebas, automatización de servidor, o certificados que no requieren token físico. "
                         + "Admite la misma firma por elemento vía Id= que la versión con token.",
-                grid
+                pestanas(grid, grillaLote)
         );
 
         tab.setContent(content);
@@ -2555,13 +2699,24 @@ public class SFideGUI extends Application {
         grid.add(simpleOutput, 1, 1);
         addExecuteButton(grid, execute, 2);
 
+        CheckBox loteSimple = new CheckBox("Salida simple");
+        loteSimple.selectedProperty().bindBidirectional(simpleOutput.selectedProperty());
+        loteSimple.setTooltip(new Tooltip("Registro y detalle simplificados"));
+        BatchPanel lote = crearPanelDeLote(new BatchPanel.Modulo("XMLVerifySignatures", "xml", false,
+                ConfigurationManager.DirectoryKind.XML, () -> null,
+                () -> loteSimple.isSelected() ? List.of("-simple") : List.of(), null, null, null,
+                documento -> executeXMLVerifySignatures(documento.toString(), loteSimple.isSelected())));
+        GridPane grillaLote = createStandardGridPane();
+        grillaLote.add(loteSimple, 1, 0);
+        lote.agregarA(grillaLote, 1);
+
         VBox content = createTabContent(
                 "Verifica la integridad criptográfica de las firmas de un XML y consulta el estado de "
                         + "revocación del certificado firmante (OCSP, con reintento por CRL) contra la fecha de "
                         + "firma — no la fecha actual, para no invalidar firmas antiguas hechas con un "
                         + "certificado hoy ya vencido. Admite firmas hechas con SHA-256 y también SHA-1 "
                         + "(compatibilidad con documentos antiguos).",
-                grid
+                pestanas(grid, grillaLote)
         );
 
         tab.setContent(content);
@@ -2591,12 +2746,24 @@ public class SFideGUI extends Application {
         addToGrid(grid, 1, "Archivo XSD:", xsdPath, browseXSD);
         addExecuteButton(grid, execute, 2);
 
+        TextField loteXsd = campoVinculado(xsdPath);
+        Button loteBuscarXsd = createBrowseButton();
+        loteBuscarXsd.setOnAction(e -> Platform.runLater(() -> selectXSDFile(loteXsd)));
+        Supplier<String> esquema = () -> loteXsd.getText() == null ? "" : loteXsd.getText().trim();
+        BatchPanel lote = crearPanelDeLote(new BatchPanel.Modulo("XMLVerifyXSDStructure", "xml", false,
+                ConfigurationManager.DirectoryKind.XML, () -> null,
+                () -> esquema.get().isEmpty() ? List.of() : List.of(esquema.get()), null, null, null,
+                documento -> executeXMLVerifyXSDStructure(documento.toString(), esquema.get())));
+        GridPane grillaLote = createStandardGridPane();
+        addToGrid(grillaLote, 0, "Archivo XSD:", loteXsd, loteBuscarXsd);
+        lote.agregarA(grillaLote, 1);
+
         VBox content = createTabContent(
                 "Valida que un XML cumpla la estructura de su esquema XSD —externo o el indicado por el propio "
                         + "documento— y de paso verifica también sus firmas digitales. Para documentos "
                         + "ALADI/MERCOSUR usa el esquema oficial, con reintento automático por un dominio espejo "
                         + "si el sitio de ALADI no responde.",
-                grid
+                pestanas(grid, grillaLote)
         );
 
         tab.setContent(content);
@@ -2661,13 +2828,53 @@ public class SFideGUI extends Application {
         grid.add(firma.nodoOpciones(), 1, 7);
         addExecuteButton(grid, execute, 8);
 
+        TextField loteLib = campoVinculado(pkcs11LibPath);
+        PasswordField loteClave = contrasenaVinculada(password, "Contraseña del token");
+        TextField loteSlot = campoVinculado(slotNumber);
+        TextField loteTexto = campoVinculado(customText);
+        Button loteBuscarLib = createBrowseButton();
+        loteBuscarLib.setOnAction(e -> Platform.runLater(() -> selectLibraryFile(loteLib)));
+        BatchPanel[] panel = new BatchPanel[1];
+        PdfSigningPanel loteFirma = new PdfSigningPanel("PDFSignerPKCS11", () -> panel[0].primerDocumento(),
+                loteTexto::getText,
+                () -> loteLib.getText().isBlank() ? null
+                        : List.of("-l", loteLib.getText().trim(), "-s", slotOrDefault(loteSlot.getText())),
+                () -> primaryStage).paraLotesVinculadoCon(firma);
+        BatchPanel lote = crearPanelDeLote(new BatchPanel.Modulo("PDFSignerPKCS11", "pdf", true,
+                ConfigurationManager.DirectoryKind.PDF,
+                () -> primeroQueFalta(faltante(loteLib, "Biblioteca PKCS#11"), faltante(loteClave, "Contraseña")),
+                () -> argumentosDeLotePdf(List.of("-l", loteLib.getText(), "-p", loteClave.getText(), "-s",
+                        slotOrDefault(loteSlot.getText())), "-k", loteFirma.pedido(), loteTexto.getText()),
+                // Para revisar no se envía la contraseña del token: así no se gasta ningún intento de PIN.
+                () -> argumentosDeLotePdf(List.of("-l", loteLib.getText(), "-p", "", "-s",
+                        slotOrDefault(loteSlot.getText())), "-k", loteFirma.pedido(), loteTexto.getText()),
+                (cantidad, seguir) -> confirmarCierreDelLote(loteFirma.pedido().cerrar(), cantidad, seguir),
+                () -> {
+                    Consumer<BatchPanel.Fin> clave = contrasenaDelLote(SessionPasswordStore.Kind.PKCS11, loteClave).get();
+                    return fin -> {
+                        clave.accept(fin);
+                        loteFirma.despuesDeFirmar();
+                    };
+                }, null));
+        panel[0] = lote;
+        GridPane grillaLote = createStandardGridPane();
+        addToGrid(grillaLote, 0, "Biblioteca PKCS#11:", loteLib, loteBuscarLib);
+        grillaLote.add(createDriverSelectorBox(loteLib), 1, 1);
+        addToGrid(grillaLote, 2, "Contraseña:", loteClave, null);
+        addToGrid(grillaLote, 3, "Número de Slot:", loteSlot, null);
+        addToGrid(grillaLote, 4, "Ubicación de la firma:", loteFirma.nodoUbicacion(), null);
+        addButtonToRow(grillaLote, 4, createFieldHelpButton("Ubicación de la firma visible", pdfPositionHelpText));
+        addToGrid(grillaLote, 5, "Texto personalizado:", loteTexto, null);
+        grillaLote.add(loteFirma.nodoOpciones(), 1, 6);
+        lote.agregarA(grillaLote, 7);
+
         VBox content = createTabContent(
                 "Firma digitalmente un documento PDF con la clave privada de un token criptográfico, usando "
                         + "SHA-256. La firma puede ser invisible o mostrarse en un recuadro con firmante, fecha "
                         + "y texto personalizado, en el lugar que usted elija sobre el propio documento. Antes de "
                         + "firmar se revisa el documento y las firmas que ya tiene; la última persona puede cerrarlo "
                         + "para que no admita más firmas.",
-                grid
+                pestanas(grid, grillaLote)
         );
 
         tab.setContent(content);
@@ -2725,11 +2932,50 @@ public class SFideGUI extends Application {
         grid.add(firma.nodoOpciones(), 1, 5);
         addExecuteButton(grid, execute, 6);
 
+        TextField loteP12 = campoVinculado(pkcs12Path);
+        PasswordField loteClave = contrasenaVinculada(password, "Contraseña del archivo");
+        TextField loteTexto = campoVinculado(customText);
+        Button loteBuscarP12 = createBrowseButton();
+        loteBuscarP12.setOnAction(e -> Platform.runLater(() -> selectPKCS12File(loteP12)));
+        BatchPanel[] panel = new BatchPanel[1];
+        PdfSigningPanel loteFirma = new PdfSigningPanel("PDFSignerPKCS12", () -> panel[0].primerDocumento(),
+                loteTexto::getText,
+                () -> loteP12.getText().isBlank() || loteClave.getText().isEmpty() ? null
+                        : List.of("-c", loteP12.getText().trim(), "-p", loteClave.getText()),
+                () -> primaryStage).paraLotesVinculadoCon(firma);
+        BatchPanel lote = crearPanelDeLote(new BatchPanel.Modulo("PDFSignerPKCS12", "pdf", true,
+                ConfigurationManager.DirectoryKind.PDF,
+                () -> primeroQueFalta(faltante(loteP12, "Archivo PKCS#12"), faltante(loteClave, "Contraseña")),
+                () -> argumentosDeLotePdf(List.of("-c", loteP12.getText(), "-p", loteClave.getText()), "-l",
+                        loteFirma.pedido(), loteTexto.getText()),
+                () -> argumentosDeLotePdf(List.of("-c", loteP12.getText(), "-p", ""), "-l", loteFirma.pedido(),
+                        loteTexto.getText()),
+                (cantidad, seguir) -> GUIUtils.confirmarRevocacion("PDFSignerPKCS12",
+                        new String[]{"-verificar-revocacion", loteP12.getText(), loteClave.getText()},
+                        sharedOutputArea,
+                        () -> confirmarCierreDelLote(loteFirma.pedido().cerrar(), cantidad, seguir)),
+                () -> {
+                    Consumer<BatchPanel.Fin> clave = contrasenaDelLote(SessionPasswordStore.Kind.PKCS12, loteClave).get();
+                    return fin -> {
+                        clave.accept(fin);
+                        loteFirma.despuesDeFirmar();
+                    };
+                }, null));
+        panel[0] = lote;
+        GridPane grillaLote = createStandardGridPane();
+        addToGrid(grillaLote, 0, "Archivo PKCS#12:", loteP12, loteBuscarP12);
+        addToGrid(grillaLote, 1, "Contraseña:", loteClave, null);
+        addToGrid(grillaLote, 2, "Ubicación de la firma:", loteFirma.nodoUbicacion(), null);
+        addButtonToRow(grillaLote, 2, createFieldHelpButton("Ubicación de la firma visible", pdfPositionHelpText));
+        addToGrid(grillaLote, 3, "Texto personalizado:", loteTexto, null);
+        grillaLote.add(loteFirma.nodoOpciones(), 1, 4);
+        lote.agregarA(grillaLote, 5);
+
         VBox content = createTabContent(
                 "Firma digitalmente un documento PDF con SHA-256, igual que la versión con token, pero usando "
                         + "un archivo de certificado PKCS#12 (.p12/.pfx) — ideal para pruebas, automatización de "
                         + "servidor, o certificados que no requieren hardware.",
-                grid
+                pestanas(grid, grillaLote)
         );
 
         tab.setContent(content);
@@ -2758,12 +3004,23 @@ public class SFideGUI extends Application {
         grid.add(simpleOutput, 1, 1);
         addExecuteButton(grid, execute, 2);
 
+        CheckBox loteSimple = new CheckBox("Salida simple");
+        loteSimple.selectedProperty().bindBidirectional(simpleOutput.selectedProperty());
+        loteSimple.setTooltip(new Tooltip("Registro y detalle simplificados"));
+        BatchPanel lote = crearPanelDeLote(new BatchPanel.Modulo("PDFVerifySignatures", "pdf", false,
+                ConfigurationManager.DirectoryKind.PDF, () -> null,
+                () -> loteSimple.isSelected() ? List.of("-simple") : List.of(), null, null, null,
+                documento -> executePDFVerifySignatures(documento.toString(), loteSimple.isSelected())));
+        GridPane grillaLote = createStandardGridPane();
+        grillaLote.add(loteSimple, 1, 0);
+        lote.agregarA(grillaLote, 1);
+
         VBox content = createTabContent(
                 "Verifica la integridad criptográfica de cada firma de un PDF, si cubre todo el documento o "
                         + "solo una versión anterior, si está bloqueado/cifrado, y el estado de revocación del "
                         + "certificado firmante (OCSP con reintento por CRL) contra la fecha de firma. Admite "
                         + "firmas hechas con SHA-256 y también SHA-1 (compatibilidad con documentos antiguos).",
-                grid
+                pestanas(grid, grillaLote)
         );
 
         tab.setContent(content);

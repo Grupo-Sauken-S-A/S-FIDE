@@ -53,6 +53,8 @@ package com.sauken.s_fide.s_fide_gui.pdf;
 
 import com.sauken.s_fide.s_fide_gui.utils.GUIUtils;
 import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -96,7 +98,9 @@ public final class PdfSigningPanel {
     private final Supplier<List<String>> credencialParaVistaPrevia;
     private final Supplier<Window> propietario;
 
-    private SignaturePlacement ubicacion = SignaturePlacement.porDefecto();
+    private final ObjectProperty<SignaturePlacement> ubicacion =
+            new SimpleObjectProperty<>(SignaturePlacement.porDefecto());
+    private boolean paraLotes;
 
     private final Label resumen = new Label();
     private final Button elegir = new Button("Elegir en el documento…");
@@ -126,6 +130,7 @@ public final class PdfSigningPanel {
         elegir.setTooltip(new Tooltip("Muestra el documento para arrastrar la firma al lugar deseado, como en Acrobat"));
         elegir.setOnAction(e -> abrirSelector());
 
+        ubicacion.addListener((obs, antes, ahora) -> actualizar());
         invisible.selectedProperty().addListener((obs, antes, ahora) -> actualizar());
         invisible.setTooltip(new Tooltip("La firma es igual de válida, pero no se ve en el documento"));
 
@@ -146,6 +151,26 @@ public final class PdfSigningPanel {
         actualizar();
     }
 
+    /**
+     * Panel de la pestaña "Por lote": comparte con {@code otro} la ubicación y las opciones, de modo que se
+     * eligen una vez, y no ofrece firmar en campos existentes (cada documento puede tenerlos en otro lugar).
+     */
+    public PdfSigningPanel paraLotesVinculadoCon(PdfSigningPanel otro) {
+        paraLotes = true;
+        ubicacion.bindBidirectional(otro.ubicacion);
+        invisible.selectedProperty().bindBidirectional(otro.invisible.selectedProperty());
+        cerrar.selectedProperty().bindBidirectional(otro.cerrar.selectedProperty());
+        proteger.selectedProperty().bindBidirectional(otro.proteger.selectedProperty());
+        actualizar();
+        return this;
+    }
+
+    private static PdfAnalysisReport sinCampos(PdfAnalysisReport informe) {
+        return informe == null ? null : new PdfAnalysisReport(informe.cerrado(), informe.motivoCierre(),
+                informe.firmas(), informe.paginas(), informe.contenidoProtegido(), List.of(),
+                informe.avisoDocumento(), informe.notaDocumento(), informe.recomendacion());
+    }
+
     /** Fila de "Ubicación de la firma": resumen, botón para elegir sobre el documento y opción de firma invisible. */
     public Node nodoUbicacion() {
         VBox fila = new VBox(6, resumen, new HBox(12, elegir, invisible));
@@ -159,10 +184,10 @@ public final class PdfSigningPanel {
 
     public Pedido pedido() {
         List<String> argumentos = new ArrayList<>();
-        if (invisible.isSelected() || ubicacion == null) {
+        if (invisible.isSelected() || ubicacion.get() == null) {
             argumentos.addAll(List.of("-x", "0", "-y", "0"));
         } else {
-            argumentos.addAll(ubicacion.argumentos());
+            argumentos.addAll(ubicacion.get().argumentos());
         }
         return new Pedido(argumentos, cerrar.isSelected(), proteger.isSelected());
     }
@@ -178,7 +203,7 @@ public final class PdfSigningPanel {
     /** Vuelve a la posición habitual y a la firma visible. */
     public void reiniciar() {
         Platform.runLater(() -> {
-            ubicacion = SignaturePlacement.porDefecto();
+            ubicacion.set(SignaturePlacement.porDefecto());
             invisible.setSelected(false);
             cerrar.setSelected(false);
             proteger.setSelected(false);
@@ -191,7 +216,7 @@ public final class PdfSigningPanel {
         elegir.setDisable(sinFirmaVisible);
         resumen.setText(sinFirmaVisible
                 ? "La firma será válida pero no se dibujará nada en el documento."
-                : ubicacion.resumen());
+                : ubicacion.get().resumen());
     }
 
     // =====================================================================================
@@ -202,7 +227,9 @@ public final class PdfSigningPanel {
             Alert alerta = new Alert(Alert.AlertType.INFORMATION);
             alerta.setTitle("Elija primero el documento");
             alerta.setHeaderText(null);
-            alerta.setContentText("Para ubicar la firma sobre el documento, primero elija el archivo PDF en el campo "
+            alerta.setContentText(paraLotes
+                    ? "Para ubicar la firma sobre un documento, primero elija una carpeta que contenga archivos PDF."
+                    : "Para ubicar la firma sobre el documento, primero elija el archivo PDF en el campo "
                     + "\"Archivo PDF\".");
             alerta.initOwner(propietario.get());
             alerta.showAndWait();
@@ -280,11 +307,12 @@ public final class PdfSigningPanel {
     }
 
     private void mostrarSelector(Path pdf, Datos datos) {
-        SignaturePlacement inicial = invisible.isSelected() ? SignaturePlacement.porDefecto() : ubicacion;
+        SignaturePlacement inicial = invisible.isSelected() ? SignaturePlacement.porDefecto() : ubicacion.get();
         Optional<SignaturePlacement> elegida = PdfSignaturePlacementDialog.mostrar(propietario.get(), pdf, inicial,
-                datos.informe(), datos.textoDeLaFirma(), datos.tamanoDeLetra(), this::pedirAMano);
+                paraLotes ? sinCampos(datos.informe()) : datos.informe(), datos.textoDeLaFirma(), datos.tamanoDeLetra(),
+                this::pedirAMano);
         elegida.ifPresent(u -> {
-            ubicacion = u;
+            ubicacion.set(u);
             invisible.setSelected(false);
             actualizar();
         });
@@ -302,7 +330,7 @@ public final class PdfSigningPanel {
         ButtonType aceptar = new ButtonType("Usar estos valores", ButtonBar.ButtonData.OK_DONE);
         dialogo.getDialogPane().getButtonTypes().addAll(aceptar, ButtonType.CANCEL);
 
-        SignaturePlacement base = ubicacion != null ? ubicacion : SignaturePlacement.porDefecto();
+        SignaturePlacement base = ubicacion.get() != null ? ubicacion.get() : SignaturePlacement.porDefecto();
         TextField pagina = new TextField(String.valueOf(base.pagina()));
         TextField x = new TextField(SignaturePlacement.numero(base.x()));
         TextField y = new TextField(SignaturePlacement.numero(base.y()));
@@ -327,8 +355,8 @@ public final class PdfSigningPanel {
         Optional<ButtonType> respuesta = dialogo.showAndWait();
         if (respuesta.isPresent() && respuesta.get() == aceptar) {
             try {
-                ubicacion = new SignaturePlacement(Integer.parseInt(pagina.getText().trim()),
-                        numero(x), numero(y), numero(ancho), numero(alto), null);
+                ubicacion.set(new SignaturePlacement(Integer.parseInt(pagina.getText().trim()),
+                        numero(x), numero(y), numero(ancho), numero(alto), null));
                 invisible.setSelected(false);
                 actualizar();
             } catch (NumberFormatException e) {
