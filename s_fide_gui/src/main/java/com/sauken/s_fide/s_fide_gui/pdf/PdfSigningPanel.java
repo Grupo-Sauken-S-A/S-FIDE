@@ -174,6 +174,14 @@ public final class PdfSigningPanel {
     /** Fila de "Ubicación de la firma": resumen, botón para elegir sobre el documento y opción de firma invisible. */
     public Node nodoUbicacion() {
         VBox fila = new VBox(6, resumen, new HBox(12, elegir, invisible));
+        if (paraLotes) {
+            Label advertencia = new Label("La ubicación se aplica a todos los documentos: en páginas de otro tamaño o "
+                    + "rotadas puede tapar contenido.");
+            advertencia.setWrapText(true);
+            advertencia.setMaxWidth(520);
+            advertencia.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
+            fila.getChildren().add(advertencia);
+        }
         return fila;
     }
 

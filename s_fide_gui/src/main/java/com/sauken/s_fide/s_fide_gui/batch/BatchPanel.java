@@ -392,9 +392,9 @@ public final class BatchPanel {
 
     private void revisarYFirmar(BatchFolder.Exploracion exploracion) {
         pedirRevision(exploracion, nueva -> {
-            boolean hayBloqueados = nueva.filas().stream().anyMatch(f -> !f.seleccionable());
-            // Nada que no se pueda firmar queda fuera sin que la persona lo vea.
-            if (nueva.mezclado() || hayBloqueados) {
+            boolean quedaAlgoFuera = nueva.filas().stream().anyMatch(f -> !f.marcadoProperty().get());
+            // Nada queda fuera del lote sin que la persona lo vea.
+            if (nueva.mezclado() || quedaAlgoFuera) {
                 boolean aceptada = BatchReviewDialog.mostrar(propietario.get(), nueva.filas(), avisoDe(nueva),
                         exploracion.excluidosPorNombre().size(), !nueva.mezclado());
                 if (!aceptada) {
