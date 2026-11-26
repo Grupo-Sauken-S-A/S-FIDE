@@ -4,6 +4,13 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), y el versionado sigue [SemVer](https://semver.org/lang/es/).
 
+## [1.6.0] — sin publicar
+
+### Cambios que un integrador debe revisar
+- **`PDFSignerPKCS12` informa el éxito y las advertencias por la salida estándar** (`stdout`). Hasta la 1.5.1 salían por la salida de error (`stderr`) y `stdout` quedaba vacío. Los textos y los códigos de salida no cambian; los errores siguen en `stderr`.
+- **`PDFSignerPKCS11` y `PDFVerifySignatures` ya no escriben líneas técnicas de Java** (fecha y nombre de clase) en `stderr`: cada error es una sola línea en español.
+- **`PDFSignerPKCS12`, ante una contraseña incorrecta, informa «Contraseña incorrecta o archivo PKCS#12 inválido»** (antes: «Error al validar los archivos»). El mismo mensaje reemplaza al texto en inglés de `-verificar-revocacion` y `-vista-previa-texto`.
+
 ## [1.5.1] — 2026-10-21
 
 ### Corregido

@@ -71,13 +71,10 @@ import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class PDFSignerPKCS11 {
-    private static final Logger logger = Logger.getLogger(PDFSignerPKCS11.class.getName());
     private static final String OUTPUT_SUFFIX = "-signed";
-    private static final String VERSION = "S-FIDE PDFSignerPKCS11 v1.5.1 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE PDFSignerPKCS11 v1.6.0 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT = readResourceFile("/LICENSE.txt");
     private static final String HELP_TEXT = readResourceFile("/HELP.txt");
     private static PrintStream errorStream;
@@ -89,7 +86,7 @@ public class PDFSignerPKCS11 {
             errorStream = new PrintStream(System.err, true, "UTF-8");
             System.setErr(errorStream);
         } catch (UnsupportedEncodingException e) {
-            logger.log(Level.WARNING, "No se pudo configurar UTF-8 para la salida");
+            System.err.println("Error: No se pudo configurar UTF-8 para la salida");
             System.exit(1);
         }
     }
@@ -159,10 +156,14 @@ public class PDFSignerPKCS11 {
             System.exit(0);
 
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error en la ejecución: {0}", e.getMessage());
-            errorStream.println("Error: " + e.getMessage());
+            errorStream.println(conPrefijoDeError(e.getMessage()));
             System.exit(1);
         }
+    }
+
+    /** Antepone "Error: " al mensaje, salvo que ya lo traiga. */
+    private static String conPrefijoDeError(String mensaje) {
+        return mensaje != null && mensaje.startsWith("Error: ") ? mensaje : "Error: " + mensaje;
     }
 
     private static void processSpecialArgument(String arg) {
@@ -186,19 +187,19 @@ public class PDFSignerPKCS11 {
     private static String readResourceFile(String resourcePath) {
         try (InputStream is = PDFSignerPKCS11.class.getResourceAsStream(resourcePath)) {
             if (is == null) {
-                logger.log(Level.SEVERE, "No se pudo encontrar el recurso: {0}", resourcePath);
+                System.err.println("Error: No se pudo encontrar el recurso: " + resourcePath);
                 return "Error: Archivo de recurso no encontrado";
             }
             return new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error al leer el archivo de recurso: {0}", e.getMessage());
+            System.err.println("Error al leer el archivo de recurso: " + resourcePath);
             return "Error al leer el archivo de recurso";
         }
     }
 
     private static SignatureParameters parseArguments(String[] args) {
         if (args.length < 8) {
-            logger.log(Level.SEVERE, "Número insuficiente de argumentos");
+            errorStream.println("Error: Número insuficiente de argumentos");
             return null;
         }
 
@@ -268,13 +269,11 @@ public class PDFSignerPKCS11 {
                 }
             }
         } catch (NumberFormatException e) {
-            logger.log(Level.SEVERE, "Error al parsear los argumentos numéricos");
             errorStream.println("Error: Los valores numéricos proporcionados no son válidos");
             return null;
         }
 
         if (pdfPath == null || libraryPath == null || password == null || slotNumber < 0) {
-            logger.log(Level.SEVERE, "Faltan argumentos obligatorios");
             errorStream.println("Error: Faltan argumentos obligatorios");
             return null;
         }
@@ -406,7 +405,7 @@ public class PDFSignerPKCS11 {
                     try {
                         CertificateValidity.exigirApto((X509Certificate) chain[0]);
                     } catch (IllegalArgumentException e) {
-                        errorStream.println("Error: " + e.getMessage());
+                        errorStream.println(conPrefijoDeError(e.getMessage()));
                         return false;
                     }
 
@@ -436,7 +435,7 @@ public class PDFSignerPKCS11 {
                 }
             }
         } catch (IOException e) {
-            errorStream.println("Error: " + e.getMessage());
+            errorStream.println(conPrefijoDeError(e.getMessage()));
             return false;
         }
     }

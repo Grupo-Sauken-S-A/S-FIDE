@@ -83,7 +83,7 @@ import java.util.logging.SimpleFormatter;
 public class PDFSignerPKCS12 {
     private static final Logger logger = Logger.getLogger(PDFSignerPKCS12.class.getName());
     private static final String OUTPUT_SUFFIX = "-signed";
-    private static final String VERSION = "S-FIDE PDFSignerPKCS12 v1.5.1 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE PDFSignerPKCS12 v1.6.0 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT = readResourceFile("/LICENSE.txt");
     private static final String HELP_TEXT = readResourceFile("/HELP.txt");
 
@@ -178,6 +178,16 @@ public class PDFSignerPKCS12 {
         } catch (Exception e) {
             logger.log(Level.SEVERE, e.getMessage());
             System.exit(1);
+        }
+    }
+
+    /** Carga el archivo PKCS#12 y, si no se puede abrir, lo explica en términos de la contraseña y el archivo. */
+    private static void cargarPkcs12(KeyStore ks, InputStream origen, String password)
+            throws GeneralSecurityException {
+        try {
+            ks.load(origen, password.toCharArray());
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Contraseña incorrecta o archivo PKCS#12 inválido");
         }
     }
 
@@ -328,7 +338,7 @@ public class PDFSignerPKCS12 {
 
             try (InputStream certStream = Files.newInputStream(certPath)) {
                 KeyStore ks = KeyStore.getInstance("PKCS12");
-                ks.load(certStream, params.password().toCharArray());
+                cargarPkcs12(ks, certStream, params.password());
 
                 if (!ks.aliases().hasMoreElements()) {
                     logger.log(Level.SEVERE, "El archivo de certificado no contiene certificados");
@@ -469,7 +479,7 @@ public class PDFSignerPKCS12 {
 
         try (InputStream certStream = Files.newInputStream(path)) {
             KeyStore ks = KeyStore.getInstance("PKCS12");
-            ks.load(certStream, password.toCharArray());
+            cargarPkcs12(ks, certStream, password);
             String alias = CertificateValidity.elegirAlias(ks);
             X500Principal subjectDN = ((X509Certificate) ks.getCertificateChain(alias)[0]).getSubjectX500Principal();
 
@@ -503,7 +513,7 @@ public class PDFSignerPKCS12 {
 
         try (InputStream certStream = Files.newInputStream(path)) {
             KeyStore ks = KeyStore.getInstance("PKCS12");
-            ks.load(certStream, password.toCharArray());
+            cargarPkcs12(ks, certStream, password);
 
             String alias = CertificateValidity.elegirAlias(ks);
             Certificate[] chain = ks.getCertificateChain(alias);
@@ -528,12 +538,12 @@ public class PDFSignerPKCS12 {
                     throw new IllegalArgumentException("El certificado de firma está revocado. No se puede firmar. "
                             + "Si necesita forzar la firma de todas formas, use -omitir-revocacion true.");
                 }
-                logger.log(Level.WARNING, "El certificado de firma está revocado, pero se continúa de todas "
+                System.out.println("El certificado de firma está revocado, pero se continúa de todas "
                         + "formas porque se indicó -omitir-revocacion true.");
             }
-            case UNKNOWN -> logger.log(Level.WARNING, "No se pudo verificar el estado de revocación del "
+            case UNKNOWN -> System.out.println("No se pudo verificar el estado de revocación del "
                     + "certificado de firma (" + resultado.getDetalle() + "). Se continúa con la firma.");
-            case GOOD -> logger.log(Level.INFO, "Certificado de firma verificado: no está revocado"
+            case GOOD -> System.out.println("Certificado de firma verificado: no está revocado"
                     + (resultado.getMetodo() != null ? " (" + resultado.getMetodo() + ")" : "") + ".");
         }
     }
@@ -571,7 +581,7 @@ public class PDFSignerPKCS12 {
 
         try (InputStream certStream = Files.newInputStream(Paths.get(params.certPath()))) {
             KeyStore ks = KeyStore.getInstance("PKCS12");
-            ks.load(certStream, params.password().toCharArray());
+            cargarPkcs12(ks, certStream, params.password());
 
             alias = CertificateValidity.elegirAlias(ks);
             privateKey = (PrivateKey) ks.getKey(alias, params.password().toCharArray());
@@ -580,9 +590,9 @@ public class PDFSignerPKCS12 {
             X509Certificate cert = (X509Certificate) chain[0];
             subjectDN = cert.getSubjectX500Principal();
 
-            ClockCheck.avisar(aviso -> logger.log(Level.WARNING, aviso));
+            ClockCheck.avisar(aviso -> System.out.println(aviso));
             CertificateValidity.exigirApto(cert);
-            CertificateValidity.avisar(chain, aviso -> logger.log(Level.WARNING, aviso));
+            CertificateValidity.avisar(chain, aviso -> System.out.println(aviso));
 
             validarRevocacionAntesDeFirmar(cert, params.omitirRevocacion());
         }
@@ -748,9 +758,9 @@ public class PDFSignerPKCS12 {
 
         controlarResultado(finalOutputPath, analisisInicial);
 
-        logger.log(Level.INFO, "Documento firmado exitosamente: " + finalOutputPath.toAbsolutePath());
+        System.out.println("Documento firmado exitosamente: " + finalOutputPath.toAbsolutePath());
         if (modoCierre) {
-            logger.log(Level.INFO, "El documento quedó cerrado: no admite más firmas.");
+            System.out.println("El documento quedó cerrado: no admite más firmas.");
         }
     }
 

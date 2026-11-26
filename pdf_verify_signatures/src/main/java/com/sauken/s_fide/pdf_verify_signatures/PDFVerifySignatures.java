@@ -67,7 +67,7 @@ import java.nio.charset.StandardCharsets;
 
 public class PDFVerifySignatures {
     private static final Logger LOGGER = Logger.getLogger(PDFVerifySignatures.class.getName());
-    private static final String VERSION = "S-FIDE PDFVerifySignatures v1.5.1 - Grupo Sauken S.A.";
+    private static final String VERSION = "S-FIDE PDFVerifySignatures v1.6.0 - Grupo Sauken S.A.";
     private static final String LICENSE_TEXT;
     private static final String HELP_TEXT;
     private static final String SEPARATOR = "\n----------------------------------------\n";
@@ -96,6 +96,7 @@ public class PDFVerifySignatures {
         try {
             System.setOut(new PrintStream(System.out, true, "UTF-8"));
             System.setErr(new PrintStream(System.err, true, "UTF-8"));
+            mensajesDeUnaLinea();
 
             if (args.length == 0) {
                 showHelp();
@@ -131,9 +132,23 @@ public class PDFVerifySignatures {
 
             verifyPDFSignatures(pdfPath);
         } catch (Exception e) {
-            LOGGER.severe("Error: " + e.getMessage());
             System.err.println("Error: " + e.getMessage());
             System.exit(1);
+        }
+    }
+
+    /**
+     * Los avisos internos se escriben en una sola línea, sin la fecha ni el nombre de la clase que agrega el
+     * formato habitual de Java. Se llama después de configurar UTF-8, para que usen esa misma salida.
+     */
+    private static void mensajesDeUnaLinea() {
+        for (Handler handler : Logger.getLogger("").getHandlers()) {
+            handler.setFormatter(new java.util.logging.Formatter() {
+                @Override
+                public String format(LogRecord registro) {
+                    return "Advertencia: " + registro.getMessage() + System.lineSeparator();
+                }
+            });
         }
     }
 
