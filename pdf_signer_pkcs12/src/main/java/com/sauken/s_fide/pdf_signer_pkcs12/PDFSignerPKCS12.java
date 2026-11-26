@@ -136,6 +136,17 @@ public class PDFSignerPKCS12 {
 
     public static void main(String[] args) {
         try {
+            if (LotePdf.pideLote(args, OPCIONES_DE_LOTE)) {
+                System.exit(ejecutarLote(args));
+                return;
+            }
+
+            if (LotePdf.pideRevisar(args, OPCIONES_DE_LOTE)) {
+                logger.log(Level.SEVERE, "-revisar solo se puede usar junto con -lote. No se firmó ningún documento.");
+                System.exit(1);
+                return;
+            }
+
             if (args.length > 1 && isFlagVistaPreviaTexto(args[0])) {
                 vistaPreviaTexto(args);
                 System.exit(0);
@@ -603,16 +614,7 @@ public class PDFSignerPKCS12 {
             PdfDocumentAnalyzer.imprimirInforme(analizarOFallar(Paths.get(params.pdfPath()), true), System.out);
         }
 
-        // Si el documento ya tiene firmas, "bloquear" se transforma en una firma de cierre común:
-        // cifrar o certificar exigiría reescribir el archivo (invalidando las firmas previas) o ya
-        // no sería posible (la certificación debe ser la primera firma del documento).
-        boolean modoCierre = params.lock() && documentoYaFirmado;
-        boolean bloquearConCifrado = params.lock() && !documentoYaFirmado;
-
         Path finalOutputPath = Paths.get(createOutputPath(params.pdfPath()));
-        Path encryptedIntermediate = null;
-
-        String signatureText = null;
 
         // Firmar dentro de un campo de firma vacío que ya trae el documento (como hace Acrobat) tiene
         // prioridad sobre las coordenadas: el campo ya define página y lugar.
@@ -624,6 +626,35 @@ public class PDFSignerPKCS12 {
             throw new IllegalArgumentException("El campo de firma '" + params.campo() + "' no existe en el documento "
                     + "o ya está firmado. Campos de firma disponibles: " + disponibles + ".");
         }
+
+        try {
+            aplicarFirma(params, documentoYaFirmado, privateKey, chain, subjectDN, finalOutputPath);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error al firmar el documento");
+            throw e;
+        }
+
+        controlarResultado(finalOutputPath, analisisInicial);
+
+        System.out.println("Documento firmado exitosamente: " + finalOutputPath.toAbsolutePath());
+        if (params.lock() && documentoYaFirmado) {
+            System.out.println("El documento quedó cerrado: no admite más firmas.");
+        }
+    }
+
+    /** Escribe en {@code finalOutputPath} una copia firmada del documento, sin modificar el original. */
+    private static void aplicarFirma(SignatureParameters params, boolean documentoYaFirmado, PrivateKey privateKey,
+                                     Certificate[] chain, X500Principal subjectDN, Path finalOutputPath)
+            throws GeneralSecurityException, IOException {
+        // Si el documento ya tiene firmas, "bloquear" se transforma en una firma de cierre común:
+        // cifrar o certificar exigiría reescribir el archivo (invalidando las firmas previas) o ya
+        // no sería posible (la certificación debe ser la primera firma del documento).
+        boolean modoCierre = params.lock() && documentoYaFirmado;
+        boolean bloquearConCifrado = params.lock() && !documentoYaFirmado;
+
+        Path encryptedIntermediate = null;
+
+        String signatureText = null;
 
         if (params.campo() != null || params.xPos() != 0 || params.yPos() != 0) {
             signatureText = buildSignatureText(
@@ -747,20 +778,136 @@ public class PDFSignerPKCS12 {
                         PdfSigner.CryptoStandard.CMS
                 );
             }
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error al firmar el documento");
-            throw e;
         } finally {
             if (encryptedIntermediate != null) {
                 Files.deleteIfExists(encryptedIntermediate);
             }
         }
+    }
 
-        controlarResultado(finalOutputPath, analisisInicial);
+    // ------------------------------------------------------------------------------------------------ por lotes
 
-        System.out.println("Documento firmado exitosamente: " + finalOutputPath.toAbsolutePath());
-        if (modoCierre) {
-            System.out.println("El documento quedó cerrado: no admite más firmas.");
+    /** Opciones de firma que admite un lote: las del modo de un documento, salvo {@code -i} y {@code -campo}. */
+    private static final List<LotePdf.Opcion> OPCIONES_DE_LOTE = List.of(
+            LotePdf.Opcion.obligatoria(LotePdf.Tipo.TEXTO, "-c", "--certificate"),
+            LotePdf.Opcion.obligatoria(LotePdf.Tipo.TEXTO, "-p", "--password"),
+            LotePdf.Opcion.de(LotePdf.Tipo.VERDADERO_O_FALSO, "-l", "--lock"),
+            LotePdf.Opcion.de(LotePdf.Tipo.NUMERO, "-x", "--xpos"),
+            LotePdf.Opcion.de(LotePdf.Tipo.NUMERO, "-y", "--ypos"),
+            LotePdf.Opcion.de(LotePdf.Tipo.TEXTO, "-t", "--text"),
+            LotePdf.Opcion.de(LotePdf.Tipo.ENTERO, "-pagina", "--pagina"),
+            LotePdf.Opcion.de(LotePdf.Tipo.NUMERO, "-ancho", "--ancho"),
+            LotePdf.Opcion.de(LotePdf.Tipo.NUMERO, "-alto", "--alto"),
+            LotePdf.Opcion.de(LotePdf.Tipo.VERDADERO_O_FALSO, "-proteger-contenido", "--proteger-contenido"),
+            LotePdf.Opcion.de(LotePdf.Tipo.VERDADERO_O_FALSO, "-omitir-revocacion", "--omitir-revocacion"));
+
+    private static int ejecutarLote(String[] args) {
+        String numeroDeVersion = VERSION.replaceAll(".* v(\\S+) .*", "$1");
+        LotePdf.Pedido pedido;
+        SignatureParameters comunes;
+        try {
+            pedido = LotePdf.analizarArgumentos(args, OPCIONES_DE_LOTE);
+            // Cada documento reemplaza este nombre provisorio por el suyo.
+            List<String> comoUnDocumento = new java.util.ArrayList<>(List.of("-i", "lote.pdf"));
+            comoUnDocumento.addAll(pedido.argumentos());
+            comunes = parseArguments(comoUnDocumento.toArray(new String[0]));
+            if (comunes == null) {
+                throw new IllegalArgumentException("Faltan argumentos obligatorios o alguno no es válido.");
+            }
+            if (comunes.lock() && comunes.protegerContenido()) {
+                throw new IllegalArgumentException("Elija una sola opción: bloquear los documentos (-l true) o proteger "
+                        + "su contenido permitiendo firmas posteriores (-proteger-contenido true).");
+            }
+        } catch (IllegalArgumentException e) {
+            return Lote.rechazarArgumentos("PDFSignerPKCS12", numeroDeVersion, System.out, System.err,
+                    e.getMessage());
+        }
+        return Lote.ejecutar("PDFSignerPKCS12", numeroDeVersion, "pdf", pedido.opciones(), System.out, System.err,
+                new FirmaPorLote(comunes));
+    }
+
+    /** Firma de cada documento del lote, con las mismas opciones y un único acceso al archivo PKCS#12. */
+    private static final class FirmaPorLote implements Lote.Tarea, LotePdf.Reglas {
+        private final SignatureParameters comunes;
+        private PrivateKey privateKey;
+        private Certificate[] chain;
+        private X509Certificate cert;
+
+        private FirmaPorLote(SignatureParameters comunes) {
+            this.comunes = comunes;
+        }
+
+        private SignatureParameters para(Path documento) {
+            return new SignatureParameters(documento.toString(), comunes.certPath(), comunes.password(), comunes.lock(),
+                    comunes.xPos(), comunes.yPos(), comunes.customText(), comunes.omitirRevocacion(), null,
+                    comunes.pagina(), comunes.ancho(), comunes.alto(), comunes.protegerContenido());
+        }
+
+        @Override
+        public void revisar(List<Lote.Documento> pendientes) {
+            LotePdf.revisar(pendientes, this);
+        }
+
+        @Override
+        public String motivoDelCifrado(Path documento) {
+            return PDFSignerPKCS12.motivoDelCifrado(documento);
+        }
+
+        @Override
+        public void validarPosicionYProteccion(Path documento, PdfDocumentAnalyzer.Analisis analisis) {
+            PDFSignerPKCS12.validarPosicionYProteccion(para(documento), analisis);
+        }
+
+        @Override
+        public void acceder() {
+            Path archivo = Paths.get(comunes.certPath());
+            if (!Files.isRegularFile(archivo)) {
+                throw new Lote.Corte("ARGUMENTOS",
+                        "El archivo de certificado no existe o no es accesible: " + comunes.certPath());
+            }
+            KeyStore ks;
+            try (InputStream certStream = Files.newInputStream(archivo)) {
+                ks = KeyStore.getInstance("PKCS12");
+                cargarPkcs12(ks, certStream, comunes.password());
+            } catch (IOException | GeneralSecurityException | IllegalArgumentException e) {
+                throw new Lote.Corte("CONTRASENA", "Contraseña incorrecta o archivo PKCS#12 inválido");
+            }
+            try {
+                String alias = CertificateValidity.elegirAlias(ks);
+                privateKey = (PrivateKey) ks.getKey(alias, comunes.password().toCharArray());
+                chain = ks.getCertificateChain(alias);
+                if (privateKey == null || chain == null || chain.length == 0) {
+                    throw new Lote.Corte("CERTIFICADO_NO_APTO",
+                            "El archivo PKCS#12 no contiene un certificado con clave privada.");
+                }
+                cert = (X509Certificate) chain[0];
+                ClockCheck.avisar(aviso -> System.out.println(aviso));
+                CertificateValidity.exigirApto(cert);
+                CertificateValidity.avisar(chain, aviso -> System.out.println(aviso));
+            } catch (GeneralSecurityException e) {
+                throw new Lote.Corte("CONTRASENA", "No se pudo acceder a la clave privada del archivo PKCS#12.");
+            } catch (IllegalArgumentException e) {
+                throw new Lote.Corte("CERTIFICADO_NO_APTO", e.getMessage());
+            }
+            try {
+                validarRevocacionAntesDeFirmar(cert, comunes.omitirRevocacion());
+            } catch (IllegalArgumentException e) {
+                throw new Lote.Corte("CERTIFICADO_REVOCADO", e.getMessage());
+            }
+        }
+
+        @Override
+        public Lote.Resultado procesar(Lote.Documento documento) {
+            try {
+                CertificateValidity.exigirVigente(cert);
+            } catch (IllegalArgumentException e) {
+                throw new Lote.Corte("CERTIFICADO_NO_APTO", e.getMessage());
+            }
+            return LotePdf.firmar(documento, (original, analisis, destino) -> {
+                aplicarFirma(para(original), !analisis.firmas().isEmpty(), privateKey, chain,
+                        cert.getSubjectX500Principal(), destino);
+                controlarResultado(destino, analisis);
+            });
         }
     }
 

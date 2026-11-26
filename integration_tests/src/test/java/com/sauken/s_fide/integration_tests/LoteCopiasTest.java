@@ -72,7 +72,8 @@ class LoteCopiasTest {
 
     @Test
     void lasClasesDelLoteSonIdenticasEnTodosLosModulos() throws IOException {
-        comprobar("Lote.java", 2);
+        comprobar("Lote.java", 3);
+        comprobar("LotePdf.java", 1);
         comprobar("LoteXml.java", 2);
         comprobar("LoteToken.java", 1);
         comprobar("XmlBom.java", 5);
@@ -101,6 +102,6 @@ class LoteCopiasTest {
         String modulo = copia.getParent().getFileName().toString();
         return Files.readString(copia, StandardCharsets.UTF_8)
                 .replace("\r\n", "\n")
-                .replace("package com.sauken.s_fide." + modulo + ";", "package <modulo>;");
+                .replace("com.sauken.s_fide." + modulo, "com.sauken.s_fide.<modulo>");
     }
 }
