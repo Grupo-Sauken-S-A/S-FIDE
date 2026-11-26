@@ -1,6 +1,6 @@
 # S-FiDE 1.6.0 — Especificación de las operaciones por lotes
 
-**Estado:** decisiones cerradas con el dueño, sin implementar. Rama `v1.6.0`. Cuando se implemente, el contenido pasa al manual técnico (`manual-tecnico-integracion.md` y `.html`) y a la Guía de Usuario, y este archivo se elimina.
+**Estado:** implementado en la rama `v1.6.0`, sin publicar. La firma con token físico está sin probar. El contrato vigente quedó en el manual técnico (sección 7.11); este archivo se elimina cuando el dueño dé por cerrada la revisión.
 
 ---
 
@@ -48,6 +48,7 @@ La regla **no** se aplica a la verificación ni a la validación XSD. El modo de
 2. `PDFVerifySignatures` y `PDFSignerPKCS11` dejan de escribir en `stderr` las líneas técnicas de Java (fecha y nombre de clase). Cada error queda en una sola línea en español.
 3. `PDFSignerPKCS12`, ante una contraseña incorrecta, informa "Contraseña incorrecta o archivo PKCS#12 inválido" (hoy: "Error al validar los archivos").
 4. `-version` informa 1.6.0.
+5. La ayuda de los siete programas con lote agrega la forma de usarlo (en `-ayuda` y en los errores que muestran la ayuda).
 
 **Cómo se comprueba:** antes de modificar código se graban `stdout`, `stderr`, código de salida y archivos de los `.jar` 1.5.1 publicados en una batería de casos (éxitos y errores). La 1.6.0 debe repetirlos. Solo se admiten las diferencias declaradas.
 

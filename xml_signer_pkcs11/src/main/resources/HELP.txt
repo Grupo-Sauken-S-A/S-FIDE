@@ -53,3 +53,19 @@ MARCA BOM EN EL XML (desde 1.5.0):
   Bloc de notas de Windows, agregan al guardar en UTF-8), el programa lo informa, la ignora y firma igual:
   el documento firmado se genera SIN la marca (el archivo original no se modifica). No afecta las firmas
   que el documento ya tuviera. Un XML guardado en UTF-16 se rechaza con un mensaje: vuelva a guardarlo como UTF-8.
+
+
+FIRMA POR LOTES (desde 1.6.0): la misma firma en todos los documentos de una lista, con un solo acceso
+al certificado.
+    java -jar XMLSignerPKCS11.jar -lote <lista> <Biblioteca PKCS#11> <Contraseña> <Slot> <Elemento> [-omitir-revocacion true|false]
+        [-revisar] [-informe <archivo.csv>] [-log]
+  <lista>     Archivo de texto en UTF-8 con la ruta de un documento por línea
+  -informe    Genera un CSV (separado por punto y coma, UTF-8) con una línea por documento
+  -log        Guarda junto a cada documento un archivo .log con el detalle de su proceso
+  -revisar    Revisa los documentos sin firmar ni usar el certificado (no gasta intentos de PIN)
+  - No se mezclan tipos de documento: con COD o CODEH todos deben ser Certificados de Origen, y con DJO
+    o DJOEH, Declaraciones Juradas. Si hay mezcla no se firma ninguno.
+  - Nunca se reemplaza un archivo "-signed" que ya exista: ese documento se omite y el código es 1.
+  - Salida: líneas LOTE_INICIO, LOTE_DOC y LOTE_RESUMEN (campos entre comillas separados por punto y coma).
+  - Código de salida 0 solo si todos los documentos terminaron bien; en otro caso, 1.
+  - Los estados y códigos están en el Manual Técnico de Integración, sección 7.11.

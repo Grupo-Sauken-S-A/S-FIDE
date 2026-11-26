@@ -2,7 +2,7 @@
 
 **Sistema de Firma Digital Extendido**
 Grupo Sauken S.A. — Córdoba, Argentina
-Versión del documento: acompaña a S-FiDE v1.5.1 — 21/10/2026
+Versión del documento: acompaña a S-FiDE v1.6.0 (en desarrollo, sin publicar) — 26/11/2026
 
 ---
 
@@ -42,6 +42,8 @@ Versión del documento: acompaña a S-FiDE v1.5.1 — 21/10/2026
 ---
 
 ## 1. Introducción y filosofía
+
+> **¿Ya integraste S-FiDE 1.5.1?** Las invocaciones de a un documento siguen funcionando igual, con tres excepciones: `PDFSignerPKCS12` informa el éxito y las advertencias por `stdout` (antes por `stderr`); `PDFSignerPKCS11` y `PDFVerifySignatures` ya no escriben líneas técnicas de Java en `stderr`; y `PDFSignerPKCS12` explica una contraseña incorrecta. Además, `-ayuda` describe el lote. Ver la [Guía de migración 1.5.1 → 1.6.0](#v160-en-desarrollo-sin-publicar).
 
 > **¿Ya integraste S-FiDE 1.5.0?** El contrato de línea de comandos no cambió. Lo único que cambia en la 1.5.1 es que los seis firmadores terminan con código `1`, sin generar archivo, ante un certificado vencido, no vigente todavía, de autoridad certificante o sin uso de firma (antes firmaban igual con uno vencido); no hay argumento para omitirlo. Pueden además imprimir líneas `ADVERTENCIA:` (reloj, cadena, clave corta) sin cambiar el código de salida, y los listados agregan una línea `Estado:`. Ver [7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151).
 
@@ -458,6 +460,111 @@ El menú **Archivo → Abrir PDF…** / **Abrir XML…** de `s_fide_gui` muestra
 
 ---
 
+### 7.11 Operaciones por lotes (1.6.0)
+
+Siete programas pueden aplicar **una misma operación a una lista de documentos** en una sola ejecución: `XMLSignerPKCS11`, `XMLSignerPKCS12`, `PDFSignerPKCS11`, `PDFSignerPKCS12`, `XMLVerifySignatures`, `PDFVerifySignatures` y `XMLVerifyXSDStructure`. Se accede al certificado una sola vez (un solo ingreso de PIN y una sola consulta de revocación). Los demás programas, incluidos los de almacén de Windows, no admiten lote. El uso de a un documento no cambia.
+
+#### Invocación
+
+| Programa | Invocación en lote |
+|---|---|
+| `XMLSignerPKCS11` | `-lote <lista> <biblioteca> <contraseña> <slot> <elemento> [-omitir-revocacion true\|false]` |
+| `XMLSignerPKCS12` | `-lote <lista> <archivo.p12> <contraseña> <elemento> [-omitir-revocacion true\|false]` |
+| `PDFSignerPKCS11`, `PDFSignerPKCS12` | Las opciones habituales, con `-lote <lista>` en lugar de `-i`. `-campo` no se admite |
+| `XMLVerifySignatures`, `PDFVerifySignatures` | `-lote <lista> [-simple]` |
+| `XMLVerifyXSDStructure` | `-lote <lista> [<archivo.xsd>]` |
+
+Todos admiten además `[-informe <archivo.csv>] [-log]`; los cuatro firmadores, `[-revisar]`. Se aceptan las formas con uno o dos guiones. En los programas de argumentos posicionales `-lote` es el **primer** argumento; en los firmadores de PDF va en cualquier posición de opción. En lote, un argumento desconocido, repetido, mal formado o no admitido corta **antes de hacer nada**. `-revisar` sin `-lote` es un error y nunca firma.
+
+**`-revisar`** revisa los documentos sin acceder al certificado ni escribir archivos: informa cada uno como `LISTO`, `OMITIDO` o `ERROR`. Usa los mismos argumentos que la firma; la contraseña no se usa, así que no gasta intentos de PIN. Admite `-informe`.
+
+#### Archivo de lista
+
+UTF-8, con o sin BOM (en otra codificación se rechaza completo). Una ruta por línea; se quitan los espacios de los extremos y las comillas que envuelven la ruta; las líneas vacías se ignoran; el tabulador está reservado. Las rutas relativas se resuelven desde la carpeta de la lista y se procesa en su orden. Un documento repetido se informa como `OMITIDO` / `DUPLICADO` la segunda vez.
+
+#### Una sola acción por lote
+
+Todos los documentos reciben exactamente la misma operación. En PDF, la misma página, posición, tamaño, texto y opciones; si se cierra, se cierran todos (como firma de cierre o como certificación con cifrado, según tengan o no firmas previas). En XML se firma una sola cosa y **no se mezclan tipos de documento**:
+
+| Elemento pedido | Todos deben ser |
+|---|---|
+| `COD`, `CODEH` | Certificados de Origen Digital |
+| `DJO`, `DJOEH` | Declaraciones Juradas de Origen |
+| `""` (documento completo) | XML que no sean de comercio exterior |
+| Otro identificador | Del mismo tipo que el primer documento legible de la lista |
+
+Si un documento no corresponde, **no se firma ninguno**: los que no corresponden quedan `ERROR` / `TIPO_NO_CORRESPONDE`, el resto `NO_PROCESADO` y el lote corta con `LOTE_MEZCLADO`. La regla no se aplica a la verificación ni a la validación XSD.
+
+#### Orden de ejecución y cortes
+
+1. Argumentos, lista e informe. 2. Lectura de cada documento y, al firmar XML, control de mezcla. 3. Al firmar, revisión de cada documento (salida existente, elemento, firmas requeridas; en PDF, documento cerrado, página y posición), todavía sin certificado. 4. Acceso único al certificado. 5. Documento por documento. 6. Resumen.
+
+Cortan todo el lote: contraseña o PIN incorrecto (nunca se reintenta), token bloqueado o retirado, certificado no apto o revocado y 3 errores seguidos de acceso a la clave. Los errores propios de un documento no cortan.
+
+Las salidas `<nombre>-signed.<extensión>` se escriben en la misma carpeta, primero en un temporal, y **nunca reemplazan un archivo existente** (a diferencia del uso de a un documento, que sobrescribe).
+
+#### Estados y códigos
+
+| Estado | Códigos |
+|---|---|
+| `LISTO` (revisión) | `OK` |
+| `FIRMADO` | `OK` |
+| `FIRMADO_CON_AVISOS` | `FIRMA_PREVIA_INVALIDA`, `MODIFICADO_DESPUES_DE_FIRMAR` |
+| `OMITIDO` | `SALIDA_YA_EXISTE`, `DUPLICADO` |
+| `VALIDO` | `OK` |
+| `VALIDO_CON_OBSERVACIONES` | `COMPROBACION_PENDIENTE` |
+| `NO_VALIDO` | `FIRMA_NO_VALIDA`, `MODIFICADO_DESPUES_DE_FIRMAR`, `ESTRUCTURA_NO_VALIDA` |
+| `SIN_FIRMAS` | `SIN_FIRMAS` |
+| `ERROR` | `ARCHIVO_NO_ENCONTRADO`, `ARCHIVO_ILEGIBLE`, `EXTENSION_NO_CORRESPONDE`, `LINEA_NO_VALIDA`, `DOCUMENTO_MAL_FORMADO`, `TIPO_NO_CORRESPONDE`, `ELEMENTO_NO_ENCONTRADO`, `ELEMENTO_YA_FIRMADO`, `FALTA_FIRMA_PREVIA`, `DOCUMENTO_CERRADO`, `DOCUMENTO_RESTRINGIDO`, `PAGINA_INEXISTENTE`, `FIRMA_NO_ENTRA`, `PROTECCION_NO_APLICABLE`, `SALIDA_NO_ESCRIBIBLE`, `ERROR_AL_FIRMAR`, `XSD_NO_REFERENCIADO`, `XSD_NO_DESCARGADO`, `XSD_NO_VALIDO`, `ERROR_INESPERADO` |
+| `NO_PROCESADO` | La causa del corte |
+
+Causas de corte: `ARGUMENTOS`, `LISTA_ILEGIBLE`, `LISTA_VACIA`, `INFORME_NO_CREADO`, `LOTE_MEZCLADO`, `BIBLIOTECA`, `CONTRASENA`, `TOKEN_BLOQUEADO`, `TOKEN_NO_DISPONIBLE`, `CERTIFICADO_NO_APTO`, `CERTIFICADO_REVOCADO`, `FALLAS_CONSECUTIVAS`, `XSD`, `ERROR_INESPERADO`. Los códigos son estables entre versiones; los mensajes pueden mejorar.
+
+Un PDF con una firma anterior inválida se firma igual (como de a un documento) y queda `FIRMADO_CON_AVISOS`. En XSD, una estructura inválida es `NO_VALIDO` aunque no haya firmas; el validador no comprueba revocación.
+
+#### Código de salida
+
+`0` solo si no hubo corte y cada documento de la lista terminó `LISTO`, `FIRMADO`, `FIRMADO_CON_AVISOS`, `VALIDO`, `VALIDO_CON_OBSERVACIONES` u `OMITIDO` / `DUPLICADO`; en cualquier otro caso, `1`. Un `OMITIDO` / `SALIDA_YA_EXISTE` da `1`: el documento pedido no se firmó y el archivo existente puede ser de una versión anterior. Para obtener `0` al repetir un lote, la lista debe contener solo lo pendiente.
+
+#### Salida estándar
+
+UTF-8, campos separados por `;` y entre comillas (una comilla dentro de un campo se duplica):
+
+```text
+LOTE_INICIO;"1";"<programa>";"<versión>";"<total>"
+LOTE_DOC;"<n>";"<total>";"<estado>";"<código>";"<entrada>";"<salida>";"<log>";"<mensaje>"
+LOTE_RESUMEN;"total=…";"correctos=…";"con_avisos=…";"no_validos=…";"sin_firmas=…";"con_error=…";"omitidos=…";"no_procesados=…";"corte=…"
+```
+
+El `1` es la versión del formato. `LOTE_INICIO` y `LOTE_RESUMEN` salen siempre que se reconoce `-lote`. Leída la lista, cada documento tiene exactamente una línea `LOTE_DOC`. `corte=NINGUNO` si no hubo corte. Puede haber otras líneas (avisos del lote): **procesar solo las que empiezan con `LOTE_`**; sin `LOTE_RESUMEN`, el lote está incompleto. Por `stderr` sale la causa de un corte y `archivo: mensaje` por cada documento con problema: **leer ambas salidas a la vez**. No se imprime detalle por documento (para eso está `-log`).
+
+#### Informe y registro
+
+- **`-informe <archivo.csv>`**: columnas `n;total;estado;codigo;entrada;salida;log;mensaje`, con encabezado, campos entre comillas, **UTF-8 sin BOM**. Se escribe línea por línea. No puede terminar en `.xml` ni `.pdf` ni ser la lista; un informe anterior se reemplaza. Si no se puede crear, no se firma nada.
+- **`-log`**: junto a cada documento, `<documento>.log` (por ejemplo `contrato.xml.log`), UTF-8, agregando al final, con la salida de su proceso y el resultado. Nunca incluye la contraseña.
+
+#### Ejemplo
+
+En Windows (`.bat`):
+
+```bat
+chcp 65001 > nul
+(for %%F in (C:\lote\*.pdf) do @echo %%F) > C:\lote.txt
+java -jar PDFSignerPKCS12.jar -lote C:\lote.txt -c C:\cert.p12 -p "clave" -informe C:\lote.csv
+if errorlevel 1 echo Revise C:\lote.csv
+```
+
+En Linux o macOS (solo los que todavía no están firmados):
+
+```bash
+find /srv/lote -maxdepth 1 -name '*.xml' ! -name '*-signed.xml' | sort > lista.txt
+java -jar XMLSignerPKCS12.jar -lote lista.txt certificado.p12 "clave" CODEH -informe lote.csv || echo "Revisar lote.csv"
+```
+
+La lista debe quedar en UTF-8: en `cmd.exe`, ejecutar `chcp 65001` **antes** de generarla; en PowerShell, usar `Set-Content -Encoding utf8`.
+
+---
+
 ## 8. Catálogo de tokens y drivers soportados
 
 Cualquier token que cumpla el estándar PKCS#11 es utilizable con S-FiDE. La siguiente tabla —fuente única en el repositorio en `shared-resources/token-profiles.txt`— documenta los modelos efectivamente presentes en el ecosistema de firma digital argentino (AC-ONTI), con la ruta típica de su biblioteca por sistema operativo:
@@ -649,6 +756,8 @@ Ambos controles se implementan buscando `<ds:Signature>`/`<ds:Reference>` existe
 
 ### 9.4 XMLSignerPKCS11
 
+> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
+
 **Qué hace:** firma digitalmente un documento XML (completo, o un elemento/párrafo específico por su atributo `Id`) usando un token PKCS#11. Implementa XML-DSig (firma enveloped, canonicalización inclusiva), con el mecanismo de hash interno o externo resuelto automáticamente (ver [sección 7.1](#71-pkcs11-tokens-criptográficos-y-hsm)).
 
 **Uso recomendado:** firma de documentos XML (por ejemplo, Certificados de Origen digitales — ver [sección 10](#10-especialización-de-comercio-exterior-aladimercosur-cod-codeh-djo-y-djoeh)) con un token de hardware, en el flujo estándar de un exportador u organismo regulado.
@@ -691,6 +800,8 @@ java -jar XMLSignerPKCS11.jar C:\Windows\System32\eTPKCS11.dll "MiPIN123" 0 C:\d
 
 ### 9.5 XMLSignerPKCS12
 
+> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
+
 **Qué hace:** idéntico a `XMLSignerPKCS11` en funcionalidad de firma XML (misma configuración criptográfica: XML-DSig, canonicalización inclusiva, RSA-SHA256), pero usando un archivo PKCS#12 en lugar de un token.
 
 **Sintaxis:**
@@ -724,6 +835,8 @@ java -jar XMLSignerPKCS12.jar C:\certificados\empresa.pfx "MiContraseña123" C:\
 ---
 
 ### 9.6 XMLVerifySignatures
+
+> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
 
 **Qué hace:** verifica la validez de todas las firmas digitales presentes en un documento XML — integridad criptográfica, validez del certificado y estado de revocación (OCSP/CRL, requiere Internet para una validación completa). Acepta firmas RSA-SHA256 **y RSA-SHA1** (ver [sección 7.6](#76-compatibilidad-con-firmas-sha-1-de-aplicaciones-de-terceros)), generadas por S-FiDE o por cualquier otra aplicación conforme a XML-DSig.
 
@@ -764,6 +877,8 @@ java -jar XMLVerifySignatures.jar C:\docs\certificado-origen-signed.xml -simple
 ---
 
 ### 9.7 XMLVerifyXSDStructure
+
+> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
 
 **Qué hace:** valida que un documento XML cumpla la estructura definida por un esquema XSD (tipos de dato, elementos obligatorios u opcionales, orden, restricciones de contenido) y además verifica sus firmas digitales (también aceptando SHA-1 y SHA-256, igual que `XMLVerifySignatures`).
 
@@ -843,6 +958,8 @@ java -jar XMLVerifyXSDStructure.jar C:\docs\certificado-origen.xml C:\xsd\esquem
 
 ### 9.8 PDFSignerPKCS11
 
+> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
+
 **Qué hace:** firma digitalmente un documento PDF usando un token PKCS#11, con firma visible opcional (ver opciones arriba). Aplica una firma detached CMS/PKCS#7 sobre el hash del documento, con verificación previa de firmas existentes.
 
 **Sintaxis:**
@@ -886,6 +1003,8 @@ java -jar PDFSignerPKCS11.jar -i C:\docs\certificado.pdf -l C:\Windows\System32\
 
 ### 9.9 PDFSignerPKCS12
 
+> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
+
 **Qué hace:** idéntico a `PDFSignerPKCS11` pero usando un archivo PKCS#12.
 
 **Sintaxis:**
@@ -925,6 +1044,8 @@ java -jar PDFSignerPKCS12.jar -i C:\docs\certificado.pdf -c C:\certificados\empr
 ---
 
 ### 9.10 PDFVerifySignatures
+
+> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
 
 **Qué hace:** verifica la validez de las firmas digitales de un documento PDF — integridad, autenticidad, vigencia del certificado y estado de revocación **a la fecha de cada firma**, y si el documento fue modificado luego de la última firma. Acepta firmas SHA-256 y SHA-1 de cualquier aplicación conforme (ver [sección 7.6](#76-compatibilidad-con-firmas-sha-1-de-aplicaciones-de-terceros)) y entiende documentos firmados por otras aplicaciones, como Acrobat (ver [7.7](#77-firma-de-pdf-en-cadena-entre-varias-personas-y-compatibilidad-con-acrobat-150)). Desde 1.5.0 usa el mismo análisis que los firmadores.
 
@@ -1091,6 +1212,10 @@ java -jar WindowsCertificateStoreView.jar
 - **macOS (1.5.0):** el menú se muestra en la barra superior del sistema (`MenuBar.setUseSystemMenuBar`), la aplicación se nombra en el Dock (`-Xdock:name`), la letra del árbol XML es Menlo y no se crean accesos directos (son de Windows). Ver la sección 12.
 - **(Windows) Accesos directos automáticos, una sola vez por usuario:** al primer arranque de `SFide-GUI.bat`, se crean tres accesos directos en el escritorio y otros tres en el menú inicio (carpeta "S-FiDE"), todos con el ícono de S-FiDE — uno abre la aplicación (`S-FiDE.lnk` hacia el `.bat`), y los otros dos abren en el navegador predeterminado la Guía de Usuario y el Manual Técnico de Integración de la carpeta `doc/` (archivos `.url` con `URL=file:///...`, no requieren asociar ninguna extensión). Cada grupo (aplicación / documentación) se registra con su propia marca independiente en el `sfide-defaults.properties` del usuario (`desktop.shortcut.created` / `doc.shortcuts.created`) para no repetirse en próximas ejecuciones, incluso si el usuario los borra después. Blindado contra políticas de seguridad corporativas restrictivas (PowerShell bloqueado o colgado, sin permisos de escritura): nunca genera un error visible ni bloquea el arranque.
   > **Nombre sin número de versión, a propósito.** Ninguno de los tres nombres incluye la versión (antes el de la aplicación sí, `S-FiDE 1.1.1.lnk`). Así, al actualizar S-FiDE a una carpeta nueva, el primer arranque de la versión nueva **sobrescribe** estos mismos archivos en vez de sumar íconos nuevos al lado de los de la versión anterior — que además quedarían apuntando a una ubicación inexistente si el usuario borra la carpeta vieja, como suele pasar. También hay un ítem de menú **Herramientas → Recrear accesos directos** para disparar esto mismo a pedido (por ejemplo, si el usuario borró alguno sin querer, o si por algún motivo el primer arranque automático no llegó a crearlos).
+
+**Pestaña Por lote (1.6.0).** En las siete opciones que admiten lote, junto a **Un documento** hay una pestaña **Por lote**: se elige una carpeta (sin subcarpetas) y la interfaz arma la lista por el nombre de los archivos (al firmar deja fuera los terminados en `-signed`, salvo que se marque «Incluir solo los archivos que terminan en -signed»). **Revisar** llama al firmador con `-revisar`; la ejecución usa `-lote` con `-informe` (y `-log` si se pide). La interfaz no valida nada por su cuenta: muestra lo que informa el programa. La lista y el informe quedan en `<carpeta del usuario>/S-FiDE/lotes`. El corte por inactividad es de 10 minutos sin novedades.
+
+---
 
 ### 9.15 SFideUpdater
 
@@ -1358,6 +1483,12 @@ powershell -ExecutionPolicy Bypass -File crear-paquete-actualizacion.ps1 [-Versi
 ---
 
 ## 13. Historial de versiones
+
+### v1.6.0 (en desarrollo, sin publicar)
+
+- **Operaciones por lotes** en los dos firmadores XML y PDF con token y PKCS#12, los dos verificadores y el validador XSD: `-lote`, `-revisar`, `-informe` y `-log`. Ver [7.11](#711-operaciones-por-lotes-160).
+- **S-FiDE GUI:** pestaña **Por lote** en esas siete opciones.
+- **Guía de migración 1.5.1 → 1.6.0:** quien lea el resultado de `PDFSignerPKCS12` desde `stderr` debe leerlo desde `stdout` (los textos y el código de salida no cambiaron; los errores siguen en `stderr`). `PDFSignerPKCS11` y `PDFVerifySignatures` escriben cada error en una sola línea, sin fecha ni nombre de clase. `PDFSignerPKCS12`, con una contraseña incorrecta, dice «Contraseña incorrecta o archivo PKCS#12 inválido». El resto del contrato de línea de comandos no cambió.
 
 ### v1.5.1 (2026-10-21)
 

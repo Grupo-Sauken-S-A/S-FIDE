@@ -1,6 +1,6 @@
 # S-FiDE - Guía Rápida
 
-Sistema de Firma Digital Extendido - Versión 1.5.1 - Grupo Sauken S.A.
+Sistema de Firma Digital Extendido - Versión 1.6.0 - Grupo Sauken S.A.
 
 SFide-GUI proporciona una interfaz gráfica de usuario para asignar los parámetros adecuados a
 cada una de las aplicaciones de la plataforma S-FiDE. Las aplicaciones se muestran de manera
@@ -86,6 +86,26 @@ el resultado del mismo al programa que los ejecuta o bien al sistema operativo (
 ## 13. Firmar PDF con Windows CSP/KSP (PDFSignerWindowsCSP) - solo Windows
 - Igual que el anterior, pero para documentos PDF. Admite las mismas opciones de posición,
   texto adicional y bloqueo del documento que "Firmar PDF con Token"
+
+## Trabajar por lote (opciones 4 a 10)
+
+Las pantallas de firma con token y con archivo PKCS#12, de verificación y de validación XSD tienen dos
+pestañas: "Un documento", que es la pantalla de siempre, y "Por lote", para una carpeta entera.
+
+- Elija la carpeta (no se incluyen subcarpetas). Al firmar quedan afuera los archivos que terminan en
+  -signed; para agregar otra firma, marque "Incluir solo los archivos que terminan en -signed".
+- "Revisar" muestra todo lo que se va a firmar, sin firmar nada ni usar su PIN. Lo que no se puede firmar
+  aparece bloqueado con el motivo; lo demás se puede desmarcar.
+- Un lote hace una sola cosa: en XML no se pueden mezclar certificados de origen con declaraciones juradas;
+  en PDF, todos reciben la misma firma y, si se cierran, se cierran todos (no se puede deshacer).
+- La contraseña se pide una sola vez. Nunca se reemplaza un archivo firmado que ya exista.
+- La tabla muestra cómo terminó cada documento. Puede reintentar los que fallaron y abrir el informe.
+- Con "Guardar un registro por documento" se deja junto a cada uno un archivo .log con el detalle.
+
+## Novedades en la versión 1.6.0
+
+- Firma, verificación y validación XSD de una carpeta entera ("Por lote").
+- Los mismos programas admiten listas de documentos desde la línea de comandos (-lote).
 
 ## Novedades en la versión 1.5.1
 

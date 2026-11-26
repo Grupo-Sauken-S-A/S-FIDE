@@ -6,6 +6,17 @@
 #
 # Formato:  "## versión | título"  /  una línea de resumen (opcional)  /  "### grupo"  /  "- novedad"
 
+## 1.6.0 | Firme y verifique carpetas enteras de una sola vez
+Ahora puede trabajar con muchos documentos juntos, ingresando la contraseña una sola vez.
+
+### Nuevo
+- Pestaña "Por lote" en las pantallas de firma con token y con archivo de certificado, de verificación y de validación XSD: elija una carpeta y S-FiDE procesa todos sus documentos.
+- Botón "Revisar": antes de firmar muestra todos los documentos y cuáles se pueden firmar, sin firmar nada. Puede desmarcar los que no quiera.
+- Al firmar quedan afuera los archivos que terminan en -signed. Para agregar otra firma a documentos ya firmados, marque "Incluir solo los archivos que terminan en -signed".
+- Una tabla muestra cómo terminó cada documento, con la opción de reintentar solo los que fallaron y de abrir el informe.
+- Por seguridad, un lote hace una sola cosa: no se mezclan certificados de origen con declaraciones juradas, y nunca se reemplaza un documento que ya estaba firmado.
+- Si cierra documentos PDF por lote, S-FiDE le pide confirmación porque no se puede deshacer.
+
 ## 1.5.1 | S-FiDE ya no deja firmar con un certificado vencido
 Esta versión revisa su certificado antes de firmar y le avisa con claridad si no se puede usar.
 

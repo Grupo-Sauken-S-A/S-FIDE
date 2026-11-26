@@ -17,3 +17,14 @@ MARCA BOM EN EL XML (desde 1.5.0):
   Si el XML comienza con una marca BOM (tres bytes invisibles que algunos editores agregan al guardar en UTF-8),
   el programa lo informa y la ignora para verificar: no afecta el resultado de las firmas. El archivo no se
   modifica. Un XML guardado en UTF-16 se rechaza con un mensaje: debe volver a guardarse como UTF-8.
+
+
+POR LOTES (desde 1.6.0): la misma comprobación sobre todos los documentos de una lista.
+    java -jar XMLVerifyXSDStructure.jar -lote <lista> [<Archivo XSD>] [-informe <archivo.csv>] [-log]
+  <lista>     Archivo de texto en UTF-8 con la ruta de un documento por línea
+  -informe    Genera un CSV (separado por punto y coma, UTF-8) con una línea por documento
+  -log        Guarda junto a cada documento un archivo .log con el detalle de su proceso
+  - Sin <Archivo XSD>, cada documento se valida contra el esquema que declara.
+  - Salida: líneas LOTE_INICIO, LOTE_DOC y LOTE_RESUMEN (campos entre comillas separados por punto y coma).
+  - Código de salida 0 solo si todos los documentos terminaron bien; en otro caso, 1.
+  - Los estados y códigos están en el Manual Técnico de Integración, sección 7.11.

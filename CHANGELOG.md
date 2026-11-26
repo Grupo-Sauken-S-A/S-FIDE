@@ -6,6 +6,14 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 
 ## [1.6.0] — sin publicar
 
+### Agregado
+- **Operaciones por lotes** en `XMLSignerPKCS11`, `XMLSignerPKCS12`, `PDFSignerPKCS11`, `PDFSignerPKCS12`, `XMLVerifySignatures`, `PDFVerifySignatures` y `XMLVerifyXSDStructure` (`-lote <lista>`): un solo acceso al certificado, una línea de resultado por documento y un resumen (`LOTE_`), informe CSV (`-informe`, `;`, UTF-8 sin BOM) y registro por documento (`-log`) opcionales, y revisión sin firmar (`-revisar`) en los firmadores. Un lote aplica una sola operación: no se mezclan tipos de XML, y en PDF todos reciben las mismas opciones. Nunca se reemplaza un archivo firmado existente. Ver la sección 7.11 del manual técnico.
+- **S-FiDE GUI:** pestaña **Por lote** en esas siete opciones: se elige una carpeta, «Revisar» muestra lo que el programa de firma informa sin firmar, y se ve el avance documento por documento, con cancelación, reintento de los fallidos e informe.
+- Herramienta `herramientas/CompatibilidadCli.java`: compara salidas, códigos y archivos de los programas contra una versión publicada (175 casos). Pruebas `LoteXmlTest`, `LotePdfTest`, `LoteVerificacionTest`, `LoteCopiasTest`, `BatchProtocolTest` y `BatchFolderTest`.
+
+### Limitaciones conocidas
+- La firma por lotes **con token físico no se probó** (sin dispositivo disponible): falta comprobar el ingreso único del PIN, el retiro del token a mitad de un lote y si algún token pide el PIN en cada firma.
+
 ### Cambios que un integrador debe revisar
 - **`PDFSignerPKCS12` informa el éxito y las advertencias por la salida estándar** (`stdout`). Hasta la 1.5.1 salían por la salida de error (`stderr`) y `stdout` quedaba vacío. Los textos y los códigos de salida no cambian; los errores siguen en `stderr`.
 - **`PDFSignerPKCS11` y `PDFVerifySignatures` ya no escriben líneas técnicas de Java** (fecha y nombre de clase) en `stderr`: cada error es una sola línea en español.

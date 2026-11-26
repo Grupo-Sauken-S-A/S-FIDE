@@ -70,3 +70,19 @@ CERTIFICADOS DE ORIGEN:
     - Para aplicar firmas digitales a Certificado de Origen No-Preferenciales en documentos PDF debe usar:
          -x 40 -y 55     Para aplicar la firma digital del Exportador
          -x 310 -y 55    Para aplicar la firma digital del Funcionario Habilitado de la Entidad
+
+
+FIRMA POR LOTES (desde 1.6.0): la misma firma en todos los documentos de una lista, con un solo acceso
+al certificado.
+    java -jar PDFSignerPKCS11.jar -lote <lista> -l <biblioteca> -p <contraseña> -s <slot> [opciones de firma]
+        [-revisar] [-informe <archivo.csv>] [-log]
+  <lista>     Archivo de texto en UTF-8 con la ruta de un documento por línea
+  -informe    Genera un CSV (separado por punto y coma, UTF-8) con una línea por documento
+  -log        Guarda junto a cada documento un archivo .log con el detalle de su proceso
+  -revisar    Revisa los documentos sin firmar ni usar el certificado (no gasta intentos de PIN)
+  - Se usa -lote en lugar de -i. La posición, el texto y las demás opciones valen para todos.
+  - -campo no se admite por lotes. Un argumento desconocido o mal escrito detiene todo antes de empezar.
+  - Nunca se reemplaza un archivo "-signed" que ya exista: ese documento se omite y el código es 1.
+  - Salida: líneas LOTE_INICIO, LOTE_DOC y LOTE_RESUMEN (campos entre comillas separados por punto y coma).
+  - Código de salida 0 solo si todos los documentos terminaron bien; en otro caso, 1.
+  - Los estados y códigos están en el Manual Técnico de Integración, sección 7.11.

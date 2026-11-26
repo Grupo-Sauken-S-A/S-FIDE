@@ -27,3 +27,13 @@ Qué invalida y qué no:
   - Entiende documentos firmados por otras aplicaciones, como Acrobat Reader.
 
 Código de salida: 0 si todas las firmas son válidas, 1 si alguna no lo es.
+
+
+POR LOTES (desde 1.6.0): la misma comprobación sobre todos los documentos de una lista.
+    java -jar PDFVerifySignatures.jar -lote <lista> [-simple] [-informe <archivo.csv>] [-log]
+  <lista>     Archivo de texto en UTF-8 con la ruta de un documento por línea
+  -informe    Genera un CSV (separado por punto y coma, UTF-8) con una línea por documento
+  -log        Guarda junto a cada documento un archivo .log con el detalle de su proceso
+  - Salida: líneas LOTE_INICIO, LOTE_DOC y LOTE_RESUMEN (campos entre comillas separados por punto y coma).
+  - Código de salida 0 solo si todos los documentos terminaron bien; en otro caso, 1.
+  - Los estados y códigos están en el Manual Técnico de Integración, sección 7.11.

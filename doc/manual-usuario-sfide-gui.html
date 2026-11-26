@@ -262,7 +262,7 @@
       <h1>Guía de Usuario S-FiDE GUI</h1>
       <p>Cómo usar la interfaz gráfica de S-FiDE para firmar y verificar documentos XML y PDF, paso a paso, con capturas reales de la propia aplicación. Pensada para quien usa el programa haciendo clic, no para quien integra los módulos por línea de comandos — para eso está el <a href="manual-tecnico-integracion.html">Manual Técnico de Integración</a>.</p>
       <div class="meta">
-        <span>Versión del producto: <strong>1.5.1</strong></span>
+        <span>Versión del producto: <strong>1.6.0 (en desarrollo, sin publicar)</strong></span>
         <span>Documento: <strong>08/10/2026</strong></span>
       </div>
     </div>
@@ -624,6 +624,21 @@
         <span class="label">Si S-FiDE le avisa algo antes de firmar</span>
         <p>"El documento está cerrado" significa que otra persona ya lo cerró: ya no se pueden agregar firmas (hacerlo invalidaría la firma de quien lo cerró). Si le avisa que una firma anterior <strong>no es válida</strong>, conviene consultar con quien le envió el documento antes de firmar; si decide continuar, su firma se agrega igual, pero la firma señalada seguirá sin ser válida.</p>
       </div>
+
+      <h3 id="por-lote">Trabajar por lote: una carpeta entera (desde 1.6.0)</h3>
+      <p>Las pantallas de <strong>firma</strong> con token y con archivo PKCS#12, de <strong>verificación</strong> y de <strong>validación XSD</strong> tienen dos pestañas: <em>Un documento</em>, que es la pantalla de siempre, y <em>Por lote</em>, para procesar todos los documentos de una carpeta. Lo que escribe en una pestaña (certificado, contraseña, elemento, opciones) aparece también en la otra.</p>
+      <ol>
+        <li><strong>Complete sus datos</strong> y elija la <strong>carpeta</strong>. No se incluyen las subcarpetas.</li>
+        <li><strong>Al firmar, los archivos que terminan en <code>-signed</code> quedan afuera.</strong> Si lo que quiere es agregar otra firma a documentos ya firmados (por ejemplo, la del Funcionario Habilitado), marque <em>"Incluir solo los archivos que terminan en -signed"</em>. S-FiDE mira el nombre del archivo.</li>
+        <li><strong>Pulse <em>Revisar</em></strong> (opcional): muestra todos los documentos sin firmar nada ni usar su PIN. Los que no se pueden firmar aparecen bloqueados con el motivo; los demás se pueden desmarcar.</li>
+        <li><strong>Pulse <em>Firmar</em></strong> o <em>Verificar</em>. La contraseña se usa una sola vez para todo el lote.</li>
+        <li><strong>Mire la tabla:</strong> muestra cómo terminó cada documento. Puede ver solo los que tuvieron problemas, reintentar los que fallaron y abrir el informe.</li>
+      </ol>
+      <div class="callout note">
+        <span class="label">Un lote hace una sola cosa</span>
+        <p>En XML no se pueden mezclar Certificados de Origen con Declaraciones Juradas: si la carpeta los mezcla, no se firma ninguno. En PDF todos reciben la misma firma en el mismo lugar y, si marca cerrar el documento, se cierran todos: S-FiDE le pide confirmación porque no se puede deshacer. Un archivo ya firmado nunca se reemplaza.</p>
+      </div>
+      <p>Si marca <em>"Guardar un registro por documento"</em>, junto a cada uno queda un archivo <code>.log</code> con el detalle. La lista y el informe de cada lote se guardan en la carpeta <code>S-FiDE/lotes</code> de su carpeta personal.</p>
     </section>
 
     <section class="chapter" id="s5">
