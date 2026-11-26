@@ -365,4 +365,36 @@ class LoteXmlTest {
         Resultado vacia = lote(escribir("vacia.txt", "\r\n  \r\n"), clave, "COD");
         assertTrue(resumen(vacia).endsWith("\"corte=LISTA_VACIA\""), vacia.salida());
     }
+
+    /** Lo que se puede comprobar del firmador con token sin tener un token conectado. */
+    @Test
+    void firmadorConTokenSinTokenConectado() throws Exception {
+        String conToken = "com.sauken.s_fide.xml_signer_pkcs11.XMLSignerPKCS11";
+        cod("a.xml");
+        djo("b.xml");
+        String lista = lista("a.xml").toString();
+        String inexistente = dir.resolve("noesta.dll").toString();
+
+        Resultado revision = ejecutarModulo(dir, conToken, "-lote", lista, inexistente, "1234", "0", "COD", "-revisar");
+        assertEquals(0, revision.exitCode(), "Revisar no usa la biblioteca: " + revision.salida());
+        assertEquals(List.of("LISTO/OK"), estados(revision), revision.salida());
+
+        Resultado sinBiblioteca = ejecutarModulo(dir, conToken, "-lote", lista, inexistente, "1234", "0", "COD");
+        assertEquals(1, sinBiblioteca.exitCode(), sinBiblioteca.salida());
+        assertEquals(List.of("NO_PROCESADO/BIBLIOTECA"), estados(sinBiblioteca), sinBiblioteca.salida());
+
+        Resultado noEsBiblioteca = ejecutarModulo(dir, conToken, "-lote", lista,
+                dir.resolve("a.xml").toString(), "1234", "0", "COD");
+        assertEquals(1, noEsBiblioteca.exitCode(), noEsBiblioteca.salida());
+        assertEquals(1, documentos(noEsBiblioteca).size(), noEsBiblioteca.salida());
+        assertTrue(estados(noEsBiblioteca).get(0).startsWith("NO_PROCESADO/"), noEsBiblioteca.salida());
+
+        Resultado mezcla = ejecutarModulo(dir, conToken, "-lote", lista("a.xml", "b.xml").toString(), inexistente,
+                "1234", "0", "COD");
+        assertTrue(resumen(mezcla).endsWith("\"corte=LOTE_MEZCLADO\""), mezcla.salida());
+
+        Resultado slot = ejecutarModulo(dir, conToken, "-lote", lista, inexistente, "1234", "cero", "COD");
+        assertTrue(resumen(slot).endsWith("\"corte=ARGUMENTOS\""), slot.salida());
+        assertTrue(firmados().isEmpty());
+    }
 }

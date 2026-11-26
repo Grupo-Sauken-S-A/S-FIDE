@@ -237,6 +237,8 @@ final class LoteXml {
         byte[] firmado;
         try {
             firmado = firma.firmar(documento.ruta().toString());
+        } catch (Lote.Corte corte) {
+            throw corte;
         } catch (Exception e) {
             // Solo los mensajes propios llegan a la persona; el detalle técnico de otras fallas, no.
             String detalle = e instanceof IllegalArgumentException ? ": " + e.getMessage() : ".";

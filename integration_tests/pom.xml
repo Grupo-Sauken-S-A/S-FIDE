@@ -48,6 +48,12 @@
         </dependency>
         <dependency>
             <groupId>com.sauken.s_fide</groupId>
+            <artifactId>xml_signer_pkcs11</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sauken.s_fide</groupId>
             <artifactId>xml_verify_signatures</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
