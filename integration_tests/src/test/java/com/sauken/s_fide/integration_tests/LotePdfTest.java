@@ -277,4 +277,32 @@ class LotePdfTest {
         assertEquals(1, revisarPrimero.exitCode(), revisarPrimero.salida());
         assertTrue(firmados().isEmpty());
     }
+
+    /** Lo que se puede comprobar del firmador con token sin tener un token conectado. */
+    @Test
+    void firmadorConTokenSinTokenConectado() throws Exception {
+        String conToken = "com.sauken.s_fide.pdf_signer_pkcs11.PDFSignerPKCS11";
+        Path a = pdf("a.pdf");
+        String lista = lista("a.pdf").toString();
+        String inexistente = dir.resolve("noesta.dll").toString();
+
+        Resultado revision = ejecutarModulo(dir, conToken, "-lote", lista, "-l", inexistente, "-p", "1",
+                "-s", "0", "-revisar");
+        assertEquals(0, revision.exitCode(), "Revisar no usa la biblioteca: " + revision.salida());
+        assertEquals(List.of("LISTO/OK"), estados(revision), revision.salida());
+
+        Resultado sinBiblioteca = ejecutarModulo(dir, conToken, "-lote", lista, "-l", inexistente, "-p", "1",
+                "-s", "0");
+        assertEquals(1, sinBiblioteca.exitCode(), sinBiblioteca.salida());
+        assertEquals(List.of("NO_PROCESADO/BIBLIOTECA"), estados(sinBiblioteca), sinBiblioteca.salida());
+
+        Resultado campo = ejecutarModulo(dir, conToken, "-lote", lista, "-l", inexistente, "-p", "1",
+                "-s", "0", "-campo", "x");
+        assertTrue(resumen(campo).endsWith("\"corte=ARGUMENTOS\""), campo.salida());
+        Resultado revisarSolo = ejecutarModulo(dir, conToken, "-i", a.toString(), "-l", inexistente, "-p",
+                "1", "-s", "0", "-revisar");
+        assertEquals(1, revisarSolo.exitCode(), revisarSolo.salida());
+        assertTrue(revisarSolo.salida().contains("solo se puede usar junto con -lote"), revisarSolo.salida());
+        assertTrue(firmados().isEmpty());
+    }
 }

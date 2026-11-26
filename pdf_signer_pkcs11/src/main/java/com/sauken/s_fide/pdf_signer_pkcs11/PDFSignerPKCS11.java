@@ -116,6 +116,17 @@ public class PDFSignerPKCS11 {
 
     public static void main(String[] args) {
         try {
+            if (LotePdf.pideLote(args, OPCIONES_DE_LOTE)) {
+                System.exit(ejecutarLote(args));
+                return;
+            }
+
+            if (LotePdf.pideRevisar(args, OPCIONES_DE_LOTE)) {
+                errorStream.println("Error: -revisar solo se puede usar junto con -lote. No se firmó ningún documento.");
+                System.exit(1);
+                return;
+            }
+
             if (args.length > 1 && isFlagVistaPreviaTexto(args[0])) {
                 vistaPreviaTexto(args);
                 System.exit(0);
@@ -718,129 +729,291 @@ public class PDFSignerPKCS11 {
                 PdfDocumentAnalyzer.imprimirInforme(analizarOFallar(Paths.get(params.pdfPath()), true), System.out);
             }
 
-            // Si el documento ya tiene firmas, "bloquear" se transforma en una firma de cierre común:
-            // cifrar o certificar exigiría reescribir el archivo (invalidando las firmas previas) o ya
-            // no sería posible (la certificación debe ser la primera firma del documento).
-            boolean modoCierre = params.lock() && documentoYaFirmado;
-            boolean bloquearConCifrado = params.lock() && !documentoYaFirmado;
-
             Path finalOutputPath = Paths.get(createOutputPath(params.pdfPath()));
-            Path encryptedIntermediate = null;
-
             try {
-                Path sourceForSigning;
-                byte[] ownerPassword = null;
-
-                if (bloquearConCifrado) {
-                    // Si hay que bloquear, primero se cifra el documento ORIGINAL (todavía
-                    // sin firmar) y recién después se firma en modo append sobre ese archivo
-                    // ya cifrado — es el orden que espera iText para combinar cifrado y
-                    // firma. Hacerlo al revés (firmar primero y volver a serializar todo el
-                    // documento con cifrado en una segunda pasada) corrompe el /Contents de
-                    // la firma: esa segunda pasada no sabe que ese campo debe quedar exento
-                    // de cifrado.
-                    encryptedIntermediate = Files.createTempFile("enc", ".tmp");
-                    ownerPassword = applyDocumentRestrictions(Paths.get(params.pdfPath()), encryptedIntermediate);
-                    sourceForSigning = encryptedIntermediate;
-                } else {
-                    sourceForSigning = Paths.get(params.pdfPath());
-                }
-
-                try (InputStream inputStream = Files.newInputStream(sourceForSigning);
-                     OutputStream outputStream = Files.newOutputStream(finalOutputPath)) {
-
-                    // Al firmar el intermedio ya cifrado hace falta abrirlo con la contraseña
-                    // de propietario: agregar una firma de certificación modifica los permisos
-                    // del documento, y eso requiere acceso de propietario, no solo de lectura.
-                    PdfReader reader = (ownerPassword != null)
-                            ? new PdfReader(inputStream, new ReaderProperties().setPassword(ownerPassword))
-                            : new PdfReader(inputStream);
-                    StampingProperties stampingProperties = new StampingProperties();
-                    stampingProperties.useAppendMode();
-
-                    String fieldName = String.format("Signature_%s_%d",
-                            getNameFromDN(subjectDN.getName()).replaceAll("[^a-zA-Z0-9]", "_"),
-                            System.currentTimeMillis());
-
-                    SignerProperties signerProperties = new SignerProperties().setFieldName(fieldName);
-
-                    if (params.campo() != null) {
-                        // Firma dentro de un campo de firma vacío que ya trae el documento (como hace Acrobat).
-                        signerProperties.setFieldName(params.campo())
-                                .setSignatureAppearance(new SignatureFieldAppearance(params.campo())
-                                        .setContent(buildSignatureText(params.customText(), subjectDN))
-                                        .setFontSize(TAMANO_LETRA_FIRMA));
-                    } else if (params.xPos() != 0 || params.yPos() != 0) {
-                        Rectangle rect = new Rectangle(params.xPos(), params.yPos(), params.ancho(), params.alto());
-                        String signatureText = buildSignatureText(
-                                params.customText(),
-                                subjectDN
-                        );
-                        SignatureFieldAppearance appearance = new SignatureFieldAppearance(fieldName)
-                                .setContent(signatureText)
-                                .setFontSize(TAMANO_LETRA_FIRMA);
-                        signerProperties.setPageRect(rect)
-                                .setPageNumber(params.pagina())
-                                .setSignatureAppearance(appearance);
-                    }
-
-                    if (bloquearConCifrado) {
-                        signerProperties.setCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
-                    }
-                    if (params.protegerContenido()) {
-                        // Certificación que protege el contenido pero admite más firmas (nivel 2 de DocMDP): no
-                        // se cifra ni se bloquea, así las personas siguientes pueden seguir firmando.
-                        signerProperties.setCertificationLevel(PdfSigner.CERTIFIED_FORM_FILLING);
-                    }
-                    if (modoCierre) {
-                        signerProperties.setReason(PdfDocumentAnalyzer.MARCA_CIERRE);
-                        // Mismo bloqueo que aplica Acrobat con "Bloquear documento después de firmar": así
-                        // Acrobat también muestra el documento como bloqueado.
-                        PdfSigFieldLock bloqueo = new PdfSigFieldLock()
-                                .setFieldLock(PdfSigFieldLock.LockAction.ALL)
-                                .setDocumentPermissions(PdfSigFieldLock.LockPermissions.NO_CHANGES_ALLOWED);
-                        // Con la acción "todos" Acrobat no escribe la lista de campos; iText agrega una vacía
-                        // y con ella Acrobat no reconoce el bloqueo.
-                        bloqueo.getPdfObject().remove(PdfName.Fields);
-                        signerProperties.setFieldLockDict(bloqueo);
-                    }
-
-                    PdfSigner signer = new PdfSigner(reader, outputStream, null, stampingProperties, signerProperties);
-
-                    Pkcs11ExternalSignature signature = new Pkcs11ExternalSignature(privateKey, provider);
-
-                    signer.signDetached(
-                            new BouncyCastleDigest(),
-                            signature,
-                            chain,
-                            null,
-                            null,
-                            null,
-                            0,
-                            PdfSigner.CryptoStandard.CMS
-                    );
-
-                    if (signature.lastSignUsedExternalHash()) {
-                        System.out.println("Mecanismo de firma: hash SHA-256 externo (token sin CKM_SHA256_RSA_PKCS)");
-                    }
-                }
+                aplicarFirma(params, documentoYaFirmado, privateKey, chain, subjectDN, provider, finalOutputPath);
             } catch (Exception e) {
                 Files.deleteIfExists(finalOutputPath);
                 throw new IOException("Error: Error al firmar el documento");
-            } finally {
-                if (encryptedIntermediate != null) {
-                    Files.deleteIfExists(encryptedIntermediate);
-                }
             }
 
             controlarResultado(finalOutputPath, analisisInicial);
 
             System.out.println("Documento firmado exitosamente: " + finalOutputPath.toAbsolutePath());
-            if (modoCierre) {
+            if (params.lock() && documentoYaFirmado) {
                 System.out.println("El documento quedó cerrado: no admite más firmas.");
             }
 
         } finally {
+            if (provider != null) {
+                Security.removeProvider(provider.getName());
+            }
+        }
+    }
+
+    /** Escribe en {@code finalOutputPath} una copia firmada del documento, sin modificar el original. */
+    private static void aplicarFirma(SignatureParameters params, boolean documentoYaFirmado, PrivateKey privateKey,
+                                     Certificate[] chain, X500Principal subjectDN, Provider provider,
+                                     Path finalOutputPath) throws Exception {
+        // Si el documento ya tiene firmas, "bloquear" se transforma en una firma de cierre común:
+        // cifrar o certificar exigiría reescribir el archivo (invalidando las firmas previas) o ya
+        // no sería posible (la certificación debe ser la primera firma del documento).
+        boolean modoCierre = params.lock() && documentoYaFirmado;
+        boolean bloquearConCifrado = params.lock() && !documentoYaFirmado;
+
+        Path encryptedIntermediate = null;
+
+        try {
+            Path sourceForSigning;
+            byte[] ownerPassword = null;
+
+            if (bloquearConCifrado) {
+                // Si hay que bloquear, primero se cifra el documento ORIGINAL (todavía
+                // sin firmar) y recién después se firma en modo append sobre ese archivo
+                // ya cifrado — es el orden que espera iText para combinar cifrado y
+                // firma. Hacerlo al revés (firmar primero y volver a serializar todo el
+                // documento con cifrado en una segunda pasada) corrompe el /Contents de
+                // la firma: esa segunda pasada no sabe que ese campo debe quedar exento
+                // de cifrado.
+                encryptedIntermediate = Files.createTempFile("enc", ".tmp");
+                ownerPassword = applyDocumentRestrictions(Paths.get(params.pdfPath()), encryptedIntermediate);
+                sourceForSigning = encryptedIntermediate;
+            } else {
+                sourceForSigning = Paths.get(params.pdfPath());
+            }
+
+            try (InputStream inputStream = Files.newInputStream(sourceForSigning);
+                 OutputStream outputStream = Files.newOutputStream(finalOutputPath)) {
+
+                // Al firmar el intermedio ya cifrado hace falta abrirlo con la contraseña
+                // de propietario: agregar una firma de certificación modifica los permisos
+                // del documento, y eso requiere acceso de propietario, no solo de lectura.
+                PdfReader reader = (ownerPassword != null)
+                        ? new PdfReader(inputStream, new ReaderProperties().setPassword(ownerPassword))
+                        : new PdfReader(inputStream);
+                StampingProperties stampingProperties = new StampingProperties();
+                stampingProperties.useAppendMode();
+
+                String fieldName = String.format("Signature_%s_%d",
+                        getNameFromDN(subjectDN.getName()).replaceAll("[^a-zA-Z0-9]", "_"),
+                        System.currentTimeMillis());
+
+                SignerProperties signerProperties = new SignerProperties().setFieldName(fieldName);
+
+                if (params.campo() != null) {
+                    // Firma dentro de un campo de firma vacío que ya trae el documento (como hace Acrobat).
+                    signerProperties.setFieldName(params.campo())
+                            .setSignatureAppearance(new SignatureFieldAppearance(params.campo())
+                                    .setContent(buildSignatureText(params.customText(), subjectDN))
+                                    .setFontSize(TAMANO_LETRA_FIRMA));
+                } else if (params.xPos() != 0 || params.yPos() != 0) {
+                    Rectangle rect = new Rectangle(params.xPos(), params.yPos(), params.ancho(), params.alto());
+                    String signatureText = buildSignatureText(
+                            params.customText(),
+                            subjectDN
+                    );
+                    SignatureFieldAppearance appearance = new SignatureFieldAppearance(fieldName)
+                            .setContent(signatureText)
+                            .setFontSize(TAMANO_LETRA_FIRMA);
+                    signerProperties.setPageRect(rect)
+                            .setPageNumber(params.pagina())
+                            .setSignatureAppearance(appearance);
+                }
+
+                if (bloquearConCifrado) {
+                    signerProperties.setCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
+                }
+                if (params.protegerContenido()) {
+                    // Certificación que protege el contenido pero admite más firmas (nivel 2 de DocMDP): no
+                    // se cifra ni se bloquea, así las personas siguientes pueden seguir firmando.
+                    signerProperties.setCertificationLevel(PdfSigner.CERTIFIED_FORM_FILLING);
+                }
+                if (modoCierre) {
+                    signerProperties.setReason(PdfDocumentAnalyzer.MARCA_CIERRE);
+                    // Mismo bloqueo que aplica Acrobat con "Bloquear documento después de firmar": así
+                    // Acrobat también muestra el documento como bloqueado.
+                    PdfSigFieldLock bloqueo = new PdfSigFieldLock()
+                            .setFieldLock(PdfSigFieldLock.LockAction.ALL)
+                            .setDocumentPermissions(PdfSigFieldLock.LockPermissions.NO_CHANGES_ALLOWED);
+                    // Con la acción "todos" Acrobat no escribe la lista de campos; iText agrega una vacía
+                    // y con ella Acrobat no reconoce el bloqueo.
+                    bloqueo.getPdfObject().remove(PdfName.Fields);
+                    signerProperties.setFieldLockDict(bloqueo);
+                }
+
+                PdfSigner signer = new PdfSigner(reader, outputStream, null, stampingProperties, signerProperties);
+
+                Pkcs11ExternalSignature signature = new Pkcs11ExternalSignature(privateKey, provider);
+
+                signer.signDetached(
+                        new BouncyCastleDigest(),
+                        signature,
+                        chain,
+                        null,
+                        null,
+                        null,
+                        0,
+                        PdfSigner.CryptoStandard.CMS
+                );
+
+                if (signature.lastSignUsedExternalHash()) {
+                    System.out.println("Mecanismo de firma: hash SHA-256 externo (token sin CKM_SHA256_RSA_PKCS)");
+                }
+            }
+        } finally {
+            if (encryptedIntermediate != null) {
+                Files.deleteIfExists(encryptedIntermediate);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------------------------------------ por lotes
+
+    /** Opciones de firma que admite un lote: las del modo de un documento, salvo {@code -i} y {@code -campo}. */
+    private static final List<LotePdf.Opcion> OPCIONES_DE_LOTE = List.of(
+            LotePdf.Opcion.obligatoria(LotePdf.Tipo.TEXTO, "-l", "--library"),
+            LotePdf.Opcion.obligatoria(LotePdf.Tipo.TEXTO, "-p", "--password"),
+            LotePdf.Opcion.obligatoria(LotePdf.Tipo.ENTERO, "-s", "--slot"),
+            LotePdf.Opcion.de(LotePdf.Tipo.VERDADERO_O_FALSO, "-k", "--lock"),
+            LotePdf.Opcion.de(LotePdf.Tipo.NUMERO, "-x", "--xpos"),
+            LotePdf.Opcion.de(LotePdf.Tipo.NUMERO, "-y", "--ypos"),
+            LotePdf.Opcion.de(LotePdf.Tipo.TEXTO, "-t", "--text"),
+            LotePdf.Opcion.de(LotePdf.Tipo.ENTERO, "-pagina", "--pagina"),
+            LotePdf.Opcion.de(LotePdf.Tipo.NUMERO, "-ancho", "--ancho"),
+            LotePdf.Opcion.de(LotePdf.Tipo.NUMERO, "-alto", "--alto"),
+            LotePdf.Opcion.de(LotePdf.Tipo.VERDADERO_O_FALSO, "-proteger-contenido", "--proteger-contenido"),
+            LotePdf.Opcion.de(LotePdf.Tipo.VERDADERO_O_FALSO, "-omitir-revocacion", "--omitir-revocacion"));
+
+    private static int ejecutarLote(String[] args) {
+        String numeroDeVersion = VERSION.replaceAll(".* v(\\S+) .*", "$1");
+        LotePdf.Pedido pedido;
+        SignatureParameters comunes;
+        try {
+            pedido = LotePdf.analizarArgumentos(args, OPCIONES_DE_LOTE);
+            // Cada documento reemplaza este nombre provisorio por el suyo.
+            List<String> comoUnDocumento = new java.util.ArrayList<>(List.of("-i", "lote.pdf"));
+            comoUnDocumento.addAll(pedido.argumentos());
+            comunes = parseArguments(comoUnDocumento.toArray(new String[0]));
+            if (comunes == null) {
+                throw new IllegalArgumentException("Faltan argumentos obligatorios o alguno no es válido.");
+            }
+            if (comunes.lock() && comunes.protegerContenido()) {
+                throw new IllegalArgumentException("Elija una sola opción: bloquear los documentos (-k true) o proteger "
+                        + "su contenido permitiendo firmas posteriores (-proteger-contenido true).");
+            }
+        } catch (IllegalArgumentException e) {
+            return Lote.rechazarArgumentos("PDFSignerPKCS11", numeroDeVersion, System.out, errorStream,
+                    e.getMessage());
+        }
+        return Lote.ejecutar("PDFSignerPKCS11", numeroDeVersion, "pdf", pedido.opciones(), System.out, errorStream,
+                new FirmaPorLote(comunes));
+    }
+
+    /** Firma de cada documento del lote, con las mismas opciones y un único ingreso al token. */
+    private static final class FirmaPorLote implements Lote.Tarea, LotePdf.Reglas {
+        private final SignatureParameters comunes;
+        private Provider provider;
+        private PrivateKey privateKey;
+        private Certificate[] chain;
+        private X509Certificate cert;
+
+        private FirmaPorLote(SignatureParameters comunes) {
+            this.comunes = comunes;
+        }
+
+        private SignatureParameters para(Path documento) {
+            return new SignatureParameters(documento.toString(), comunes.libraryPath(), comunes.password(),
+                    comunes.slotNumber(), comunes.lock(), comunes.xPos(), comunes.yPos(), comunes.customText(),
+                    comunes.omitirRevocacion(), null, comunes.pagina(), comunes.ancho(), comunes.alto(),
+                    comunes.protegerContenido());
+        }
+
+        @Override
+        public void revisar(List<Lote.Documento> pendientes) {
+            LotePdf.revisar(pendientes, this);
+        }
+
+        @Override
+        public String motivoDelCifrado(Path documento) {
+            return PDFSignerPKCS11.motivoDelCifrado(documento);
+        }
+
+        @Override
+        public void validarPosicionYProteccion(Path documento, PdfDocumentAnalyzer.Analisis analisis) {
+            PDFSignerPKCS11.validarPosicionYProteccion(para(documento), analisis);
+        }
+
+        @Override
+        public void acceder() {
+            String biblioteca = comunes.libraryPath();
+            try {
+                Pkcs11Access.validateLibraryFile(biblioteca);
+            } catch (IllegalArgumentException e) {
+                throw new Lote.Corte("BIBLIOTECA", e.getMessage());
+            }
+            try {
+                provider = configurePKCS11Provider(biblioteca, comunes.slotNumber());
+            } catch (RuntimeException e) {
+                throw LoteToken.corte(e, biblioteca, e.getMessage());
+            }
+            Security.addProvider(provider);
+
+            KeyStore keyStore;
+            try {
+                keyStore = KeyStore.getInstance("PKCS11");
+                keyStore.load(null, comunes.password().toCharArray());
+            } catch (Exception e) {
+                throw LoteToken.corte(e, biblioteca, Pkcs11Access.describeFailure(e, biblioteca));
+            }
+            try {
+                String alias = CertificateValidity.elegirAlias(keyStore);
+                privateKey = (PrivateKey) keyStore.getKey(alias, comunes.password().toCharArray());
+                chain = keyStore.getCertificateChain(alias);
+                if (privateKey == null || chain == null || chain.length == 0) {
+                    throw new Lote.Corte("CERTIFICADO_NO_APTO",
+                            "El token no contiene un certificado con clave privada.");
+                }
+                cert = (X509Certificate) chain[0];
+                ClockCheck.avisar(System.out::println);
+                CertificateValidity.exigirApto(cert);
+                CertificateValidity.avisar(chain, System.out::println);
+            } catch (IllegalArgumentException e) {
+                throw new Lote.Corte("CERTIFICADO_NO_APTO", e.getMessage());
+            } catch (GeneralSecurityException e) {
+                throw LoteToken.corte(e, biblioteca, Pkcs11Access.describeFailure(e, biblioteca));
+            }
+            try {
+                validarRevocacionAntesDeFirmar(cert, comunes.omitirRevocacion());
+            } catch (IllegalArgumentException e) {
+                throw new Lote.Corte("CERTIFICADO_REVOCADO", e.getMessage());
+            }
+        }
+
+        @Override
+        public Lote.Resultado procesar(Lote.Documento documento) {
+            try {
+                CertificateValidity.exigirVigente(cert);
+            } catch (IllegalArgumentException e) {
+                throw new Lote.Corte("CERTIFICADO_NO_APTO", e.getMessage());
+            }
+            return LotePdf.firmar(documento, (original, analisis, destino) -> {
+                try {
+                    aplicarFirma(para(original), !analisis.firmas().isEmpty(), privateKey, chain,
+                            cert.getSubjectX500Principal(), provider, destino);
+                } catch (Exception e) {
+                    // Si se perdió el acceso al token no tiene sentido seguir con los demás documentos.
+                    if (LoteToken.perdioElAcceso(e)) {
+                        throw LoteToken.corte(e, comunes.libraryPath(),
+                                Pkcs11Access.describeFailure(e, comunes.libraryPath()));
+                    }
+                    throw e;
+                }
+                controlarResultado(destino, analisis);
+            });
+        }
+
+        @Override
+        public void cerrar() {
             if (provider != null) {
                 Security.removeProvider(provider.getName());
             }

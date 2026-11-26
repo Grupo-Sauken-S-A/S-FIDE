@@ -72,10 +72,10 @@ class LoteCopiasTest {
 
     @Test
     void lasClasesDelLoteSonIdenticasEnTodosLosModulos() throws IOException {
-        comprobar("Lote.java", 3);
-        comprobar("LotePdf.java", 1);
+        comprobar("Lote.java", 4);
+        comprobar("LotePdf.java", 2);
         comprobar("LoteXml.java", 2);
-        comprobar("LoteToken.java", 1);
+        comprobar("LoteToken.java", 2);
         comprobar("XmlBom.java", 5);
     }
 
