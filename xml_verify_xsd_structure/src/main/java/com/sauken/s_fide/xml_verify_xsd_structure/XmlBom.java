@@ -81,6 +81,11 @@ final class XmlBom {
 
     private static boolean yaAviso;
 
+    /** Vuelve a avisar en el próximo archivo con BOM: se usa al pasar de un documento a otro de un lote. */
+    static void reiniciarAviso() {
+        yaAviso = false;
+    }
+
     private XmlBom() {
     }
 

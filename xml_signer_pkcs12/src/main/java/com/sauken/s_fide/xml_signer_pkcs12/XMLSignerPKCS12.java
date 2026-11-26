@@ -92,6 +92,9 @@ public class XMLSignerPKCS12 {
     }
 
     public static void main(String[] args) {
+        if (args.length > 0 && Lote.esOpcionDeLote(args[0])) {
+            System.exit(ejecutarLote(args));
+        }
         try {
             processArguments(args);
             System.exit(0);
@@ -263,10 +266,10 @@ public class XMLSignerPKCS12 {
         }
     }
 
-    private static String readFileToString(String filePath) throws IOException {
+    private static String readFileToString(String filePath, PrintStream salida) throws IOException {
         StringBuilder content = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                new ByteArrayInputStream(XmlBom.leer(filePath, XmlBom.Uso.FIRMA, outputStream)), StandardCharsets.UTF_8))) {
+                new ByteArrayInputStream(XmlBom.leer(filePath, XmlBom.Uso.FIRMA, salida)), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 content.append(line).append("\n");
@@ -297,142 +300,257 @@ public class XMLSignerPKCS12 {
 
             validarRevocacionAntesDeFirmar(cert, omitirRevocacion);
 
-            // Configurar el DocumentBuilderFactory
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            dbf.setNamespaceAware(true);
-            dbf.setCoalescing(false);
-            dbf.setExpandEntityReferences(false);
-            dbf.setValidating(false);
-            dbf.setXIncludeAware(false);
-            dbf.setIgnoringElementContentWhitespace(false);
-            dbf.setIgnoringComments(false);
+            byte[] firmado = firmarDocumento(xmlFile, uri, privateKey, cert, outputStream);
 
-            // Preservar declaración XML original
-            String originalContent = readFileToString(xmlFile);
-            String xmlDeclaration = null;
-            if (originalContent.startsWith("<?xml")) {
-                int endDecl = originalContent.indexOf("?>");
-                if (endDecl != -1) {
-                    xmlDeclaration = originalContent.substring(0, endDecl + 2);
-                }
+            // Guardar documento firmado
+            String outputXmlFile = getOutputFileName(xmlFile);
+            try (OutputStream archivoFirmado = new FileOutputStream(outputXmlFile)) {
+                archivoFirmado.write(firmado);
             }
 
-            // Leer el documento
-            Document doc;
-            try (InputStream fis = new ByteArrayInputStream(XmlBom.leer(xmlFile, XmlBom.Uso.FIRMA, outputStream))) {
-                DocumentBuilder builder = dbf.newDocumentBuilder();
-                InputSource is = new InputSource(new InputStreamReader(fis, "UTF-8"));
-                is.setEncoding("UTF-8");
-                doc = builder.parse(is);
-
-                // Registrar los IDs
-                NodeList nodeList = doc.getElementsByTagName("*");
-                for (int i = 0; i < nodeList.getLength(); i++) {
-                    Node node = nodeList.item(i);
-                    if (node instanceof Element) {
-                        Element element = (Element) node;
-                        if (element.hasAttribute("ID")) {
-                            element.setIdAttribute("ID", true);
-                        }
-                        if (element.hasAttribute("Id")) {
-                            element.setIdAttribute("Id", true);
-                        }
-                        if (element.hasAttribute("id")) {
-                            element.setIdAttribute("id", true);
-                        }
-                    }
-                }
-
-                // Verificar URI
-                if (!uri.isEmpty() && !uriExistsInXML(doc, uri)) {
-                    throw new IllegalArgumentException("El elemento o párrafo XML especificado no existe en el documento XML.");
-                }
-
-                String comexType = detectForeignTradeDocumentType(doc);
-                if (comexType != null && uri.isEmpty()) {
-                    throw new IllegalArgumentException("Este XML corresponde a un documento de comercio exterior ("
-                            + comexTypeExceptionPhrase(comexType) + "). No se permite firmar el documento completo: "
-                            + "debe indicarse un elemento específico a firmar.");
-                }
-
-                validateSignatureRules(doc, uri);
-
-                if (comexType != null) {
-                    outputStream.println(comexTypeInfoMessage(comexType));
-                    outputStream.println("Elemento firmado: " + uri);
-                }
-
-                // Crear firma XML
-                XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM");
-
-                // Crear transformaciones
-                List<Transform> transforms = new ArrayList<>();
-                transforms.add(fac.newTransform(Transform.ENVELOPED, (TransformParameterSpec) null));
-                transforms.add(fac.newTransform(CanonicalizationMethod.INCLUSIVE, (C14NMethodParameterSpec) null));
-
-                // Crear referencia
-                Reference ref = fac.newReference(
-                        uri.isEmpty() ? "" : "#" + uri,
-                        fac.newDigestMethod(DigestMethod.SHA256, null),
-                        transforms,
-                        null,
-                        null);
-
-                // Crear SignedInfo
-                SignedInfo si = fac.newSignedInfo(
-                        fac.newCanonicalizationMethod(CanonicalizationMethod.INCLUSIVE, (C14NMethodParameterSpec) null),
-                        fac.newSignatureMethod("http://www.w3.org/2001/04/xmldsig-more#rsa-sha256", null),
-                        Collections.singletonList(ref));
-
-                // Crear KeyInfo
-                KeyInfoFactory kif = fac.getKeyInfoFactory();
-                KeyValue keyValue = kif.newKeyValue(cert.getPublicKey());
-
-                List<Object> x509Content = new ArrayList<>();
-                x509Content.add(cert.getSubjectX500Principal().getName());
-                x509Content.add(cert);
-                X509Data x509Data = kif.newX509Data(x509Content);
-
-                List<XMLStructure> kiContent = new ArrayList<>();
-                kiContent.add(keyValue);
-                kiContent.add(x509Data);
-                KeyInfo ki = kif.newKeyInfo(kiContent);
-
-                // Crear XMLSignature
-                XMLSignature signature = fac.newXMLSignature(si, ki);
-
-                // Crear contexto y firmar
-                DOMSignContext dsc = createSignatureContext(doc, uri, privateKey);
-                signature.sign(dsc);
-
-                // Guardar documento firmado
-                String outputXmlFile = getOutputFileName(xmlFile);
-                TransformerFactory tf = TransformerFactory.newInstance();
-                tf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-
-                Transformer trans = tf.newTransformer();
-                if (xmlDeclaration != null) {
-                    trans.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-                }
-                trans.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-                trans.setOutputProperty(OutputKeys.INDENT, "no");
-
-                try (StringWriter sw = new StringWriter()) {
-                    trans.transform(new DOMSource(doc), new StreamResult(sw));
-                    String output = sw.toString().replace("&#13;", "");
-
-                    try (Writer writer = new OutputStreamWriter(new FileOutputStream(outputXmlFile), "UTF-8")) {
-                        if (xmlDeclaration != null) {
-                            writer.write(xmlDeclaration + "\n");
-                        }
-                        writer.write(output);
-                    }
-                }
-
-                outputStream.println("Documento XML firmado guardado como: " + outputXmlFile);
-            }
+            outputStream.println("Documento XML firmado guardado como: " + outputXmlFile);
         } catch (Exception e) {
             throw new IllegalArgumentException(e.getMessage());
+        }
+    }
+
+    private static DocumentBuilderFactory crearFabricaDeDocumentos() {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(true);
+        dbf.setCoalescing(false);
+        dbf.setExpandEntityReferences(false);
+        dbf.setValidating(false);
+        dbf.setXIncludeAware(false);
+        dbf.setIgnoringElementContentWhitespace(false);
+        dbf.setIgnoringComments(false);
+        return dbf;
+    }
+
+    /** Lee el documento y registra sus identificadores, sin modificar el archivo. */
+    private static Document leerXml(String xmlFile, PrintStream salida) throws Exception {
+        Document doc;
+        try (InputStream fis = new ByteArrayInputStream(XmlBom.leer(xmlFile, XmlBom.Uso.FIRMA, salida))) {
+            DocumentBuilder builder = crearFabricaDeDocumentos().newDocumentBuilder();
+            InputSource is = new InputSource(new InputStreamReader(fis, "UTF-8"));
+            is.setEncoding("UTF-8");
+            doc = builder.parse(is);
+        }
+
+        // Registrar los IDs
+        NodeList nodeList = doc.getElementsByTagName("*");
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Node node = nodeList.item(i);
+            if (node instanceof Element) {
+                Element element = (Element) node;
+                if (element.hasAttribute("ID")) {
+                    element.setIdAttribute("ID", true);
+                }
+                if (element.hasAttribute("Id")) {
+                    element.setIdAttribute("Id", true);
+                }
+                if (element.hasAttribute("id")) {
+                    element.setIdAttribute("id", true);
+                }
+            }
+        }
+        return doc;
+    }
+
+    /** Firma el documento y devuelve el contenido del archivo firmado; no escribe nada en disco. */
+    private static byte[] firmarDocumento(String xmlFile, String uri, PrivateKey privateKey, X509Certificate cert,
+                                          PrintStream salida) throws Exception {
+        // Preservar declaración XML original
+        String originalContent = readFileToString(xmlFile, salida);
+        String xmlDeclaration = null;
+        if (originalContent.startsWith("<?xml")) {
+            int endDecl = originalContent.indexOf("?>");
+            if (endDecl != -1) {
+                xmlDeclaration = originalContent.substring(0, endDecl + 2);
+            }
+        }
+
+        // Leer el documento
+        Document doc = leerXml(xmlFile, salida);
+
+        // Verificar URI
+        if (!uri.isEmpty() && !uriExistsInXML(doc, uri)) {
+            throw new IllegalArgumentException("El elemento o párrafo XML especificado no existe en el documento XML.");
+        }
+
+        String comexType = detectForeignTradeDocumentType(doc);
+        if (comexType != null && uri.isEmpty()) {
+            throw new IllegalArgumentException("Este XML corresponde a un documento de comercio exterior ("
+                    + comexTypeExceptionPhrase(comexType) + "). No se permite firmar el documento completo: "
+                    + "debe indicarse un elemento específico a firmar.");
+        }
+
+        validateSignatureRules(doc, uri);
+
+        if (comexType != null) {
+            salida.println(comexTypeInfoMessage(comexType));
+            salida.println("Elemento firmado: " + uri);
+        }
+
+        // Crear firma XML
+        XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM");
+
+        // Crear transformaciones
+        List<Transform> transforms = new ArrayList<>();
+        transforms.add(fac.newTransform(Transform.ENVELOPED, (TransformParameterSpec) null));
+        transforms.add(fac.newTransform(CanonicalizationMethod.INCLUSIVE, (C14NMethodParameterSpec) null));
+
+        // Crear referencia
+        Reference ref = fac.newReference(
+                uri.isEmpty() ? "" : "#" + uri,
+                fac.newDigestMethod(DigestMethod.SHA256, null),
+                transforms,
+                null,
+                null);
+
+        // Crear SignedInfo
+        SignedInfo si = fac.newSignedInfo(
+                fac.newCanonicalizationMethod(CanonicalizationMethod.INCLUSIVE, (C14NMethodParameterSpec) null),
+                fac.newSignatureMethod("http://www.w3.org/2001/04/xmldsig-more#rsa-sha256", null),
+                Collections.singletonList(ref));
+
+        // Crear KeyInfo
+        KeyInfoFactory kif = fac.getKeyInfoFactory();
+        KeyValue keyValue = kif.newKeyValue(cert.getPublicKey());
+
+        List<Object> x509Content = new ArrayList<>();
+        x509Content.add(cert.getSubjectX500Principal().getName());
+        x509Content.add(cert);
+        X509Data x509Data = kif.newX509Data(x509Content);
+
+        List<XMLStructure> kiContent = new ArrayList<>();
+        kiContent.add(keyValue);
+        kiContent.add(x509Data);
+        KeyInfo ki = kif.newKeyInfo(kiContent);
+
+        // Crear XMLSignature
+        XMLSignature signature = fac.newXMLSignature(si, ki);
+
+        // Crear contexto y firmar
+        DOMSignContext dsc = createSignatureContext(doc, uri, privateKey);
+        signature.sign(dsc);
+
+        TransformerFactory tf = TransformerFactory.newInstance();
+        tf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+
+        Transformer trans = tf.newTransformer();
+        if (xmlDeclaration != null) {
+            trans.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        }
+        trans.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        trans.setOutputProperty(OutputKeys.INDENT, "no");
+
+        try (StringWriter sw = new StringWriter()) {
+            trans.transform(new DOMSource(doc), new StreamResult(sw));
+            String output = sw.toString().replace("&#13;", "");
+            String contenido = (xmlDeclaration != null ? xmlDeclaration + "\n" : "") + output;
+            return contenido.getBytes(StandardCharsets.UTF_8);
+        }
+    }
+
+    // ------------------------------------------------------------------------------------------------ por lotes
+
+    private static int ejecutarLote(String[] args) {
+        String numeroDeVersion = VERSION.replaceAll(".* v(\\S+) .*", "$1");
+        LoteXml.Pedido pedido;
+        try {
+            pedido = LoteXml.analizarArgumentos(args, 2);
+        } catch (IllegalArgumentException e) {
+            return Lote.rechazarArgumentos("XMLSignerPKCS12", numeroDeVersion, outputStream, errorStream,
+                    e.getMessage());
+        }
+        return Lote.ejecutar("XMLSignerPKCS12", numeroDeVersion, "xml", pedido.opciones(), outputStream, errorStream,
+                new FirmaPorLote(pedido));
+    }
+
+    /** Firma de cada documento del lote con un único acceso al archivo PKCS#12. */
+    private static final class FirmaPorLote implements Lote.Tarea, LoteXml.Xml {
+        private final LoteXml.Pedido pedido;
+        private PrivateKey privateKey;
+        private X509Certificate cert;
+
+        private FirmaPorLote(LoteXml.Pedido pedido) {
+            this.pedido = pedido;
+        }
+
+        @Override
+        public void revisar(List<Lote.Documento> pendientes) {
+            LoteXml.revisar(pendientes, pedido.elemento(), this);
+        }
+
+        @Override
+        public void acceder() {
+            String pkcs12File = pedido.credencial().get(0);
+            String password = pedido.credencial().get(1);
+            if (!new File(pkcs12File).isFile()) {
+                throw new Lote.Corte("ARGUMENTOS", "El archivo PKCS#12 no existe: " + pkcs12File);
+            }
+            KeyStore keyStore;
+            try {
+                keyStore = KeyStore.getInstance("PKCS12");
+                try (FileInputStream fis = new FileInputStream(pkcs12File)) {
+                    keyStore.load(fis, password.toCharArray());
+                }
+            } catch (IOException | GeneralSecurityException e) {
+                throw new Lote.Corte("CONTRASENA",
+                        "El archivo no es un PKCS#12 válido o la contraseña es incorrecta");
+            }
+            try {
+                String alias = CertificateValidity.elegirAlias(keyStore);
+                privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
+                cert = (X509Certificate) keyStore.getCertificate(alias);
+                if (privateKey == null || cert == null) {
+                    throw new Lote.Corte("CERTIFICADO_NO_APTO",
+                            "El archivo PKCS#12 no contiene un certificado con clave privada.");
+                }
+                ClockCheck.avisar(outputStream::println);
+                CertificateValidity.exigirApto(cert);
+                CertificateValidity.avisar(keyStore.getCertificateChain(alias), outputStream::println);
+            } catch (GeneralSecurityException e) {
+                throw new Lote.Corte("CONTRASENA", "No se pudo acceder a la clave privada del archivo PKCS#12.");
+            } catch (IllegalArgumentException e) {
+                throw new Lote.Corte("CERTIFICADO_NO_APTO", e.getMessage());
+            }
+            try {
+                validarRevocacionAntesDeFirmar(cert, pedido.omitirRevocacion());
+            } catch (IllegalArgumentException e) {
+                throw new Lote.Corte("CERTIFICADO_REVOCADO", e.getMessage());
+            }
+        }
+
+        @Override
+        public Lote.Resultado procesar(Lote.Documento documento) {
+            try {
+                CertificateValidity.exigirVigente(cert);
+            } catch (IllegalArgumentException e) {
+                throw new Lote.Corte("CERTIFICADO_NO_APTO", e.getMessage());
+            }
+            return LoteXml.firmar(documento, ruta ->
+                    firmarDocumento(ruta, pedido.elemento(), privateKey, cert, documento.registro()));
+        }
+
+        @Override
+        public Document leer(String ruta, PrintStream salida) throws Exception {
+            return leerXml(ruta, salida);
+        }
+
+        @Override
+        public String tipoComex(Document doc) {
+            return detectForeignTradeDocumentType(doc);
+        }
+
+        @Override
+        public boolean existeElemento(Document doc, String elemento) throws Exception {
+            return uriExistsInXML(doc, elemento);
+        }
+
+        @Override
+        public boolean tieneFirma(Document doc, String elemento) {
+            return hasExistingSignatureForUri(doc, elemento);
         }
     }
 
