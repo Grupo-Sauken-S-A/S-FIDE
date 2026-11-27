@@ -263,7 +263,7 @@
       <h1>Guía de Usuario S-FiDE GUI</h1>
       <p>Cómo usar la interfaz gráfica de S-FiDE para firmar y verificar documentos XML y PDF, paso a paso, con capturas reales de la propia aplicación. Pensada para quien usa el programa haciendo clic, no para quien integra los módulos por línea de comandos — para eso está el <a href="manual-tecnico-integracion.html">Manual Técnico de Integración</a>.</p>
       <div class="meta">
-        <span>Versión del producto: <strong>1.6.0 (en desarrollo, sin publicar)</strong></span>
+        <span>Versión del producto: <strong>1.6.0</strong></span>
         <span>Documento: <strong>26/11/2026</strong></span>
       </div>
     </div>
@@ -275,7 +275,7 @@
       <p>Además, el menú <strong>Archivo</strong> abre un <strong>visor interno</strong> de PDF y de XML (ver «Abrir un documento para mirarlo»). Esta guía recorre cada una de esas 13 pantallas con capturas reales de la aplicación: qué hace cada una, qué significa cada campo, y qué puede pasar al presionar "Ejecutar" — tanto si todo sale bien como los mensajes más comunes cuando algo falta o está mal.</p>
       <div class="callout note">
         <span class="label">Nota sobre las capturas</span>
-        <p>Las capturas de las pantallas que cambiaron en la versión 1.6.0 (firma con token y con archivo PKCS#12, verificación, validación XSD, trabajo por lote, la Guía Rápida, «Acerca de» y las novedades) son de esa versión, hechas con un certificado de prueba en archivo; las dos pantallas de firma con token muestran el formulario, sin un token conectado. Las demás, incluidas las que muestran un certificado vencido, son de la versión 1.5.1 y se hicieron con tokens criptográficos reales y con el almacén de certificados de Windows. El campo del documento queda vacío después de cada ejecución, tal como lo verá usted; las contraseñas nunca se muestran. Los mensajes de error y de éxito que se describen en cada sección son los mensajes reales que imprime cada programa: algunos con captura real y el resto tomados textualmente de la documentación técnica del producto.</p>
+        <p>Las capturas de las pantallas que cambiaron en la versión 1.6.0 (firma con token y con archivo PKCS#12, verificación, validación XSD, trabajo por lote, la Guía Rápida, «Acerca de» y las novedades) son de esa versión, hechas con un certificado de prueba en archivo; las dos pantallas de firma con token muestran el formulario, sin un token conectado. Las demás corresponden a pantallas que no cambiaron, o muestran un certificado vencido, y se hicieron con la versión anterior, con tokens criptográficos reales y con el almacén de certificados de Windows. El campo del documento queda vacío después de cada ejecución, tal como lo verá usted; las contraseñas nunca se muestran. Los mensajes de error y de éxito que se describen en cada sección son los mensajes reales que imprime cada programa: algunos con captura real y el resto tomados textualmente de la documentación técnica del producto.</p>
       </div>
     </section>
 
@@ -421,7 +421,7 @@
         <p>Si el certificado del token está vencido, S-FiDE no firma y lo explica antes de tocar el documento:</p>
         <figure class="shot">
           <img src="img/manual-usuario/15_firmar_xml_certificado_vencido.png" alt="Firmar XML con Token con un certificado vencido: el programa se niega a firmar y explica cuándo venció">
-          <figcaption>Captura real (versión 1.5.1, anterior a las pestañas) — con un certificado vencido no se genera ningún archivo firmado; lo mismo ocurre con todos los módulos de firma</figcaption>
+          <figcaption>Captura real, anterior a las pestañas «Un documento» y «Por lote» — con un certificado vencido no se genera ningún archivo firmado; lo mismo ocurre con todos los módulos de firma</figcaption>
         </figure>
         <p class="field-label">Campos</p>
         <ul>

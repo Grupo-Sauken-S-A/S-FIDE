@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Novedades S-FiDE 1.5.1</title>
-<meta name="description" content="S-FiDE 1.5.1: ya no se puede firmar con un certificado vencido, avisos sobre el reloj de la computadora y de la cadena del certificado, y vigencia visible en todos los listados. Cómo actualizar desde la 1.4.0 o la 1.5.0, o instalar desde cero.">
+<title>Novedades S-FiDE 1.6.0</title>
+<meta name="description" content="S-FiDE 1.6.0: firma, verificación y validación XSD de carpetas enteras con un solo ingreso de la contraseña. Cómo actualizar desde la 1.4.0 o posterior, o instalar desde cero.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Public+Sans:wght@400;500;600;700&display=swap">
 <style>
   :root{
@@ -396,22 +396,22 @@
     <div class="org">Grupo Sauken S.A.</div>
   </div>
 
-  <p class="eyebrow">Novedades · Versión 1.5.1</p>
-  <h1>S-FiDE 1.5.1: ya no se firma con un certificado vencido, y el programa le avisa antes de que firme mal</h1>
-  <p class="dek">Antes de aplicar una firma, S-FiDE ahora comprueba que el certificado esté vigente y sea apto para firmar, y le advierte si el reloj de la computadora está desfasado. Además, todas las pantallas que muestran certificados indican si cada uno está vigente o vencido. Un repaso de lo más importante, y cómo actualizar.</p>
-  <p class="meta">Grupo Sauken S.A. — Córdoba, Argentina · Octubre de 2026</p>
+  <p class="eyebrow">Novedades · Versión 1.6.0</p>
+  <h1>S-FiDE 1.6.0: firme y verifique carpetas enteras de una sola vez</h1>
+  <p class="dek">Ahora se puede aplicar una misma operación a muchos documentos juntos, ingresando la contraseña una sola vez: firmar XML y PDF, verificar firmas y validar contra el esquema, con el resultado documento por documento. Un repaso de lo más importante, y cómo actualizar.</p>
+  <p class="meta">Grupo Sauken S.A. — Córdoba, Argentina · Noviembre de 2026</p>
 
   <p class="lede">
-    S-FiDE es el programa gratuito y de código abierto de Grupo Sauken S.A. para firmar y verificar digitalmente documentos XML y PDF con validez legal en Argentina, usando un token criptográfico, un certificado en archivo o el almacén de certificados de Windows. La versión 1.5.1 refuerza lo más importante de una firma: que <strong>se haga con un certificado que realmente sirve</strong>. Mantiene todo lo de la 1.5.0 (firma de PDF entre varias personas, visor integrado, Windows, Linux y macOS).
+    S-FiDE es el programa gratuito y de código abierto de Grupo Sauken S.A. para firmar y verificar digitalmente documentos XML y PDF con validez legal en Argentina, usando un token criptográfico, un certificado en archivo o el almacén de certificados de Windows. La versión 1.6.0 agrega el <strong>trabajo por lote</strong>: en lugar de repetir los mismos pasos documento por documento, se elige una carpeta y S-FiDE hace el resto. Mantiene todo lo anterior: no firma con certificados vencidos, permite que varias personas firmen un PDF, trae visor integrado y funciona en Windows, Linux y macOS.
   </p>
 
   <section class="howto" aria-labelledby="como-actualizar">
-    <h2 id="como-actualizar">Cómo pasar a la versión 1.5.1</h2>
+    <h2 id="como-actualizar">Cómo pasar a la versión 1.6.0</h2>
     <p class="sub">Depende de la versión que tenga hoy. Para saberlo, abra S-FiDE y mire el menú <span class="menu-path">Ayuda → Versión</span>.</p>
 
     <div class="paths">
       <div class="path">
-        <p class="who">Si ya usa la versión 1.4.0 o 1.5.0</p>
+        <p class="who">Si ya usa la versión 1.4.0 o una posterior</p>
         <h3>Actualice desde el propio programa</h3>
         <ol>
           <li>Abra S-FiDE y vaya al menú <span class="menu-path">Ayuda → Buscar actualizaciones…</span></li>
@@ -434,37 +434,96 @@
     </div>
 
     <div class="downloads">
-      <p class="label">Descargas de la versión 1.5.1</p>
+      <p class="label">Descargas de la versión 1.6.0</p>
       <div class="dl-grid">
-        <a class="dl" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/download/v1.5.1/S-FiDE-1.5.1-windows.zip">
+        <a class="dl" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/download/v1.6.0/S-FiDE-1.6.0-windows.zip">
           <span class="os">Windows (64 bits)</span>
-          <span class="file">S-FiDE-1.5.1-windows.zip</span>
+          <span class="file">S-FiDE-1.6.0-windows.zip</span>
         </a>
-        <a class="dl" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/download/v1.5.1/S-FiDE-1.5.1-linux.zip">
+        <a class="dl" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/download/v1.6.0/S-FiDE-1.6.0-linux.zip">
           <span class="os">Linux (64 bits)</span>
-          <span class="file">S-FiDE-1.5.1-linux.zip</span>
+          <span class="file">S-FiDE-1.6.0-linux.zip</span>
         </a>
-        <a class="dl" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/download/v1.5.1/S-FiDE-1.5.1-macos-aarch64.tar.gz">
+        <a class="dl" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/download/v1.6.0/S-FiDE-1.6.0-macos-aarch64.tar.gz">
           <span class="os">macOS con Apple Silicon (M1 o posterior)</span>
-          <span class="file">S-FiDE-1.5.1-macos-aarch64.tar.gz</span>
+          <span class="file">S-FiDE-1.6.0-macos-aarch64.tar.gz</span>
         </a>
-        <a class="dl" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/download/v1.5.1/S-FiDE-1.5.1-macos-x64.tar.gz">
+        <a class="dl" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/download/v1.6.0/S-FiDE-1.6.0-macos-x64.tar.gz">
           <span class="os">macOS con procesador Intel</span>
-          <span class="file">S-FiDE-1.5.1-macos-x64.tar.gz</span>
+          <span class="file">S-FiDE-1.6.0-macos-x64.tar.gz</span>
         </a>
       </div>
       <p class="small-note">En una Mac, el menú Apple → «Acerca de este Mac» indica si tiene chip Apple o procesador Intel. Los pasos para abrir S-FiDE en macOS están en el archivo <code>Leeme.txt</code> incluido. Todas las descargas, con sus sumas de verificación (SHA-256), están en la <a href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/latest" style="color:var(--accent)">página de la versión</a>.</p>
     </div>
   </section>
 
-  <p class="section-label">Novedades de la versión 1.5.1</p>
+  <p class="section-label">Novedades de la versión 1.6.0</p>
+  <div class="features">
+
+    <div class="feature">
+      <div class="icon teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <h3>Una carpeta entera, una sola contraseña <span class="badge-new">Nuevo</span></h3>
+      <p>Las pantallas de firma con token y con archivo de certificado, de verificación y de validación XSD suman la pestaña <strong>Por lote</strong>: se elige una carpeta y S-FiDE procesa todos sus documentos, con un solo ingreso de la contraseña.</p>
+    </div>
+
+    <div class="feature">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </div>
+      <h3>Revisar antes de firmar <span class="badge-new">Nuevo</span></h3>
+      <p>El botón <em>Revisar</em> muestra todos los documentos sin firmar nada ni usar el PIN. Los que no se pueden firmar aparecen bloqueados con el motivo, y los demás se pueden desmarcar.</p>
+    </div>
+
+    <div class="feature">
+      <div class="icon teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+      </div>
+      <h3>El resultado, documento por documento</h3>
+      <p>Una tabla muestra cómo terminó cada uno. Se pueden reintentar solo los que fallaron, abrir el informe y, si se pide, dejar junto a cada documento un registro con los avisos, el detalle y el resultado.</p>
+    </div>
+
+    <div class="feature">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <h3>Un lote hace una sola cosa</h3>
+      <p>No se mezclan Certificados de Origen con Declaraciones Juradas; en PDF todos reciben la misma firma en el mismo lugar; cerrar documentos pide confirmación; y un archivo ya firmado nunca se reemplaza.</p>
+    </div>
+
+    <div class="feature wide">
+      <div class="icon teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      </div>
+      <h3>Para quien integra S-FiDE en su propio sistema</h3>
+      <p>Siete programas admiten <code>-lote</code> con una lista de documentos, con salida estable para procesar desde otra aplicación. Su ayuda (<code>-ayuda</code>) tiene ahora una misma estructura, con ejemplos. Atención: <code>PDFSignerPKCS12</code> informa el éxito por la salida estándar; la guía de migración está en el Manual Técnico.</p>
+      <div class="tokens">
+        <span>Firma XML</span>
+        <span>Firma PDF</span>
+        <span>Verificación</span>
+        <span>Validación XSD</span>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3>Componentes al día</h3>
+      <p>Se actualizaron las bibliotecas de firma y verificación con las correcciones de seguridad más recientes de sus autores.</p>
+    </div>
+
+  </div>
+
+  <p class="section-label">También en la versión 1.5.1</p>
   <div class="features">
 
     <div class="feature">
       <div class="icon teal">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
       </div>
-      <h3>Un certificado vencido ya no puede firmar <span class="badge-new">Corrección</span></h3>
+      <h3>Un certificado vencido ya no puede firmar</h3>
       <p>Antes, S-FiDE podía firmar con un certificado vencido sin avisar, y el documento firmado no era aceptado después. Ahora comprueba las fechas de validez antes de firmar y, si el certificado venció o todavía no empezó a valer, no firma y le explica cuándo venció. Vale para XML y PDF, con token, con archivo de certificado y con el almacén de Windows.</p>
     </div>
 
@@ -480,7 +539,7 @@
       <div class="icon teal">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       </div>
-      <h3>Aviso si el reloj de la computadora está mal <span class="badge-new">Nuevo</span></h3>
+      <h3>Aviso si el reloj de la computadora está mal</h3>
       <p>La vigencia del certificado y la fecha de la firma dependen del reloj de la computadora. Si hay conexión a Internet, S-FiDE lo compara con la hora real y le avisa antes de firmar si la diferencia es grande. Es solo un aviso: no le impide firmar, y sin Internet no dice nada.</p>
     </div>
 
@@ -498,96 +557,6 @@
       </div>
       <h3>Advertencias que no lo detienen</h3>
       <p>Si el certificado de la autoridad certificante que emitió el suyo está vencido, o si su clave es más débil de lo recomendable, S-FiDE se lo advierte antes de firmar, sin impedirle hacerlo.</p>
-    </div>
-
-    <div class="feature">
-      <div class="icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </div>
-      <h3>Bibliotecas al día</h3>
-      <p>Se repitió la revisión de seguridad de todos los componentes que S-FiDE distribuye (ninguno tiene avisos conocidos), se actualizaron varias bibliotecas y se eliminó un mensaje técnico que la firma de PDF con Windows podía mostrar por pantalla.</p>
-    </div>
-  </div>
-
-  <p class="section-label">También en la versión 1.5.0</p>
-  <div class="features">
-
-    <div class="feature">
-      <div class="icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      </div>
-      <h3>Un PDF, varias firmas, varias personas</h3>
-      <p>Una persona firma y lo deja abierto, otra lo revisa y lo firma, y la última lo cierra. Cada una desde su computadora, con S-FiDE o con Acrobat Reader en cualquier combinación: lo que firma S-FiDE es válido en Acrobat Reader, y a la inversa.</p>
-    </div>
-
-    <div class="feature">
-      <div class="icon teal">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l-3 3 3 3"/><path d="M9 5l3-3 3 3"/><path d="M15 19l-3 3-3-3"/><path d="M19 9l3 3-3 3"/><path d="M2 12h20"/><path d="M12 2v20"/></svg>
-      </div>
-      <h3>La firma se ubica sobre el propio documento</h3>
-      <p>Se acabaron los números de X e Y: ahora se arrastra el recuadro con el mouse sobre el PDF, como en Acrobat Reader, y se ve el texto real que va a llevar. Se puede elegir la página, el tamaño y firmar dentro de los campos de firma que ya traiga el documento.</p>
-    </div>
-
-    <div class="feature">
-      <div class="icon teal">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
-      </div>
-      <h3>Revisa antes de firmar, y se lo explica en simple</h3>
-      <p>Antes de firmar, S-FiDE revisa el documento y las firmas que ya tiene y se lo cuenta con palabras sencillas. Si alguien ya lo cerró, se lo dice y no firma encima. Y no lo alarma sin motivo: que un certificado haya vencido después de firmar no es un problema.</p>
-    </div>
-
-    <div class="feature">
-      <div class="icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      </div>
-      <h3>Visor integrado de PDF y de XML <span class="badge-new">Nuevo</span></h3>
-      <p>Desde el menú Archivo se puede abrir un PDF o un XML para mirarlo, sin modificarlo. El XML se ve con colores y con elementos que se pliegan y despliegan, con las firmas marcadas (quién firmó y qué quedó firmado), y un botón para validarlas.</p>
-    </div>
-
-    <div class="feature">
-      <div class="icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
-      </div>
-      <h3>Comercio exterior: visores oficiales y validación del esquema</h3>
-      <p>Si el XML es un Certificado de Origen o una Declaración Jurada de Origen, un botón abre el visor oficial en el navegador. Y si el documento está completo, «Validar XSD» comprueba su estructura con el esquema oficial, que S-FiDE descarga solo.</p>
-    </div>
-
-    <div class="feature">
-      <div class="icon teal">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
-      </div>
-      <h3>XML con marca «BOM»: ya no falla</h3>
-      <p>Algunos editores, como el Bloc de notas de Windows, agregan al guardar un carácter invisible (el BOM) que impedía firmar. Ahora S-FiDE se lo explica, lo ignora y firma igual, dejando el documento firmado sin esa marca. No afecta a las firmas que el documento ya tuviera.</p>
-    </div>
-
-    <div class="feature wide">
-      <div class="icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
-      </div>
-      <h3>Ahora también para macOS <span class="badge-new">Nuevo</span></h3>
-      <p>Por primera vez, S-FiDE tiene versión para Mac, con un paquete para los equipos con chip Apple (M1 en adelante) y otro para los de procesador Intel. Cada uno trae su propio Java: no hay que instalar nada. Es la primera versión para macOS; si encuentra algún inconveniente, escríbanos a <strong>soporte@sauken.com.ar</strong>.</p>
-      <div class="tokens">
-        <span>Windows</span>
-        <span>Linux</span>
-        <span>macOS · Apple Silicon</span>
-        <span>macOS · Intel</span>
-      </div>
-    </div>
-
-    <div class="feature">
-      <div class="icon teal">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </div>
-      <h3>Más seguridad</h3>
-      <p>Se actualizaron las bibliotecas criptográficas y de soporte a sus versiones más recientes, se revisó toda la cadena de componentes que S-FiDE distribuye y se documentaron las licencias de cada uno.</p>
-    </div>
-
-    <div class="feature">
-      <div class="icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
-      </div>
-      <h3>Al actualizar, un resumen de lo nuevo</h3>
-      <p>La primera vez que cada usuario abre una versión nueva, S-FiDE le muestra un resumen de las novedades, también si se saltó alguna versión. Se puede volver a ver cuando se quiera desde <em>Ayuda → Novedades de esta versión</em>.</p>
     </div>
 
   </div>
@@ -651,7 +620,7 @@
   </div>
 
   <div class="closing">
-    <p><strong style="color:var(--ink)">Si ya usa la versión 1.4.0 o 1.5.0, actualice desde el menú Ayuda → Buscar actualizaciones.</strong> Si tiene una versión anterior, descargue el ZIP completo e instálelo normalmente, como se explica más arriba.</p>
+    <p><strong style="color:var(--ink)">Si ya usa la versión 1.4.0 o una posterior, actualice desde el menú Ayuda → Buscar actualizaciones.</strong> Si tiene una versión anterior, descargue el ZIP completo e instálelo normalmente, como se explica más arriba.</p>
     <div class="cta-row">
       <a class="btn primary" href="https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/latest">Descargar la última versión</a>
       <a class="btn secondary" href="https://grupo-sauken-s-a.github.io/S-FIDE/manual-usuario-sfide-gui.html">Ver la Guía de Usuario</a>

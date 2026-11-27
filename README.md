@@ -5,6 +5,8 @@
 [![Última versión](https://img.shields.io/github/v/release/Grupo-Sauken-S-A/S-FIDE)](https://github.com/Grupo-Sauken-S-A/S-FIDE/releases/latest)
 [![Compilar y verificar](https://github.com/Grupo-Sauken-S-A/S-FIDE/actions/workflows/ci.yml/badge.svg)](https://github.com/Grupo-Sauken-S-A/S-FIDE/actions/workflows/ci.yml)
 
+**Versión actual: 1.6.0**
+
 Suite de programas Java independientes, de Grupo Sauken S.A., para firmar y verificar firmas digitales en documentos XML y PDF en Argentina, y para extraer/inspeccionar certificados digitales desde tokens criptográficos (PKCS#11), archivos PKCS#12 o el almacén de certificados de Windows. Trabaja con certificados de firma digital emitidos bajo la Ley 25.506 de Firma Digital argentina —la misma normativa detrás de los certificados de la Autoridad Certificante de la ONTI (AC-ONTI) y de trámites ante organismos como AFIP/ARCA— y con la especialización de comercio exterior ALADI/MERCOSUR. Incluye una interfaz gráfica JavaFX opcional (`s_fide_gui`) que orquesta esos mismos programas.
 
 ## Filosofía
@@ -51,6 +53,8 @@ Cada uno de los 15 módulos genera su jar en su propia carpeta `target/`.
 
 `install.bat` arma una carpeta de distribución autocontenida (jars con nombre sin versión, runtime de Java y JavaFX embebidos si se indica una carpeta "vendor") que puede ejecutarse desde cualquier ubicación, incluido un medio removible, en un equipo sin Java preinstalado — ver `Leeme.txt` y la [sección 12 del manual técnico](doc/manual-tecnico-integracion.md#12-distribución-y-despliegue).
 
+**Operaciones por lotes (desde 1.6.0).** Los firmadores de XML y PDF con token y con PKCS#12, los dos verificadores y el validador XSD aplican una misma operación a una lista de documentos (`-lote <lista>`), con un solo acceso al certificado, una línea de resultado por documento y, si se piden, un informe CSV y un registro por documento. La interfaz gráfica lo ofrece en la pestaña «Por lote», sobre una carpeta entera. Ver la sección 7.11 del [Manual Técnico](doc/manual-tecnico-integracion.md).
+
 **Certificado vigente y apto antes de firmar (desde 1.5.1).** Los seis firmadores se niegan a firmar (código de salida `1`, sin generar archivo) si el certificado está vencido, todavía no es válido, es el de una autoridad certificante o su uso no incluye firma; no hay argumento para omitirlo. Advierten, sin impedir la firma, si el reloj de la computadora difiere de la hora real de Internet, si un certificado de la cadena está vencido o si la clave es débil. Los listados de certificados muestran una línea `Estado:`. Ver la sección 7.5.2 del [Manual Técnico](doc/manual-tecnico-integracion.md).
 
 **Firma de PDF en cadena (desde 1.5.0).** Varias personas pueden firmar el mismo PDF una después de otra, en computadoras distintas y con S-FiDE o Acrobat Reader en cualquier combinación. Los firmadores revisan el documento antes de firmar (si ya fue cerrado, y el estado de cada firma anterior, explicado en lenguaje simple); la última persona puede cerrarlo con una firma final que Acrobat reconoce como bloqueo; y la interfaz gráfica permite ubicar la firma sobre el propio documento. Ver la sección 7.7 del [Manual Técnico](doc/manual-tecnico-integracion.md). La GUI incluye Apache PDFBox (Apache 2.0) solo para mostrar las páginas.
@@ -61,7 +65,7 @@ Cada uno de los 15 módulos genera su jar en su propia carpeta `target/`.
 
 **macOS (desde 1.5.0).** Hay un paquete por procesador, `S-FiDE-<versión>-macos-aarch64.tar.gz` (Apple Silicon) y `S-FiDE-<versión>-macos-x64.tar.gz` (Intel), con su propio Java y JavaFX embebidos (macOS 12 o posterior). Se arman con `crear-distribucion-macos.ps1`/`.sh`; las instrucciones de uso están en `Leeme.txt`.
 
-Los ZIP de las [releases](https://github.com/Grupo-Sauken-S-A/S-FIDE/releases) traen esa misma distribución ya armada. **Antes de descomprimir, cree una carpeta propia** (se recomienda `C:\S-FiDE` en Windows y `/opt/S-FiDE` en Linux y macOS) y descomprima el contenido del ZIP dentro de esa carpeta — no directamente en la raíz de una unidad, el Escritorio o Descargas. Se recomienda `C:S-FiDE` en Windows y `/opt/S-FiDE` en Linux y macOS.
+Los ZIP de las [releases](https://github.com/Grupo-Sauken-S-A/S-FIDE/releases) traen esa misma distribución ya armada. **Antes de descomprimir, cree una carpeta propia** (se recomienda `C:\S-FiDE` en Windows y `/opt/S-FiDE` en Linux y macOS) y descomprima el contenido del ZIP dentro de esa carpeta — no directamente en la raíz de una unidad, el Escritorio o Descargas.
 
 ## Documentación
 
