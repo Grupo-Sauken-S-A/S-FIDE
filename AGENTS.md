@@ -72,6 +72,13 @@ Requiere JDK 23 (el repo incluye Maven Wrapper — no hace falta tener Maven ins
 
 No existe un `doc/guia-uso-sfide.md` separado — existió en versiones anteriores y se fusionó dentro del manual técnico; no lo recrees.
 
+**Guías del trabajo por lotes (desde 1.6.0), una por público y sin mezclarlos:**
+
+- `doc/guia-lotes-sfide-gui.html` (capturas en `doc/img/guia-lotes/`): solo la interfaz gráfica, sin nada de línea de comandos. Si cambia una pantalla, un aviso o una regla del lote en la GUI, actualizá el texto y las capturas.
+- `doc/guia-lotes-integradores.html`: solo los `.jar` por línea de comandos, sin nada de la GUI. Si cambia una opción, un estado, un código, un mensaje o la salida de un lote, actualizá sus ejemplos con salidas reales.
+
+No pongas enlaces entre una y otra. Las capturas y los ejemplos usan certificados de prueba y documentos ficticios.
+
 ---
 
 ## 5. Licencia: plantilla exacta para archivos nuevos

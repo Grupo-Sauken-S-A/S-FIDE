@@ -2,7 +2,7 @@
 
 **Sistema de Firma Digital Extendido**
 Grupo Sauken S.A. — Córdoba, Argentina
-Versión del documento: acompaña a S-FiDE v1.6.0 — 26/11/2026
+Versión del documento: acompaña a S-FiDE v1.6.0 — 27/11/2026
 
 ---
 
@@ -137,6 +137,8 @@ Mismo método que en las revisiones anteriores (descrito más abajo, en la de la
 | OpenJDK (runtime embebido) | 23.0.1 | 23.0.1 | no cubierto por OSV | Sin cambios |
 
 **Verificación después de actualizar:** el reactor completo (169 pruebas, sin fallas; 2 omitidas porque requieren un PDF real) y `herramientas/CompatibilidadCli.java` (175 casos): la salida de la comparación contra la 1.5.1 es idéntica antes y después de cambiar las bibliotecas. La versión 1.87 de Bouncy Castle es más estricta con datos mal formados (por ejemplo, rechaza un sello de tiempo cuya hora firmada contradiga la que declara). **Falta comprobar en Acrobat Reader** los PDF firmados con iText 8.0.6.
+
+**Repetición antes de publicar (2026-11-27):** las mismas 36 combinaciones, consultadas otra vez en OSV y en la base de avisos de GitHub, con sus controles positivos: ningún aviso y ninguna versión estable nueva desde la revisión anterior.
 
 **Pendientes que requieren decisión:** JDK 25 LTS con JavaFX 25 (cambia los runtimes de todas las plataformas, incluido macOS) y iText 9.x (9.8.1 al momento de la revisión; salto mayor con cambios de API en la firma).
 
@@ -484,6 +486,8 @@ El menú **Archivo → Abrir PDF…** / **Abrir XML…** de `s_fide_gui` muestra
 
 Siete programas pueden aplicar **una misma operación a una lista de documentos** en una sola ejecución: `XMLSignerPKCS11`, `XMLSignerPKCS12`, `PDFSignerPKCS11`, `PDFSignerPKCS12`, `XMLVerifySignatures`, `PDFVerifySignatures` y `XMLVerifyXSDStructure`. Se accede al certificado una sola vez (un solo ingreso de PIN y una sola consulta de revocación). Los demás programas, incluidos los de almacén de Windows, no admiten lote. El uso de a un documento no cambia.
 
+Ejemplos completos de ejecuciones correctas y con errores, programa por programa: [Guía de lotes para integradores](guia-lotes-integradores.html).
+
 #### Invocación
 
 | Programa | Invocación en lote |
@@ -648,7 +652,7 @@ Convenciones comunes a todas las aplicaciones de esta sección:
 | No hay ningún token | Falla (código `1`): `No se detectó ningún token conectado para la biblioteca ... (la biblioteca informa N slots, todos sin token)` |
 | La biblioteca es de otra arquitectura (32 bits con un Java de 64 bits, o a la inversa) | Falla con un mensaje explícito, detectado leyendo el encabezado del propio archivo (PE en Windows, ELF en Linux). Es una causa frecuente de que un programa antiguo con Java de 32 bits acceda al token y S-FiDE no: en Windows la biblioteca de 64 bits suele estar en `C:\Windows\System32` y la de 32 bits en `C:\Windows\SysWOW64` |
 
-Los errores de acceso al token (contraseña incorrecta, token bloqueado, token retirado, dispositivo con falla, biblioteca incompatible o inexistente) se traducen a un mensaje en español a partir de **toda** la cadena de causas — el error real casi nunca es el de arriba, `SunPKCS11` lo envuelve varias veces —, sin exponer una traza de Java; si la causa no se reconoce, se agrega el detalle técnico en una sola línea.
+Los errores de acceso al token (contraseña incorrecta, token bloqueado, token retirado, dispositivo con falla, biblioteca incompatible, inexistente o indicada sin su ruta completa) se traducen a un mensaje en español a partir de **toda** la cadena de causas — el error real casi nunca es el de arriba, `SunPKCS11` lo envuelve varias veces —, sin exponer una traza de Java; si la causa no se reconoce, se agrega el detalle técnico en una sola línea.
 
 **Rutas de biblioteca con espacios en el nombre (p. ej. `C:\Program Files (x86)\...`):** los cuatro módulos aceptan estas rutas sin que el integrador deba agregar comillas — la conversión necesaria (barra invertida a barra normal, y encomillado interno) la hace el propio programa antes de pasarla al proveedor SunPKCS11. Este manejo es uniforme en Windows/Linux/macOS.
 
@@ -1338,7 +1342,7 @@ java -jar WindowsCertificateStoreView.jar
 - Los módulos de CSP/KSP (`WindowsCertificateStoreView`/`XMLSignerWindowsCSP`/`PDFSignerWindowsCSP`) solo aparecen en el panel lateral si la GUI corre en Windows.
 - Validación de que todos los `.jar` necesarios estén presentes junto a `SFide-GUI.jar` antes de permitir su uso.
 - **Instancia única por usuario y por carpeta de instalación:** al arrancar, se detecta si ese mismo usuario ya tiene otra instancia de la GUI corriendo desde la misma carpeta (dos instalaciones en carpetas distintas sí pueden correr en paralelo, y **usuarios distintos del mismo equipo** — por ejemplo, en un servidor de escritorio remoto — pueden tener cada uno su propia instancia a la vez sobre la misma instalación). Si la hay, se informa y la nueva instancia se cierra sin abrir ninguna ventana, sin afectar la ya abierta. Implementado con un `FileLock` (`java.nio.channels`) exclusivo sobre `sfide-gui-<marca>.lock` en la carpeta personal del usuario (la marca identifica la carpeta de instalación), no con un flag persistido — el sistema operativo libera el lock automáticamente al terminar el proceso, sea un cierre normal o una caída, sin dejar ningún estado que limpiar a mano. Mecanismo estándar del JDK, igual en Windows/Linux/macOS.
-- **Ventana de Ayuda, pestaña "Documentación":** enlaces para abrir, en el navegador web predeterminado del sistema, los documentos HTML de `doc/` (Guía de Usuario y Manual Técnico) como URL `file://`, más enlaces externos a los visualizadores de ALADI para COD/CODEH (`viewcod.certificadoorigen.com.ar`) y DJO/DJOEH (`viewdjo.certificadoorigen.com.ar`). La pestaña "Contacto" de la misma ventana incluye además un enlace a la página del proyecto en GitHub.
+- **Ventana de Ayuda, pestaña "Documentación":** enlaces para abrir, en el navegador web predeterminado del sistema, los documentos HTML de `doc/` (Guía de Usuario, Guía de trabajo por lotes, Manual Técnico y, desde 1.6.0, Guía de lotes para integradores) como URL `file://`, más enlaces externos a los visualizadores de ALADI para COD/CODEH (`viewcod.certificadoorigen.com.ar`) y DJO/DJOEH (`viewdjo.certificadoorigen.com.ar`). La pestaña "Contacto" de la misma ventana incluye además un enlace a la página del proyecto en GitHub.
 - **Botón "Abrir documento generado"**, junto al campo del documento de entrada en las seis pestañas de firma: deshabilitado hasta que la firma termina con código de salida `0` **y** el archivo `-signed` correspondiente existe realmente en disco (no se confía ciegamente en el código de salida) — al presionarlo, abre ese documento como URL `file://` en el navegador predeterminado. Se deshabilita si el usuario edita el campo del documento de entrada después de firmar.
 - **Botones de ayuda contextual ("?")**: junto a "Elemento XML (ID) a Firmar" en las tres pestañas de firma XML (qué pasa si se deja vacío, qué debe contener, y el detalle de COD/CODEH/DJO/DJOEH para comercio exterior), y junto a la posición X/Y en las tres pestañas de firma PDF (sistema de coordenadas de PDF y las posiciones recomendadas para Exportador/Funcionario Habilitado en comercio exterior — ver también [sección 9.9](#99-pdfsignerpkcs12), tabla de flags).
 - **Campos de entrada vacíos con ejemplo de carga ("placeholder"):** cada `TextField` sin valor recordado muestra, en gris claro, un valor de ejemplo realista (p. ej. `C:\Documentos\factura.xml`) en vez de repetir la etiqueta del campo — no es un valor real, desaparece al tipear y nunca se envía como argumento.
@@ -1348,7 +1352,7 @@ java -jar WindowsCertificateStoreView.jar
 - **(Windows) Accesos directos automáticos, una sola vez por usuario:** al primer arranque de `SFide-GUI.bat`, se crean tres accesos directos en el escritorio y otros tres en el menú inicio (carpeta "S-FiDE"), todos con el ícono de S-FiDE — uno abre la aplicación (`S-FiDE.lnk` hacia el `.bat`), y los otros dos abren en el navegador predeterminado la Guía de Usuario y el Manual Técnico de Integración de la carpeta `doc/` (archivos `.url` con `URL=file:///...`, no requieren asociar ninguna extensión). Cada grupo (aplicación / documentación) se registra con su propia marca independiente en el `sfide-defaults.properties` del usuario (`desktop.shortcut.created` / `doc.shortcuts.created`) para no repetirse en próximas ejecuciones, incluso si el usuario los borra después. Blindado contra políticas de seguridad corporativas restrictivas (PowerShell bloqueado o colgado, sin permisos de escritura): nunca genera un error visible ni bloquea el arranque.
   > **Nombre sin número de versión, a propósito.** Ninguno de los tres nombres incluye la versión (antes el de la aplicación sí, `S-FiDE 1.1.1.lnk`). Así, al actualizar S-FiDE a una carpeta nueva, el primer arranque de la versión nueva **sobrescribe** estos mismos archivos en vez de sumar íconos nuevos al lado de los de la versión anterior — que además quedarían apuntando a una ubicación inexistente si el usuario borra la carpeta vieja, como suele pasar. También hay un ítem de menú **Herramientas → Recrear accesos directos** para disparar esto mismo a pedido (por ejemplo, si el usuario borró alguno sin querer, o si por algún motivo el primer arranque automático no llegó a crearlos).
 
-**Pestaña Por lote (1.6.0).** En las siete opciones que admiten lote, junto a **Un documento** hay una pestaña **Por lote**: se elige una carpeta (sin subcarpetas) y la interfaz arma la lista por el nombre de los archivos (al firmar deja fuera los terminados en `-signed`, salvo que se marque «Incluir solo los archivos que terminan en -signed»). **Revisar** llama al firmador con `-revisar`; la ejecución usa `-lote` con `-informe` (y `-log` si se pide). La interfaz no valida nada por su cuenta: muestra lo que informa el programa. La lista y el informe quedan en `<carpeta del usuario>/S-FiDE/lotes`. El corte por inactividad es de 10 minutos sin novedades.
+**Pestaña Por lote (1.6.0).** En las siete opciones que admiten lote, junto a **Un documento** hay una pestaña **Por lote**: se elige una carpeta (sin subcarpetas) y la interfaz arma la lista por el nombre de los archivos (al firmar deja fuera los terminados en `-signed`, salvo que se marque «Incluir solo los archivos que terminan en -signed»). **Revisar** llama al firmador con `-revisar`; la ejecución usa `-lote` con `-informe` (y `-log` si se pide). La interfaz no valida nada por su cuenta: muestra lo que informa el programa. La lista y el informe quedan en `<carpeta del usuario>/S-FiDE/lotes`. El corte por inactividad es de 10 minutos sin novedades. Al empezar un lote se quita de la tabla el resultado del anterior. Cada pestaña **Por lote** y el menú **Ayuda** abren la [Guía de trabajo por lotes](guia-lotes-sfide-gui.html).
 
 ---
 
@@ -1619,13 +1623,16 @@ powershell -ExecutionPolicy Bypass -File crear-paquete-actualizacion.ps1 [-Versi
 
 ## 13. Historial de versiones
 
-### v1.6.0
+### v1.6.0 (2026-11-27)
 
 - **Operaciones por lotes** en los dos firmadores XML y PDF con token y PKCS#12, los dos verificadores y el validador XSD: `-lote`, `-revisar`, `-informe` y `-log`. Ver [7.11](#711-operaciones-por-lotes-160).
 - **S-FiDE GUI:** pestaña **Por lote** en esas siete opciones. La pestaña **Un documento** ocupa solo su propio alto.
 - **Registro por documento (`-log`) autosuficiente:** avisos generales del lote, los mismos mensajes que de a un documento (incluido el error) y el resultado.
 - **Ayuda de los siete programas reorganizada** con una misma estructura: uso de un documento y por lote, parámetros comunes y de cada modo, salida, código de salida y ejemplos. Se corrigieron la descripción de `-p` en `PDFSignerPKCS11` (es el PIN del token) y la del elemento a firmar en los firmadores de XML (hay que escribirlo siempre).
 - En los firmadores de XML por lote, si falta un argumento y una opción queda en el lugar del elemento, el mensaje lo explica.
+- **Guías del trabajo por lotes:** [para la interfaz gráfica](guia-lotes-sfide-gui.html) y [para integradores](guia-lotes-integradores.html), enlazadas desde la GUI y las ayudas.
+- **S-FiDE GUI:** al empezar un lote se quita de la tabla el resultado del anterior, y los avisos del lote se redactan bien en singular.
+- **Mensajes de los programas de token:** una ruta incompleta a la biblioteca PKCS#11 se explica sin nombres técnicos; y el aviso de certificado revocado de `XMLSignerPKCS11` y `PDFSignerPKCS11` ya no sugiere `-omitir-revocacion` (la opción sigue igual y figura en la ayuda; el código de salida no cambia).
 - **Manual:** bloque **Por lote** con sintaxis y ejemplo en cada uno de los siete programas, y se quitaron mensajes de error que los programas ya no emiten.
 - **Guía de migración 1.5.1 → 1.6.0:** quien lea el resultado de `PDFSignerPKCS12` desde `stderr` debe leerlo desde `stdout` (los textos y el código de salida no cambiaron; los errores siguen en `stderr`). `PDFSignerPKCS11` y `PDFVerifySignatures` escriben cada error en una sola línea, sin fecha ni nombre de clase. `PDFSignerPKCS12`, con una contraseña incorrecta, dice «Contraseña incorrecta o archivo PKCS#12 inválido». El texto de `-ayuda` de los siete programas con lote se reorganizó. El resto del contrato de línea de comandos no cambió.
 - **Revisión de seguridad de dependencias:** Bouncy Castle 1.87, iText 8.0.6 y Logback 1.6.8; siguen pendientes de decisión JDK 25 LTS con JavaFX 25 y iText 9.x. Ver la [sección 3.1](#31-revisión-de-seguridad-de-dependencias).

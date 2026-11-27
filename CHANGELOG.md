@@ -4,18 +4,22 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), y el versionado sigue [SemVer](https://semver.org/lang/es/).
 
-## [1.6.0] — sin publicar
+## [1.6.0] — 2026-11-27
 
 ### Agregado
 - **Operaciones por lotes** en `XMLSignerPKCS11`, `XMLSignerPKCS12`, `PDFSignerPKCS11`, `PDFSignerPKCS12`, `XMLVerifySignatures`, `PDFVerifySignatures` y `XMLVerifyXSDStructure` (`-lote <lista>`): un solo acceso al certificado, una línea de resultado por documento y un resumen (`LOTE_`), informe CSV (`-informe`, `;`, UTF-8 sin BOM) y registro por documento (`-log`) opcionales, y revisión sin firmar (`-revisar`) en los firmadores. Un lote aplica una sola operación: no se mezclan tipos de XML, y en PDF todos reciben las mismas opciones. Nunca se reemplaza un archivo firmado existente. Ver la sección 7.11 del manual técnico.
 - **S-FiDE GUI:** pestaña **Por lote** en esas siete opciones: se elige una carpeta, «Revisar» muestra lo que el programa de firma informa sin firmar, y se ve el avance documento por documento, con cancelación, reintento de los fallidos e informe.
 - Herramienta `herramientas/CompatibilidadCli.java`: compara salidas, códigos y archivos de los programas contra una versión publicada (175 casos). Pruebas `LoteXmlTest`, `LotePdfTest`, `LoteVerificacionTest`, `LoteCopiasTest`, `BatchProtocolTest` y `BatchFolderTest`.
+- **Dos guías del trabajo por lotes** en `doc/`: [`guia-lotes-sfide-gui.html`](doc/guia-lotes-sfide-gui.html), ilustrada, para la interfaz gráfica, y [`guia-lotes-integradores.html`](doc/guia-lotes-integradores.html), por línea de comandos, con ejemplos correctos y con errores. Se abren desde la GUI (Ayuda → Documentación; la ilustrada también desde el menú Ayuda y desde cada pestaña **Por lote**) y están enlazadas desde la página del proyecto, el README, los manuales y las ayudas de los siete programas.
 - **Registro por documento autosuficiente:** cada `.log` incluye los avisos generales del lote (certificado, revocación, reloj, token), lo mismo que se vería al procesar ese documento solo (incluido el error) y el resultado. En PDF, los mismos mensajes de éxito y de cierre; en XSD, la misma conclusión.
 
 ### Mejorado
 - **Ayuda (`-ayuda`) de los siete programas con lote** reorganizada con una misma estructura y un ejemplo de cada modo. Corrige la descripción de `-p` en `PDFSignerPKCS11` y la del elemento a firmar en los firmadores de XML, y aclara lo que no comprueba `-revisar`, que `-simple` por lote solo afecta al `.log` y la diferencia de `-l` entre los firmadores de PDF.
 - Firmadores de XML por lote: si falta un argumento, el mensaje lo dice en vez de informar que el elemento no existe.
 - **S-FiDE GUI:** la pestaña «Un documento» ya no muestra una barra de desplazamiento innecesaria.
+- **S-FiDE GUI:** al empezar un lote se quita de la tabla el resultado del anterior (si el nuevo no llegaba a empezar, por ejemplo por una contraseña incorrecta, quedaban a la vista documentos «Firmados» que no eran de ese intento) y se corrigió la redacción en singular de los avisos del lote.
+- Con una ruta incompleta a la biblioteca PKCS#11, los cuatro programas de token lo explican en lugar de mostrar el nombre de un error técnico de Java.
+- Firmadores con token: el mensaje de certificado revocado ya no sugiere `-omitir-revocacion`, porque también se muestra en la interfaz gráfica, donde esa opción no existe. La opción sigue funcionando igual y está explicada en la ayuda.
 - Manual técnico: bloque «Por lote» en cada programa; se quitaron mensajes de error que ya no existen desde la 1.5.0.
 
 ### Seguridad
@@ -28,6 +32,7 @@ El formato sigue las convenciones de [Keep a Changelog](https://keepachangelog.c
 - **`PDFSignerPKCS12` informa el éxito y las advertencias por la salida estándar** (`stdout`). Hasta la 1.5.1 salían por la salida de error (`stderr`) y `stdout` quedaba vacío. Los textos y los códigos de salida no cambian; los errores siguen en `stderr`.
 - **`PDFSignerPKCS11` y `PDFVerifySignatures` ya no escriben líneas técnicas de Java** (fecha y nombre de clase) en `stderr`: cada error es una sola línea en español.
 - **`PDFSignerPKCS12`, ante una contraseña incorrecta, informa «Contraseña incorrecta o archivo PKCS#12 inválido»** (antes: «Error al validar los archivos»). El mismo mensaje reemplaza al texto en inglés de `-verificar-revocacion` y `-vista-previa-texto`.
+- **`XMLSignerPKCS11` y `PDFSignerPKCS11`, ante un certificado revocado**, informan «El certificado de firma está revocado. No se puede firmar.», sin la frase que sugería `-omitir-revocacion`. El código de salida y la opción no cambian.
 
 ## [1.5.1] — 2026-10-21
 

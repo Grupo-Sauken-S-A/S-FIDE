@@ -368,6 +368,7 @@
 
       <h4>Mientras el lote está en curso</h4>
       <ul>
+        <li>Al empezar un lote, la tabla deja de mostrar el resultado del anterior (su informe queda guardado).</li>
         <li>No puede cambiar de pantalla ni modificar los datos. Puede <em>Cancelar</em>.</li>
         <li>Si pasan 10 minutos sin ninguna novedad, el lote se detiene.</li>
       </ul>
@@ -390,6 +391,7 @@
         <li><strong>Revisar</strong> (solo al firmar): muestra qué se puede firmar, sin firmar nada.</li>
         <li><strong>Firmar</strong> o <strong>Verificar:</strong> ejecuta el lote. Cuando elige la carpeta, el botón indica cuántos documentos hay.</li>
         <li><strong>Cancelar:</strong> se habilita mientras el lote está en curso.</li>
+        <li><strong>Guía de trabajo por lotes:</strong> abre esta guía. También está en el menú <em>Ayuda</em>.</li>
         <li><strong>Tabla:</strong> un documento por fila, con su estado y el detalle.</li>
         <li><strong>Después de ejecutar:</strong> filtrar los que tuvieron problemas, ver el detalle, reintentar, abrir el informe o la carpeta.</li>
       </ol>
@@ -672,7 +674,7 @@
         <a href="img/guia-lotes/15-clave-incorrecta-salida.png"><img src="img/guia-lotes/15-clave-incorrecta-salida.png" alt="Salida del proceso: el archivo no es un PKCS#12 válido o la contraseña es incorrecta"></a>
         <figcaption>La causa, en «Salida del Proceso»</figcaption>
       </figure>
-      <p>Corrija la contraseña y vuelva a pulsar <em>Firmar</em>. En este caso no se firmó nada; si la tabla todavía muestra filas, son del lote anterior.</p>
+      <p>No se firmó nada y la tabla queda vacía. Corrija la contraseña y vuelva a pulsar <em>Firmar</em>.</p>
 
       <h4>Otros avisos</h4>
       <div class="table-wrap">

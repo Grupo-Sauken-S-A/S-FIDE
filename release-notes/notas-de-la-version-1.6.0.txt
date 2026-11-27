@@ -2,9 +2,7 @@ S-FiDE 1.6.0 - Firme y verifique carpetas enteras de una sola vez
 
 (Este texto es el cuerpo del Release de GitHub. El actualizador de las versiones anteriores muestra solo sus primeros
 4000 caracteres al pedir autorización para instalar: por eso lo esencial va al principio, en texto plano. Debajo de la
-línea de guiones empieza el cuerpo; al publicar se le agrega la tabla de descargas con sus SHA-256.
-ANTES DE PUBLICAR, revisar "LÍMITES CONOCIDOS" según lo que se haya probado: firma por lote con token físico, PDF
-firmados con esta versión abiertos en Acrobat Reader y paquete de macOS en un Mac real.)
+línea de guiones empieza el cuerpo; al publicar se le agrega la tabla de descargas con sus SHA-256.)
 
 --------------------------------------------------------------------------------
 
@@ -24,6 +22,8 @@ QUÉ HAY DE NUEVO
 * Al firmar una carpeta quedan afuera los archivos que terminan en -signed. Para agregar otra firma a documentos ya
   firmados, marque "Incluir solo los archivos que terminan en -signed".
 * Firmar y verificar de a un documento funciona como siempre, en la pestaña "Un documento".
+* Guía ilustrada del trabajo por lotes: menú "Ayuda > Guía de trabajo por lotes", o el enlace en cada pestaña
+  "Por lote".
 
 SEGURIDAD
 
@@ -43,16 +43,22 @@ PARA INTEGRADORES (los .jar)
   error). Los textos y los códigos de salida no cambian.
 * PDFSignerPKCS11 y PDFVerifySignatures ya no escriben líneas técnicas de Java en la salida de error, y
   PDFSignerPKCS12, con una contraseña incorrecta, dice "Contraseña incorrecta o archivo PKCS#12 inválido".
+* XMLSignerPKCS11 y PDFSignerPKCS11, con un certificado revocado, ya no sugieren -omitir-revocacion en el mensaje
+  (la opción sigue igual). Con una ruta incompleta a la biblioteca del token, los cuatro programas de token lo
+  explican.
 * El resto del uso de a un documento no cambia. El texto de -ayuda se reorganizó.
 * Nuevo: "-lote lista.txt" en XMLSignerPKCS11, XMLSignerPKCS12, PDFSignerPKCS11, PDFSignerPKCS12,
   XMLVerifySignatures, PDFVerifySignatures y XMLVerifyXSDStructure, con -informe (CSV), -log y, en los firmadores,
   -revisar. Informa líneas LOTE_INICIO, LOTE_DOC y LOTE_RESUMEN, y termina con 0 solo si todos los documentos
-  terminaron bien. Detalle y guía de migración: manual técnico, secciones 7.11 y 13.
+  terminaron bien. Ejemplos: doc/guia-lotes-integradores.html. Detalle y guía de migración: manual técnico,
+  secciones 7.11 y 13.
 
 LÍMITES CONOCIDOS
 
 * La firma por lote con token todavía no se probó con un dispositivo físico. Algunos tokens podrían pedir el PIN en
   cada firma.
+* Los PDF firmados con esta versión (con la biblioteca de firma actualizada) todavía no se comprobaron en Acrobat
+  Reader. Si ve algo distinto de lo habitual, avísenos.
 * No hay lote en las pantallas de Windows CSP/KSP ni en las de ver certificados.
 * S-FiDE no usa sello de tiempo al firmar: la fecha de cada firma es la del reloj del equipo de quien firma.
 * El paquete de macOS todavía no se probó en un Mac real: si algo no anda, avísenos.
