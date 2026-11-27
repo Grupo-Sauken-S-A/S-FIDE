@@ -246,6 +246,7 @@
             <li><a href="#g11">Ver Certificados de Windows</a></li>
             <li><a href="#g12">Firmar XML con Windows CSP/KSP</a></li>
             <li><a href="#g13">Firmar PDF con Windows CSP/KSP</a></li>
+            <li><a href="#por-lote">Trabajar por lote (carpetas)</a></li>
           </ol>
         </li>
         <li><a href="#s5">Dónde quedan los archivos generados</a></li>
@@ -263,7 +264,7 @@
       <p>Cómo usar la interfaz gráfica de S-FiDE para firmar y verificar documentos XML y PDF, paso a paso, con capturas reales de la propia aplicación. Pensada para quien usa el programa haciendo clic, no para quien integra los módulos por línea de comandos — para eso está el <a href="manual-tecnico-integracion.html">Manual Técnico de Integración</a>.</p>
       <div class="meta">
         <span>Versión del producto: <strong>1.6.0 (en desarrollo, sin publicar)</strong></span>
-        <span>Documento: <strong>08/10/2026</strong></span>
+        <span>Documento: <strong>26/11/2026</strong></span>
       </div>
     </div>
 
@@ -274,7 +275,7 @@
       <p>Además, el menú <strong>Archivo</strong> abre un <strong>visor interno</strong> de PDF y de XML (ver «Abrir un documento para mirarlo»). Esta guía recorre cada una de esas 13 pantallas con capturas reales de la aplicación: qué hace cada una, qué significa cada campo, y qué puede pasar al presionar "Ejecutar" — tanto si todo sale bien como los mensajes más comunes cuando algo falta o está mal.</p>
       <div class="callout note">
         <span class="label">Nota sobre las capturas</span>
-        <p>Las capturas de esta guía son de la versión 1.5.1 y se hicieron con tokens criptográficos reales conectados (uno de ellos con un certificado ya vencido, para mostrar cómo S-FiDE lo informa), con un certificado de prueba en archivo y con el almacén de certificados de Windows. Los formularios quedan con los campos vacíos después de cada ejecución, tal como los verá usted; las contraseñas nunca se muestran. Los mensajes de error y de éxito que se describen en cada sección son los mensajes reales que imprime cada programa: algunos con captura real y el resto tomados textualmente de la documentación técnica del producto.</p>
+        <p>Las capturas de las pantallas que cambiaron en la versión 1.6.0 (firma con token y con archivo PKCS#12, verificación, validación XSD, trabajo por lote, la Guía Rápida, «Acerca de» y las novedades) son de esa versión, hechas con un certificado de prueba en archivo; las dos pantallas de firma con token muestran el formulario, sin un token conectado. Las demás, incluidas las que muestran un certificado vencido, son de la versión 1.5.1 y se hicieron con tokens criptográficos reales y con el almacén de certificados de Windows. El campo del documento queda vacío después de cada ejecución, tal como lo verá usted; las contraseñas nunca se muestran. Los mensajes de error y de éxito que se describen en cada sección son los mensajes reales que imprime cada programa: algunos con captura real y el resto tomados textualmente de la documentación técnica del producto.</p>
       </div>
     </section>
 
@@ -345,6 +346,7 @@
       <span class="chapter-num">04</span>
       <h2>Los módulos, uno por uno</h2>
       <p>Los tres botones que aparecen abajo de cada formulario — <strong>Limpiar Salida</strong>, <strong>Ayuda</strong>, <strong>Salir</strong> — son los mismos en las 13 pantallas y no se repiten en cada sección.</p>
+      <p>Desde la versión 1.6.0, las pantallas 4 a 10 tienen dos pestañas: <strong>Un documento</strong>, que es la que describe cada una de esas secciones, y <strong>Por lote</strong>, para procesar una carpeta entera (ver <a href="#por-lote">Trabajar por lote</a>).</p>
 
       <div class="module" id="g1">
         <div class="module-head"><h3>1. Ver Slots de Token</h3><span class="module-num">TokenSlotsView</span></div>
@@ -413,12 +415,13 @@
         <div class="module-head"><h3>4. Firmar XML con Token</h3><span class="module-num">XMLSignerPKCS11</span></div>
         <p class="desc">Firma digitalmente un documento XML con la clave privada de un token criptográfico, usando SHA-256. Puede firmar el documento completo, o solo un elemento/párrafo específico identificado por su atributo Id= —una posibilidad general, válida para cualquier XML— que además es la que usan los documentos de comercio exterior ALADI/MERCOSUR (Certificados de Origen Digital, Declaraciones Juradas de Origen), cuyas firmas van embebidas sobre elementos puntuales del documento y no sobre el XML completo.</p>
         <figure class="shot">
-          <img src="img/manual-usuario/04_firmar_xml_con_token.png" alt="Pantalla Firmar XML con Token">
+          <img src="img/manual-usuario/04_firmar_xml_con_token.png" alt="Pantalla Firmar XML con Token, con las pestañas Un documento y Por lote">
+          <figcaption>Captura real — formulario de «Un documento», sin un token conectado</figcaption>
         </figure>
         <p>Si el certificado del token está vencido, S-FiDE no firma y lo explica antes de tocar el documento:</p>
         <figure class="shot">
           <img src="img/manual-usuario/15_firmar_xml_certificado_vencido.png" alt="Firmar XML con Token con un certificado vencido: el programa se niega a firmar y explica cuándo venció">
-          <figcaption>Captura real — con un certificado vencido no se genera ningún archivo firmado; lo mismo ocurre con todos los módulos de firma</figcaption>
+          <figcaption>Captura real (versión 1.5.1, anterior a las pestañas) — con un certificado vencido no se genera ningún archivo firmado; lo mismo ocurre con todos los módulos de firma</figcaption>
         </figure>
         <p class="field-label">Campos</p>
         <ul>
@@ -501,7 +504,8 @@
         <div class="module-head"><h3>8. Firmar PDF con Token</h3><span class="module-num">PDFSignerPKCS11</span></div>
         <p class="desc">Firma digitalmente un documento PDF con la clave privada de un token criptográfico, usando SHA-256. La firma puede ser invisible o mostrarse en un recuadro con firmante, fecha y texto personalizado, en el lugar que usted elija sobre el propio documento. Antes de firmar, S-FiDE revisa el documento y las firmas que ya tiene; la última persona que firma puede cerrarlo para que no admita más firmas. Ver "Un documento, varias firmas" más abajo.</p>
         <figure class="shot">
-          <img src="img/manual-usuario/08_firmar_pdf_con_token.png" alt="Pantalla Firmar PDF con Token">
+          <img src="img/manual-usuario/08_firmar_pdf_con_token.png" alt="Pantalla Firmar PDF con Token, con las pestañas Un documento y Por lote">
+          <figcaption>Captura real — formulario de «Un documento», sin un token conectado</figcaption>
         </figure>
         <p class="field-label">Campos</p>
         <ul>
@@ -630,15 +634,38 @@
       <ol>
         <li><strong>Complete sus datos</strong> y elija la <strong>carpeta</strong>. No se incluyen las subcarpetas.</li>
         <li><strong>Al firmar, los archivos que terminan en <code>-signed</code> quedan afuera.</strong> Si lo que quiere es agregar otra firma a documentos ya firmados (por ejemplo, la del Funcionario Habilitado), marque <em>"Incluir solo los archivos que terminan en -signed"</em>. S-FiDE mira el nombre del archivo.</li>
-        <li><strong>Pulse <em>Revisar</em></strong> (opcional): muestra todos los documentos sin firmar nada ni usar su PIN. Los que no se pueden firmar aparecen bloqueados con el motivo; los demás se pueden desmarcar.</li>
+        <li><strong>Pulse <em>Revisar</em></strong> (opcional, solo al firmar): muestra todos los documentos sin firmar nada ni usar su PIN. Los que no se pueden firmar aparecen bloqueados con el motivo; los demás se pueden desmarcar.</li>
         <li><strong>Pulse <em>Firmar</em></strong> o <em>Verificar</em>. La contraseña se usa una sola vez para todo el lote.</li>
         <li><strong>Mire la tabla:</strong> muestra cómo terminó cada documento. Puede ver solo los que tuvieron problemas, reintentar los que fallaron y abrir el informe.</li>
       </ol>
+      <figure class="shot">
+        <img src="img/manual-usuario/22_lote_revisar.png" alt="Revisión de un lote: tres documentos listos para firmar y uno bloqueado porque ya está firmado">
+        <figcaption>Captura real — «Revisar»: tres documentos listos y uno bloqueado, con el motivo</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="img/manual-usuario/23_lote_resultado.png" alt="Pestaña Por lote de Firmar XML con PKCS#12 después de firmar tres documentos">
+        <figcaption>Captura real — resultado de un lote de firma: resumen, tabla y botones para revisar lo ocurrido</figcaption>
+      </figure>
       <div class="callout note">
         <span class="label">Un lote hace una sola cosa</span>
         <p>En XML no se pueden mezclar Certificados de Origen con Declaraciones Juradas: si la carpeta los mezcla, no se firma ninguno. En PDF todos reciben la misma firma en el mismo lugar y, si marca cerrar el documento, se cierran todos: S-FiDE le pide confirmación porque no se puede deshacer. Un archivo ya firmado nunca se reemplaza.</p>
       </div>
-      <p>Si marca <em>"Guardar un registro por documento"</em>, junto a cada uno queda un archivo <code>.log</code> con el detalle. La lista y el informe de cada lote se guardan en la carpeta <code>S-FiDE/lotes</code> de su carpeta personal.</p>
+      <figure class="shot">
+        <img src="img/manual-usuario/24_lote_confirmar_cierre.png" alt="Confirmación antes de cerrar los documentos de un lote">
+        <figcaption>Captura real — cerrar los documentos de un lote no se puede deshacer, por eso se pide confirmación</figcaption>
+      </figure>
+      <p><strong>Cómo leer la tabla.</strong> Cada documento termina en uno de estos estados: <em>Firmado</em>, <em>Firmado con avisos</em>, <em>Válido</em>, <em>Válido con observaciones</em>, <em>No válido</em>, <em>Sin firmas</em>, <em>Omitido</em> (por ejemplo, porque su archivo firmado ya existía), <em>Error</em> o <em>No procesado</em> (el lote se detuvo antes de llegar a él). La columna <em>Detalle</em> explica el motivo.</p>
+      <figure class="shot">
+        <img src="img/manual-usuario/25_lote_verificar.png" alt="Pestaña Por lote de Verificar Firmas en XML con el resultado de siete documentos">
+        <figcaption>Captura real — verificación de una carpeta: documentos válidos, válidos con observaciones y sin firmas</figcaption>
+      </figure>
+      <ul>
+        <li><strong>Ver detalle:</strong> al verificar o validar, comprueba de nuevo el documento elegido y muestra todo en la Salida del Proceso. Al firmar, abre su registro, si marcó guardarlo.</li>
+        <li><strong>Cancelar:</strong> detiene el lote. Mientras está en curso no se puede cambiar de pantalla.</li>
+        <li><strong>Salida del Proceso:</strong> durante un lote muestra los avisos generales (por ejemplo, sobre la revocación del certificado) y los problemas, no el detalle completo de cada documento.</li>
+        <li><strong>Registro por documento:</strong> si marca <em>"Guardar un registro por documento"</em>, junto a cada uno queda un archivo <code>.log</code> con el detalle de su proceso y su resultado. Los avisos generales del lote no se copian en esos archivos. Si el archivo ya existe, el nuevo registro se agrega al final.</li>
+      </ul>
+      <p>La lista y el informe de cada lote se guardan en la carpeta <code>S-FiDE/lotes</code> de su carpeta personal.</p>
     </section>
 
     <section class="chapter" id="s5">
@@ -649,9 +676,11 @@
         <tr><td>Firmadores de XML (3)</td><td><code>&lt;nombre&gt;-signed.xml</code></td><td>En la misma carpeta que el XML original</td></tr>
         <tr><td>Firmadores de PDF (3)</td><td><code>&lt;nombre&gt;-signed.pdf</code></td><td>En la misma carpeta que el PDF original</td></tr>
         <tr><td>Extractores de certificado (2)</td><td><code>&lt;nombre-del-certificado&gt;.pem</code></td><td><strong>En su carpeta personal de S-FiDE</strong> (<code>C:\Users\su-usuario\S-FiDE</code>) — no junto al token ni al archivo de origen, y desde la 1.4.0 ya no en la carpeta de instalación</td></tr>
+        <tr><td>Registro por documento de un lote (opcional)</td><td><code>&lt;documento&gt;.log</code>, por ejemplo <code>contrato.pdf.log</code></td><td>Junto a cada documento del lote</td></tr>
+        <tr><td>Lista e informe de cada lote</td><td>Un archivo <code>.txt</code> y un informe <code>.csv</code></td><td>En la carpeta <code>S-FiDE/lotes</code> de su carpeta personal</td></tr>
       </table>
-      <p>Los módulos de "ver"/"verificar" no generan ningún archivo: todo su resultado se muestra en el panel "Salida del Proceso".</p>
-      <p>En las seis pestañas de firma, junto al campo del documento de entrada aparece un botón <strong>"Abrir documento generado"</strong>, deshabilitado hasta que la firma termina con éxito y el archivo <code>-signed</code> correspondiente realmente existe en disco. Al presionarlo, abre ese documento en el navegador web predeterminado del sistema. Si edita el campo del documento de entrada después de firmar, el botón se deshabilita — ya no corresponde necesariamente a lo que ve en pantalla.</p>
+      <p>De a un documento, los módulos de "ver"/"verificar" no generan ningún archivo (salvo los extractores, que guardan el <code>.pem</code>): todo su resultado se muestra en el panel "Salida del Proceso".</p>
+      <p>En las seis pantallas de firma, dentro de la pestaña de un documento (donde la hay), junto al campo del documento de entrada aparece un botón <strong>"Abrir documento generado"</strong>, deshabilitado hasta que la firma termina con éxito y el archivo <code>-signed</code> correspondiente realmente existe en disco. Al presionarlo, abre ese documento en el navegador web predeterminado del sistema. Si edita el campo del documento de entrada después de firmar, el botón se deshabilita — ya no corresponde necesariamente a lo que ve en pantalla.</p>
     </section>
 
     <section class="chapter" id="s6">
@@ -726,6 +755,10 @@
         <tr><td>S-FiDE dice que el certificado venció, o que todavía no es válido, y no firma</td><td>Es lo correcto: un documento firmado con un certificado vencido no sería aceptado. Corra "Ver Slots de Token", "Ver Certificado de Token o de PKCS#12" o "Ver Certificados de Windows": la línea <em>Estado</em> de cada certificado dice si está vigente, vencido o aún no vigente. Si el vencido es el suyo, renuévelo ante su autoridad certificante; si su token o archivo tiene además uno renovado, S-FiDE usa solo el vigente. Si el certificado figura como "todavía no válido" y usted sabe que ya corresponde, revise la fecha y hora de la computadora.</td></tr>
         <tr><td>Aparece una <em>ADVERTENCIA</em> sobre el reloj de la computadora</td><td>S-FiDE compara el reloj con la hora real de Internet (si hay conexión) y avisa si la diferencia supera los 5 minutos, porque de ese reloj dependen la vigencia del certificado y la fecha de la firma. No impide firmar, pero conviene corregir la fecha y hora de Windows antes de seguir.</td></tr>
         <tr><td>Aparece una ADVERTENCIA sobre la autoridad certificante o la clave del certificado</td><td>Es informativa y no impide firmar: el certificado de la autoridad que emitió el suyo está vencido, o su clave es más débil de lo recomendable. Consulte con su autoridad certificante.</td></tr>
+        <tr><td>En «Por lote» faltan documentos de la carpeta</td><td>No se incluyen las subcarpetas. Al firmar quedan afuera los archivos que terminan en <code>-signed</code>; para agregarles otra firma, marque <em>"Incluir solo los archivos que terminan en -signed"</em>.</td></tr>
+        <tr><td>El lote no firmó ningún documento porque están mezclados</td><td>La carpeta tiene documentos que no corresponden al elemento indicado (por ejemplo, Certificados de Origen junto con Declaraciones Juradas). Sepárelos en carpetas distintas y vuelva a ejecutar.</td></tr>
+        <tr><td>Un documento aparece como «Omitido» al firmar por lote</td><td>Ya existe su archivo <code>-signed</code>: por lote nunca se reemplaza. Muévalo o cambie su nombre si de verdad quiere firmarlo de nuevo.</td></tr>
+        <tr><td>El lote se detuvo por la contraseña</td><td>S-FiDE no vuelve a probarla, para no gastar intentos del token. Corríjala y pulse de nuevo <em>Firmar</em>; los documentos que quedaron como «No procesado» siguen sin firmar.</td></tr>
         <tr><td>No encuentro el archivo firmado</td><td>Queda en la misma carpeta que el archivo original (ver la tabla de la sección anterior) — no en la carpeta de instalación de S-FiDE.</td></tr>
         <tr><td>No encuentro el .pem que extraje</td><td>Queda en su carpeta personal de S-FiDE (<code>C:\Users\su-usuario\S-FiDE</code>), no junto al token/archivo de origen. Use el botón "Abrir carpeta del .pem" de las pestañas "Ver Certificado".</td></tr>
         <tr><td>S-FiDE dice que el documento "está cerrado" y no me deja firmar</td><td>Otra persona ya lo cerró con su firma final, o lo bloqueó con Acrobat Reader ("Bloquear documento después de firmar"): ya no admite más firmas. Pídale a esa persona una versión que no esté cerrada.</td></tr>
