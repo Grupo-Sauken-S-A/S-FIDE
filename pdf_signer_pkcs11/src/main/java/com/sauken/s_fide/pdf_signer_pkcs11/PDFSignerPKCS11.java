@@ -996,7 +996,7 @@ public class PDFSignerPKCS11 {
             } catch (IllegalArgumentException e) {
                 throw new Lote.Corte("CERTIFICADO_NO_APTO", e.getMessage());
             }
-            return LotePdf.firmar(documento, (original, analisis, destino) -> {
+            return LotePdf.firmar(documento, comunes.lock(), (original, analisis, destino) -> {
                 try {
                     aplicarFirma(para(original), !analisis.firmas().isEmpty(), privateKey, chain,
                             cert.getSubjectX500Principal(), provider, destino);

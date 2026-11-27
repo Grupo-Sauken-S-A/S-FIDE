@@ -192,7 +192,48 @@ class LoteXmlTest {
         assertFalse(Files.readString(dir.resolve("uno.xml.log")).contains("Byte Order Mark"));
         // Fuera de las líneas LOTE_ no se imprime detalle de los documentos.
         assertFalse(r.salida().contains("guardado como"), r.salida());
+        // Cada registro se entiende solo: lleva los avisos generales del lote, que en pantalla salen una vez.
+        for (String nombre : List.of("uno.xml.log", "tres.xml.log")) {
+            String propio = Files.readString(dir.resolve(nombre));
+            assertTrue(propio.contains("no se pudo verificar el estado de revocación"), propio);
+            assertTrue(propio.contains("Documento XML firmado guardado como"), propio);
+            assertFalse(propio.contains(clave), "El registro no lleva la contraseña");
+        }
+        assertEquals(1, r.salida().lines().filter(l -> l.contains("estado de revocación")).count(), r.salida());
         sinTemporales();
+    }
+
+    @Test
+    void elRegistroDeUnDocumentoRechazadoMuestraElError() throws Exception {
+        cod("a.xml");
+        cod("b.xml");
+
+        Resultado r = lote(lista("a.xml"), clave, "NoEsta", "-log");
+        assertEquals(1, r.exitCode(), r.salida());
+        String registro = Files.readString(dir.resolve("a.xml.log"));
+        assertTrue(registro.contains("Error: El elemento o párrafo XML especificado no existe"), registro);
+
+        // Rechazado en la revisión mientras otro sí se firma: también lleva los avisos del lote.
+        escribir("b-signed.xml", "anterior");
+        Resultado mixto = lote(lista("b.xml", "a.xml"), clave, "COD", "-log");
+        assertEquals(List.of("OMITIDO/SALIDA_YA_EXISTE", "FIRMADO/OK"), estados(mixto), mixto.salida());
+        assertTrue(Files.readString(dir.resolve("b.xml.log")).contains("estado de revocación"));
+    }
+
+    @Test
+    void unaOpcionEnElLugarDeUnArgumentoSeExplica() throws Exception {
+        cod("a.xml");
+        String lista = lista("a.xml").toString();
+        String p12 = dir.resolve("prueba.p12").toString();
+
+        // Falta la contraseña: el elemento queda ocupado por la opción.
+        for (String opcion : List.of("-revisar", "-log", "-informe")) {
+            Resultado r = ejecutarModulo(dir, FIRMADOR, "-lote", lista, p12, "COD", opcion);
+            assertEquals(1, r.exitCode(), r.salida());
+            assertTrue(r.salida().contains("Falta un argumento"), r.salida());
+            assertTrue(resumen(r).endsWith("\"corte=ARGUMENTOS\""), r.salida());
+        }
+        assertTrue(firmados().isEmpty());
     }
 
     @Test

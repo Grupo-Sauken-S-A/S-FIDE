@@ -298,8 +298,10 @@ final class LotePdf {
     /**
      * Firma un documento ya revisado: escribe en un temporal, y solo si el resultado es correcto lo deja con su
      * nombre definitivo, sin reemplazar ningún archivo.
+     *
+     * @param cerrar si se pidió bloquear los documentos, para informar el cierre igual que de a un documento
      */
-    static Lote.Resultado firmar(Lote.Documento documento, Firma firma) {
+    static Lote.Resultado firmar(Lote.Documento documento, boolean cerrar, Firma firma) {
         Path original = documento.ruta();
         Path destino = salidaDe(original);
         if (Files.exists(destino)) {
@@ -318,7 +320,11 @@ final class LotePdf {
             if (!Lote.publicar(temporal, destino)) {
                 return yaExiste(destino);
             }
-            System.out.println("Documento firmado guardado como: " + destino);
+            // Los mismos mensajes que de a un documento: es lo que queda en el registro.
+            System.out.println("Documento firmado exitosamente: " + destino);
+            if (cerrar && !analisis.firmas().isEmpty()) {
+                System.out.println("El documento quedó cerrado: no admite más firmas.");
+            }
             return resultadoDeLaFirma(destino, previas);
         } catch (Lote.Corte corte) {
             throw corte;

@@ -256,12 +256,12 @@ public class XMLSignerPKCS12 {
                     throw new IllegalArgumentException("El certificado de firma está revocado. No se puede firmar. "
                             + "Si necesita forzar la firma de todas formas, use -omitir-revocacion true.");
                 }
-                outputStream.println("ADVERTENCIA: el certificado de firma está revocado, pero se continúa "
+                System.out.println("ADVERTENCIA: el certificado de firma está revocado, pero se continúa "
                         + "de todas formas porque se indicó -omitir-revocacion true.");
             }
-            case UNKNOWN -> outputStream.println("ADVERTENCIA: no se pudo verificar el estado de revocación del "
+            case UNKNOWN -> System.out.println("ADVERTENCIA: no se pudo verificar el estado de revocación del "
                     + "certificado de firma (" + resultado.getDetalle() + "). Se continúa con la firma.");
-            case GOOD -> outputStream.println("Certificado de firma verificado: no está revocado"
+            case GOOD -> System.out.println("Certificado de firma verificado: no está revocado"
                     + (resultado.getMetodo() != null ? " (" + resultado.getMetodo() + ")" : "") + ".");
         }
     }
@@ -507,9 +507,9 @@ public class XMLSignerPKCS12 {
                     throw new Lote.Corte("CERTIFICADO_NO_APTO",
                             "El archivo PKCS#12 no contiene un certificado con clave privada.");
                 }
-                ClockCheck.avisar(outputStream::println);
+                ClockCheck.avisar(System.out::println);
                 CertificateValidity.exigirApto(cert);
-                CertificateValidity.avisar(keyStore.getCertificateChain(alias), outputStream::println);
+                CertificateValidity.avisar(keyStore.getCertificateChain(alias), System.out::println);
             } catch (GeneralSecurityException e) {
                 throw new Lote.Corte("CONTRASENA", "No se pudo acceder a la clave privada del archivo PKCS#12.");
             } catch (IllegalArgumentException e) {

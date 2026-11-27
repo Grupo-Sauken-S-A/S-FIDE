@@ -175,6 +175,12 @@ class LoteVerificacionTest {
         assertEquals(List.of("VALIDO/OK", "SIN_FIRMAS/SIN_FIRMAS", "NO_VALIDO/ESTRUCTURA_NO_VALIDA"), estados(r),
                 r.salida());
         assertTrue(Files.readString(dir.resolve("otraforma.xml.log")).contains("Error"), "El detalle va al registro");
+        // El registro termina con la misma conclusión que de a un documento.
+        String bueno = Files.readString(dir.resolve("bueno-signed.xml.log"));
+        assertTrue(bueno.contains("Resultado final:"), bueno);
+        assertTrue(bueno.contains("El documento XML es válido y todas las firmas parecen correctas"), bueno);
+        String otraForma = Files.readString(dir.resolve("otraforma.xml.log"));
+        assertTrue(otraForma.contains("Se encontraron errores en la validación del documento XML."), otraForma);
 
         assertEquals(0, lote(XSD, lista("bueno-signed.xml"), xsd).exitCode());
         Resultado sinReferencia = lote(XSD, lista("bueno-signed.xml"));

@@ -1,60 +1,91 @@
 XMLSignerPKCS12 - Programa de Firma Digital de archivos XML usando certificados X.509 PKCS12
 
-Uso: java -jar XMLSignerPKCS12.jar [OPCIÓN] | <Archivo PKCS#12> <Contraseña> <Archivo XML> <Elemento XML a firmar>
+USO
+  Un documento:
+    java -jar XMLSignerPKCS12.jar <Archivo PKCS#12> <Contraseña> <Archivo XML> <Elemento>
+        [-omitir-revocacion true|false]
+  Por lote (una lista de documentos, desde 1.6.0):
+    java -jar XMLSignerPKCS12.jar -lote <lista> <Archivo PKCS#12> <Contraseña> <Elemento>
+        [-omitir-revocacion true|false] [-revisar] [-informe <archivo.csv>] [-log]
+  Información:
+    java -jar XMLSignerPKCS12.jar -version | -ayuda | -licencia
 
-Opciones:
   -version, -v, --version      Muestra la versión del programa
   -ayuda, -h, --help           Muestra este mensaje de ayuda
   -licencia, --license         Muestra la información de licencia
 
-Para firmar un documento XML:
-  java -jar XMLSignerPKCS12.jar [OPCIÓN] | <Archivo PKCS#12> <Contraseña> <Archivo XML> <Elemento XML a firmar> [-omitir-revocacion true|false]
-donde:
-    <Archivo PKCS#12>           Ruta al archivo PKCS#12 con el certificado digital X.509
-    <Contraseña>                Contraseña del archivo PKCS#12 que contiene el certificado
-    <Archivo XML>               Archivo XML a firmar
-    <Elemento XML a firmar>     Párrafo o elemento a firmar (vacío "" para firmar todo el documento)
-    -omitir-revocacion true|false  Opcional (por defecto false). Fuerza la firma aunque el certificado
-                                    esté confirmado como revocado. Ver "Revocación" más abajo.
+PARÁMETROS DE LOS DOS MODOS (van en ese orden y hay que escribirlos todos)
+  <Archivo PKCS#12>       Ruta al archivo .p12/.pfx con el certificado digital X.509
+  <Contraseña>            Contraseña del archivo PKCS#12
+  <Elemento>              Párrafo o elemento a firmar. Hay que escribirlo siempre: para firmar el documento
+                          completo es una cadena vacía, "" (ver ELEMENTO A FIRMAR)
+  -omitir-revocacion true|false
+                          Opcional (por defecto false). Fuerza la firma aunque el certificado esté confirmado
+                          como revocado (ver REVOCACIÓN)
 
-Notas:
-- El párrafo o elemento XML a firmar es opcional. Si se deja vacío (""), se firmará todo el documento, de lo contrario se firmará el párrafo con el elemento XML especificado
-  Si el elemento XML es "COD", se está firmando un Certificado de Origen como Exportador
-  Si el elemento XML es "CODEH", se está firmando un Certificado de Origen como Funcionario
-  Si el elemento XML es "DJO", se está firmando una Declaración Jurada de Origen como Exportador
-  Si el elemento XML es "DJOEH", se está firmando una Declaración Jurada de Origen como Funcionario
-- El nombre del elemento XML a firmar es sensitivo a mayúsculas y minúsculas, en caso de Certificados de Origen Digitales, siempre use mayúsculas
-- El archivo firmado se guardará con el sufijo "-signed" antes de la extensión.
-- Asegúrese de tener los permisos necesarios para acceder al archivo PKCS#12.
+SOLO PARA UN DOCUMENTO
+  <Archivo XML>           Documento a firmar. Va entre la contraseña y el elemento
 
-Revocación:
-- Antes de firmar, se valida el estado de revocación del certificado (OCSP primero, CRL como respaldo).
-- Si el certificado está confirmado como revocado, no se firma (a menos que use -omitir-revocacion true).
-- Si no se puede determinar el estado (sin Internet, o el certificado no publica OCSP/CRL), se informa por
-  consola y se firma igual — esto nunca bloquea la firma.
-- Para consultar el estado de revocación sin firmar nada:
-    java -jar XMLSignerPKCS12.jar -verificar-revocacion <Archivo PKCS#12> <Contraseña>
-  Imprime "ESTADO_REVOCACION: GOOD|UNKNOWN|REVOKED" (y "DETALLE: ..." si corresponde) y termina.
+SOLO POR LOTE
+  -lote <lista>           Tiene que ser el primer argumento. <lista> es un archivo de texto en UTF-8 con la ruta
+                          de un documento por línea; las rutas relativas se toman desde la carpeta de la lista
+  -revisar                Revisa los documentos sin firmar ni usar el certificado. Hay que escribir igual todos
+                          los argumentos (la contraseña puede ser ""). No comprueba el archivo PKCS#12 ni la
+                          contraseña
+  -informe <archivo.csv>  Genera un informe (campos separados por punto y coma, UTF-8) con una línea por
+                          documento. Reemplaza un informe anterior; no puede terminar en .xml ni .pdf
+  -log                    Guarda junto a cada documento procesado un archivo <documento>.log con los avisos del
+                          lote, el detalle de ese documento y su resultado. Si el archivo existe, agrega al final
+  Reglas:
+  - Un solo acceso al certificado para todo el lote.
+  - No se mezclan tipos de documento: con COD o CODEH todos deben ser Certificados de Origen; con DJO o DJOEH,
+    Declaraciones Juradas; con "" ninguno puede ser de comercio exterior; con otro elemento, todos del tipo del
+    primero. Si hay mezcla no se firma ninguno.
+  - Nunca se reemplaza un archivo "-signed" que ya exista: ese documento se omite y el código de salida es 1.
+  - Un argumento desconocido, repetido o faltante detiene todo antes de empezar.
+  - Una contraseña incorrecta y un certificado no apto o revocado detienen el lote.
 
+SALIDA Y CÓDIGO DE SALIDA
+  Un documento: informa lo que hace; el archivo firmado se guarda junto al original con el sufijo "-signed"
+  (si ya existe, se reemplaza). Código 0 si firmó; 1 si no.
+  Por lote: por la salida estándar, las líneas LOTE_INICIO, LOTE_DOC (una por documento) y LOTE_RESUMEN, con
+  campos entre comillas separados por punto y coma, y los avisos generales; un programa debe procesar solo las
+  líneas que empiezan con LOTE_. Los problemas salen también por la salida de error. El detalle de cada
+  documento no se muestra: queda en su archivo .log. Código 0 solo si no se detuvo el lote y todos los
+  documentos terminaron bien. Estados y códigos: Manual Técnico de Integración, sección 7.11.
 
-MARCA BOM EN EL XML (desde 1.5.0):
+EJEMPLOS
+  Un documento:
+    java -jar XMLSignerPKCS12.jar certificado.p12 "contraseña" certificadoorigen.xml "COD"
+    java -jar XMLSignerPKCS12.jar certificado.p12 "contraseña" documento.xml ""
+  Por lote (primero revisar, después firmar):
+    java -jar XMLSignerPKCS12.jar -lote lista.txt certificado.p12 "" "COD" -revisar
+    java -jar XMLSignerPKCS12.jar -lote lista.txt certificado.p12 "contraseña" "COD" -informe informe.csv -log
+
+ELEMENTO A FIRMAR
+  - Con "" se firma todo el documento; si no, el párrafo con el elemento XML indicado.
+      "COD"     Certificado de Origen, como Exportador
+      "CODEH"   Certificado de Origen, como Funcionario
+      "DJO"     Declaración Jurada de Origen, como Exportador
+      "DJOEH"   Declaración Jurada de Origen, como Funcionario
+  - El nombre distingue mayúsculas de minúsculas; en Certificados de Origen Digitales use siempre mayúsculas.
+    Puede ir entre comillas o no.
+
+REVOCACIÓN
+  - Antes de firmar, se valida el estado de revocación del certificado (OCSP primero, CRL como respaldo).
+  - Si el certificado está confirmado como revocado, no se firma (a menos que use -omitir-revocacion true).
+  - Si no se puede determinar el estado (sin Internet, o el certificado no publica OCSP/CRL), se informa por
+    consola y se firma igual — esto nunca bloquea la firma.
+  - Para consultar el estado de revocación sin firmar nada:
+      java -jar XMLSignerPKCS12.jar -verificar-revocacion <Archivo PKCS#12> <Contraseña>
+    Imprime "ESTADO_REVOCACION: GOOD|UNKNOWN|REVOKED" (y "DETALLE: ..." si corresponde) y termina.
+
+MARCA BOM EN EL XML (desde 1.5.0)
   Si el XML comienza con una marca BOM (Byte Order Mark: tres bytes invisibles que algunos editores, como el
   Bloc de notas de Windows, agregan al guardar en UTF-8), el programa lo informa, la ignora y firma igual:
   el documento firmado se genera SIN la marca (el archivo original no se modifica). No afecta las firmas
   que el documento ya tuviera. Un XML guardado en UTF-16 se rechaza con un mensaje: vuelva a guardarlo como UTF-8.
 
+NOTAS
+  - Asegúrese de tener los permisos necesarios para acceder al archivo PKCS#12.
 
-FIRMA POR LOTES (desde 1.6.0): la misma firma en todos los documentos de una lista, con un solo acceso
-al certificado.
-    java -jar XMLSignerPKCS12.jar -lote <lista> <Archivo PKCS#12> <Contraseña> <Elemento> [-omitir-revocacion true|false]
-        [-revisar] [-informe <archivo.csv>] [-log]
-  <lista>     Archivo de texto en UTF-8 con la ruta de un documento por línea
-  -informe    Genera un CSV (separado por punto y coma, UTF-8) con una línea por documento
-  -log        Guarda junto a cada documento un archivo .log con el detalle de su proceso
-  -revisar    Revisa los documentos sin firmar ni usar el certificado (no gasta intentos de PIN)
-  - No se mezclan tipos de documento: con COD o CODEH todos deben ser Certificados de Origen, y con DJO
-    o DJOEH, Declaraciones Juradas. Si hay mezcla no se firma ninguno.
-  - Nunca se reemplaza un archivo "-signed" que ya exista: ese documento se omite y el código es 1.
-  - Salida: líneas LOTE_INICIO, LOTE_DOC y LOTE_RESUMEN (campos entre comillas separados por punto y coma).
-  - Código de salida 0 solo si todos los documentos terminaron bien; en otro caso, 1.
-  - Los estados y códigos están en el Manual Técnico de Integración, sección 7.11.

@@ -53,6 +53,7 @@ package com.sauken.s_fide.pdf_verify_signatures;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -168,7 +169,11 @@ final class Lote {
         default void revisar(List<Documento> pendientes) {
         }
 
-        /** Accede una única vez a lo que se necesita para procesar; solo se llama si queda algo por hacer. */
+        /**
+         * Accede una única vez a lo que se necesita para procesar; solo se llama si queda algo por hacer. Lo que
+         * escriba con {@code System.out} o {@code System.err} (avisos del certificado, la revocación, el reloj o
+         * el token) se muestra una vez y se copia al principio del registro de cada documento.
+         */
         default void acceder() {
         }
 
@@ -188,6 +193,8 @@ final class Lote {
     private final String version;
     private final PrintStream salida;
     private final PrintStream error;
+    /** Avisos generales del lote, para repetirlos en el registro de cada documento. */
+    private final ByteArrayOutputStream avisos = new ByteArrayOutputStream();
     private BufferedWriter informe;
     private boolean informeIncompleto;
 
@@ -278,7 +285,7 @@ final class Lote {
                     }
                 }
             } else if (documentos.stream().anyMatch(Documento::pendiente)) {
-                tarea.acceder();
+                accederGuardandoAvisos(tarea);
             }
             int fallasDeClave = 0;
             for (Documento documento : documentos) {
@@ -314,6 +321,42 @@ final class Lote {
         boolean todoBien = corte == null && !informeIncompleto
                 && documentos.stream().allMatch(d -> terminoBien(d.resultado));
         return todoBien ? 0 : 1;
+    }
+
+    private void accederGuardandoAvisos(Tarea tarea) {
+        PrintStream salidaAnterior = System.out;
+        PrintStream errorAnterior = System.err;
+        System.setOut(duplicar(salidaAnterior, avisos));
+        System.setErr(duplicar(errorAnterior, avisos));
+        try {
+            tarea.acceder();
+        } finally {
+            System.setOut(salidaAnterior);
+            System.setErr(errorAnterior);
+        }
+    }
+
+    /** Lo que se escriba se ve como siempre y además queda en la copia. */
+    private static PrintStream duplicar(PrintStream visible, OutputStream copia) {
+        return new PrintStream(new OutputStream() {
+            @Override
+            public void write(int dato) throws IOException {
+                visible.write(dato);
+                copia.write(dato);
+            }
+
+            @Override
+            public void write(byte[] datos, int desde, int largo) throws IOException {
+                visible.write(datos, desde, largo);
+                copia.write(datos, desde, largo);
+            }
+
+            @Override
+            public void flush() throws IOException {
+                visible.flush();
+                copia.flush();
+            }
+        }, true, StandardCharsets.UTF_8);
     }
 
     private static Resultado procesarUno(Documento documento, Tarea tarea) {
@@ -525,14 +568,23 @@ final class Lote {
         error.println("Error: no se pudo seguir escribiendo el informe; está incompleto.");
     }
 
-    /** Agrega el detalle del documento a su archivo .log; devuelve la ruta, o vacío si no se pudo. */
+    /**
+     * Agrega el detalle del documento a su archivo .log; devuelve la ruta, o vacío si no se pudo. El registro
+     * se entiende solo: encabezado, avisos generales del lote, lo mismo que se vería al procesar ese documento
+     * solo (incluido el error, si lo hubo) y el resultado.
+     */
     private String escribirRegistro(Documento documento) {
         Path archivo = documento.ruta.resolveSibling(documento.ruta.getFileName() + ".log");
         String fin = System.lineSeparator();
         Resultado r = documento.resultado;
+        String detalle = documento.memoria.toString(StandardCharsets.UTF_8);
+        if ((r.estado() == Estado.ERROR || r.estado() == Estado.SIN_FIRMAS) && !detalle.contains(r.mensaje())) {
+            detalle += "Error: " + r.mensaje() + fin;
+        }
         String contenido = "===== " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
                 + " - " + programa + " " + version + " =====" + fin
-                + documento.memoria.toString(StandardCharsets.UTF_8)
+                + avisos.toString(StandardCharsets.UTF_8)
+                + detalle
                 + "Resultado: " + r.estado() + " (" + r.codigo() + ") " + sinSaltos(r.mensaje()) + fin + fin;
         try {
             Files.writeString(archivo, contenido, StandardCharsets.UTF_8, StandardOpenOption.CREATE,

@@ -1,92 +1,126 @@
 PDFSignerPKCS12 - Programa de Firma Digital de documentos PDF con certificados PKCS12
 
-Uso: java -jar PDFSignerPKCS12.jar [opciones]
+USO
+  Un documento:
+    java -jar PDFSignerPKCS12.jar -i <archivo.pdf> -c <certificado.p12> -p <contraseña> [opciones de firma]
+  Por lote (una lista de documentos, desde 1.6.0):
+    java -jar PDFSignerPKCS12.jar -lote <lista> -c <certificado.p12> -p <contraseña> [opciones de firma]
+        [-revisar] [-informe <archivo.csv>] [-log]
+  Información y consultas:
+    java -jar PDFSignerPKCS12.jar -version | -ayuda | -licencia
+    java -jar PDFSignerPKCS12.jar -analizar-documento <archivo.pdf>
+    java -jar PDFSignerPKCS12.jar -vista-previa-texto -c <certificado.p12> -p <contraseña> [-t <texto>]
 
-Opciones:
-  -i, --input <archivo>        Archivo PDF a firmar (obligatorio)
+  -v, --version, -version      Muestra la versión del programa
+  -h, --help, -ayuda           Muestra esta ayuda
+  --license, -licencia         Muestra la licencia del programa
+
+ATENCIÓN: en este programa -l cierra el documento.
+En PDFSignerPKCS11, en cambio, -l es la biblioteca del token y el documento se cierra con -k.
+
+PARÁMETROS DE LOS DOS MODOS (en cualquier orden)
+  Credenciales:
   -c, --certificate <archivo>  Archivo del certificado PKCS12 (obligatorio)
   -p, --password <contraseña>  Contraseña del certificado PKCS12 (obligatorio)
-  -l, --lock <true|false>      Bloquear el documento después de firmar (opcional, default: false)
+  Opciones de firma:
+  -l, --lock <true|false>      Cerrar el documento después de firmar (opcional, default: false)
   -x, --xpos <número>          Coordenada X para el campo de firma (opcional, default: 0)
   -y, --ypos <número>          Coordenada Y para el campo de firma (opcional, default: 0)
   -t, --text <texto>           Texto adicional para el campo de firma (opcional)
   -pagina, --pagina <número>   Página donde se dibuja la firma visible (opcional, default: 1)
   -ancho, --ancho <número>     Ancho del recuadro de la firma, en puntos (opcional, default: 160)
   -alto, --alto <número>       Alto del recuadro de la firma, en puntos (opcional, default: 70)
+  -proteger-contenido <true|false>
+                               Primera firma: protege el contenido del documento pero permite que otras personas
+                               sigan firmando (opcional, default: false). No se combina con -l
+  -omitir-revocacion <true|false>
+                               Fuerza la firma aunque el certificado esté confirmado como revocado
+                               (opcional, default: false). Ver REVOCACIÓN
+
+SOLO PARA UN DOCUMENTO
+  -i, --input <archivo>        Archivo PDF a firmar (obligatorio)
   -campo, --campo <nombre>     Firma dentro de un campo de firma vacío que ya trae el documento, en vez de crear
                                uno nuevo (opcional). -analizar-documento informa los campos disponibles
-  -proteger-contenido <true|false>  Primera firma: protege el contenido del documento pero permite que otras
-                                    personas sigan firmando (opcional, default: false). No se combina con el
-                                    bloqueo del documento
-  -omitir-revocacion <true|false>  Fuerza la firma aunque el certificado esté confirmado como revocado
-                                    (opcional, default: false). Ver "REVOCACIÓN" más abajo.
 
-Opciones Adicionales
-  -v, --version, -version      Muestra la versión del programa
-  -h, --help, -ayuda           Muestra esta ayuda
-  --license, -licencia         Muestra la licencia del programa
-  -analizar-documento <archivo.pdf>   Solo lectura: informa si el documento admite más firmas y el estado de cada
-                                      firma que ya tiene (formato estable, para otros programas). No firma nada
-  -vista-previa-texto -c <archivo> -p <contraseña> [-t <texto>]
-                               Solo lectura: imprime el texto exacto que llevaría la firma visible
+SOLO POR LOTE
+  -lote <lista>                Reemplaza a -i. <lista> es un archivo de texto en UTF-8 con la ruta de un documento
+                               por línea; las rutas relativas se toman desde la carpeta de la lista
+  -revisar                     Revisa los documentos sin firmar ni usar el certificado. Hay que escribir igual
+                               -c y -p (la contraseña puede ser ""). No comprueba el certificado ni la contraseña
+  -informe <archivo.csv>       Genera un informe (campos separados por punto y coma, UTF-8) con una línea por
+                               documento. Reemplaza un informe anterior; no puede terminar en .xml ni .pdf
+  -log                         Guarda junto a cada documento procesado un archivo <documento>.log con los avisos
+                               del lote, el detalle de ese documento y su resultado. Si existe, agrega al final
+  Reglas:
+  - Un solo acceso al certificado para todo el lote.
+  - La posición, el texto y las demás opciones valen para todos los documentos; con -l true se cierran todos.
+  - -i y -campo no se admiten.
+  - Un argumento desconocido, repetido o mal escrito detiene todo antes de empezar (de a un documento, los
+    argumentos desconocidos se ignoran).
+  - Nunca se reemplaza un archivo "-signed" que ya exista: ese documento se omite y el código de salida es 1.
+  - Una contraseña incorrecta y un certificado no apto o revocado detienen el lote.
 
-ERRORES POSIBLES:
-    - Archivo PDF no existe o no es accesible
-    - Certificado PKCS12 no existe o no es accesible
-    - Contraseña del certificado incorrecta
-    - PDF está cifrado o bloqueado
-    - El documento fue cerrado o bloqueado por otra persona y no admite más firmas
-    - La página indicada no existe, o el recuadro de la firma no entra en la página
-    - El campo de firma indicado no existe o ya está firmado
-    - El documento tiene restricciones de seguridad que impiden agregarle firmas
-    - Errores en el proceso de firma
-    - Parámetros de entrada inválidos o faltantes
+SALIDA Y CÓDIGO DE SALIDA
+  Un documento: informa lo que hace; el archivo firmado se guarda junto al original con el sufijo "-signed"
+  (si ya existe, se reemplaza). Código 0 si firmó; 1 si no.
+  Por lote: por la salida estándar, las líneas LOTE_INICIO, LOTE_DOC (una por documento) y LOTE_RESUMEN, con
+  campos entre comillas separados por punto y coma, y los avisos generales; un programa debe procesar solo las
+  líneas que empiezan con LOTE_. Los problemas salen también por la salida de error. El detalle de cada
+  documento no se muestra: queda en su archivo .log. Código 0 solo si no se detuvo el lote y todos los
+  documentos terminaron bien. Estados y códigos: Manual Técnico de Integración, sección 7.11.
 
-EJEMPLOS:
+EJEMPLOS
+  Un documento:
     java -jar PDFSignerPKCS12.jar -i documento.pdf -c certificado.p12 -p miclave123 -l true -x 100 -y 100
-    java -jar PDFSignerPKCS12.jar --help
-
     java -jar PDFSignerPKCS12.jar -i C:/S-FiDE/Ejemplo.pdf -c C:/S-FiDE/test/test-sauken.pfx -p W1far0CBA68 -l false -x 310 -y 55 -t "Certificado de Origen"
     java -jar PDFSignerPKCS12.jar -i C:/S-FiDE/Ejemplo-ds.pdf -c C:/S-FiDE/test/test-sauken.pfx -p W1far0CBA68 -l true -x 40 -y 55
+  Por lote (primero revisar, después firmar):
+    java -jar PDFSignerPKCS12.jar -lote lista.txt -c certificado.p12 -p "" -x 40 -y 55 -revisar
+    java -jar PDFSignerPKCS12.jar -lote lista.txt -c certificado.p12 -p miclave123 -x 40 -y 55 -informe informe.csv -log
 
-NOTAS:
-    - El programa revisará el documento y todas las firmas existentes antes de agregar una nueva (ver FIRMAS EN CADENA)
-    - Se firmará siempre el documento PDF de manera completa; la firma visible se aplica en la página indicada
-      con -pagina (por defecto, la primera)
-    - El documento resultante incluirá metadatos sobre la firma aplicada
+ERRORES POSIBLES
+  - Archivo PDF no existe o no es accesible
+  - Certificado PKCS12 no existe o no es accesible
+  - Contraseña del certificado incorrecta
+  - PDF está cifrado o bloqueado
+  - El documento fue cerrado o bloqueado por otra persona y no admite más firmas
+  - La página indicada no existe, o el recuadro de la firma no entra en la página
+  - El campo de firma indicado no existe o ya está firmado
+  - El documento tiene restricciones de seguridad que impiden agregarle firmas
+  - Errores en el proceso de firma
+  - Parámetros de entrada inválidos o faltantes
 
-FIRMAS EN CADENA (varias personas, en computadoras distintas):
-    - Antes de firmar se revisa el documento: si fue cerrado (certificación "sin cambios", "Bloquear documento
-      después de firmar" de Acrobat, o una firma final de S-FiDE) no se firma y se informa quién lo cerró
-    - Las firmas anteriores se analizan una por una. Si alguna es inválida se informa, pero se firma igual: la
-      decisión es de quien firma. Un certificado vencido o dado de baja DESPUÉS de firmar no invalida esa firma
-    - Con el bloqueo activado sobre un documento que YA tiene firmas, la firma es una FIRMA DE CIERRE: no reescribe
-      el archivo ni invalida las anteriores, y después el documento no admite más firmas. Sin firmas previas, el
-      bloqueo certifica y cifra el documento (nadie más podrá firmar)
-    - Al terminar se comprueba el resultado: si alguna firma previa quedó dañada, no se entrega ningún archivo
-    - Es válido para Acrobat Reader y viceversa: pueden combinarse firmas de S-FiDE y de Acrobat en el mismo documento
+NOTAS
+  - Las coordenadas X,Y son opcionales; si no se especifican, la firma es invisible.
+  - La firma visible aparece en la página indicada con -pagina (por defecto, la primera).
+  - Se firma siempre el documento PDF completo, y el resultado incluye metadatos sobre la firma aplicada.
+  - Antes de firmar se revisan el documento y todas las firmas que ya tiene (ver FIRMAS EN CADENA).
+  - -analizar-documento es de solo lectura: informa si el documento admite más firmas y el estado de cada firma
+    que ya tiene (formato estable, para otros programas). No firma nada.
+  - -vista-previa-texto es de solo lectura: imprime el texto exacto que llevaría la firma visible.
 
-REVOCACIÓN:
-    - Antes de firmar, se valida el estado de revocación del certificado (OCSP primero, CRL como respaldo)
-    - Si el certificado está confirmado como revocado, no se firma (a menos que use -omitir-revocacion true)
-    - Si no se puede determinar el estado (sin Internet, o el certificado no publica OCSP/CRL), se informa
-      por consola y se firma igual — esto nunca bloquea la firma
-    - Para consultar el estado de revocación sin firmar nada:
-        java -jar PDFSignerPKCS12.jar -verificar-revocacion <certificado.p12> <password>
-      Imprime "ESTADO_REVOCACION: GOOD|UNKNOWN|REVOKED" (y "DETALLE: ...") y termina
+FIRMAS EN CADENA (varias personas, en computadoras distintas)
+  - Si el documento fue cerrado (certificación "sin cambios", "Bloquear documento después de firmar" de Acrobat,
+    o una firma final de S-FiDE) no se firma y se informa quién lo cerró.
+  - Las firmas anteriores se analizan una por una. Si alguna es inválida se informa, pero se firma igual: la
+    decisión es de quien firma. Un certificado vencido o dado de baja DESPUÉS de firmar no invalida esa firma.
+  - Con el cierre activado sobre un documento que YA tiene firmas, la firma es una FIRMA DE CIERRE: no reescribe
+    el archivo ni invalida las anteriores, y después el documento no admite más firmas. Sin firmas previas, el
+    cierre certifica y cifra el documento (nadie más podrá firmar).
+  - Al terminar se comprueba el resultado: si alguna firma previa quedó dañada, no se entrega ningún archivo.
+  - Es válido para Acrobat Reader y viceversa: pueden combinarse firmas de S-FiDE y de Acrobat en el mismo documento.
 
+REVOCACIÓN
+  - Antes de firmar, se valida el estado de revocación del certificado (OCSP primero, CRL como respaldo).
+  - Si el certificado está confirmado como revocado, no se firma (a menos que use -omitir-revocacion true).
+  - Si no se puede determinar el estado (sin Internet, o el certificado no publica OCSP/CRL), se informa
+    por consola y se firma igual — esto nunca bloquea la firma.
+  - Para consultar el estado de revocación sin firmar nada:
+      java -jar PDFSignerPKCS12.jar -verificar-revocacion <certificado.p12> <contraseña>
+    Imprime "ESTADO_REVOCACION: GOOD|UNKNOWN|REVOKED" (y "DETALLE: ...") y termina.
 
-FIRMA POR LOTES (desde 1.6.0): la misma firma en todos los documentos de una lista, con un solo acceso
-al certificado.
-    java -jar PDFSignerPKCS12.jar -lote <lista> -c <archivo.p12> -p <contraseña> [opciones de firma]
-        [-revisar] [-informe <archivo.csv>] [-log]
-  <lista>     Archivo de texto en UTF-8 con la ruta de un documento por línea
-  -informe    Genera un CSV (separado por punto y coma, UTF-8) con una línea por documento
-  -log        Guarda junto a cada documento un archivo .log con el detalle de su proceso
-  -revisar    Revisa los documentos sin firmar ni usar el certificado (no gasta intentos de PIN)
-  - Se usa -lote en lugar de -i. La posición, el texto y las demás opciones valen para todos.
-  - -campo no se admite por lotes. Un argumento desconocido o mal escrito detiene todo antes de empezar.
-  - Nunca se reemplaza un archivo "-signed" que ya exista: ese documento se omite y el código es 1.
-  - Salida: líneas LOTE_INICIO, LOTE_DOC y LOTE_RESUMEN (campos entre comillas separados por punto y coma).
-  - Código de salida 0 solo si todos los documentos terminaron bien; en otro caso, 1.
-  - Los estados y códigos están en el Manual Técnico de Integración, sección 7.11.
+CERTIFICADOS DE ORIGEN
+  - Para aplicar firmas digitales a Certificados de Origen No Preferenciales en documentos PDF use:
+      -x 40 -y 55     Para aplicar la firma digital del Exportador
+      -x 310 -y 55    Para aplicar la firma digital del Funcionario Habilitado de la Entidad
+

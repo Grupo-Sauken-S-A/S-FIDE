@@ -113,6 +113,12 @@ final class LoteXml {
         }
         List<String> credencial = new ArrayList<>(List.of(args).subList(2, 2 + cantidadDeCredencial));
         String elemento = args[2 + cantidadDeCredencial];
+        // Ningún nombre de elemento XML empieza con "-": ahí hay una opción porque falta un argumento anterior.
+        if (elemento.startsWith("-")) {
+            throw new IllegalArgumentException("Falta un argumento: en el lugar del elemento a firmar está "
+                    + elemento + ". Escriba todos los argumentos en orden; para firmar el documento completo, el "
+                    + "elemento es \"\".");
+        }
 
         String informe = null;
         Boolean omitir = null;

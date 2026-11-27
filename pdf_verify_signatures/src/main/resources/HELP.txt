@@ -1,24 +1,56 @@
 PDFVerifySignatures - Programa de Verificación/Validación de Firmas Digitales en documentos PDF
 
-Uso: java -jar PDFVerifySignatures.jar [OPCIÓN] | <Documento PDF> [-simple]
+USO
+  Un documento:
+    java -jar PDFVerifySignatures.jar <Documento PDF> [-simple]
+  Por lote (una lista de documentos, desde 1.6.0):
+    java -jar PDFVerifySignatures.jar -lote <lista> [-simple] [-informe <archivo.csv>] [-log]
+  Información:
+    java -jar PDFVerifySignatures.jar -version | -ayuda | -licencia
 
-Opciones:
   -version, -v, --version      Muestra la versión del programa
   -ayuda, -h, --help           Muestra este mensaje de ayuda
   -licencia, --license         Muestra la información de licencia
 
-Para verificar firmas en un documento PDF:
-  java -jar PDFVerifySignatures.jar <Documento PDF> [-simple]
+PARÁMETROS DE LOS DOS MODOS
+  -simple                 Opcional. Reduce el detalle a la información básica de la validación
 
-Opcional:
-  -simple      Muestra solo la información básica de la validación
+SOLO PARA UN DOCUMENTO
+  <Documento PDF>         Documento firmado a verificar
 
-Qué informa:
+SOLO POR LOTE
+  -lote <lista>           Tiene que ser el primer argumento. <lista> es un archivo de texto en UTF-8 con la ruta
+                          de un documento por línea; las rutas relativas se toman desde la carpeta de la lista
+  -informe <archivo.csv>  Genera un informe (campos separados por punto y coma, UTF-8) con una línea por
+                          documento. Reemplaza un informe anterior; no puede terminar en .xml ni .pdf
+  -log                    Guarda junto a cada documento un archivo <documento>.log con el detalle de su
+                          verificación y su resultado. Si el archivo existe, agrega al final
+  Importante: por lote el detalle no se muestra en pantalla, así que -simple solo cambia lo que se guarda en
+  los archivos .log. Sin -log no tiene ningún efecto.
+
+SALIDA Y CÓDIGO DE SALIDA
+  Un documento: muestra el detalle de cada firma y el estado del documento. Código 0 si todas las firmas son
+  válidas; 1 si alguna no lo es, si el documento no tiene firmas o si no se pudo procesar.
+  Por lote: por la salida estándar, las líneas LOTE_INICIO, LOTE_DOC (una por documento) y LOTE_RESUMEN, con
+  campos entre comillas separados por punto y coma; un programa debe procesar solo las líneas que empiezan con
+  LOTE_. Los problemas salen también por la salida de error. Código 0 solo si no se detuvo el lote y todos los
+  documentos son válidos (con o sin observaciones). Estados y códigos: Manual Técnico de Integración,
+  sección 7.11.
+
+EJEMPLOS
+  Un documento:
+    java -jar PDFVerifySignatures.jar contrato-signed.pdf
+    java -jar PDFVerifySignatures.jar contrato-signed.pdf -simple
+  Por lote:
+    java -jar PDFVerifySignatures.jar -lote lista.txt -informe informe.csv
+    java -jar PDFVerifySignatures.jar -lote lista.txt -simple -log
+
+QUÉ INFORMA
   Por cada firma, primero un resultado en lenguaje simple (VÁLIDA, VÁLIDA CON COMPROBACIONES PENDIENTES o NO VÁLIDA)
   con su explicación, y después los datos técnicos. Al final, el estado del documento: si está bloqueado (y por
   quién), si su contenido está protegido, si está encriptado y los campos de firma que quedaron sin firmar.
 
-Qué invalida y qué no:
+QUÉ INVALIDA Y QUÉ NO
   - NO invalida: un certificado vencido o dado de baja DESPUÉS de firmar, una revocación que no se pudo comprobar
     (por ejemplo sin Internet), un sello de tiempo, o comentarios e información de validación agregados después.
   - SÍ invalida: un documento modificado después de firmarse, una firma dañada, un certificado que ya no era
@@ -26,14 +58,3 @@ Qué invalida y qué no:
     última firma.
   - Entiende documentos firmados por otras aplicaciones, como Acrobat Reader.
 
-Código de salida: 0 si todas las firmas son válidas, 1 si alguna no lo es.
-
-
-POR LOTES (desde 1.6.0): la misma comprobación sobre todos los documentos de una lista.
-    java -jar PDFVerifySignatures.jar -lote <lista> [-simple] [-informe <archivo.csv>] [-log]
-  <lista>     Archivo de texto en UTF-8 con la ruta de un documento por línea
-  -informe    Genera un CSV (separado por punto y coma, UTF-8) con una línea por documento
-  -log        Guarda junto a cada documento un archivo .log con el detalle de su proceso
-  - Salida: líneas LOTE_INICIO, LOTE_DOC y LOTE_RESUMEN (campos entre comillas separados por punto y coma).
-  - Código de salida 0 solo si todos los documentos terminaron bien; en otro caso, 1.
-  - Los estados y códigos están en el Manual Técnico de Integración, sección 7.11.

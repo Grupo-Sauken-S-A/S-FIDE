@@ -190,16 +190,7 @@ public class XMLVerifyXSDStructure {
                 }
 
                 if (xsdUrl != null) {
-                    String urlXsdFileName = extractFileNameFromUrl(xsdUrl);
-                    String inputXsdFileName = xsdFileObj.getName();
-
-                    if (!urlXsdFileName.equals(inputXsdFileName)) {
-                        System.out.println("\nNOTA: Diferencia en nombres de archivo XSD");
-                        System.out.println("├─ XSD referenciado en XML: " + urlXsdFileName);
-                        System.out.println("├─ XSD proporcionado: " + inputXsdFileName);
-                        System.out.println("└─ Se utilizará el archivo proporcionado: " + xsdFile);
-                        System.out.println();
-                    }
+                    avisarSiElNombreDifiere(xsdUrl, xsdFile);
                 }
             } else if (xsdUrl != null) {
                 System.out.println("Descargando XSD desde: " + xsdUrl);
@@ -223,18 +214,34 @@ public class XMLVerifyXSDStructure {
             System.out.println("\nVerificando firmas digitales...");
             isValid &= verifyXMLSignatures(xmlFile);
 
-            System.out.println("\nResultado final:");
-            if (isValid) {
-                System.out.println("El documento XML es válido y todas las firmas parecen correctas. Este proceso no realiza validación de revocación de las firmas digitales aplicadas.");
-                System.exit(0);
-            } else {
-                System.err.println("Se encontraron errores en la validación del documento XML.");
-                System.exit(1);
-            }
+            informarResultadoFinal(isValid);
+            System.exit(isValid ? 0 : 1);
 
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
             System.exit(1);
+        }
+    }
+
+    private static void avisarSiElNombreDifiere(String xsdUrl, String xsdFile) {
+        String urlXsdFileName = extractFileNameFromUrl(xsdUrl);
+        String inputXsdFileName = new File(xsdFile).getName();
+
+        if (!urlXsdFileName.equals(inputXsdFileName)) {
+            System.out.println("\nNOTA: Diferencia en nombres de archivo XSD");
+            System.out.println("├─ XSD referenciado en XML: " + urlXsdFileName);
+            System.out.println("├─ XSD proporcionado: " + inputXsdFileName);
+            System.out.println("└─ Se utilizará el archivo proporcionado: " + xsdFile);
+            System.out.println();
+        }
+    }
+
+    private static void informarResultadoFinal(boolean isValid) {
+        System.out.println("\nResultado final:");
+        if (isValid) {
+            System.out.println("El documento XML es válido y todas las firmas parecen correctas. Este proceso no realiza validación de revocación de las firmas digitales aplicadas.");
+        } else {
+            System.err.println("Se encontraron errores en la validación del documento XML.");
         }
     }
 
@@ -292,10 +299,17 @@ public class XMLVerifyXSDStructure {
                 if (!descargados.containsKey(url)) {
                     System.out.println("Descargando XSD desde: " + url);
                     descargados.put(url, descargar(url));
+                } else if (descargados.get(url) != null) {
+                    System.out.println("Esquema XSD ya descargado en este lote: " + url);
                 }
                 esquema = descargados.get(url);
                 if (esquema == null) {
                     return Lote.Resultado.error("XSD_NO_DESCARGADO", "No se pudo descargar el esquema " + url + ".");
+                }
+            } else {
+                String url = XSDDownloader.extractXSDUrlFromXML(doc);
+                if (url != null) {
+                    avisarSiElNombreDifiere(url, esquema);
                 }
             }
 
@@ -303,11 +317,12 @@ public class XMLVerifyXSDStructure {
                 return Lote.Resultado.error("XSD_NO_VALIDO", "No se pudo usar el archivo XSD: no es un esquema válido.");
             }
             try {
-                System.out.println("Validando estructura XML contra XSD...");
+                System.out.println("\nValidando estructura XML contra XSD...");
                 boolean estructura = validateXMLAgainstXSD(ruta, esquema);
-                System.out.println("Verificando firmas digitales...");
+                System.out.println("\nVerificando firmas digitales...");
                 boolean sinFirmas = doc.getElementsByTagNameNS(XMLSignature.XMLNS, "Signature").getLength() == 0;
                 boolean firmas = verifyXMLSignatures(ruta);
+                informarResultadoFinal(estructura && firmas);
                 if (!estructura) {
                     return Lote.Resultado.de(Lote.Estado.NO_VALIDO, "ESTRUCTURA_NO_VALIDA",
                             "El documento no cumple con la estructura del esquema XSD.");

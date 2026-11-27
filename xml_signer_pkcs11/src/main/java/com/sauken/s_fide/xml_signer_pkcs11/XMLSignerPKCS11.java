@@ -239,12 +239,12 @@ public class XMLSignerPKCS11 {
                     throw new IllegalArgumentException("El certificado de firma está revocado. No se puede firmar. "
                             + "Si necesita forzar la firma de todas formas, use -omitir-revocacion true.");
                 }
-                outputStream.println("ADVERTENCIA: el certificado de firma está revocado, pero se continúa "
+                System.out.println("ADVERTENCIA: el certificado de firma está revocado, pero se continúa "
                         + "de todas formas porque se indicó -omitir-revocacion true.");
             }
-            case UNKNOWN -> outputStream.println("ADVERTENCIA: no se pudo verificar el estado de revocación del "
+            case UNKNOWN -> System.out.println("ADVERTENCIA: no se pudo verificar el estado de revocación del "
                     + "certificado de firma (" + resultado.getDetalle() + "). Se continúa con la firma.");
-            case GOOD -> outputStream.println("Certificado de firma verificado: no está revocado"
+            case GOOD -> System.out.println("Certificado de firma verificado: no está revocado"
                     + (resultado.getMetodo() != null ? " (" + resultado.getMetodo() + ")" : "") + ".");
         }
     }
@@ -307,7 +307,7 @@ public class XMLSignerPKCS11 {
         Pkcs11Access.Resolution resolution =
                 Pkcs11Access.resolve(pkcs11LibraryPath, slotNumber, "XMLSignerProvider", false);
         if (resolution.differsFromRequested()) {
-            outputStream.println("Aviso: no había un token en el slot " + slotNumber
+            System.out.println("Aviso: no había un token en el slot " + slotNumber
                     + "; se usó el slot " + resolution.selected().slotIndex() + ", donde se detectó el token.");
         }
         return resolution.selected().provider();
@@ -710,9 +710,9 @@ public class XMLSignerPKCS11 {
             try {
                 String alias = CertificateValidity.elegirAlias(keyStore);
                 cert = (X509Certificate) keyStore.getCertificate(alias);
-                ClockCheck.avisar(outputStream::println);
+                ClockCheck.avisar(System.out::println);
                 CertificateValidity.exigirApto(cert);
-                CertificateValidity.avisar(keyStore.getCertificateChain(alias), outputStream::println);
+                CertificateValidity.avisar(keyStore.getCertificateChain(alias), System.out::println);
                 privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
             } catch (IllegalArgumentException e) {
                 throw new Lote.Corte("CERTIFICADO_NO_APTO", e.getMessage());

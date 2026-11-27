@@ -1,30 +1,54 @@
-XMLVerifyXSDStructure - Programa que verifica si un archivo XML cumple con las espeficiaciones contenidas en un archivo XSD
+XMLVerifyXSDStructure - Programa que verifica si un archivo XML cumple con las especificaciones contenidas en un archivo XSD
 
-Uso: java -jar XMLVerifyXSDStructure.jar [OPCIÓN] | <Archivo XML> [<Archivo XSD>]
+USO
+  Un documento:
+    java -jar XMLVerifyXSDStructure.jar <Archivo XML> [<Archivo XSD>]
+  Por lote (una lista de documentos, desde 1.6.0):
+    java -jar XMLVerifyXSDStructure.jar -lote <lista> [<Archivo XSD>] [-informe <archivo.csv>] [-log]
+  Información:
+    java -jar XMLVerifyXSDStructure.jar -version | -ayuda | -licencia
 
-Opciones:
   -version, -v, --version      Muestra la versión del programa
   -ayuda, -h, --help           Muestra este mensaje de ayuda
   -licencia, --license         Muestra la información de licencia
 
-Para verificar la estructura XSD y firmas en un archivo XML:
-  java -jar XMLVerifyXSDStructure.jar <Archivo XML> [<Archivo XSD>]
+PARÁMETROS DE LOS DOS MODOS
+  <Archivo XSD>           Opcional. Esquema contra el que se valida. Si no se indica, se usa el esquema que
+                          declara cada documento XML (se descarga de Internet)
 
-Si no se especifica un archivo XSD, se intentará usar el esquema referenciado en el documento XML.
+SOLO PARA UN DOCUMENTO
+  <Archivo XML>           Documento a validar. Va antes del esquema
 
+SOLO POR LOTE
+  -lote <lista>           Tiene que ser el primer argumento. <lista> es un archivo de texto en UTF-8 con la ruta
+                          de un documento por línea; las rutas relativas se toman desde la carpeta de la lista
+  <Archivo XSD>           Si se indica, va inmediatamente después de la lista y vale para todos los documentos.
+                          Si no, cada esquema declarado se descarga una sola vez por lote
+  -informe <archivo.csv>  Genera un informe (campos separados por punto y coma, UTF-8) con una línea por
+                          documento. Reemplaza un informe anterior; no puede terminar en .xml ni .pdf
+  -log                    Guarda junto a cada documento un archivo <documento>.log con el detalle de su
+                          validación y su resultado. Si el archivo existe, agrega al final
 
-MARCA BOM EN EL XML (desde 1.5.0):
+SALIDA Y CÓDIGO DE SALIDA
+  Un documento: muestra la validación de la estructura y de las firmas. Código 0 si la estructura cumple el
+  esquema y las firmas son correctas; 1 en cualquier otro caso (incluido un documento sin firmas).
+  Por lote: por la salida estándar, las líneas LOTE_INICIO, LOTE_DOC (una por documento) y LOTE_RESUMEN, con
+  campos entre comillas separados por punto y coma; un programa debe procesar solo las líneas que empiezan con
+  LOTE_. Los problemas salen también por la salida de error. El detalle de cada documento no se muestra: queda
+  en su archivo .log. Código 0 solo si no se detuvo el lote y todos los documentos terminaron bien. Estados y
+  códigos: Manual Técnico de Integración, sección 7.11.
+  Este programa no comprueba la revocación de los certificados (para eso, XMLVerifySignatures).
+
+EJEMPLOS
+  Un documento:
+    java -jar XMLVerifyXSDStructure.jar certificadoorigen-signed.xml
+    java -jar XMLVerifyXSDStructure.jar certificadoorigen-signed.xml cod_ver_1.8.2.xsd
+  Por lote:
+    java -jar XMLVerifyXSDStructure.jar -lote lista.txt -informe informe.csv
+    java -jar XMLVerifyXSDStructure.jar -lote lista.txt cod_ver_1.8.2.xsd -log
+
+MARCA BOM EN EL XML (desde 1.5.0)
   Si el XML comienza con una marca BOM (tres bytes invisibles que algunos editores agregan al guardar en UTF-8),
   el programa lo informa y la ignora para verificar: no afecta el resultado de las firmas. El archivo no se
   modifica. Un XML guardado en UTF-16 se rechaza con un mensaje: debe volver a guardarse como UTF-8.
 
-
-POR LOTES (desde 1.6.0): la misma comprobación sobre todos los documentos de una lista.
-    java -jar XMLVerifyXSDStructure.jar -lote <lista> [<Archivo XSD>] [-informe <archivo.csv>] [-log]
-  <lista>     Archivo de texto en UTF-8 con la ruta de un documento por línea
-  -informe    Genera un CSV (separado por punto y coma, UTF-8) con una línea por documento
-  -log        Guarda junto a cada documento un archivo .log con el detalle de su proceso
-  - Sin <Archivo XSD>, cada documento se valida contra el esquema que declara.
-  - Salida: líneas LOTE_INICIO, LOTE_DOC y LOTE_RESUMEN (campos entre comillas separados por punto y coma).
-  - Código de salida 0 solo si todos los documentos terminaron bien; en otro caso, 1.
-  - Los estados y códigos están en el Manual Técnico de Integración, sección 7.11.

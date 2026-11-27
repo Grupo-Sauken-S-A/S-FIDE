@@ -144,8 +144,14 @@ class LotePdfTest {
         for (String nombre : firmados()) {
             assertEquals(0, verificar(nombre).exitCode(), nombre);
         }
-        assertTrue(Files.readString(dir.resolve("uno.pdf.log")).contains("Resultado: FIRMADO"));
-        assertFalse(r.salida().contains("guardado como"), r.salida());
+        String primero = Files.readString(dir.resolve("uno.pdf.log"));
+        assertTrue(primero.contains("Resultado: FIRMADO"), primero);
+        // Los avisos generales del lote y los mismos mensajes finales que de a un documento.
+        assertTrue(primero.contains("estado de revocación"), primero);
+        assertTrue(primero.contains("Documento firmado exitosamente: "), primero);
+        assertFalse(primero.contains("El documento quedó cerrado"), primero);
+        assertFalse(primero.contains(clave), "El registro no lleva la contraseña");
+        assertFalse(r.salida().contains("firmado exitosamente"), r.salida());
 
         Resultado segunda = lote(clave, lista("uno-signed.pdf", "Declaración dos-signed.pdf"), "-l", "true", "-log");
 
@@ -153,7 +159,10 @@ class LotePdfTest {
         assertEquals(List.of("FIRMADO/OK", "FIRMADO/OK"), estados(segunda), segunda.salida());
         assertEquals(0, verificar("uno-signed-signed.pdf").exitCode());
         // El detalle de la firma anterior queda en el registro, no en la salida del lote.
-        assertTrue(Files.readString(dir.resolve("uno-signed.pdf.log")).contains("CANTIDAD_FIRMAS: 1"));
+        String cierre = Files.readString(dir.resolve("uno-signed.pdf.log"));
+        assertTrue(cierre.contains("CANTIDAD_FIRMAS: 1"), cierre);
+        assertTrue(cierre.contains("El documento quedó cerrado: no admite más firmas."), cierre);
+        assertTrue(cierre.contains("estado de revocación"), cierre);
         assertFalse(segunda.salida().contains("CANTIDAD_FIRMAS"), segunda.salida());
 
         Resultado cerrado = lote(clave, lista("uno-signed-signed.pdf"));

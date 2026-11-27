@@ -1474,7 +1474,20 @@ public class SFideGUI extends Application {
         Tab lote = new Tab("Por lote", porLote);
         TabPane pestanas = new TabPane(individual, lote);
         pestanas.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        ocuparAltoSoloSiSeVe(individual, unDocumento);
+        ocuparAltoSoloSiSeVe(lote, porLote);
         return pestanas;
+    }
+
+    /**
+     * Un conjunto de pestañas reserva el alto de la más alta: "Un documento" quedaría con el alto de "Por lote" y
+     * mostraría una barra de desplazamiento innecesaria. Así, solo cuenta el alto de la pestaña que se ve.
+     */
+    private static void ocuparAltoSoloSiSeVe(Tab pestana, Region contenido) {
+        var alto = javafx.beans.binding.Bindings.when(pestana.selectedProperty())
+                .then(Region.USE_COMPUTED_SIZE).otherwise(0.0);
+        contenido.minHeightProperty().bind(alto);
+        contenido.prefHeightProperty().bind(alto);
     }
 
     private BatchPanel crearPanelDeLote(BatchPanel.Modulo modulo) {
