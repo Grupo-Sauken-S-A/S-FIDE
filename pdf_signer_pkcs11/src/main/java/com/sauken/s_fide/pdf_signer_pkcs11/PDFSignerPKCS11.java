@@ -343,8 +343,9 @@ public class PDFSignerPKCS11 {
         switch (resultado.getEstado()) {
             case REVOKED -> {
                 if (!omitirRevocacion) {
-                    throw new IllegalArgumentException("El certificado de firma está revocado. No se puede firmar. "
-                            + "Si necesita forzar la firma de todas formas, use -omitir-revocacion true.");
+                    // Este mensaje también se muestra en la interfaz gráfica: no nombrar opciones de línea de comandos
+                    // (-omitir-revocacion está explicada en la ayuda).
+                    throw new IllegalArgumentException("El certificado de firma está revocado. No se puede firmar.");
                 }
                 System.out.println("ADVERTENCIA: el certificado de firma está revocado, pero se continúa "
                         + "de todas formas porque se indicó -omitir-revocacion true.");

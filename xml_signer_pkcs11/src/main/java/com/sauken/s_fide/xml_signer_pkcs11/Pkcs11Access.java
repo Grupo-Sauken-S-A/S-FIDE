@@ -373,6 +373,10 @@ final class Pkcs11Access {
         if (text.contains("CKR_CRYPTOKI_ALREADY_INITIALIZED")) {
             return "La biblioteca PKCS#11 informó que ya estaba inicializada por otro componente de este proceso.";
         }
+        if (text.contains("Absolute path required")) {
+            return "La biblioteca PKCS#11 se debe indicar con su ruta completa (por ejemplo, en Windows, "
+                    + "C:\\Windows\\System32\\ y el nombre del archivo). Se indicó: " + libraryPath;
+        }
         return "No se pudo acceder al token (" + root.getClass().getSimpleName()
                 + (root.getMessage() != null ? ": " + root.getMessage().trim() : "") + ").";
     }

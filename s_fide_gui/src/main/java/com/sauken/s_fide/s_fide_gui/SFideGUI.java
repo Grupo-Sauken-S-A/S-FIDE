@@ -117,6 +117,7 @@ public class SFideGUI extends Application {
     private static final String VERSION = "S-FIDE GUI v" + VERSION_NUMBER + " - Grupo Sauken S.A.";
     private static final String CSS_FILE = "css/styles.css";
     private static final String HELP_FILE = "text/HELP.txt";
+    private static final String GUIA_DE_LOTES = "guia-lotes-sfide-gui.html";
     private static final String RELEASE_NOTES_FILE = "text/NOVEDADES.txt";
     private static final String LICENSE_FILE = "text/LICENSE.txt";
     private static final String FAQ_FILE = "text/FAQ.txt";
@@ -1492,7 +1493,8 @@ public class SFideGUI extends Application {
 
     private BatchPanel crearPanelDeLote(BatchPanel.Modulo modulo) {
         // El área de salida se crea después que las pestañas: se pide recién al usarla.
-        return new BatchPanel(modulo, configManager, () -> primaryStage, () -> sharedOutputArea);
+        return new BatchPanel(modulo, configManager, () -> primaryStage, () -> sharedOutputArea,
+                () -> openDocFile(GUIA_DE_LOTES));
     }
 
     /** Campo de contraseña de la pestaña "Por lote", que muestra siempre lo mismo que el de "Un documento". */
@@ -1559,10 +1561,12 @@ public class SFideGUI extends Application {
         Alert alerta = new Alert(Alert.AlertType.WARNING, "", aceptar, cancelar);
         alerta.initOwner(primaryStage);
         alerta.setTitle("Cerrar los documentos");
-        alerta.setHeaderText("Se van a cerrar " + cantidad + (cantidad == 1 ? " documento" : " documentos"));
-        Label explicacion = new Label("Después no admitirán más firmas, y cualquier cambio posterior hará que las "
-                + "firmas dejen de ser válidas. Esto no se puede deshacer.\n\nSi otras personas todavía tienen que "
-                + "firmarlos, cancele y desmarque la opción de cerrar.");
+        boolean uno = cantidad == 1;
+        alerta.setHeaderText(uno ? "Se va a cerrar 1 documento" : "Se van a cerrar " + cantidad + " documentos");
+        Label explicacion = new Label("Después no " + (uno ? "admitirá" : "admitirán") + " más firmas, y cualquier "
+                + "cambio posterior hará que las firmas dejen de ser válidas. Esto no se puede deshacer.\n\nSi otras "
+                + "personas todavía tienen que " + (uno ? "firmarlo" : "firmarlos")
+                + ", cancele y desmarque la opción de cerrar.");
         explicacion.setWrapText(true);
         explicacion.setMaxWidth(420);
         alerta.getDialogPane().setContent(explicacion);
@@ -1741,6 +1745,8 @@ public class SFideGUI extends Application {
         versionMenuItem.setOnAction(e -> Platform.runLater(this::showVersionDialog));
         licenseMenuItem.setOnAction(e -> Platform.runLater(this::showLicenseDialog));
         helpMenuItem.setOnAction(e -> Platform.runLater(this::showHelpDialog));
+        MenuItem batchGuideMenuItem = new MenuItem("Guía de trabajo por lotes");
+        batchGuideMenuItem.setOnAction(e -> Platform.runLater(() -> openDocFile(GUIA_DE_LOTES)));
         aboutMenuItem.setOnAction(e -> Platform.runLater(this::showAboutDialog));
 
         MenuItem updatesMenuItem = new MenuItem("Buscar actualizaciones...");
@@ -1752,6 +1758,7 @@ public class SFideGUI extends Application {
                 versionMenuItem,
                 licenseMenuItem,
                 helpMenuItem,
+                batchGuideMenuItem,
                 new SeparatorMenuItem(),
                 updatesMenuItem,
                 whatsNewMenuItem,
@@ -2037,12 +2044,24 @@ public class SFideGUI extends Application {
                                 + "línea de comandos."
                 ),
                 createDocLinkEntry(
+                        "Guía de trabajo por lotes",
+                        GUIA_DE_LOTES,
+                        "Cómo firmar, verificar y validar una carpeta entera de documentos: reglas, pantallas "
+                                + "ilustradas y qué hacer ante cada problema."
+                ),
+                createDocLinkEntry(
                         "Manual Técnico de Integración",
                         "manual-tecnico-integracion.html",
                         "Arquitectura, catálogo de todos los módulos con sus parámetros, "
                                 + "mecanismos de firma (PKCS#11/PKCS#12/Windows CSP-KSP) y "
                                 + "especialización de comercio exterior ALADI/MERCOSUR — para "
                                 + "integradores por línea de comandos."
+                ),
+                createDocLinkEntry(
+                        "Guía de lotes para integradores",
+                        "guia-lotes-integradores.html",
+                        "Operaciones por lotes por línea de comandos: reglas y ejemplos de ejecuciones correctas y "
+                                + "con errores — para integradores."
                 ),
                 new Separator(),
                 createHeading("Visualizadores de documentos XML de comercio exterior", 13.5),
@@ -2218,7 +2237,11 @@ public class SFideGUI extends Application {
             comexTab.setContent(createRichTextView(comexText));
 
             Tab docsTab = new Tab("Documentación");
-            docsTab.setContent(createDocumentationContent());
+            // Con barra de desplazamiento: la lista de documentos no entra entera en pantallas bajas.
+            ScrollPane documentos = new ScrollPane(createDocumentationContent());
+            documentos.setFitToWidth(true);
+            documentos.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            docsTab.setContent(documentos);
 
             Tab contactTab = new Tab("Contacto");
             contactTab.setContent(createContactContent());

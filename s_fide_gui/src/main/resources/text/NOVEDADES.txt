@@ -17,6 +17,11 @@ Ahora puede trabajar con muchos documentos juntos, ingresando la contraseña una
 - Si lo pide, junto a cada documento queda un registro con todo lo que pasó: avisos, detalle y resultado.
 - Por seguridad, un lote hace una sola cosa: no se mezclan certificados de origen con declaraciones juradas, y nunca se reemplaza un documento que ya estaba firmado.
 - Si cierra documentos PDF por lote, S-FiDE le pide confirmación porque no se puede deshacer.
+- Guía ilustrada del trabajo por lotes: está en el menú Ayuda, en "Guía de trabajo por lotes", y en cada pestaña "Por lote".
+
+### Correcciones
+- Si la biblioteca del token se indica sin su ruta completa, ahora el mensaje lo explica en palabras claras.
+- Si el certificado de su token está revocado, el aviso ya no menciona opciones que la interfaz no tiene.
 
 ### Seguridad
 - Se actualizaron los componentes de firma y verificación con las correcciones de seguridad más recientes de sus autores.

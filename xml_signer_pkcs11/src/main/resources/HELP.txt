@@ -49,6 +49,8 @@ SOLO POR LOTE
   - Una contraseña incorrecta, un token bloqueado o retirado y un certificado no apto o revocado detienen el
     lote. La contraseña nunca se vuelve a probar sola.
 
+  Ejemplos de lotes correctos y con errores: doc/guia-lotes-integradores.html, en la carpeta de S-FiDE.
+
 SALIDA Y CÓDIGO DE SALIDA
   Un documento: informa lo que hace; el archivo firmado se guarda junto al original con el sufijo "-signed"
   (si ya existe, se reemplaza). Código 0 si firmó; 1 si no.

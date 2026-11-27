@@ -45,6 +45,8 @@ SOLO POR LOTE
   - Un argumento desconocido, repetido o faltante detiene todo antes de empezar.
   - Una contraseña incorrecta y un certificado no apto o revocado detienen el lote.
 
+  Ejemplos de lotes correctos y con errores: doc/guia-lotes-integradores.html, en la carpeta de S-FiDE.
+
 SALIDA Y CÓDIGO DE SALIDA
   Un documento: informa lo que hace; el archivo firmado se guarda junto al original con el sufijo "-signed"
   (si ya existe, se reemplaza). Código 0 si firmó; 1 si no.

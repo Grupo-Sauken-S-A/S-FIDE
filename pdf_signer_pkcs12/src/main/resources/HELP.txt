@@ -60,6 +60,8 @@ SOLO POR LOTE
   - Nunca se reemplaza un archivo "-signed" que ya exista: ese documento se omite y el código de salida es 1.
   - Una contraseña incorrecta y un certificado no apto o revocado detienen el lote.
 
+  Ejemplos de lotes correctos y con errores: doc/guia-lotes-integradores.html, en la carpeta de S-FiDE.
+
 SALIDA Y CÓDIGO DE SALIDA
   Un documento: informa lo que hace; el archivo firmado se guarda junto al original con el sufijo "-signed"
   (si ya existe, se reemplaza). Código 0 si firmó; 1 si no.

@@ -66,6 +66,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -157,6 +158,8 @@ public final class BatchPanel {
     private final Button revisar = new Button("Revisar");
     private final Button ejecutar = new Button();
     private final Button cancelar = new Button("Cancelar");
+    private final Hyperlink guia = new Hyperlink("Guía de trabajo por lotes");
+    private final Runnable abrirGuia;
 
     private final ObservableList<BatchRow> filas = FXCollections.observableArrayList();
     private final FilteredList<BatchRow> visibles = new FilteredList<>(filas);
@@ -175,7 +178,8 @@ public final class BatchPanel {
     private Path informe;
 
     public BatchPanel(Modulo modulo, ConfigurationManager configuracion, Supplier<Window> propietario,
-                      Supplier<TextArea> salidaDelProceso) {
+                      Supplier<TextArea> salidaDelProceso, Runnable abrirGuia) {
+        this.abrirGuia = abrirGuia;
         this.modulo = modulo;
         this.configuracion = configuracion;
         this.propietario = propietario;
@@ -195,6 +199,8 @@ public final class BatchPanel {
         resumen.setMaxWidth(640);
 
         examinar.setOnAction(e -> elegirCarpeta());
+        guia.setTooltip(new Tooltip("Abre en el navegador la guía ilustrada del trabajo por lote"));
+        guia.setOnAction(e -> abrirGuia.run());
         revisar.setTooltip(new Tooltip("Muestra todo lo que se va a firmar, sin firmar nada"));
         revisar.setOnAction(e -> revisarCarpeta());
         ejecutar.getStyleClass().add("execute");
@@ -215,7 +221,7 @@ public final class BatchPanel {
         tabla.setPrefHeight(260);
         tabla.setPrefWidth(860);
         // Los botones nunca se recortan, aunque la pantalla de la opción sea angosta.
-        for (javafx.scene.layout.Region control : List.of(revisar, ejecutar, cancelar, soloProblemas, detalle,
+        for (javafx.scene.layout.Region control : List.of(revisar, ejecutar, cancelar, guia, soloProblemas, detalle,
                 reintentar, abrirInforme, abrirCarpeta)) {
             control.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
         }
@@ -253,7 +259,8 @@ public final class BatchPanel {
         if (modulo.firma()) {
             botones.getChildren().add(revisar);
         }
-        botones.getChildren().addAll(ejecutar, cancelar);
+        botones.getChildren().addAll(ejecutar, cancelar, guia);
+        botones.setStyle("-fx-alignment: center-left;");
         grilla.add(botones, 1, fila++, 2, 1);
         grilla.add(resumen, 1, fila++, 2, 1);
         grilla.add(tabla, 0, fila++, 3, 1);
@@ -418,7 +425,7 @@ public final class BatchPanel {
         }
         int fuera = exploracion.excluidosPorNombre().size();
         avisar("No hay documentos ." + modulo.extension() + " para procesar en la carpeta."
-                + (fuera > 0 ? " Por su nombre quedaron fuera " + fuera + "." : ""));
+                + BatchReviewDialog.fueraPorElNombre(fuera));
         return true;
     }
 
@@ -472,6 +479,7 @@ public final class BatchPanel {
             }
             boolean mezclado = fin[0] != null && "LOTE_MEZCLADO".equals(fin[0].corte());
             if (fin[0] == null || (fin[0].corte() != null && !mezclado)) {
+                olvidarResultados();
                 avisar("No se pudo revisar los documentos.\n\n" + (errores.isEmpty()
                         ? "El programa no respondió." : String.join("\n", errores)));
                 return;
@@ -489,7 +497,16 @@ public final class BatchPanel {
         });
     }
 
+    /** Quita lo del lote anterior: si el nuevo no llega a empezar, no tiene que parecer que es su resultado. */
+    private void olvidarResultados() {
+        filas.clear();
+        soloProblemas.setSelected(false);
+        hayInforme.set(false);
+        hayParaReintentar.set(false);
+    }
+
     private void confirmarYLanzar(List<Path> documentos, int fuera) {
+        olvidarResultados();
         if (documentos.isEmpty()) {
             avisar("No queda ningún documento marcado para procesar.");
             return;

@@ -28,6 +28,8 @@ SOLO POR LOTE
   Importante: por lote el detalle no se muestra en pantalla, así que -simple solo cambia lo que se guarda en
   los archivos .log. Sin -log no tiene ningún efecto.
 
+  Ejemplos de lotes correctos y con errores: doc/guia-lotes-integradores.html, en la carpeta de S-FiDE.
+
 SALIDA Y CÓDIGO DE SALIDA
   Un documento: muestra el detalle de cada firma y el resultado. Código 0 si todas las firmas son válidas;
   1 si alguna no lo es, si el documento no tiene firmas o si no se pudo procesar.

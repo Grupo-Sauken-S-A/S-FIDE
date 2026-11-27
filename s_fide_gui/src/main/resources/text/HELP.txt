@@ -102,11 +102,15 @@ pestañas: "Un documento", que es la pantalla de siempre, y "Por lote", para una
 - La tabla muestra cómo terminó cada documento. Puede reintentar los que fallaron y abrir el informe.
 - Con "Guardar un registro por documento" se deja junto a cada uno un archivo .log con los avisos,
   el detalle de ese documento y su resultado.
+- La explicación completa, con pantallas, reglas y qué hacer ante cada problema, está en la "Guía de
+  trabajo por lotes": menú Ayuda, o el enlace del mismo nombre en cada pestaña "Por lote".
 
 ## Novedades en la versión 1.6.0
 
 - Firma, verificación y validación XSD de una carpeta entera ("Por lote").
 - Los mismos programas admiten listas de documentos desde la línea de comandos (-lote).
+- Dos guías nuevas del trabajo por lotes, en la pestaña "Documentación" de esta ventana: una ilustrada
+  para esta aplicación y otra para integradores.
 
 ## Novedades en la versión 1.5.1
 

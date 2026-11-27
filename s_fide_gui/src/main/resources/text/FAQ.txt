@@ -69,6 +69,8 @@
 - En "doc/manual-tecnico-integracion.md" hay una sección "Integración desde otras
   aplicaciones" con ejemplos concretos de invocación por línea de comandos, redirección de
   salida y captura de código de resultado (útil para integradores)
+- Para el trabajo por lotes desde otra aplicación hay ejemplos completos, correctos y con
+  errores, en "doc/guia-lotes-integradores.html"
 
 ## 9. ¿Qué es la detección automática de drivers?
 

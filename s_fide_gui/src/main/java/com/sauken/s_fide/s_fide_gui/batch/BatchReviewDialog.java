@@ -131,7 +131,7 @@ final class BatchReviewDialog {
         }
         Label nota = new Label("El sufijo -signed se mira en el nombre del archivo: un documento firmado por otro "
                 + "programa sin ese sufijo cuenta como sin sufijo."
-                + (excluidos > 0 ? " Por su nombre quedaron fuera " + excluidos + " archivos de la carpeta." : ""));
+                + fueraPorElNombre(excluidos));
         nota.setWrapText(true);
         nota.setMaxWidth(880);
         nota.setStyle("-fx-text-fill: #666; -fx-font-size: 11px;");
@@ -151,6 +151,15 @@ final class BatchReviewDialog {
             dialogo.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
         }
         return dialogo.showAndWait().filter(boton -> boton == aceptar).isPresent();
+    }
+
+    /** Aviso de cuántos archivos no entraron por su nombre, en singular o plural; vacío si entraron todos. */
+    static String fueraPorElNombre(int cantidad) {
+        if (cantidad <= 0) {
+            return "";
+        }
+        return cantidad == 1 ? " Por su nombre quedó fuera 1 archivo de la carpeta."
+                : " Por su nombre quedaron fuera " + cantidad + " archivos de la carpeta.";
     }
 
     private static TableColumn<BatchRow, String> columna(String titulo,

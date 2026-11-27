@@ -127,6 +127,16 @@ class Pkcs11AccessTest {
     }
 
     @Test
+    void unaRutaRelativaSeExplicaSinNombresTecnicos() {
+        Throwable error = new ProviderException("SunPKCS11 configuration failed",
+                new IllegalStateException("Absolute path required for library value: token.dll"));
+        String mensaje = Pkcs11Access.describeFailure(error, "token.dll");
+        assertTrue(mensaje.contains("ruta completa"));
+        assertTrue(mensaje.contains("token.dll"));
+        assertTrue(!mensaje.contains("Exception") && !mensaje.contains("Absolute"));
+    }
+
+    @Test
     void causaDesconocidaNuncaExponeUnaTrazaDeJava() {
         String mensaje = Pkcs11Access.describeFailure(new IllegalStateException("algo raro"), "x.dll");
         assertTrue(mensaje.startsWith("No se pudo acceder al token"));

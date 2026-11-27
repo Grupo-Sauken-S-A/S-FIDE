@@ -29,6 +29,8 @@ SOLO POR LOTE
   -log                    Guarda junto a cada documento un archivo <documento>.log con el detalle de su
                           validación y su resultado. Si el archivo existe, agrega al final
 
+  Ejemplos de lotes correctos y con errores: doc/guia-lotes-integradores.html, en la carpeta de S-FiDE.
+
 SALIDA Y CÓDIGO DE SALIDA
   Un documento: muestra la validación de la estructura y de las firmas. Código 0 si la estructura cumple el
   esquema y las firmas son correctas; 1 en cualquier otro caso (incluido un documento sin firmas).
