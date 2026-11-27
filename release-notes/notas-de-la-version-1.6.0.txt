@@ -29,7 +29,6 @@ SEGURIDAD
 
 * Se actualizaron los componentes de firma y verificación con las correcciones de seguridad de sus autores: Bouncy
   Castle 1.87, iText 8.0.6 y Logback 1.6.8.
-* Pendiente: pasar el Java embebido (23, sin soporte) a una versión con soporte largo.
 
 CÓMO ACTUALIZAR
 
