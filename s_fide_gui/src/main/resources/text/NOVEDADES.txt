@@ -14,6 +14,7 @@ Ahora puede trabajar con muchos documentos juntos, ingresando la contraseña una
 - Botón "Revisar": antes de firmar muestra todos los documentos y cuáles se pueden firmar, sin firmar nada. Puede desmarcar los que no quiera.
 - Al firmar quedan afuera los archivos que terminan en -signed. Para agregar otra firma a documentos ya firmados, marque "Incluir solo los archivos que terminan en -signed".
 - Una tabla muestra cómo terminó cada documento, con la opción de reintentar solo los que fallaron y de abrir el informe.
+- Si lo pide, junto a cada documento queda un registro con todo lo que pasó: avisos, detalle y resultado.
 - Por seguridad, un lote hace una sola cosa: no se mezclan certificados de origen con declaraciones juradas, y nunca se reemplaza un documento que ya estaba firmado.
 - Si cierra documentos PDF por lote, S-FiDE le pide confirmación porque no se puede deshacer.
 

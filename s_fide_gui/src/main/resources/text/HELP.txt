@@ -100,7 +100,8 @@ pestañas: "Un documento", que es la pantalla de siempre, y "Por lote", para una
   en PDF, todos reciben la misma firma y, si se cierran, se cierran todos (no se puede deshacer).
 - La contraseña se pide una sola vez. Nunca se reemplaza un archivo firmado que ya exista.
 - La tabla muestra cómo terminó cada documento. Puede reintentar los que fallaron y abrir el informe.
-- Con "Guardar un registro por documento" se deja junto a cada uno un archivo .log con el detalle.
+- Con "Guardar un registro por documento" se deja junto a cada uno un archivo .log con los avisos,
+  el detalle de ese documento y su resultado.
 
 ## Novedades en la versión 1.6.0
 

@@ -43,7 +43,7 @@ Versión del documento: acompaña a S-FiDE v1.6.0 (en desarrollo, sin publicar) 
 
 ## 1. Introducción y filosofía
 
-> **¿Ya integraste S-FiDE 1.5.1?** Las invocaciones de a un documento siguen funcionando igual, con tres excepciones: `PDFSignerPKCS12` informa el éxito y las advertencias por `stdout` (antes por `stderr`); `PDFSignerPKCS11` y `PDFVerifySignatures` ya no escriben líneas técnicas de Java en `stderr`; y `PDFSignerPKCS12` explica una contraseña incorrecta. Además, `-ayuda` describe el lote. Ver la [Guía de migración 1.5.1 → 1.6.0](#v160-en-desarrollo-sin-publicar).
+> **¿Ya integraste S-FiDE 1.5.1?** Las invocaciones de a un documento siguen funcionando igual, con tres excepciones: `PDFSignerPKCS12` informa el éxito y las advertencias por `stdout` (antes por `stderr`); `PDFSignerPKCS11` y `PDFVerifySignatures` ya no escriben líneas técnicas de Java en `stderr`; y `PDFSignerPKCS12` explica una contraseña incorrecta. Además, el texto de `-ayuda` de los siete programas con lote se reorganizó. Ver la [Guía de migración 1.5.1 → 1.6.0](#v160-en-desarrollo-sin-publicar).
 
 > **¿Ya integraste S-FiDE 1.5.0?** El contrato de línea de comandos no cambió. Lo único que cambia en la 1.5.1 es que los seis firmadores terminan con código `1`, sin generar archivo, ante un certificado vencido, no vigente todavía, de autoridad certificante o sin uso de firma (antes firmaban igual con uno vencido); no hay argumento para omitirlo. Pueden además imprimir líneas `ADVERTENCIA:` (reloj, cadena, clave corta) sin cambiar el código de salida, y los listados agregan una línea `Estado:`. Ver [7.5.2](#752-vigencia-y-aptitud-del-certificado-antes-de-firmar-151).
 
@@ -494,9 +494,9 @@ Siete programas pueden aplicar **una misma operación a una lista de documentos*
 | `XMLVerifySignatures`, `PDFVerifySignatures` | `-lote <lista> [-simple]` |
 | `XMLVerifyXSDStructure` | `-lote <lista> [<archivo.xsd>]` |
 
-Todos admiten además `[-informe <archivo.csv>] [-log]`; los cuatro firmadores, `[-revisar]`. Se aceptan las formas con uno o dos guiones. En los programas de argumentos posicionales `-lote` es el **primer** argumento; en los firmadores de PDF va en cualquier posición de opción. En lote, un argumento desconocido, repetido, mal formado o no admitido corta **antes de hacer nada**. `-revisar` sin `-lote` es un error y nunca firma.
+Todos admiten además `[-informe <archivo.csv>] [-log]`; los cuatro firmadores, `[-revisar]`. Se aceptan las formas con uno o dos guiones. En los programas de argumentos posicionales `-lote` es el **primer** argumento; en los firmadores de PDF va en cualquier posición de opción. En lote, un argumento desconocido, repetido, mal formado o no admitido corta **antes de hacer nada**. `-revisar` sin `-lote` es un error y nunca firma. En los firmadores de XML, si en el lugar del elemento hay algo que empieza con `-`, falta un argumento anterior y el lote se rechaza.
 
-**`-revisar`** revisa los documentos sin acceder al certificado ni escribir archivos: informa cada uno como `LISTO`, `OMITIDO` o `ERROR`. Usa los mismos argumentos que la firma; la contraseña no se usa, así que no gasta intentos de PIN. Admite `-informe`.
+**`-revisar`** revisa los documentos sin acceder al certificado ni escribir archivos: informa cada uno como `LISTO`, `OMITIDO` o `ERROR`. Usa los mismos argumentos que la firma, y hay que escribirlos todos; la contraseña no se usa (puede ser `""`), así que no gasta intentos de PIN. Tampoco se comprueban la biblioteca, el token ni el archivo de certificado. Admite `-informe`.
 
 #### Archivo de lista
 
@@ -556,12 +556,18 @@ LOTE_DOC;"<n>";"<total>";"<estado>";"<código>";"<entrada>";"<salida>";"<log>";"
 LOTE_RESUMEN;"total=…";"correctos=…";"con_avisos=…";"no_validos=…";"sin_firmas=…";"con_error=…";"omitidos=…";"no_procesados=…";"corte=…"
 ```
 
-El `1` es la versión del formato. `LOTE_INICIO` y `LOTE_RESUMEN` salen siempre que se reconoce `-lote`. Leída la lista, cada documento tiene exactamente una línea `LOTE_DOC`. `corte=NINGUNO` si no hubo corte. Puede haber otras líneas (avisos del lote): **procesar solo las que empiezan con `LOTE_`**; sin `LOTE_RESUMEN`, el lote está incompleto. Por `stderr` sale la causa de un corte y `archivo: mensaje` por cada documento con problema: **leer ambas salidas a la vez**. No se imprime detalle por documento (para eso está `-log`).
+El `1` es la versión del formato. `LOTE_INICIO` y `LOTE_RESUMEN` salen siempre que se reconoce `-lote`. Leída la lista, cada documento tiene exactamente una línea `LOTE_DOC`. `corte=NINGUNO` si no hubo corte. Puede haber otras líneas (avisos del lote): **procesar solo las que empiezan con `LOTE_`**; sin `LOTE_RESUMEN`, el lote está incompleto. Por `stderr` sale la causa de un corte y `archivo: mensaje` por cada documento con problema: **leer ambas salidas a la vez**. No se imprime detalle por documento (para eso está `-log`); por eso, en los verificadores, `-simple` solo cambia el contenido de los registros.
 
 #### Informe y registro
 
 - **`-informe <archivo.csv>`**: columnas `n;total;estado;codigo;entrada;salida;log;mensaje`, con encabezado, campos entre comillas, **UTF-8 sin BOM**. Se escribe línea por línea. No puede terminar en `.xml` ni `.pdf` ni ser la lista; un informe anterior se reemplaza. Si no se puede crear, no se firma nada.
-- **`-log`**: junto a cada documento, `<documento>.log` (por ejemplo `contrato.xml.log`), UTF-8, agregando al final, con la salida de su proceso y el resultado. Nunca incluye la contraseña.
+- **`-log`**: junto a cada documento, `<documento>.log` (por ejemplo `contrato.xml.log`), UTF-8, agregando al final. Cada registro se entiende solo y contiene, en este orden:
+  1. Un encabezado con fecha, programa y versión.
+  2. Los **avisos generales del lote** (certificado, revocación, reloj, token), los mismos que en pantalla salen una sola vez.
+  3. Lo mismo que se vería al procesar ese documento solo, por `stdout` y `stderr`, incluido el error si lo hubo.
+  4. Una línea `Resultado: ESTADO (CODIGO) mensaje`.
+
+  No se genera para los documentos `NO_PROCESADO` ni con `-revisar`. Nunca incluye la contraseña.
 
 #### Ejemplo
 
@@ -776,7 +782,7 @@ Ambos controles se implementan buscando `<ds:Signature>`/`<ds:Reference>` existe
 
 ### 9.4 XMLSignerPKCS11
 
-> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
+> Admite **operaciones por lotes** desde 1.6.0: ver **Por lote** al final de esta sección y las reglas comunes en [7.11](#711-operaciones-por-lotes-160).
 
 **Qué hace:** firma digitalmente un documento XML (completo, o un elemento/párrafo específico por su atributo `Id`) usando un token PKCS#11. Implementa XML-DSig (firma enveloped, canonicalización inclusiva), con el mecanismo de hash interno o externo resuelto automáticamente (ver [sección 7.1](#71-pkcs11-tokens-criptográficos-y-hsm)).
 
@@ -807,7 +813,7 @@ Antes de firmar, comprueba que el certificado esté vigente y sea apto para firm
 
 **Salida:** archivo `<nombre>-signed.xml` en el mismo directorio que el original; mensaje de confirmación con la ruta de salida por `stdout`.
 
-**Mensajes de error posibles:** "El archivo de la biblioteca PKCS#11 no existe", "El archivo XML no existe", "El elemento o párrafo XML especificado no existe en el documento XML", "Contraseña incorrecta", "Proveedor SunPKCS11 no disponible", "No se encontró el elemento XML con identificador [...]", "El token no admite ningún mecanismo de firma RSA-SHA256 compatible (ni interno ni externo)" (caso extremo, token no soportado), más las [reglas de firma comunes](#reglas-de-firma-comunes-a-los-tres-firmadores-xml) (elemento ya firmado, orden CODEH/DJOEH, obligatoriedad de indicar elemento en XML de comercio exterior — [sección 10.5](#105-reglas-de-firma-obligatorias)).
+**Mensajes de error posibles:** "El archivo de la biblioteca PKCS#11 no existe", "El archivo XML no existe", "El elemento o párrafo XML especificado no existe en el documento XML", "Contraseña incorrecta", los mensajes de acceso al token (contraseña incorrecta, token bloqueado o retirado, ningún token detectado, biblioteca que no se puede cargar), "No se encontró el elemento XML con identificador [...]", "El token no admite ningún mecanismo de firma RSA-SHA256 compatible (ni interno ni externo)" (caso extremo, token no soportado), más las [reglas de firma comunes](#reglas-de-firma-comunes-a-los-tres-firmadores-xml) (elemento ya firmado, orden CODEH/DJOEH, obligatoriedad de indicar elemento en XML de comercio exterior — [sección 10.5](#105-reglas-de-firma-obligatorias)).
 
 **Advertencia de seguridad:** un número elevado de intentos fallidos de contraseña puede dejar inutilizado el certificado del token, exigiendo tramitar uno nuevo ante la autoridad certificante.
 
@@ -816,11 +822,27 @@ Antes de firmar, comprueba que el certificado esté vigente y sea apto para firm
 java -jar XMLSignerPKCS11.jar C:\Windows\System32\eTPKCS11.dll "MiPIN123" 0 C:\docs\certificado-origen.xml COD
 ```
 
+**Por lote (1.6.0):**
+```
+java -jar XMLSignerPKCS11.jar -lote <lista> <biblioteca> <contraseña> <slot> <elemento> [-omitir-revocacion true|false] [-revisar] [-informe <archivo.csv>] [-log]
+```
+
+- `-lote` es el primer argumento; los demás son los de un documento, en el mismo orden y sin el archivo.
+- Un solo acceso al token y un solo ingreso de PIN. Con `-revisar` la contraseña puede ser `""`; no se comprueban la biblioteca, el token ni la contraseña.
+- No se mezclan tipos de documento (tabla de la sección 7.11).
+- Si falta un argumento y en el lugar del elemento queda una opción (por ejemplo `-revisar`), el lote se rechaza con `ARGUMENTOS`.
+
+Ejemplo (primero revisar, después firmar):
+```
+java -jar XMLSignerPKCS11.jar -lote C:\lote.txt C:\Windows\System32\eTPKCS11.dll "" 0 COD -revisar
+java -jar XMLSignerPKCS11.jar -lote C:\lote.txt C:\Windows\System32\eTPKCS11.dll "MiPIN123" 0 COD -informe C:\lote.csv -log
+```
+
 ---
 
 ### 9.5 XMLSignerPKCS12
 
-> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
+> Admite **operaciones por lotes** desde 1.6.0: ver **Por lote** al final de esta sección y las reglas comunes en [7.11](#711-operaciones-por-lotes-160).
 
 **Qué hace:** idéntico a `XMLSignerPKCS11` en funcionalidad de firma XML (misma configuración criptográfica: XML-DSig, canonicalización inclusiva, RSA-SHA256), pero usando un archivo PKCS#12 en lugar de un token.
 
@@ -852,11 +874,27 @@ No aplica `-listar-drivers` (no hay driver involucrado con archivos PKCS#12).
 java -jar XMLSignerPKCS12.jar C:\certificados\empresa.pfx "MiContraseña123" C:\docs\declaracion.xml DJO
 ```
 
+**Por lote (1.6.0):**
+```
+java -jar XMLSignerPKCS12.jar -lote <lista> <certificado.p12> <password> <elemento> [-omitir-revocacion true|false] [-revisar] [-informe <archivo.csv>] [-log]
+```
+
+- `-lote` es el primer argumento; los demás son los de un documento, en el mismo orden y sin el archivo.
+- Un solo acceso al certificado. Con `-revisar` la contraseña puede ser `""`; no se comprueban el archivo PKCS#12 ni la contraseña.
+- No se mezclan tipos de documento (tabla de la sección 7.11).
+- Si falta un argumento y en el lugar del elemento queda una opción (por ejemplo `-revisar`), el lote se rechaza con `ARGUMENTOS`.
+
+Ejemplo (primero revisar, después firmar):
+```
+java -jar XMLSignerPKCS12.jar -lote C:\lote.txt C:\certificados\empresa.pfx "" DJO -revisar
+java -jar XMLSignerPKCS12.jar -lote C:\lote.txt C:\certificados\empresa.pfx "MiContraseña123" DJO -informe C:\lote.csv -log
+```
+
 ---
 
 ### 9.6 XMLVerifySignatures
 
-> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
+> Admite **operaciones por lotes** desde 1.6.0: ver **Por lote** al final de esta sección y las reglas comunes en [7.11](#711-operaciones-por-lotes-160).
 
 **Qué hace:** verifica la validez de todas las firmas digitales presentes en un documento XML — integridad criptográfica, validez del certificado y estado de revocación (OCSP/CRL, requiere Internet para una validación completa). Acepta firmas RSA-SHA256 **y RSA-SHA1** (ver [sección 7.6](#76-compatibilidad-con-firmas-sha-1-de-aplicaciones-de-terceros)), generadas por S-FiDE o por cualquier otra aplicación conforme a XML-DSig.
 
@@ -894,11 +932,26 @@ java -jar XMLVerifySignatures.jar C:\docs\certificado-origen-signed.xml
 java -jar XMLVerifySignatures.jar C:\docs\certificado-origen-signed.xml -simple
 ```
 
+**Por lote (1.6.0):**
+```
+java -jar XMLVerifySignatures.jar -lote <lista> [-simple] [-informe <archivo.csv>] [-log]
+```
+
+- `-lote` es el primer argumento.
+- El detalle de cada documento no sale en pantalla: queda en su `.log`, así que `-simple` solo cambia ese contenido y sin `-log` no tiene efecto.
+- Código de salida `0` solo si todos los documentos son válidos (con o sin observaciones). No admite `-revisar`.
+
+Ejemplo (primero con informe, después con registros):
+```
+java -jar XMLVerifySignatures.jar -lote C:\lote.txt -informe C:\lote.csv
+java -jar XMLVerifySignatures.jar -lote C:\lote.txt -simple -log
+```
+
 ---
 
 ### 9.7 XMLVerifyXSDStructure
 
-> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
+> Admite **operaciones por lotes** desde 1.6.0: ver **Por lote** al final de esta sección y las reglas comunes en [7.11](#711-operaciones-por-lotes-160).
 
 **Qué hace:** valida que un documento XML cumpla la estructura definida por un esquema XSD (tipos de dato, elementos obligatorios u opcionales, orden, restricciones de contenido) y además verifica sus firmas digitales (también aceptando SHA-1 y SHA-256, igual que `XMLVerifySignatures`).
 
@@ -948,6 +1001,21 @@ java -jar XMLVerifyXSDStructure.jar C:\docs\certificado-origen.xml
 java -jar XMLVerifyXSDStructure.jar C:\docs\certificado-origen.xml C:\xsd\esquema-v2.xsd
 ```
 
+**Por lote (1.6.0):**
+```
+java -jar XMLVerifyXSDStructure.jar -lote <lista> [<archivo.xsd>] [-informe <archivo.csv>] [-log]
+```
+
+- `-lote` es el primer argumento. El esquema, si se indica, va **inmediatamente después de la lista** y vale para todos.
+- Sin esquema, cada documento usa el que declara; cada uno se descarga una sola vez por lote.
+- Una estructura inválida es `NO_VALIDO` aunque el documento no tenga firmas. No comprueba revocación ni admite `-revisar`.
+
+Ejemplo (primero con informe, después con registros):
+```
+java -jar XMLVerifyXSDStructure.jar -lote C:\lote.txt -informe C:\lote.csv
+java -jar XMLVerifyXSDStructure.jar -lote C:\lote.txt C:\xsd\cod_ver_1.8.2.xsd -log
+```
+
 ---
 
 ### Opciones específicas de los firmadores de PDF
@@ -978,7 +1046,7 @@ java -jar XMLVerifyXSDStructure.jar C:\docs\certificado-origen.xml C:\xsd\esquem
 
 ### 9.8 PDFSignerPKCS11
 
-> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
+> Admite **operaciones por lotes** desde 1.6.0: ver **Por lote** al final de esta sección y las reglas comunes en [7.11](#711-operaciones-por-lotes-160).
 
 **Qué hace:** firma digitalmente un documento PDF usando un token PKCS#11, con firma visible opcional (ver opciones arriba). Aplica una firma detached CMS/PKCS#7 sobre el hash del documento, con verificación previa de firmas existentes.
 
@@ -1010,7 +1078,7 @@ Antes de firmar, comprueba que el certificado esté vigente y sea apto para firm
 
 **Salida:** archivo `<nombre>-signed.pdf`. Si el token necesitó el mecanismo de hash externo (ver [sección 7.1](#71-pkcs11-tokens-criptográficos-y-hsm)), se informa por consola: *"Mecanismo de firma: hash SHA-256 externo (token sin CKM_SHA256_RSA_PKCS)"*.
 
-**Mensajes de error posibles:** "El archivo PDF no existe o no es accesible", "La biblioteca PKCS#11 no existe o no es accesible", "El PDF está encriptado y no puede ser firmado", "La firma existente '[nombre]' no es válida", "El token no contiene una clave privada válida", "No se encontró una cadena de certificados válida en el token", "Error al acceder a la clave privada del token", "El token no admite ningún mecanismo de firma RSA-SHA256 compatible (ni interno ni externo)".
+**Mensajes de error posibles:** "El archivo PDF no existe o no es accesible", "La biblioteca PKCS#11 no existe o no es accesible", "Faltan argumentos obligatorios", los mensajes de acceso al token, "El token no contiene una clave privada válida", "No se encontró una cadena de certificados válida en el token", "Error al acceder a la clave privada del token", "El token no admite ningún mecanismo de firma RSA-SHA256 compatible (ni interno ni externo)".
 
 **Posiciones útiles para Certificados de Origen no preferenciales** (convención Grupo Sauken): `-x 40 -y 55` para la firma del Exportador, `-x 310 -y 55` para la firma del Funcionario Habilitado.
 
@@ -1019,11 +1087,27 @@ Antes de firmar, comprueba que el certificado esté vigente y sea apto para firm
 java -jar PDFSignerPKCS11.jar -i C:\docs\certificado.pdf -l C:\Windows\System32\eTPKCS11.dll -p "MiPIN123" -s 0 -k true -x 40 -y 55 -t "Exportador"
 ```
 
+**Por lote (1.6.0):**
+```
+java -jar PDFSignerPKCS11.jar -lote <lista> -l <lib-pkcs11> -p <password> -s <slot> [-k true|false] [-x pos] [-y pos] [-pagina n] [-ancho w] [-alto h] [-proteger-contenido true|false] [-t "texto"] [-omitir-revocacion true|false] [-revisar] [-informe <archivo.csv>] [-log]
+```
+
+- `-lote` reemplaza a `-i` y puede ir en cualquier posición; `-campo` no se admite. Posición, texto y demás opciones valen para todos.
+- En este programa `-l` es la biblioteca y `-k true` cierra **todos** los documentos.
+- Un solo acceso al token y un solo ingreso de PIN. Con `-revisar` hay que escribir igual `-l`, `-p` (puede ser `""`) y `-s`; no se comprueban la biblioteca, el token ni la contraseña.
+- Un argumento desconocido, repetido o mal escrito rechaza el lote (de a un documento, los desconocidos se ignoran).
+
+Ejemplo (primero revisar, después firmar):
+```
+java -jar PDFSignerPKCS11.jar -lote C:\lote.txt -l C:\Windows\System32\eTPKCS11.dll -p "" -s 0 -x 40 -y 55 -revisar
+java -jar PDFSignerPKCS11.jar -lote C:\lote.txt -l C:\Windows\System32\eTPKCS11.dll -p "MiPIN123" -s 0 -x 40 -y 55 -informe C:\lote.csv -log
+```
+
 ---
 
 ### 9.9 PDFSignerPKCS12
 
-> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
+> Admite **operaciones por lotes** desde 1.6.0: ver **Por lote** al final de esta sección y las reglas comunes en [7.11](#711-operaciones-por-lotes-160).
 
 **Qué hace:** idéntico a `PDFSignerPKCS11` pero usando un archivo PKCS#12.
 
@@ -1054,18 +1138,34 @@ Antes de firmar, comprueba que el certificado esté vigente y sea apto para firm
 
 **Atención:** en este módulo el flag de bloqueo es `-l`/`--lock` (no `-k`) — es una diferencia histórica de nomenclatura entre este módulo y los otros dos firmadores de PDF.
 
-**Mensajes de error posibles:** "El archivo PDF no existe o no es accesible", "El archivo de certificado no existe o no es accesible", "El PDF está encriptado y no puede ser firmado", "La firma existente '[nombre]' no es válida", "El archivo de certificado no contiene certificados", "El certificado no contiene una clave privada", "No se encontró una cadena de certificados válida", "Error al acceder a la clave privada".
+**Mensajes de error posibles:** "El archivo PDF no existe o no es accesible", "El archivo de certificado no existe o no es accesible", "Contraseña incorrecta o archivo PKCS#12 inválido", "El archivo de certificado no contiene certificados", "El certificado no contiene una clave privada", "No se encontró una cadena de certificados válida", "Error al acceder a la clave privada".
 
 **Ejemplo:**
 ```
 java -jar PDFSignerPKCS12.jar -i C:\docs\certificado.pdf -c C:\certificados\empresa.pfx -p "MiContraseña123" -l true -x 40 -y 55
 ```
 
+**Por lote (1.6.0):**
+```
+java -jar PDFSignerPKCS12.jar -lote <lista> -c <certificado.p12> -p <password> [-l true|false] [-x pos] [-y pos] [-pagina n] [-ancho w] [-alto h] [-proteger-contenido true|false] [-t "texto"] [-omitir-revocacion true|false] [-revisar] [-informe <archivo.csv>] [-log]
+```
+
+- `-lote` reemplaza a `-i` y puede ir en cualquier posición; `-campo` no se admite. Posición, texto y demás opciones valen para todos.
+- En este programa `-l true` cierra **todos** los documentos.
+- Un solo acceso al certificado. Con `-revisar` hay que escribir igual `-c` y `-p` (puede ser `""`); no se comprueban el certificado ni la contraseña.
+- Un argumento desconocido, repetido o mal escrito rechaza el lote (de a un documento, los desconocidos se ignoran).
+
+Ejemplo (primero revisar, después firmar):
+```
+java -jar PDFSignerPKCS12.jar -lote C:\lote.txt -c C:\certificados\empresa.pfx -p "" -x 40 -y 55 -revisar
+java -jar PDFSignerPKCS12.jar -lote C:\lote.txt -c C:\certificados\empresa.pfx -p "MiContraseña123" -x 40 -y 55 -informe C:\lote.csv -log
+```
+
 ---
 
 ### 9.10 PDFVerifySignatures
 
-> Admite **operaciones por lotes** desde 1.6.0: ver [7.11](#711-operaciones-por-lotes-160).
+> Admite **operaciones por lotes** desde 1.6.0: ver **Por lote** al final de esta sección y las reglas comunes en [7.11](#711-operaciones-por-lotes-160).
 
 **Qué hace:** verifica la validez de las firmas digitales de un documento PDF — integridad, autenticidad, vigencia del certificado y estado de revocación **a la fecha de cada firma**, y si el documento fue modificado luego de la última firma. Acepta firmas SHA-256 y SHA-1 de cualquier aplicación conforme (ver [sección 7.6](#76-compatibilidad-con-firmas-sha-1-de-aplicaciones-de-terceros)) y entiende documentos firmados por otras aplicaciones, como Acrobat (ver [7.7](#77-firma-de-pdf-en-cadena-entre-varias-personas-y-compatibilidad-con-acrobat-150)). Desde 1.5.0 usa el mismo análisis que los firmadores.
 
@@ -1088,12 +1188,27 @@ java -jar PDFVerifySignatures.jar [-version | -ayuda | -licencia]
 
 > **Migración (1.4.0 → 1.5.0):** quien parseaba la salida debe tener en cuenta que el estado de revocación se imprime ahora como texto (por ejemplo `No figura revocado (consulta OCSP)`) y no como `GOOD`/`UNKNOWN`/`REVOKED`. El contrato de código de salida (`0`/`1`) y las líneas finales `DOCUMENTO VÁLIDO` / `DOCUMENTO INVÁLIDO` no cambian.
 
-**Mensajes de error posibles:** "El documento no contiene firmas digitales", "Error en firma [nombre]: [detalle]", "DOCUMENTO INVÁLIDO: Una o más firmas no son válidas", "Certificado revocado al momento de la firma", "Certificado no confiable o autofirmado", "No se pudo obtener el certificado firmante".
+**Mensajes de error posibles:** "El documento no contiene firmas digitales", "DOCUMENTO INVÁLIDO: Una o más firmas no son válidas", "Certificado no confiable o autofirmado", "No se pudo obtener el certificado firmante".
 
 **Ejemplo:**
 ```
 java -jar PDFVerifySignatures.jar C:\docs\certificado-signed.pdf
 java -jar PDFVerifySignatures.jar C:\docs\certificado-signed.pdf -simple
+```
+
+**Por lote (1.6.0):**
+```
+java -jar PDFVerifySignatures.jar -lote <lista> [-simple] [-informe <archivo.csv>] [-log]
+```
+
+- `-lote` es el primer argumento.
+- El detalle de cada documento no sale en pantalla: queda en su `.log`, así que `-simple` solo cambia ese contenido y sin `-log` no tiene efecto.
+- Código de salida `0` solo si todos los documentos son válidos (con o sin observaciones). No admite `-revisar`.
+
+Ejemplo (primero con informe, después con registros):
+```
+java -jar PDFVerifySignatures.jar -lote C:\lote.txt -informe C:\lote.csv
+java -jar PDFVerifySignatures.jar -lote C:\lote.txt -simple -log
 ```
 
 ---
@@ -1507,8 +1622,12 @@ powershell -ExecutionPolicy Bypass -File crear-paquete-actualizacion.ps1 [-Versi
 ### v1.6.0 (en desarrollo, sin publicar)
 
 - **Operaciones por lotes** en los dos firmadores XML y PDF con token y PKCS#12, los dos verificadores y el validador XSD: `-lote`, `-revisar`, `-informe` y `-log`. Ver [7.11](#711-operaciones-por-lotes-160).
-- **S-FiDE GUI:** pestaña **Por lote** en esas siete opciones.
-- **Guía de migración 1.5.1 → 1.6.0:** quien lea el resultado de `PDFSignerPKCS12` desde `stderr` debe leerlo desde `stdout` (los textos y el código de salida no cambiaron; los errores siguen en `stderr`). `PDFSignerPKCS11` y `PDFVerifySignatures` escriben cada error en una sola línea, sin fecha ni nombre de clase. `PDFSignerPKCS12`, con una contraseña incorrecta, dice «Contraseña incorrecta o archivo PKCS#12 inválido». El resto del contrato de línea de comandos no cambió.
+- **S-FiDE GUI:** pestaña **Por lote** en esas siete opciones. La pestaña **Un documento** ocupa solo su propio alto.
+- **Registro por documento (`-log`) autosuficiente:** avisos generales del lote, los mismos mensajes que de a un documento (incluido el error) y el resultado.
+- **Ayuda de los siete programas reorganizada** con una misma estructura: uso de un documento y por lote, parámetros comunes y de cada modo, salida, código de salida y ejemplos. Se corrigieron la descripción de `-p` en `PDFSignerPKCS11` (es el PIN del token) y la del elemento a firmar en los firmadores de XML (hay que escribirlo siempre).
+- En los firmadores de XML por lote, si falta un argumento y una opción queda en el lugar del elemento, el mensaje lo explica.
+- **Manual:** bloque **Por lote** con sintaxis y ejemplo en cada uno de los siete programas, y se quitaron mensajes de error que los programas ya no emiten.
+- **Guía de migración 1.5.1 → 1.6.0:** quien lea el resultado de `PDFSignerPKCS12` desde `stderr` debe leerlo desde `stdout` (los textos y el código de salida no cambiaron; los errores siguen en `stderr`). `PDFSignerPKCS11` y `PDFVerifySignatures` escriben cada error en una sola línea, sin fecha ni nombre de clase. `PDFSignerPKCS12`, con una contraseña incorrecta, dice «Contraseña incorrecta o archivo PKCS#12 inválido». El texto de `-ayuda` de los siete programas con lote se reorganizó. El resto del contrato de línea de comandos no cambió.
 - **Revisión de seguridad de dependencias:** Bouncy Castle 1.87, iText 8.0.6 y Logback 1.6.8; siguen pendientes de decisión JDK 25 LTS con JavaFX 25 y iText 9.x. Ver la [sección 3.1](#31-revisión-de-seguridad-de-dependencias).
 
 ### v1.5.1 (2026-10-21)

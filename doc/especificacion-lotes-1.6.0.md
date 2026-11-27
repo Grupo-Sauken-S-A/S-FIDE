@@ -69,7 +69,7 @@ La regla **no** se aplica a la verificación ni a la validación XSD. El modo de
 Todos admiten además `[-informe <archivo.csv>] [-log]`. Se aceptan `-lote`/`--lote`, `-informe`/`--informe`, `-log`/`--log` y `-revisar`/`--revisar`.
 
 * En los módulos de argumentos posicionales, `-lote` es el **primer** argumento. En los firmadores de PDF va en cualquier posición de opción, pero **nunca se reconoce como valor** de otra (por ejemplo, el texto de `-t`).
-* En lote, un argumento desconocido, repetido, mal formado o no admitido **corta antes de hacer nada** (`ARGUMENTOS`).
+* En lote, un argumento desconocido, repetido, mal formado o no admitido **corta antes de hacer nada** (`ARGUMENTOS`). En los firmadores XML, un elemento que empieza con `-` indica que falta un argumento anterior.
 * El elemento XML y las opciones de PDF son **los mismos para todo el lote**.
 * `-simple` en lote solo cambia el contenido del `.log`.
 
@@ -174,7 +174,7 @@ LOTE_RESUMEN;"total=…";"correctos=…";"con_avisos=…";"no_validos=…";"sin_
 ### 6.5 Registro por documento (`-log`, opcional)
 
 * `<documento>.log` conservando la extensión (`contrato.xml.log`), en la misma carpeta, en **UTF-8**. Si existe, se agrega al final.
-* Contiene encabezado (fecha, programa, versión), la salida y los errores de ese documento, y el resultado.
+* Contiene encabezado (fecha, programa, versión), los avisos generales del lote, la salida y los errores de ese documento (los mismos que de a un documento) y el resultado.
 * Nunca incluye contraseña, PIN, línea de comandos ni trazas técnicas.
 * Si no se puede escribir, se avisa y no afecta el documento ni el código de salida.
 * Sin `.log` para `NO_PROCESADO` ni para archivos inexistentes.
