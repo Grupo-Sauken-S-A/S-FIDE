@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lotes para integradores — S-FiDE</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #eef1f6;
+    --surface: #ffffff;
+    --surface-2: #e4e9f1;
+    --ink: #16233a;
+    --muted: #52607a;
+    --faint: #8493ac;
+    --line: #d6dce6;
+    --accent: #24487d;
+    --accent-strong: #14335e;
+    --accent-soft: #dde6f3;
+    --ok: #2f7a4f;
+    --ok-soft: #e2f1e7;
+    --warn: #9a5518;
+    --warn-soft: #f5e9dc;
+    --code-bg: #0f1c30;
+    --code-fg: #dbe6f5;
+    --code-accent: #8fb4e8;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1524;
+      --surface: #151f34;
+      --surface-2: #1c2a45;
+      --ink: #e7ecf6;
+      --muted: #a6b1c9;
+      --faint: #67728c;
+      --line: #283552;
+      --accent: #7fa3dd;
+      --accent-strong: #b0cbf3;
+      --accent-soft: #1f2d4a;
+      --ok: #74c491;
+      --ok-soft: #16281d;
+      --warn: #e0aa71;
+      --warn-soft: #33230f;
+      --code-bg: #0a1220;
+      --code-fg: #d7e2f2;
+      --code-accent: #9dc0ef;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0e1524;
+    --surface: #151f34;
+    --surface-2: #1c2a45;
+    --ink: #e7ecf6;
+    --muted: #a6b1c9;
+    --faint: #67728c;
+    --line: #283552;
+    --accent: #7fa3dd;
+    --accent-strong: #b0cbf3;
+    --accent-soft: #1f2d4a;
+    --ok: #74c491;
+    --ok-soft: #16281d;
+    --warn: #e0aa71;
+    --warn-soft: #33230f;
+    --code-bg: #0a1220;
+    --code-fg: #d7e2f2;
+    --code-accent: #9dc0ef;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  code, kbd, .mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  code {
+    background: var(--surface-2);
+    color: var(--accent-strong);
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+    font-size: 0.85em;
+  }
+
+  a { color: var(--accent-strong); }
+  ::selection { background: var(--accent-soft); }
+
+  /* ---------- Shell layout ---------- */
+
+  .shell {
+    display: grid;
+    grid-template-columns: 272px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 940px) {
+    .shell { grid-template-columns: 1fr; }
+  }
+
+  aside.nav {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 2rem 1.4rem 2rem 1.75rem;
+    border-right: 1px solid var(--line);
+    scrollbar-width: thin;
+  }
+
+  @media (max-width: 940px) {
+    aside.nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); padding: 1.25rem 1.25rem; }
+  }
+
+  .brand { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.6rem; }
+  .brand .mark {
+    width: 34px; height: 34px; border-radius: 50%; border: 1.4px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 0.82rem; color: var(--accent); flex: none;
+  }
+  .brand .name { font-weight: 700; font-size: 0.95rem; letter-spacing: -0.01em; }
+  .brand .tag { display: block; font-size: 0.68rem; color: var(--faint); font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.03em; }
+
+  nav.toc { font-size: 0.86rem; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: sec; }
+  nav.toc > ol > li { counter-increment: sec; margin-bottom: 0.05rem; }
+  nav.toc a { display: block; padding: 0.32rem 0.5rem; border-radius: 6px; color: var(--muted); text-decoration: none; font-weight: 500; }
+  nav.toc > ol > li > a::before { content: counter(sec) ". "; color: var(--faint); font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; }
+  nav.toc a:hover { background: var(--surface-2); color: var(--ink); }
+  nav.toc ol ol { margin: 0.1rem 0 0.4rem 1.1rem; counter-reset: sub; }
+  nav.toc ol ol li { counter-increment: sub; }
+  nav.toc ol ol a { font-size: 0.8rem; padding: 0.2rem 0.5rem; }
+  nav.toc ol ol a::before { content: counter(sec) "." counter(sub) " "; }
+
+  main { padding: 3.5rem 3rem 8rem; min-width: 0; }
+  @media (max-width: 940px) { main { padding: 2.25rem 1.25rem 5rem; } }
+
+  .doc-header { max-width: 700px; margin-bottom: 3.5rem; }
+  .eyebrow { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+  h1 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: clamp(2rem, 4vw, 2.7rem); line-height: 1.1; letter-spacing: -0.01em; margin: 0 0 0.9rem; text-wrap: balance; }
+  .doc-header .meta { color: var(--muted); font-size: 0.95rem; display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; }
+  .doc-header .meta strong { color: var(--ink); font-weight: 600; }
+
+  section.chapter { max-width: 900px; padding-top: 3rem; margin-top: 3rem; border-top: 1px solid var(--line); scroll-margin-top: 1.5rem; }
+  section.chapter:first-of-type { border-top: none; margin-top: 0; }
+  .chapter-num { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--accent); letter-spacing: 0.06em; display: block; margin-bottom: 0.5rem; }
+  h2 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 1.65rem; margin: 0 0 1.1rem; text-wrap: balance; }
+  h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 1.3rem; margin: 0 0 0.9rem; }
+  h4 { font-size: 0.95rem; font-weight: 700; margin: 1.4rem 0 0.5rem; color: var(--ink); }
+  p { margin: 0 0 1rem; max-width: 68ch; }
+  ul, ol { padding-left: 1.3rem; margin: 0 0 1.1rem; }
+  li { margin-bottom: 0.4rem; max-width: 66ch; }
+  strong { font-weight: 700; }
+
+  .table-wrap { overflow-x: auto; margin: 1.2rem 0 1.6rem; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.87rem; background: var(--surface); }
+  th, td { text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+
+  .callout { border-radius: 10px; padding: 1rem 1.2rem; margin: 1.2rem 0 1.6rem; font-size: 0.92rem; max-width: 66ch; }
+  .callout.note { background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
+  .callout.warn { background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); }
+  .callout.ok { background: var(--ok-soft); border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent); }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .label { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 0.4rem; }
+  .callout.note .label { color: var(--accent-strong); }
+  .callout.warn .label { color: var(--warn); }
+  .callout.ok .label { color: var(--ok); }
+
+  /* ---------- Module blocks ---------- */
+
+  .module {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.8rem 2rem 2rem;
+    margin-bottom: 2.2rem;
+    background: var(--surface);
+  }
+  .module-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.3rem; }
+  .module-head h3 { margin: 0; }
+  .module-num { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--faint); }
+  .module .windows-only {
+    display: inline-flex; align-items: center; gap: 0.3rem; font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--warn);
+    background: var(--warn-soft); padding: 0.15rem 0.5rem; border-radius: 999px; margin-left: 0.5rem;
+  }
+  .module .desc { color: var(--muted); margin-bottom: 1.3rem; }
+
+  figure.shot { margin: 0 0 1.5rem; }
+  figure.shot img {
+    display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line);
+    box-shadow: 0 8px 24px -12px rgba(20, 40, 80, 0.35);
+  }
+  figure.shot figcaption { font-size: 0.8rem; color: var(--faint); margin-top: 0.5rem; text-align: center; }
+
+  .field-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); margin: 1.3rem 0 0.5rem; }
+  .field-label:first-of-type { margin-top: 0.4rem; }
+
+  .errlist { font-size: 0.87rem; color: var(--muted); }
+  .errlist code { color: var(--warn); background: var(--warn-soft); }
+  .oklist { font-size: 0.87rem; color: var(--muted); }
+  .oklist code { color: var(--ok); background: var(--ok-soft); }
+
+  footer.doc-footer { max-width: 900px; margin-top: 4rem; padding-top: 1.6rem; border-top: 1px solid var(--line); color: var(--faint); font-size: 0.85rem; }
+
+  details.mobile-toc { display: none; }
+  @media (max-width: 940px) {
+    details.mobile-toc { display: block; }
+    aside.nav > nav.toc { display: none; }
+    details.mobile-toc[open] + aside.nav > nav.toc, aside.nav.open nav.toc { display: block; }
+  }
+
+  pre { background: var(--code-bg); color: var(--code-fg); border-radius: 10px; padding: 0.9rem 1.1rem; overflow-x: auto; font-size: 0.76rem; line-height: 1.55; margin: 0 0 1rem; }
+  pre code { background: none; color: inherit; padding: 0; font-size: 1em; }
+  details { margin: 0 0 1rem; }
+  summary { cursor: pointer; color: var(--accent-strong); font-size: 0.88rem; margin-bottom: 0.5rem; }
+  .salida-codigo { display: inline-block; border-radius: 999px; padding: 0.15rem 0.8rem; font-size: 0.82rem; }
+  .salida-codigo.bien { background: var(--ok-soft); color: var(--ok); }
+  .salida-codigo.mal { background: var(--warn-soft); color: var(--warn); }
+  .module > h4:first-child { margin-top: 0; font-size: 1.05rem; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="nav">
+    <div class="brand"><div class="mark">SF</div><div><span class="name">S-FiDE</span><span class="tag">Lotes para integradores</span></div></div>
+    <nav class="toc"><ol>
+<li><a href="#objetivo">Objetivo y alcance</a></li>
+<li><a href="#reglas">Reglas y restricciones</a></li>
+<li><a href="#flujo">Cómo se ejecuta un lote</a></li>
+<li><a href="#salidas">Salidas, estados y código de salida</a></li>
+<li><a href="#integrar">Cómo integrarlo</a></li>
+<li><a href="#xml12">XMLSignerPKCS12</a></li>
+<li><a href="#xml11">XMLSignerPKCS11</a></li>
+<li><a href="#pdf12">PDFSignerPKCS12</a></li>
+<li><a href="#pdf11">PDFSignerPKCS11</a></li>
+<li><a href="#xmlv">XMLVerifySignatures</a></li>
+<li><a href="#pdfv">PDFVerifySignatures</a></li>
+<li><a href="#xsd">XMLVerifyXSDStructure</a></li>
+<li><a href="#errores">Referencia de códigos</a></li>
+    </ol></nav>
+  </aside>
+  <main>
+    <div class="doc-header">
+      <span class="eyebrow">Grupo Sauken S.A. — Guía para integradores</span>
+      <h1>Operaciones por lotes</h1>
+      <p>Cómo firmar, verificar y validar muchos documentos en una sola ejecución desde su propio sistema: reglas, contrato de salida y ejemplos de cada programa, con y sin errores.</p>
+      <div class="meta"><span>Versión del producto: <strong>1.6.0</strong></span></div>
+    </div>
+<section class="chapter" id="objetivo">
+<span class="chapter-num">01</span>
+<h2>Objetivo y alcance</h2>
+<p>El trabajo por lotes permite aplicar <strong>una misma operación a una lista de documentos en una sola ejecución</strong> de un programa de S-FiDE. Está pensado para quien integra S-FiDE desde su propio sistema y hoy invoca el programa una vez por documento.</p>
+<h4>Qué resuelve</h4>
+<ul>
+  <li><strong>Un solo acceso al certificado</strong> por lote: un ingreso de contraseña o PIN y una sola consulta de revocación, en lugar de uno por documento.</li>
+  <li><strong>Un resultado estable por documento</strong> (estado, código y mensaje), pensado para que lo procese un programa.</li>
+  <li><strong>Un resumen</strong> del lote y un <strong>código de salida</strong> que dice si todo terminó bien.</li>
+  <li>Informe CSV y registro por documento, opcionales.</li>
+  <li>En la firma, una <strong>revisión previa</strong> sin usar el certificado.</li>
+</ul>
+<h4>Programas que admiten lote</h4>
+<div class="table-wrap"><table>
+  <tr><th>Programa</th><th>Operación del lote</th><th>Certificado</th><th><code>-revisar</code></th></tr>
+  <tr><td><a href="#xml11"><code>XMLSignerPKCS11</code></a></td><td>Firmar XML</td><td>Token (PKCS#11)</td><td>Sí</td></tr>
+  <tr><td><a href="#xml12"><code>XMLSignerPKCS12</code></a></td><td>Firmar XML</td><td>Archivo PKCS#12</td><td>Sí</td></tr>
+  <tr><td><a href="#pdf11"><code>PDFSignerPKCS11</code></a></td><td>Firmar PDF</td><td>Token (PKCS#11)</td><td>Sí</td></tr>
+  <tr><td><a href="#pdf12"><code>PDFSignerPKCS12</code></a></td><td>Firmar PDF</td><td>Archivo PKCS#12</td><td>Sí</td></tr>
+  <tr><td><a href="#xmlv"><code>XMLVerifySignatures</code></a></td><td>Verificar firmas de XML</td><td>No usa</td><td>No</td></tr>
+  <tr><td><a href="#pdfv"><code>PDFVerifySignatures</code></a></td><td>Verificar firmas de PDF</td><td>No usa</td><td>No</td></tr>
+  <tr><td><a href="#xsd"><code>XMLVerifyXSDStructure</code></a></td><td>Validar XML contra XSD y sus firmas</td><td>No usa</td><td>No</td></tr>
+</table></div>
+<p>Los demás programas no admiten lote, incluidos los firmadores que usan el almacén de certificados de Windows.</p>
+<div class="callout note"><span class="label">Compatibilidad</span><p>Invocar un programa sin <code>-lote</code> funciona como en el modo de un documento. El lote es una forma adicional de uso.</p></div>
+<div class="callout note"><span class="label">Sobre los ejemplos</span><p>Las salidas de esta guía se obtuvieron ejecutando los programas de la versión 1.6.0 en Windows, con documentos y un certificado de prueba creados para este fin (contraseña de ejemplo: <code>clave-de-ejemplo</code>). La carpeta de trabajo se muestra como <code>C:\lotes</code>. Los pocos ejemplos que <strong>no</strong> se pudieron ejecutar (firma con un token físico) están señalados como <em>ilustrativos</em>.</p></div>
+<p>En los comandos se escribe <code>java -jar Programa.jar</code>. S-FiDE trae su propio Java: en una instalación en <code>C:\S-FiDE</code> es <code>C:\S-FiDE\openjdk-23.0.1\windows-x64\bin\java.exe</code>.</p>
+</section>
+<section class="chapter" id="reglas">
+<span class="chapter-num">02</span>
+<h2>Reglas y restricciones</h2>
+<h4>Una sola operación por lote</h4>
+<ul>
+  <li>Todos los documentos reciben <strong>exactamente la misma operación</strong> con los mismos parámetros. No se pueden indicar opciones por documento.</li>
+  <li><strong>Firma XML:</strong> se firma un único elemento (o el documento completo) y <strong>no se mezclan tipos de documento</strong>. Ante una mezcla <strong>no se firma ninguno</strong>.</li>
+</ul>
+<div class="table-wrap"><table>
+  <tr><th>Elemento pedido</th><th>Todos los documentos deben ser</th></tr>
+  <tr><td><code>COD</code>, <code>CODEH</code></td><td>Certificados de Origen Digital</td></tr>
+  <tr><td><code>DJO</code>, <code>DJOEH</code></td><td>Declaraciones Juradas de Origen</td></tr>
+  <tr><td><code>""</code> (documento completo)</td><td>XML que no sean de comercio exterior</td></tr>
+  <tr><td>Otro identificador</td><td>Del mismo tipo que el primer documento legible de la lista</td></tr>
+</table></div>
+<ul>
+  <li><strong>Firma PDF:</strong> misma página, posición, tamaño, texto y opciones para todos. Si se pide cerrar, se cierran todos. <code>-campo</code> no se admite.</li>
+  <li>Para dos firmas distintas (por ejemplo <code>COD</code> y luego <code>CODEH</code>) se ejecutan <strong>dos lotes</strong>: el segundo con la lista de los archivos generados por el primero.</li>
+</ul>
+<h4>Archivos generados</h4>
+<ul>
+  <li>El firmado se guarda junto al original como <code>nombre-signed.extensión</code>. El original no se modifica.</li>
+  <li>Por lote <strong>nunca se reemplaza un archivo que ya exista</strong>: el documento queda <code>OMITIDO</code> / <code>SALIDA_YA_EXISTE</code> y el código de salida es <code>1</code>. (De a un documento, en cambio, se reemplaza.)</li>
+  <li>Se escribe primero un archivo temporal (<code>.tmp-sfide</code>) y recién al final toma su nombre definitivo. Si se mata el proceso, puede quedar un temporal que se puede borrar.</li>
+</ul>
+<h4>Argumentos</h4>
+<ul>
+  <li>En los programas de argumentos por posición (firmadores XML, verificadores y validador XSD), <code>-lote</code> es el <strong>primer</strong> argumento. En los firmadores PDF va en cualquier posición y reemplaza a <code>-i</code>.</li>
+  <li>Por lote los argumentos son <strong>estrictos</strong>: uno desconocido, repetido, incompleto o no admitido detiene todo antes de empezar (<code>ARGUMENTOS</code>).</li>
+  <li><code>-revisar</code> solo vale junto con <code>-lote</code>; sin él es un error y no se firma.</li>
+  <li>Opciones: <code>-lote</code>, <code>-informe</code>, <code>-log</code> y <code>-revisar</code> se aceptan con uno o dos guiones.</li>
+</ul>
+<h4>Certificado y token</h4>
+<ul>
+  <li>Se accede al certificado <strong>una sola vez</strong> y solo si queda algún documento por firmar.</li>
+  <li>Una contraseña o PIN incorrecto <strong>nunca se reintenta</strong>.</li>
+  <li>Un certificado vencido, todavía no válido, no apto para firmar o revocado detiene el lote.</li>
+  <li>No se deben ejecutar dos lotes a la vez con el mismo token.</li>
+  <li>Algunos tokens pueden pedir el PIN en cada firma por una política propia: conviene probar con el token real antes de automatizar.</li>
+</ul>
+</section>
+<section class="chapter" id="flujo">
+<span class="chapter-num">03</span>
+<h2>Cómo se ejecuta un lote</h2>
+<ol>
+  <li>Se controlan los <strong>argumentos</strong>.</li>
+  <li>Se lee la <strong>lista</strong>. Si no se puede leer o está vacía, se detiene.</li>
+  <li>Se crea el <strong>informe</strong>, si se pidió. Si no se puede, no se procesa nada.</li>
+  <li>Se revisa <strong>cada documento sin usar el certificado</strong>: existencia, extensión y formato; en la firma, además, archivo de salida existente, elemento o firmas previas requeridas (XML), documento cerrado, página y posición (PDF). En XML se controla que no haya mezcla.</li>
+  <li>En la firma, se <strong>accede al certificado</strong> una vez: vigencia, aptitud y revocación.</li>
+  <li>Se procesa <strong>documento por documento</strong>. Se informa cada resultado apenas se conoce.</li>
+  <li>Se informa el <strong>resumen</strong> y el código de salida.</li>
+</ol>
+<h4>Qué detiene todo el lote y qué no</h4>
+<div class="table-wrap"><table>
+  <tr><th>Detiene el lote (lo pendiente queda <code>NO_PROCESADO</code>)</th><th>No lo detiene (afecta solo a ese documento)</th></tr>
+  <tr><td>Argumentos, lista o informe inválidos; mezcla de tipos; biblioteca, token o contraseña; certificado no apto o revocado; archivo XSD indicado que no existe; 3 errores seguidos de acceso a la clave</td><td>Documento inexistente, dañado, repetido, con otra extensión, ya firmado, cerrado, sin el elemento pedido o con salida existente; firma no válida al verificar</td></tr>
+</table></div>
+<h4>La lista de documentos</h4>
+<ul>
+  <li>Archivo de texto en <strong>UTF-8</strong> (con o sin BOM). En otra codificación se rechaza completo.</li>
+  <li><strong>Una ruta por línea.</strong> Las rutas relativas se resuelven desde la carpeta de la lista.</li>
+  <li>Se quitan los espacios de los extremos y las comillas que envuelvan la ruta. Las líneas vacías se ignoran. El tabulador está reservado.</li>
+  <li>Un documento repetido se informa <code>OMITIDO</code> / <code>DUPLICADO</code> la segunda vez.</li>
+  <li>Todos deben tener la extensión del programa (<code>.xml</code> o <code>.pdf</code>).</li>
+</ul>
+</section>
+<section class="chapter" id="salidas">
+<span class="chapter-num">04</span>
+<h2>Salidas, estados y código de salida</h2>
+<h4>Salida estándar</h4>
+<p>Texto en UTF-8. Las líneas del lote empiezan con <code>LOTE_</code>; los campos van entre comillas y separados por punto y coma (una comilla dentro de un campo se duplica).</p>
+<pre><code>LOTE_INICIO;"1";"programa";"versión";"total"
+LOTE_DOC;"n";"total";"estado";"código";"entrada";"salida";"log";"mensaje"
+LOTE_RESUMEN;"total=…";"correctos=…";"con_avisos=…";"no_validos=…";"sin_firmas=…";"con_error=…";"omitidos=…";"no_procesados=…";"corte=…"</code></pre>
+<ul>
+  <li>El <code>1</code> de <code>LOTE_INICIO</code> es la versión del formato.</li>
+  <li>Leída la lista, <strong>cada documento tiene exactamente una línea</strong> <code>LOTE_DOC</code>.</li>
+  <li><code>corte=NINGUNO</code> si el lote no se detuvo.</li>
+  <li>También pueden aparecer avisos generales (revocación, reloj, certificado): <strong>procesar solo las líneas que empiezan con <code>LOTE_</code></strong>.</li>
+  <li><strong>Sin <code>LOTE_RESUMEN</code>, el lote está incompleto</strong> (por ejemplo, porque se cortó el proceso).</li>
+</ul>
+<h4>Salida de error</h4>
+<p>La causa de un corte (<code>Error: …</code>) y una línea <code>archivo: mensaje</code> por cada documento con problema. Hay que <strong>leer las dos salidas a la vez</strong> para que el proceso no quede bloqueado.</p>
+<h4>Estados</h4>
+<div class="table-wrap"><table>
+  <tr><th>Estado</th><th>Significado</th><th>¿Da código 0?</th></tr>
+  <tr><td><code>LISTO</code></td><td>Revisión: se podría firmar</td><td>Sí</td></tr>
+  <tr><td><code>FIRMADO</code></td><td>Se generó el archivo firmado</td><td>Sí</td></tr>
+  <tr><td><code>FIRMADO_CON_AVISOS</code></td><td>Se firmó, pero hay algo para revisar (por ejemplo, una firma anterior inválida)</td><td>Sí</td></tr>
+  <tr><td><code>VALIDO</code></td><td>Verificación correcta</td><td>Sí</td></tr>
+  <tr><td><code>VALIDO_CON_OBSERVACIONES</code></td><td>Válido, pero algo no se pudo comprobar</td><td>Sí</td></tr>
+  <tr><td><code>OMITIDO</code> / <code>DUPLICADO</code></td><td>Repetido en la lista</td><td>Sí</td></tr>
+  <tr><td><code>OMITIDO</code> / <code>SALIDA_YA_EXISTE</code></td><td>No se firmó porque el archivo firmado ya existe</td><td><strong>No</strong></td></tr>
+  <tr><td><code>NO_VALIDO</code></td><td>Firma o estructura no válida</td><td>No</td></tr>
+  <tr><td><code>SIN_FIRMAS</code></td><td>El documento no tiene firmas</td><td>No</td></tr>
+  <tr><td><code>ERROR</code></td><td>No se pudo procesar ese documento</td><td>No</td></tr>
+  <tr><td><code>NO_PROCESADO</code></td><td>El lote se detuvo antes; el código indica la causa</td><td>No</td></tr>
+</table></div>
+<h4>Código de salida del proceso</h4>
+<p><code>0</code> solo si el lote no se detuvo y <strong>todos</strong> los documentos terminaron en un estado que da código 0. En cualquier otro caso, <code>1</code>. Un <code>0</code> puede incluir avisos: si importan, leer los estados.</p>
+<h4>Informe CSV (<code>-informe archivo.csv</code>)</h4>
+<p>Columnas <code>n;total;estado;codigo;entrada;salida;log;mensaje</code>, con encabezado, UTF-8 sin BOM. Se escribe línea por línea. No puede terminar en <code>.xml</code> ni <code>.pdf</code>, ni ser la lista; un informe anterior se reemplaza.</p>
+<h4>Registro por documento (<code>-log</code>)</h4>
+<p>Junto a cada documento queda <code>documento.extensión.log</code>, que se entiende solo: encabezado, avisos generales del lote, lo mismo que se vería al procesar ese documento solo (incluido el error) y la línea <code>Resultado:</code>. Si ya existe, se agrega al final. No se genera para los <code>NO_PROCESADO</code> ni con <code>-revisar</code>. Nunca incluye la contraseña.</p>
+<h4>Revisión previa (<code>-revisar</code>, solo firmadores)</h4>
+<p>Ejecuta las comprobaciones que no necesitan el certificado e informa cada documento como <code>LISTO</code>, <code>OMITIDO</code> o <code>ERROR</code>. No firma ni escribe documentos. Hay que escribir los mismos argumentos que para firmar; la contraseña puede ser <code>""</code> y no se usa. <strong>No comprueba</strong> la biblioteca, el token, el archivo del certificado ni la contraseña.</p>
+</section>
+<section class="chapter" id="integrar">
+<span class="chapter-num">05</span>
+<h2>Cómo integrarlo</h2>
+<h4>Secuencia recomendada</h4>
+<ol>
+  <li>Generar la lista en UTF-8 con los documentos pendientes.</li>
+  <li>Opcional, al firmar: ejecutar con <code>-revisar</code> y apartar lo que no esté <code>LISTO</code>.</li>
+  <li>Ejecutar el lote con <code>-informe</code> (y <code>-log</code> si se quiere el detalle).</li>
+  <li>Mirar el código de salida. Si es <code>1</code>, leer el informe o las líneas <code>LOTE_DOC</code>.</li>
+  <li>Para repetir, armar la lista <strong>solo con lo pendiente</strong>: lo ya firmado daría <code>SALIDA_YA_EXISTE</code> y código <code>1</code>.</li>
+  <li>Si el corte fue por la contraseña o el token, corregir antes de volver a ejecutar: no reintentar en forma automática.</li>
+</ol>
+<h4>Recomendaciones</h4>
+<ul>
+  <li><strong>No fijar un tiempo máximo corto:</strong> un lote grande, o una consulta de revocación lenta, pueden tardar varios minutos.</li>
+  <li>La contraseña viaja como argumento y puede verse en la lista de procesos del sistema: tenerlo en cuenta en equipos compartidos.</li>
+  <li>Poner entre comillas las rutas con espacios.</li>
+  <li>Leer todo en UTF-8.</li>
+</ul>
+<h4>Ejemplo en PowerShell</h4><pre><code>$java = 'C:\S-FiDE\openjdk-23.0.1\windows-x64\bin\java.exe'
+$jar  = 'C:\S-FiDE\XMLVerifySignatures.jar'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+$salida = &amp; $java -jar $jar -lote verificar.txt -informe informe.csv
+$codigo = $LASTEXITCODE
+
+if (-not ($salida -match '^LOTE_RESUMEN;')) { Write-Output 'Lote incompleto'; exit 1 }
+
+$columnas = 'n','total','estado','codigo','entrada','salida','log','mensaje'
+$documentos = $salida | Where-Object { $_ -like 'LOTE_DOC;*' } |
+    ForEach-Object { $_.Substring(9) } |
+    ConvertFrom-Csv -Delimiter ';' -Header $columnas
+
+foreach ($d in $documentos) {
+    $nombre = Split-Path $d.entrada -Leaf
+    Write-Output ('{0} {1} {2} {3}' -f $d.n, $d.estado, $d.codigo, $nombre)
+}
+Write-Output "Codigo de salida: $codigo"
+exit $codigo</code></pre>
+<div class="field-label">Comando</div><pre><code>powershell -ExecutionPolicy Bypass -File verificar.ps1</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>1 VALIDO_CON_OBSERVACIONES COMPROBACION_PENDIENTE factura-001-signed.xml
+2 SIN_FIRMAS SIN_FIRMAS factura-002.xml
+Codigo de salida: 1</code></pre>
+<div class="field-label">Salida de error</div><pre><code>C:\lotes\factura-002.xml: El documento XML no contiene firmas digitales.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<h4>Ejemplo en Linux o macOS</h4><pre><code>#!/bin/sh
+JAVA=/opt/S-FiDE/openjdk-23.0.1/linux-x64/bin/java
+JAR=/opt/S-FiDE/XMLVerifySignatures.jar
+
+"$JAVA" -jar "$JAR" -lote verificar.txt -informe informe.csv &gt; salida.txt 2&gt; errores.txt
+codigo=$?
+
+grep -q '^LOTE_RESUMEN;' salida.txt || { echo "Lote incompleto"; exit 1; }
+
+echo "Documentos con problemas:"
+grep -E '^LOTE_DOC;"[0-9]+";"[0-9]+";"(ERROR|NO_VALIDO|SIN_FIRMAS|NO_PROCESADO|OMITIDO)";' salida.txt
+echo "Codigo de salida: $codigo"
+exit $codigo</code></pre>
+<div class="field-label">Comando</div><pre><code>sh verificar.sh</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>Documentos con problemas:
+LOTE_DOC;"2";"2";"SIN_FIRMAS";"SIN_FIRMAS";"C:\lotes\factura-002.xml";"";"";"El documento XML no contiene firmas digitales."
+Codigo de salida: 1</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<h4>Cómo generar la lista</h4>
+<p>PowerShell (solo los XML que todavía no están firmados):</p>
+<pre><code>Get-ChildItem C:\lotes\*.xml | Where-Object { $_.BaseName -notlike '*-signed' } |
+    ForEach-Object { $_.FullName } | Set-Content -Encoding utf8 C:\lotes\lista.txt</code></pre>
+<p>Símbolo del sistema (<code>.bat</code>): ejecutar <code>chcp 65001</code> antes, para que los acentos queden en UTF-8.</p>
+<pre><code>chcp 65001 &gt; nul
+(for %%F in (C:\lotes\*.pdf) do @echo %%F) &gt; C:\lotes\lista.txt</code></pre>
+<p>Linux o macOS:</p>
+<pre><code>find /srv/lotes -maxdepth 1 -name '*.xml' ! -name '*-signed.xml' | sort &gt; lista.txt</code></pre>
+</section>
+<section class="chapter" id="xml12">
+<span class="chapter-num">06</span>
+<h2>XMLSignerPKCS12</h2>
+<p>Firma XML con un archivo PKCS#12.</p>
+<div class="field-label">Sintaxis por lote</div>
+<pre><code>java -jar XMLSignerPKCS12.jar -lote &lt;lista&gt; &lt;certificado.p12&gt; &lt;contraseña&gt; &lt;elemento&gt; [-omitir-revocacion true|false] [-revisar] [-informe &lt;archivo.csv&gt;] [-log]</code></pre>
+<div class="table-wrap"><table><tr><th>Argumento</th><th>Descripción</th></tr>
+<tr><td><code>&lt;lista&gt;</code></td><td>Archivo con un documento por línea</td></tr>
+<tr><td><code>&lt;certificado.p12&gt;</code></td><td>Certificado y clave privada</td></tr>
+<tr><td><code>&lt;contraseña&gt;</code></td><td>Contraseña del archivo ("" al revisar)</td></tr>
+<tr><td><code>&lt;elemento&gt;</code></td><td><code>COD</code>, <code>CODEH</code>, <code>DJO</code>, <code>DJOEH</code>, otro identificador o <code>""</code> para el documento completo. Hay que escribirlo siempre</td></tr>
+<tr><td><code>-omitir-revocacion</code></td><td>Opcional: firma aunque el certificado figure revocado</td></tr>
+</table></div>
+<p>Los argumentos van en ese orden y <code>-lote</code> es el primero. Además admiten <code>-informe</code> y <code>-log</code>.</p>
+<h4>Procesos sin errores</h4><div class="module">
+<h4>1. Revisar antes de firmar</h4>
+<p>Comprueba los tres Certificados de Origen sin usar el certificado.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS12.jar -lote lista.txt certificado.p12 "" COD -revisar</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS12";"1.6.0";"3"
+LOTE_DOC;"1";"3";"LISTO";"OK";"C:\lotes\co-001.xml";"";"";"Listo para procesar."
+LOTE_DOC;"2";"3";"LISTO";"OK";"C:\lotes\co-002.xml";"";"";"Listo para procesar."
+LOTE_DOC;"3";"3";"LISTO";"OK";"C:\lotes\co-003.xml";"";"";"Listo para procesar."
+LOTE_RESUMEN;"total=3";"correctos=3";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+<details><summary>Contenido de <code>lista.txt</code></summary><pre><code>co-001.xml
+co-002.xml
+co-003.xml</code></pre>
+</details>
+<p>Los tres quedan <code>LISTO</code>. No se generó ningún archivo.</p>
+</div>
+<div class="module">
+<h4>2. Firmar como Exportador, con informe y registros</h4>
+<p>Firma el elemento <code>COD</code> de los tres documentos.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS12.jar -lote lista.txt certificado.p12 "clave-de-ejemplo" COD -informe informe.csv -log</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS12";"1.6.0";"3"
+ADVERTENCIA: no se pudo verificar el estado de revocación del certificado de firma (el certificado no publica una URL de OCSP ni de CRL). Se continúa con la firma.
+LOTE_DOC;"1";"3";"FIRMADO";"OK";"C:\lotes\co-001.xml";"C:\lotes\co-001-signed.xml";"C:\lotes\co-001.xml.log";""
+LOTE_DOC;"2";"3";"FIRMADO";"OK";"C:\lotes\co-002.xml";"C:\lotes\co-002-signed.xml";"C:\lotes\co-002.xml.log";""
+LOTE_DOC;"3";"3";"FIRMADO";"OK";"C:\lotes\co-003.xml";"C:\lotes\co-003-signed.xml";"C:\lotes\co-003.xml.log";""
+LOTE_RESUMEN;"total=3";"correctos=3";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+<details><summary>Archivos de la carpeta después de ejecutar</summary><pre><code>certificado.p12
+co-001-signed.xml
+co-001.xml
+co-001.xml.log
+co-002-signed.xml
+co-002.xml
+co-002.xml.log
+co-003-signed.xml
+co-003.xml
+co-003.xml.log
+informe.csv
+lista.txt</code></pre>
+</details>
+<details><summary>Contenido de <code>informe.csv</code></summary><pre><code>"n";"total";"estado";"codigo";"entrada";"salida";"log";"mensaje"
+"1";"3";"FIRMADO";"OK";"C:\lotes\co-001.xml";"C:\lotes\co-001-signed.xml";"C:\lotes\co-001.xml.log";""
+"2";"3";"FIRMADO";"OK";"C:\lotes\co-002.xml";"C:\lotes\co-002-signed.xml";"C:\lotes\co-002.xml.log";""
+"3";"3";"FIRMADO";"OK";"C:\lotes\co-003.xml";"C:\lotes\co-003-signed.xml";"C:\lotes\co-003.xml.log";""</code></pre>
+</details>
+<details><summary>Contenido de <code>co-001.xml.log</code></summary><pre><code>===== 26/11/2026 23:26:13 - XMLSignerPKCS12 1.6.0 =====
+ADVERTENCIA: no se pudo verificar el estado de revocación del certificado de firma (el certificado no publica una URL de OCSP ni de CRL). Se continúa con la firma.
+El XML a firmar es un Certificado de Origen Digital de ALADI (sin verificación de contenido).
+Elemento firmado: COD
+Documento XML firmado guardado como: C:\lotes\co-001-signed.xml
+Resultado: FIRMADO (OK)</code></pre>
+</details>
+<p>El aviso sobre la revocación aparece <strong>una sola vez</strong> (el certificado de prueba no indica dónde consultarla) y se repite dentro de cada registro.</p>
+</div>
+<div class="module">
+<h4>3. Segunda firma, como Funcionario Habilitado</h4>
+<p>Otro lote sobre los archivos generados por el anterior, firmando <code>CODEH</code>.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS12.jar -lote lista-entidad.txt certificado.p12 "clave-de-ejemplo" CODEH</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS12";"1.6.0";"3"
+ADVERTENCIA: no se pudo verificar el estado de revocación del certificado de firma (el certificado no publica una URL de OCSP ni de CRL). Se continúa con la firma.
+LOTE_DOC;"1";"3";"FIRMADO";"OK";"C:\lotes\co-001-signed.xml";"C:\lotes\co-001-signed-signed.xml";"";""
+LOTE_DOC;"2";"3";"FIRMADO";"OK";"C:\lotes\co-002-signed.xml";"C:\lotes\co-002-signed-signed.xml";"";""
+LOTE_DOC;"3";"3";"FIRMADO";"OK";"C:\lotes\co-003-signed.xml";"C:\lotes\co-003-signed-signed.xml";"";""
+LOTE_RESUMEN;"total=3";"correctos=3";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+<details><summary>Contenido de <code>lista-entidad.txt</code></summary><pre><code>co-001-signed.xml
+co-002-signed.xml
+co-003-signed.xml</code></pre>
+</details>
+<p>Cada salida suma otro sufijo <code>-signed</code>.</p>
+</div>
+<h4>Procesos con errores</h4><div class="module">
+<h4>4. Errores propios de algunos documentos</h4>
+<p>Una lista con un repetido, un archivo que no existe, uno con otra extensión, uno mal formado, uno ya firmado y uno cuya salida ya existe.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS12.jar -lote lista.txt certificado.p12 "clave-de-ejemplo" COD</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS12";"1.6.0";"8"
+ADVERTENCIA: no se pudo verificar el estado de revocación del certificado de firma (el certificado no publica una URL de OCSP ni de CRL). Se continúa con la firma.
+LOTE_DOC;"1";"8";"FIRMADO";"OK";"C:\lotes\co-001.xml";"C:\lotes\co-001-signed.xml";"";""
+LOTE_DOC;"2";"8";"OMITIDO";"DUPLICADO";"C:\lotes\co-001.xml";"";"";"El documento está repetido en la lista."
+LOTE_DOC;"3";"8";"ERROR";"ARCHIVO_NO_ENCONTRADO";"C:\lotes\no-existe.xml";"";"";"El archivo no existe."
+LOTE_DOC;"4";"8";"ERROR";"EXTENSION_NO_CORRESPONDE";"C:\lotes\notas.txt";"";"";"El archivo no tiene la extensión .xml."
+LOTE_DOC;"5";"8";"ERROR";"DOCUMENTO_MAL_FORMADO";"C:\lotes\roto.xml";"";"";"El archivo XML está mal formado (línea 1, columna 30)."
+LOTE_DOC;"6";"8";"ERROR";"ELEMENTO_YA_FIRMADO";"C:\lotes\co-ya-firmado.xml";"";"";"El elemento 'COD' ya tiene una firma digital aplicada. No se puede firmar el mismo elemento dos veces."
+LOTE_DOC;"7";"8";"OMITIDO";"SALIDA_YA_EXISTE";"C:\lotes\co-003.xml";"C:\lotes\co-003-signed.xml";"";"Ya existe el archivo firmado: no se vuelve a firmar ni se reemplaza."
+LOTE_DOC;"8";"8";"FIRMADO";"OK";"C:\lotes\co-004.xml";"C:\lotes\co-004-signed.xml";"";""
+LOTE_RESUMEN;"total=8";"correctos=2";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=4";"omitidos=2";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>C:\lotes\no-existe.xml: El archivo no existe.
+C:\lotes\notas.txt: El archivo no tiene la extensión .xml.
+C:\lotes\roto.xml: El archivo XML está mal formado (línea 1, columna 30).
+C:\lotes\co-ya-firmado.xml: El elemento 'COD' ya tiene una firma digital aplicada. No se puede firmar el mismo elemento dos veces.
+C:\lotes\co-003.xml: Ya existe el archivo firmado: no se vuelve a firmar ni se reemplaza.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<details><summary>Contenido de <code>lista.txt</code></summary><pre><code>co-001.xml
+co-001.xml
+no-existe.xml
+notas.txt
+roto.xml
+co-ya-firmado.xml
+co-003.xml
+co-004.xml</code></pre>
+</details>
+<p>Los documentos correctos <strong>se firman igual</strong>. Cada problema queda identificado por su código y se repite en la salida de error. El código de salida es <code>1</code>.</p>
+</div>
+<div class="module">
+<h4>5. Falta la firma previa</h4>
+<p>Se pide <code>CODEH</code> sobre documentos que todavía no tienen la firma del Exportador.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS12.jar -lote lista.txt certificado.p12 "clave-de-ejemplo" CODEH</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS12";"1.6.0";"2"
+LOTE_DOC;"1";"2";"ERROR";"FALTA_FIRMA_PREVIA";"C:\lotes\co-001.xml";"";"";"No se puede firmar el elemento CODEH: no existe una firma digital previa sobre el elemento COD."
+LOTE_DOC;"2";"2";"ERROR";"FALTA_FIRMA_PREVIA";"C:\lotes\co-002.xml";"";"";"No se puede firmar el elemento CODEH: no existe una firma digital previa sobre el elemento COD."
+LOTE_RESUMEN;"total=2";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=2";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>C:\lotes\co-001.xml: No se puede firmar el elemento CODEH: no existe una firma digital previa sobre el elemento COD.
+C:\lotes\co-002.xml: No se puede firmar el elemento CODEH: no existe una firma digital previa sobre el elemento COD.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>Ninguno se firma: primero debe existir la firma sobre <code>COD</code>. No se llegó a usar el certificado.</p>
+</div>
+<div class="module">
+<h4>6. Lote mezclado</h4>
+<p>Una Declaración Jurada entre Certificados de Origen.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS12.jar -lote lista.txt certificado.p12 "clave-de-ejemplo" COD</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS12";"1.6.0";"3"
+LOTE_DOC;"1";"3";"NO_PROCESADO";"LOTE_MEZCLADO";"C:\lotes\co-001.xml";"";"";"No se firmó ningún documento: el lote incluye documentos que no corresponden a la firma del elemento COD. Sepárelos y vuelva a ejecutar."
+LOTE_DOC;"2";"3";"ERROR";"TIPO_NO_CORRESPONDE";"C:\lotes\ddjj-001.xml";"";"";"El documento es una Declaración Jurada de Origen y este lote es para un Certificado de Origen Digital."
+LOTE_DOC;"3";"3";"NO_PROCESADO";"LOTE_MEZCLADO";"C:\lotes\co-002.xml";"";"";"No se firmó ningún documento: el lote incluye documentos que no corresponden a la firma del elemento COD. Sepárelos y vuelva a ejecutar."
+LOTE_RESUMEN;"total=3";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=1";"omitidos=0";"no_procesados=2";"corte=LOTE_MEZCLADO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: No se firmó ningún documento: el lote incluye documentos que no corresponden a la firma del elemento COD. Sepárelos y vuelva a ejecutar.
+C:\lotes\ddjj-001.xml: El documento es una Declaración Jurada de Origen y este lote es para un Certificado de Origen Digital.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p><strong>No se firma ninguno</strong>. El que no corresponde queda <code>TIPO_NO_CORRESPONDE</code>; los demás, <code>NO_PROCESADO</code>, y el corte es <code>LOTE_MEZCLADO</code>.</p>
+</div>
+<div class="module">
+<h4>7. Contraseña incorrecta</h4>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS12.jar -lote lista.txt certificado.p12 "otra-clave" COD</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS12";"1.6.0";"2"
+LOTE_DOC;"1";"2";"NO_PROCESADO";"CONTRASENA";"C:\lotes\co-001.xml";"";"";"El archivo no es un PKCS#12 válido o la contraseña es incorrecta"
+LOTE_DOC;"2";"2";"NO_PROCESADO";"CONTRASENA";"C:\lotes\co-002.xml";"";"";"El archivo no es un PKCS#12 válido o la contraseña es incorrecta"
+LOTE_RESUMEN;"total=2";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=2";"corte=CONTRASENA"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: El archivo no es un PKCS#12 válido o la contraseña es incorrecta</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>El lote se detiene sin firmar. Corregir la contraseña y volver a ejecutar.</p>
+</div>
+<div class="module">
+<h4>8. Certificado vencido</h4>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS12.jar -lote lista.txt vencido.p12 "clave-de-ejemplo" COD</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS12";"1.6.0";"2"
+LOTE_DOC;"1";"2";"NO_PROCESADO";"CERTIFICADO_NO_APTO";"C:\lotes\co-001.xml";"";"";"El certificado de firma venció el 29/10/2026 23:26. No se puede firmar con un certificado vencido: renueve el certificado o use otro que esté vigente."
+LOTE_DOC;"2";"2";"NO_PROCESADO";"CERTIFICADO_NO_APTO";"C:\lotes\co-002.xml";"";"";"El certificado de firma venció el 29/10/2026 23:26. No se puede firmar con un certificado vencido: renueve el certificado o use otro que esté vigente."
+LOTE_RESUMEN;"total=2";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=2";"corte=CERTIFICADO_NO_APTO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: El certificado de firma venció el 29/10/2026 23:26. No se puede firmar con un certificado vencido: renueve el certificado o use otro que esté vigente.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>No hay forma de omitir este control.</p>
+</div>
+<div class="module">
+<h4>9. Falta un argumento</h4>
+<p>Se olvidó la contraseña, y <code>-revisar</code> quedó en el lugar del elemento.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS12.jar -lote lista.txt certificado.p12 COD -revisar</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS12";"1.6.0";"0"
+LOTE_RESUMEN;"total=0";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=ARGUMENTOS"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: Falta un argumento: en el lugar del elemento a firmar está -revisar. Escriba todos los argumentos en orden; para firmar el documento completo, el elemento es "".</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>No se hace nada. Con <code>total=0</code> no hay líneas <code>LOTE_DOC</code>.</p>
+</div>
+<div class="module">
+<h4>10. Lista en otra codificación</h4>
+<p>La lista se guardó en UTF-16.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS12.jar -lote lista-utf16.txt certificado.p12 "clave-de-ejemplo" COD</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS12";"1.6.0";"0"
+LOTE_RESUMEN;"total=0";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=LISTA_ILEGIBLE"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: El archivo de lista no está en UTF-8. Vuelva a guardarlo como UTF-8: lista-utf16.txt</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>Guardar la lista en UTF-8.</p>
+</div>
+<div class="module">
+<h4>11. Informe no admitido</h4>
+<p>El informe no puede tener extensión de documento.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS12.jar -lote lista.txt certificado.p12 "clave-de-ejemplo" COD -informe informe.xml</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS12";"1.6.0";"2"
+LOTE_DOC;"1";"2";"NO_PROCESADO";"INFORME_NO_CREADO";"C:\lotes\co-001.xml";"";"";"El informe no puede ser un archivo .xml ni .pdf: informe.xml"
+LOTE_DOC;"2";"2";"NO_PROCESADO";"INFORME_NO_CREADO";"C:\lotes\co-002.xml";"";"";"El informe no puede ser un archivo .xml ni .pdf: informe.xml"
+LOTE_RESUMEN;"total=2";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=2";"corte=INFORME_NO_CREADO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: El informe no puede ser un archivo .xml ni .pdf: informe.xml</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>No se firma nada si el informe no se puede crear.</p>
+</div>
+</section>
+<section class="chapter" id="xml11">
+<span class="chapter-num">07</span>
+<h2>XMLSignerPKCS11</h2>
+<p>Firma XML con un token PKCS#11.</p>
+<div class="field-label">Sintaxis por lote</div>
+<pre><code>java -jar XMLSignerPKCS11.jar -lote &lt;lista&gt; &lt;biblioteca&gt; &lt;contraseña&gt; &lt;slot&gt; &lt;elemento&gt; [-omitir-revocacion true|false] [-revisar] [-informe &lt;archivo.csv&gt;] [-log]</code></pre>
+<div class="table-wrap"><table><tr><th>Argumento</th><th>Descripción</th></tr>
+<tr><td><code>&lt;lista&gt;</code></td><td>Archivo con un documento por línea</td></tr>
+<tr><td><code>&lt;biblioteca&gt;</code></td><td>Biblioteca PKCS#11 del fabricante del token</td></tr>
+<tr><td><code>&lt;contraseña&gt;</code></td><td>PIN del token ("" al revisar)</td></tr>
+<tr><td><code>&lt;slot&gt;</code></td><td>Número de slot. Si ahí no hay un token, se busca en los demás y se avisa</td></tr>
+<tr><td><code>&lt;elemento&gt;</code></td><td>Igual que en <code>XMLSignerPKCS12</code>. Hay que escribirlo siempre</td></tr>
+<tr><td><code>-omitir-revocacion</code></td><td>Opcional</td></tr>
+</table></div>
+<p>Las reglas sobre documentos son las mismas que en <a href="#xml12"><code>XMLSignerPKCS12</code></a>; sus ejemplos 3 a 6, 10 y 11 valen igual para este programa. Además admiten <code>-informe</code> y <code>-log</code>.</p>
+<h4>Procesos sin errores</h4><div class="module">
+<h4>1. Revisar antes de firmar</h4>
+<p>No usa el token: se puede ejecutar sin tenerlo conectado y no gasta intentos de PIN.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS11.jar -lote lista.txt C:\Windows\System32\eps2003csp11.dll "" 0 COD -revisar</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS11";"1.6.0";"3"
+LOTE_DOC;"1";"3";"LISTO";"OK";"C:\lotes\co-001.xml";"";"";"Listo para procesar."
+LOTE_DOC;"2";"3";"LISTO";"OK";"C:\lotes\co-002.xml";"";"";"Listo para procesar."
+LOTE_DOC;"3";"3";"LISTO";"OK";"C:\lotes\co-003.xml";"";"";"Listo para procesar."
+LOTE_RESUMEN;"total=3";"correctos=3";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+<details><summary>Contenido de <code>lista.txt</code></summary><pre><code>co-001.xml
+co-002.xml
+co-003.xml</code></pre>
+</details>
+<p>Ejecutado sin ningún token conectado.</p>
+</div>
+<div class="module">
+<h4>2. Firmar el lote con el token</h4>
+<div class="callout warn"><span class="label">Ejemplo ilustrativo</span><p>No se ejecutó con un token físico. Muestra el formato de salida que define el programa; los textos de los avisos dependen del certificado y del token.</p></div>
+<pre><code>java -jar XMLSignerPKCS11.jar -lote lista.txt C:\Windows\System32\eps2003csp11.dll "su-PIN" 0 COD -informe informe.csv</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS11";"1.6.0";"3"
+Certificado de firma verificado: no está revocado (OCSP).
+LOTE_DOC;"1";"3";"FIRMADO";"OK";"C:\lotes\co-001.xml";"C:\lotes\co-001-signed.xml";"";""
+LOTE_DOC;"2";"3";"FIRMADO";"OK";"C:\lotes\co-002.xml";"C:\lotes\co-002-signed.xml";"";""
+LOTE_DOC;"3";"3";"FIRMADO";"OK";"C:\lotes\co-003.xml";"C:\lotes\co-003-signed.xml";"";""
+LOTE_RESUMEN;"total=3";"correctos=3";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+</div><h4>Procesos con errores</h4><div class="module">
+<h4>3. Ningún token conectado</h4>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS11.jar -lote lista.txt C:\Windows\System32\eps2003csp11.dll 1234 0 COD</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS11";"1.6.0";"3"
+LOTE_DOC;"1";"3";"NO_PROCESADO";"TOKEN_NO_DISPONIBLE";"C:\lotes\co-001.xml";"";"";"No se detectó ningún token conectado para la biblioteca C:\Windows\System32\eps2003csp11.dll (la biblioteca informa 1 slot, todos sin token). Verifique que el token esté insertado, que la biblioteca corresponda a la marca/modelo de ese token y que no lo esté usando otro programa en forma exclusiva."
+LOTE_DOC;"2";"3";"NO_PROCESADO";"TOKEN_NO_DISPONIBLE";"C:\lotes\co-002.xml";"";"";"No se detectó ningún token conectado para la biblioteca C:\Windows\System32\eps2003csp11.dll (la biblioteca informa 1 slot, todos sin token). Verifique que el token esté insertado, que la biblioteca corresponda a la marca/modelo de ese token y que no lo esté usando otro programa en forma exclusiva."
+LOTE_DOC;"3";"3";"NO_PROCESADO";"TOKEN_NO_DISPONIBLE";"C:\lotes\co-003.xml";"";"";"No se detectó ningún token conectado para la biblioteca C:\Windows\System32\eps2003csp11.dll (la biblioteca informa 1 slot, todos sin token). Verifique que el token esté insertado, que la biblioteca corresponda a la marca/modelo de ese token y que no lo esté usando otro programa en forma exclusiva."
+LOTE_RESUMEN;"total=3";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=3";"corte=TOKEN_NO_DISPONIBLE"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: No se detectó ningún token conectado para la biblioteca C:\Windows\System32\eps2003csp11.dll (la biblioteca informa 1 slot, todos sin token). Verifique que el token esté insertado, que la biblioteca corresponda a la marca/modelo de ese token y que no lo esté usando otro programa en forma exclusiva.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>El PIN no llegó a usarse. Conectar el token y volver a ejecutar.</p>
+</div>
+<div class="module">
+<h4>4. La biblioteca no existe</h4>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS11.jar -lote lista.txt C:\drivers\no-existe.dll 1234 0 COD</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS11";"1.6.0";"3"
+LOTE_DOC;"1";"3";"NO_PROCESADO";"BIBLIOTECA";"C:\lotes\co-001.xml";"";"";"El archivo de la biblioteca PKCS#11 no existe: C:\drivers\no-existe.dll"
+LOTE_DOC;"2";"3";"NO_PROCESADO";"BIBLIOTECA";"C:\lotes\co-002.xml";"";"";"El archivo de la biblioteca PKCS#11 no existe: C:\drivers\no-existe.dll"
+LOTE_DOC;"3";"3";"NO_PROCESADO";"BIBLIOTECA";"C:\lotes\co-003.xml";"";"";"El archivo de la biblioteca PKCS#11 no existe: C:\drivers\no-existe.dll"
+LOTE_RESUMEN;"total=3";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=3";"corte=BIBLIOTECA"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: El archivo de la biblioteca PKCS#11 no existe: C:\drivers\no-existe.dll</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>Revisar la ruta. El programa tiene <code>-listar-drivers</code> con las rutas habituales.</p>
+</div>
+<div class="module">
+<h4>5. El archivo indicado no es una biblioteca de token</h4>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS11.jar -lote lista.txt "C:\lotes\co-001.xml" 1234 0 COD</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS11";"1.6.0";"3"
+LOTE_DOC;"1";"3";"NO_PROCESADO";"TOKEN_NO_DISPONIBLE";"C:\lotes\co-001.xml";"";"";"La biblioteca PKCS#11 no es compatible con este Java (probablemente es de otra arquitectura: 32 bits contra 64 bits)."
+LOTE_DOC;"2";"3";"NO_PROCESADO";"TOKEN_NO_DISPONIBLE";"C:\lotes\co-002.xml";"";"";"La biblioteca PKCS#11 no es compatible con este Java (probablemente es de otra arquitectura: 32 bits contra 64 bits)."
+LOTE_DOC;"3";"3";"NO_PROCESADO";"TOKEN_NO_DISPONIBLE";"C:\lotes\co-003.xml";"";"";"La biblioteca PKCS#11 no es compatible con este Java (probablemente es de otra arquitectura: 32 bits contra 64 bits)."
+LOTE_RESUMEN;"total=3";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=3";"corte=TOKEN_NO_DISPONIBLE"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: La biblioteca PKCS#11 no es compatible con este Java (probablemente es de otra arquitectura: 32 bits contra 64 bits).</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>Revisar que la ruta completa apunte a la biblioteca del fabricante y que sea de 64 bits.</p>
+</div>
+<div class="module">
+<h4>6. Slot que no es un número</h4>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS11.jar -lote lista.txt C:\Windows\System32\eps2003csp11.dll 1234 cero COD</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS11";"1.6.0";"0"
+LOTE_RESUMEN;"total=0";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=ARGUMENTOS"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: El número de slot debe ser un valor numérico.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>Error de argumentos: no se hace nada.</p>
+</div>
+<div class="module">
+<h4>7. Lote mezclado: se detecta antes de usar el token</h4>
+<div class="field-label">Comando</div><pre><code>java -jar XMLSignerPKCS11.jar -lote mezcla.txt C:\Windows\System32\eps2003csp11.dll 1234 0 COD</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLSignerPKCS11";"1.6.0";"2"
+LOTE_DOC;"1";"2";"NO_PROCESADO";"LOTE_MEZCLADO";"C:\lotes\co-001.xml";"";"";"No se firmó ningún documento: el lote incluye documentos que no corresponden a la firma del elemento COD. Sepárelos y vuelva a ejecutar."
+LOTE_DOC;"2";"2";"ERROR";"TIPO_NO_CORRESPONDE";"C:\lotes\ddjj-001.xml";"";"";"El documento es una Declaración Jurada de Origen y este lote es para un Certificado de Origen Digital."
+LOTE_RESUMEN;"total=2";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=1";"omitidos=0";"no_procesados=1";"corte=LOTE_MEZCLADO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: No se firmó ningún documento: el lote incluye documentos que no corresponden a la firma del elemento COD. Sepárelos y vuelva a ejecutar.
+C:\lotes\ddjj-001.xml: El documento es una Declaración Jurada de Origen y este lote es para un Certificado de Origen Digital.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>El corte se produce sin tocar el token.</p>
+</div>
+<div class="module">
+<h4>8. Errores del token que detienen el lote</h4>
+<p>No se reprodujeron por requerir un token físico. El programa los identifica con estos códigos de corte, y los documentos pendientes quedan <code>NO_PROCESADO</code>:</p>
+<div class="table-wrap"><table>
+  <tr><th>Corte</th><th>Mensaje (por la salida de error)</th><th>Qué hacer</th></tr>
+  <tr><td><code>CONTRASENA</code></td><td>Contraseña (PIN) incorrecta.</td><td>Corregirla. <strong>No reintentar en forma automática:</strong> cada intento cuenta para el bloqueo</td></tr>
+  <tr><td><code>TOKEN_BLOQUEADO</code></td><td>El token está bloqueado por demasiados intentos fallidos…</td><td>Desbloquear con la herramienta del fabricante</td></tr>
+  <tr><td><code>TOKEN_NO_DISPONIBLE</code></td><td>El token no está presente, fue retirado o no es reconocido…</td><td>Reconectar y ejecutar con lo pendiente</td></tr>
+  <tr><td><code>FALLAS_CONSECUTIVAS</code></td><td>Se detuvo el lote: 3 documentos seguidos no se pudieron firmar…</td><td>Revisar el token y el certificado</td></tr>
+</table></div>
+</div>
+</section>
+<section class="chapter" id="pdf12">
+<span class="chapter-num">08</span>
+<h2>PDFSignerPKCS12</h2>
+<p>Firma PDF con un archivo PKCS#12.</p>
+<div class="field-label">Sintaxis por lote</div>
+<pre><code>java -jar PDFSignerPKCS12.jar -lote &lt;lista&gt; -c &lt;certificado.p12&gt; -p &lt;contraseña&gt; [-l true|false] [-x n] [-y n] [-pagina n] [-ancho n] [-alto n] [-t texto] [-proteger-contenido true|false] [-omitir-revocacion true|false] [-revisar] [-informe &lt;archivo.csv&gt;] [-log]</code></pre>
+<div class="table-wrap"><table><tr><th>Argumento</th><th>Descripción</th></tr>
+<tr><td><code>-lote</code></td><td>Reemplaza a <code>-i</code></td></tr>
+<tr><td><code>-c, -p</code></td><td>Certificado y contraseña (obligatorios también al revisar; <code>-p ""</code>)</td></tr>
+<tr><td><code>-l</code></td><td><strong>Cierra</strong> todos los documentos</td></tr>
+<tr><td><code>-x, -y</code></td><td>Posición de la firma visible; sin ellas la firma es invisible</td></tr>
+<tr><td><code>-pagina, -ancho, -alto</code></td><td>Página (por defecto 1) y tamaño (160 × 70 puntos)</td></tr>
+<tr><td><code>-t</code></td><td>Texto adicional en la firma visible</td></tr>
+<tr><td><code>-proteger-contenido</code></td><td>Primera firma: protege el contenido y permite seguir firmando. No se combina con <code>-l</code></td></tr>
+</table></div>
+<p>El orden es libre. <code>-i</code> y <code>-campo</code> no se admiten por lote. Además admiten <code>-informe</code> y <code>-log</code>.</p>
+<h4>Procesos sin errores</h4><div class="module">
+<h4>1. Revisar antes de firmar</h4>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS12.jar -lote lista.txt -c certificado.p12 -p "" -x 40 -y 55 -revisar</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS12";"1.6.0";"3"
+LOTE_DOC;"1";"3";"LISTO";"OK";"C:\lotes\contrato-001.pdf";"";"";"Listo para procesar."
+LOTE_DOC;"2";"3";"LISTO";"OK";"C:\lotes\contrato-002.pdf";"";"";"Listo para procesar."
+LOTE_DOC;"3";"3";"LISTO";"OK";"C:\lotes\contrato-003.pdf";"";"";"Listo para procesar."
+LOTE_RESUMEN;"total=3";"correctos=3";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+<details><summary>Contenido de <code>lista.txt</code></summary><pre><code>contrato-001.pdf
+contrato-002.pdf
+contrato-003.pdf</code></pre>
+</details>
+<p>También se comprueba que la firma entre en la página pedida.</p>
+</div>
+<div class="module">
+<h4>2. Firma visible con texto, informe y registros</h4>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS12.jar -lote lista.txt -c certificado.p12 -p "clave-de-ejemplo" -x 40 -y 55 -t Exportador -informe informe.csv -log</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS12";"1.6.0";"3"
+No se pudo verificar el estado de revocación del certificado de firma (el certificado no publica una URL de OCSP ni de CRL). Se continúa con la firma.
+LOTE_DOC;"1";"3";"FIRMADO";"OK";"C:\lotes\contrato-001.pdf";"C:\lotes\contrato-001-signed.pdf";"C:\lotes\contrato-001.pdf.log";""
+LOTE_DOC;"2";"3";"FIRMADO";"OK";"C:\lotes\contrato-002.pdf";"C:\lotes\contrato-002-signed.pdf";"C:\lotes\contrato-002.pdf.log";""
+LOTE_DOC;"3";"3";"FIRMADO";"OK";"C:\lotes\contrato-003.pdf";"C:\lotes\contrato-003-signed.pdf";"C:\lotes\contrato-003.pdf.log";""
+LOTE_RESUMEN;"total=3";"correctos=3";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+<details><summary>Archivos de la carpeta después de ejecutar</summary><pre><code>certificado.p12
+contrato-001-signed.pdf
+contrato-001.pdf
+contrato-001.pdf.log
+contrato-002-signed.pdf
+contrato-002.pdf
+contrato-002.pdf.log
+contrato-003-signed.pdf
+contrato-003.pdf
+contrato-003.pdf.log
+informe.csv
+lista.txt
+logs</code></pre>
+</details>
+<details><summary>Contenido de <code>informe.csv</code></summary><pre><code>"n";"total";"estado";"codigo";"entrada";"salida";"log";"mensaje"
+"1";"3";"FIRMADO";"OK";"C:\lotes\contrato-001.pdf";"C:\lotes\contrato-001-signed.pdf";"C:\lotes\contrato-001.pdf.log";""
+"2";"3";"FIRMADO";"OK";"C:\lotes\contrato-002.pdf";"C:\lotes\contrato-002-signed.pdf";"C:\lotes\contrato-002.pdf.log";""
+"3";"3";"FIRMADO";"OK";"C:\lotes\contrato-003.pdf";"C:\lotes\contrato-003-signed.pdf";"C:\lotes\contrato-003.pdf.log";""</code></pre>
+</details>
+<details><summary>Contenido de <code>contrato-001.pdf.log</code></summary><pre><code>===== 26/11/2026 23:26:38 - PDFSignerPKCS12 1.6.0 =====
+No se pudo verificar el estado de revocación del certificado de firma (el certificado no publica una URL de OCSP ni de CRL). Se continúa con la firma.
+Documento firmado exitosamente: C:\lotes\contrato-001-signed.pdf
+Resultado: FIRMADO (OK)</code></pre>
+</details>
+</div>
+<div class="module">
+<h4>3. Segunda firma que cierra los documentos</h4>
+<p>Segundo firmante, en otra posición, cerrando.</p>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS12.jar -lote lista-cierre.txt -c certificado.p12 -p "clave-de-ejemplo" -x 310 -y 55 -l true -log</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS12";"1.6.0";"3"
+No se pudo verificar el estado de revocación del certificado de firma (el certificado no publica una URL de OCSP ni de CRL). Se continúa con la firma.
+LOTE_DOC;"1";"3";"FIRMADO";"OK";"C:\lotes\contrato-001-signed.pdf";"C:\lotes\contrato-001-signed-signed.pdf";"C:\lotes\contrato-001-signed.pdf.log";"No se pudieron completar todas las comprobaciones de las firmas anteriores."
+LOTE_DOC;"2";"3";"FIRMADO";"OK";"C:\lotes\contrato-002-signed.pdf";"C:\lotes\contrato-002-signed-signed.pdf";"C:\lotes\contrato-002-signed.pdf.log";"No se pudieron completar todas las comprobaciones de las firmas anteriores."
+LOTE_DOC;"3";"3";"FIRMADO";"OK";"C:\lotes\contrato-003-signed.pdf";"C:\lotes\contrato-003-signed-signed.pdf";"C:\lotes\contrato-003-signed.pdf.log";"No se pudieron completar todas las comprobaciones de las firmas anteriores."
+LOTE_RESUMEN;"total=3";"correctos=3";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+<details><summary>Contenido de <code>contrato-001-signed.pdf.log</code></summary><pre><code>===== 26/11/2026 23:26:40 - PDFSignerPKCS12 1.6.0 =====
+No se pudo verificar el estado de revocación del certificado de firma (el certificado no publica una URL de OCSP ni de CRL). Se continúa con la firma.
+ESTADO_DOCUMENTO: ABIERTO
+CANTIDAD_FIRMAS: 1
+FIRMA: 1 | NO_VERIFICABLE | Empresa de Ejemplo
+MENSAJE: La firma de Empresa de Ejemplo está íntegra, pero no pudimos comprobar si su certificado estaba vigente cuando firmó (el certificado no indica dónde consultar su estado).
+CAMPO: Signature_Empresa_de_Ejemplo_1795746397814
+REVOCACION: No se pudo comprobar (el certificado no indica dónde consultar su estado)
+PAGINAS: 2
+Documento firmado exitosamente: C:\lotes\contrato-001-signed-signed.pdf
+El documento quedó cerrado: no admite más firmas.
+Resultado: FIRMADO (OK) No se pudieron completar todas las comprobaciones de las firmas anteriores.</code></pre>
+</details>
+<p>El detalle de la firma anterior queda en el registro de cada documento. El mensaje del resultado aclara que no se pudieron completar todas las comprobaciones porque el certificado de prueba no indica dónde consultar su estado.</p>
+</div>
+<h4>Procesos con errores</h4><div class="module">
+<h4>4. Errores propios de algunos documentos</h4>
+<p>Un documento cerrado, uno con restricciones de seguridad, uno dañado, uno inexistente y uno cuya salida ya existe.</p>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS12.jar -lote lista.txt -c certificado.p12 -p "clave-de-ejemplo"</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS12";"1.6.0";"6"
+No se pudo verificar el estado de revocación del certificado de firma (el certificado no publica una URL de OCSP ni de CRL). Se continúa con la firma.
+LOTE_DOC;"1";"6";"ERROR";"DOCUMENTO_CERRADO";"C:\lotes\cerrado.pdf";"";"";"El documento fue bloqueado por Empresa de Ejemplo y no admite más firmas."
+LOTE_DOC;"2";"6";"ERROR";"DOCUMENTO_RESTRINGIDO";"C:\lotes\restringido.pdf";"";"";"Este documento tiene restricciones de seguridad (está protegido con una contraseña de propietario) que impiden agregarle firmas. Pida a quien se lo envió una versión sin restricciones."
+LOTE_DOC;"3";"6";"ERROR";"DOCUMENTO_MAL_FORMADO";"C:\lotes\roto.pdf";"";"";"No se pudo leer el documento PDF. Verifique que el archivo no esté dañado."
+LOTE_DOC;"4";"6";"ERROR";"ARCHIVO_NO_ENCONTRADO";"C:\lotes\no-existe.pdf";"";"";"El archivo no existe."
+LOTE_DOC;"5";"6";"OMITIDO";"SALIDA_YA_EXISTE";"C:\lotes\contrato-002.pdf";"C:\lotes\contrato-002-signed.pdf";"";"Ya existe el archivo firmado: no se vuelve a firmar ni se reemplaza."
+LOTE_DOC;"6";"6";"FIRMADO";"OK";"C:\lotes\contrato-003.pdf";"C:\lotes\contrato-003-signed.pdf";"";""
+LOTE_RESUMEN;"total=6";"correctos=1";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=4";"omitidos=1";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>C:\lotes\cerrado.pdf: El documento fue bloqueado por Empresa de Ejemplo y no admite más firmas.
+C:\lotes\restringido.pdf: Este documento tiene restricciones de seguridad (está protegido con una contraseña de propietario) que impiden agregarle firmas. Pida a quien se lo envió una versión sin restricciones.
+C:\lotes\roto.pdf: No se pudo leer el documento PDF. Verifique que el archivo no esté dañado.
+C:\lotes\no-existe.pdf: El archivo no existe.
+C:\lotes\contrato-002.pdf: Ya existe el archivo firmado: no se vuelve a firmar ni se reemplaza.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<details><summary>Contenido de <code>lista.txt</code></summary><pre><code>cerrado.pdf
+restringido.pdf
+roto.pdf
+no-existe.pdf
+contrato-002.pdf
+contrato-003.pdf</code></pre>
+</details>
+<p>El documento correcto se firma. El código de salida es <code>1</code>.</p>
+</div>
+<div class="module">
+<h4>5. La página pedida no existe</h4>
+<p>El documento tiene 2 páginas y se pide la 9.</p>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS12.jar -lote lista.txt -c certificado.p12 -p "clave-de-ejemplo" -x 40 -y 55 -pagina 9</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS12";"1.6.0";"1"
+LOTE_DOC;"1";"1";"ERROR";"PAGINA_INEXISTENTE";"C:\lotes\contrato-002.pdf";"";"";"El documento tiene 2 páginas y la página 9 no existe."
+LOTE_RESUMEN;"total=1";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=1";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>C:\lotes\contrato-002.pdf: El documento tiene 2 páginas y la página 9 no existe.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>Afecta solo a ese documento: los demás de la lista se procesan.</p>
+</div>
+<div class="module">
+<h4>6. El recuadro no entra en la página</h4>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS12.jar -lote lista2.txt -c certificado.p12 -p "clave-de-ejemplo" -x 560 -y 55</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS12";"1.6.0";"1"
+LOTE_DOC;"1";"1";"ERROR";"FIRMA_NO_ENTRA";"C:\lotes\contrato-003.pdf";"";"";"El recuadro de la firma no entra en la página 1, que mide 595 x 842 puntos. Con X=560.0 e Y=55.0 el recuadro de 160.0 x 70.0 se sale de la hoja."
+LOTE_RESUMEN;"total=1";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=1";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>C:\lotes\contrato-003.pdf: El recuadro de la firma no entra en la página 1, que mide 595 x 842 puntos. Con X=560.0 e Y=55.0 el recuadro de 160.0 x 70.0 se sale de la hoja.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+</div>
+<div class="module">
+<h4>7. Proteger el contenido de un documento ya firmado</h4>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS12.jar -lote lista3.txt -c certificado.p12 -p "clave-de-ejemplo" -proteger-contenido true</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS12";"1.6.0";"1"
+LOTE_DOC;"1";"1";"ERROR";"PROTECCION_NO_APLICABLE";"C:\lotes\contrato-001-signed.pdf";"";"";"La protección del contenido solo puede aplicarse con la primera firma del documento, y este ya tiene firmas."
+LOTE_RESUMEN;"total=1";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=1";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>C:\lotes\contrato-001-signed.pdf: La protección del contenido solo puede aplicarse con la primera firma del documento, y este ya tiene firmas.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>La protección del contenido solo puede aplicarse con la primera firma.</p>
+</div>
+<div class="module">
+<h4>8. Firmado con avisos: una firma anterior no es válida</h4>
+<p>El documento se alteró después de la primera firma.</p>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS12.jar -lote lista.txt -c certificado.p12 -p "clave-de-ejemplo"</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS12";"1.6.0";"1"
+No se pudo verificar el estado de revocación del certificado de firma (el certificado no publica una URL de OCSP ni de CRL). Se continúa con la firma.
+LOTE_DOC;"1";"1";"FIRMADO_CON_AVISOS";"FIRMA_PREVIA_INVALIDA";"C:\lotes\contrato-001-signed.pdf";"C:\lotes\contrato-001-signed-signed.pdf";"";"Se firmó, pero hay una firma anterior que no es válida. La firma de Empresa de Ejemplo NO es válida: el documento fue modificado después de que Empresa de Ejemplo lo firmara."
+LOTE_RESUMEN;"total=1";"correctos=0";"con_avisos=1";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+<p>Se firma igual (la decisión es de quien firma) y el código de salida es <code>0</code>: <strong>revisar el estado <code>FIRMADO_CON_AVISOS</code></strong>.</p>
+</div>
+<div class="module">
+<h4>9. Contraseña incorrecta</h4>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS12.jar -lote lista.txt -c certificado.p12 -p "otra-clave"</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS12";"1.6.0";"2"
+LOTE_DOC;"1";"2";"NO_PROCESADO";"CONTRASENA";"C:\lotes\contrato-001.pdf";"";"";"Contraseña incorrecta o archivo PKCS#12 inválido"
+LOTE_DOC;"2";"2";"NO_PROCESADO";"CONTRASENA";"C:\lotes\contrato-002.pdf";"";"";"Contraseña incorrecta o archivo PKCS#12 inválido"
+LOTE_RESUMEN;"total=2";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=2";"corte=CONTRASENA"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: Contraseña incorrecta o archivo PKCS#12 inválido</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+</div>
+<div class="module">
+<h4>10. Opción no admitida por lote</h4>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS12.jar -lote lista.txt -c certificado.p12 -p "clave-de-ejemplo" -campo Firma1</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS12";"1.6.0";"0"
+LOTE_RESUMEN;"total=0";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=ARGUMENTOS"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: -campo no se admite por lotes: cada documento puede tener el campo en otro lugar. Fírmelos de a uno.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+</div>
+<div class="module">
+<h4>11. Opciones incompatibles</h4>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS12.jar -lote lista.txt -c certificado.p12 -p "clave-de-ejemplo" -l true -proteger-contenido true</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS12";"1.6.0";"0"
+LOTE_RESUMEN;"total=0";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=ARGUMENTOS"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: Elija una sola opción: bloquear los documentos (-l true) o proteger su contenido permitiendo firmas posteriores (-proteger-contenido true).</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+</div>
+<div class="module">
+<h4>12. Lista vacía</h4>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS12.jar -lote vacia.txt -c certificado.p12 -p "clave-de-ejemplo"</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS12";"1.6.0";"0"
+LOTE_RESUMEN;"total=0";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=LISTA_VACIA"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: El archivo de lista no contiene ningún documento: vacia.txt</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+</div>
+</section>
+<section class="chapter" id="pdf11">
+<span class="chapter-num">09</span>
+<h2>PDFSignerPKCS11</h2>
+<p>Firma PDF con un token PKCS#11.</p>
+<div class="field-label">Sintaxis por lote</div>
+<pre><code>java -jar PDFSignerPKCS11.jar -lote &lt;lista&gt; -l &lt;biblioteca&gt; -p &lt;contraseña&gt; -s &lt;slot&gt; [-k true|false] [-x n] [-y n] [-pagina n] [-ancho n] [-alto n] [-t texto] [-proteger-contenido true|false] [-omitir-revocacion true|false] [-revisar] [-informe &lt;archivo.csv&gt;] [-log]</code></pre>
+<div class="table-wrap"><table><tr><th>Argumento</th><th>Descripción</th></tr>
+<tr><td><code>-lote</code></td><td>Reemplaza a <code>-i</code></td></tr>
+<tr><td><code>-l</code></td><td><strong>Biblioteca</strong> PKCS#11 (atención: en <code>PDFSignerPKCS12</code>, <code>-l</code> significa cerrar)</td></tr>
+<tr><td><code>-p, -s</code></td><td>PIN y slot (obligatorios también al revisar; <code>-p ""</code>)</td></tr>
+<tr><td><code>-k</code></td><td><strong>Cierra</strong> todos los documentos</td></tr>
+<tr><td><code>-x, -y, -pagina, -ancho, -alto, -t</code></td><td>Igual que en <code>PDFSignerPKCS12</code></td></tr>
+<tr><td><code>-proteger-contenido</code></td><td>No se combina con <code>-k</code></td></tr>
+</table></div>
+<p>Las reglas sobre documentos son las mismas que en <a href="#pdf12"><code>PDFSignerPKCS12</code></a>; sus ejemplos 3 a 8 y 10 a 12 valen igual, cambiando <code>-l</code> por <code>-k</code>. Además admiten <code>-informe</code> y <code>-log</code>.</p>
+<h4>Procesos sin errores</h4><div class="module">
+<h4>1. Revisar antes de firmar</h4>
+<p>No usa el token.</p>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS11.jar -lote lista.txt -l C:\Windows\System32\eps2003csp11.dll -p "" -s 0 -x 40 -y 55 -revisar</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS11";"1.6.0";"2"
+LOTE_DOC;"1";"2";"LISTO";"OK";"C:\lotes\contrato-001.pdf";"";"";"Listo para procesar."
+LOTE_DOC;"2";"2";"LISTO";"OK";"C:\lotes\contrato-002.pdf";"";"";"Listo para procesar."
+LOTE_RESUMEN;"total=2";"correctos=2";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+<details><summary>Contenido de <code>lista.txt</code></summary><pre><code>contrato-001.pdf
+contrato-002.pdf</code></pre>
+</details>
+<p>Ejecutado sin ningún token conectado.</p>
+</div>
+<div class="module">
+<h4>2. Firmar el lote con el token</h4>
+<div class="callout warn"><span class="label">Ejemplo ilustrativo</span><p>No se ejecutó con un token físico. Muestra el formato de salida que define el programa.</p></div>
+<pre><code>java -jar PDFSignerPKCS11.jar -lote lista.txt -l C:\Windows\System32\eps2003csp11.dll -p "su-PIN" -s 0 -x 40 -y 55</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS11";"1.6.0";"2"
+Certificado de firma verificado: no está revocado (OCSP).
+LOTE_DOC;"1";"2";"FIRMADO";"OK";"C:\lotes\contrato-001.pdf";"C:\lotes\contrato-001-signed.pdf";"";""
+LOTE_DOC;"2";"2";"FIRMADO";"OK";"C:\lotes\contrato-002.pdf";"C:\lotes\contrato-002-signed.pdf";"";""
+LOTE_RESUMEN;"total=2";"correctos=2";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+</div><h4>Procesos con errores</h4><div class="module">
+<h4>3. Ningún token conectado</h4>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS11.jar -lote lista.txt -l C:\Windows\System32\eps2003csp11.dll -p 1234 -s 0</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS11";"1.6.0";"2"
+LOTE_DOC;"1";"2";"NO_PROCESADO";"TOKEN_NO_DISPONIBLE";"C:\lotes\contrato-001.pdf";"";"";"No se detectó ningún token conectado para la biblioteca C:\Windows\System32\eps2003csp11.dll (la biblioteca informa 1 slot, todos sin token). Verifique que el token esté insertado, que la biblioteca corresponda a la marca/modelo de ese token y que no lo esté usando otro programa en forma exclusiva."
+LOTE_DOC;"2";"2";"NO_PROCESADO";"TOKEN_NO_DISPONIBLE";"C:\lotes\contrato-002.pdf";"";"";"No se detectó ningún token conectado para la biblioteca C:\Windows\System32\eps2003csp11.dll (la biblioteca informa 1 slot, todos sin token). Verifique que el token esté insertado, que la biblioteca corresponda a la marca/modelo de ese token y que no lo esté usando otro programa en forma exclusiva."
+LOTE_RESUMEN;"total=2";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=2";"corte=TOKEN_NO_DISPONIBLE"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: No se detectó ningún token conectado para la biblioteca C:\Windows\System32\eps2003csp11.dll (la biblioteca informa 1 slot, todos sin token). Verifique que el token esté insertado, que la biblioteca corresponda a la marca/modelo de ese token y que no lo esté usando otro programa en forma exclusiva.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>El PIN no llegó a usarse.</p>
+</div>
+<div class="module">
+<h4>4. La biblioteca no existe</h4>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS11.jar -lote lista.txt -l C:\drivers\no-existe.dll -p 1234 -s 0</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS11";"1.6.0";"2"
+LOTE_DOC;"1";"2";"NO_PROCESADO";"BIBLIOTECA";"C:\lotes\contrato-001.pdf";"";"";"El archivo de la biblioteca PKCS#11 no existe: C:\drivers\no-existe.dll"
+LOTE_DOC;"2";"2";"NO_PROCESADO";"BIBLIOTECA";"C:\lotes\contrato-002.pdf";"";"";"El archivo de la biblioteca PKCS#11 no existe: C:\drivers\no-existe.dll"
+LOTE_RESUMEN;"total=2";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=2";"corte=BIBLIOTECA"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: El archivo de la biblioteca PKCS#11 no existe: C:\drivers\no-existe.dll</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+</div>
+<div class="module">
+<h4>5. Falta el slot</h4>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS11.jar -lote lista.txt -l C:\Windows\System32\eps2003csp11.dll -p 1234</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS11";"1.6.0";"0"
+LOTE_RESUMEN;"total=0";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=ARGUMENTOS"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: Falta el argumento obligatorio -s.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+</div>
+<div class="module">
+<h4>6. Se usó <code>-i</code> junto con <code>-lote</code></h4>
+<div class="field-label">Comando</div><pre><code>java -jar PDFSignerPKCS11.jar -lote lista.txt -i contrato-001.pdf -l C:\Windows\System32\eps2003csp11.dll -p 1234 -s 0</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFSignerPKCS11";"1.6.0";"0"
+LOTE_RESUMEN;"total=0";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=ARGUMENTOS"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: Con -lote no se usa -i: los documentos van en la lista.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+</div>
+<div class="module"><h4>7. Errores del token</h4>
+<p>Contraseña incorrecta, token bloqueado o retirado y fallas consecutivas se informan con los mismos códigos de corte que en <a href="#xml11"><code>XMLSignerPKCS11</code></a> (ejemplo 8).</p></div>
+</section>
+<section class="chapter" id="xmlv">
+<span class="chapter-num">10</span>
+<h2>XMLVerifySignatures</h2>
+<p>Verifica las firmas de cada XML de la lista, incluida la revocación (requiere Internet para un resultado completo).</p>
+<div class="field-label">Sintaxis por lote</div>
+<pre><code>java -jar XMLVerifySignatures.jar -lote &lt;lista&gt; [-simple] [-informe &lt;archivo.csv&gt;] [-log]</code></pre>
+<div class="table-wrap"><table><tr><th>Argumento</th><th>Descripción</th></tr>
+<tr><td><code>&lt;lista&gt;</code></td><td>Archivo con un documento por línea</td></tr>
+<tr><td><code>-simple</code></td><td>Reduce el detalle guardado en los registros. Por lote el detalle no sale en pantalla: sin <code>-log</code> no tiene efecto</td></tr>
+</table></div>
+<p><code>-lote</code> es el primer argumento. No admite <code>-revisar</code>. Además admiten <code>-informe</code> y <code>-log</code>.</p>
+<h4>Procesos sin errores</h4><div class="module">
+<h4>1. Verificar con informe y registros</h4>
+<p>Dos documentos firmados con el certificado de prueba y uno de ejemplo firmado con un certificado de una autoridad certificante (necesita Internet).</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLVerifySignatures.jar -lote lista.txt -informe informe.csv -simple -log</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLVerifySignatures";"1.6.0";"3"
+LOTE_DOC;"1";"3";"VALIDO_CON_OBSERVACIONES";"COMPROBACION_PENDIENTE";"C:\lotes\factura-001-signed.xml";"";"C:\lotes\factura-001-signed.xml.log";"Las firmas son válidas, pero no se pudo comprobar la revocación de algún certificado."
+LOTE_DOC;"2";"3";"VALIDO_CON_OBSERVACIONES";"COMPROBACION_PENDIENTE";"C:\lotes\factura-002-signed.xml";"";"C:\lotes\factura-002-signed.xml.log";"Las firmas son válidas, pero no se pudo comprobar la revocación de algún certificado."
+LOTE_DOC;"3";"3";"VALIDO";"OK";"C:\lotes\certificado-origen-de-terceros.xml";"";"C:\lotes\certificado-origen-de-terceros.xml.log";""
+LOTE_RESUMEN;"total=3";"correctos=1";"con_avisos=2";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+<details><summary>Contenido de <code>informe.csv</code></summary><pre><code>"n";"total";"estado";"codigo";"entrada";"salida";"log";"mensaje"
+"1";"3";"VALIDO_CON_OBSERVACIONES";"COMPROBACION_PENDIENTE";"C:\lotes\factura-001-signed.xml";"";"C:\lotes\factura-001-signed.xml.log";"Las firmas son válidas, pero no se pudo comprobar la revocación de algún certificado."
+"2";"3";"VALIDO_CON_OBSERVACIONES";"COMPROBACION_PENDIENTE";"C:\lotes\factura-002-signed.xml";"";"C:\lotes\factura-002-signed.xml.log";"Las firmas son válidas, pero no se pudo comprobar la revocación de algún certificado."
+"3";"3";"VALIDO";"OK";"C:\lotes\certificado-origen-de-terceros.xml";"";"C:\lotes\certificado-origen-de-terceros.xml.log";""</code></pre>
+</details>
+<details><summary>Contenido de <code>factura-001-signed.xml.log</code></summary><pre><code>===== 26/11/2026 23:27:15 - XMLVerifySignatures 1.6.0 =====
+Firma #1:
+  Algoritmo de Hash: SHA256
+  Valor de firma: Válido
+  Referencia #1 ():
+    Válida: Sí
+  Validación principal: Válida
+  Estado de revocación: No verificable - Sin URLs de OCSP/CRL
+
+========== RESULTADO FINAL ==========
+DOCUMENTO VÁLIDO: Todas las firmas son válidas.
+Resultado: VALIDO_CON_OBSERVACIONES (COMPROBACION_PENDIENTE) Las firmas son válidas, pero no se pudo comprobar la revocación de algún certificado.</code></pre>
+</details>
+<p><code>VALIDO_CON_OBSERVACIONES</code> / <code>COMPROBACION_PENDIENTE</code> indica que las firmas son correctas pero no se pudo comprobar la revocación (el certificado de prueba no publica dónde). El código de salida es <code>0</code>.</p>
+</div>
+<h4>Procesos con errores</h4><div class="module">
+<h4>2. Firmas no válidas y documentos con problemas</h4>
+<p>Un documento correcto, uno modificado después de firmarse, uno sin firmas, uno mal formado, uno inexistente y uno repetido.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLVerifySignatures.jar -lote lista.txt -log</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLVerifySignatures";"1.6.0";"6"
+LOTE_DOC;"1";"6";"VALIDO_CON_OBSERVACIONES";"COMPROBACION_PENDIENTE";"C:\lotes\factura-001-signed.xml";"";"C:\lotes\factura-001-signed.xml.log";"Las firmas son válidas, pero no se pudo comprobar la revocación de algún certificado."
+LOTE_DOC;"2";"6";"NO_VALIDO";"FIRMA_NO_VALIDA";"C:\lotes\factura-002-signed.xml";"";"C:\lotes\factura-002-signed.xml.log";"Hay 1 firma que no es válida."
+LOTE_DOC;"3";"6";"SIN_FIRMAS";"SIN_FIRMAS";"C:\lotes\factura-003.xml";"";"C:\lotes\factura-003.xml.log";"El documento XML no contiene firmas digitales."
+LOTE_DOC;"4";"6";"ERROR";"DOCUMENTO_MAL_FORMADO";"C:\lotes\roto.xml";"";"C:\lotes\roto.xml.log";"No se pudo leer el documento XML. Verifique que sea un XML válido en UTF-8."
+LOTE_DOC;"5";"6";"ERROR";"ARCHIVO_NO_ENCONTRADO";"C:\lotes\no-existe.xml";"";"";"El archivo no existe."
+LOTE_DOC;"6";"6";"OMITIDO";"DUPLICADO";"C:\lotes\factura-001-signed.xml";"";"C:\lotes\factura-001-signed.xml.log";"El documento está repetido en la lista."
+LOTE_RESUMEN;"total=6";"correctos=0";"con_avisos=1";"no_validos=1";"sin_firmas=1";"con_error=2";"omitidos=1";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>C:\lotes\factura-002-signed.xml: Hay 1 firma que no es válida.
+C:\lotes\factura-003.xml: El documento XML no contiene firmas digitales.
+C:\lotes\roto.xml: No se pudo leer el documento XML. Verifique que sea un XML válido en UTF-8.
+C:\lotes\no-existe.xml: El archivo no existe.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<details><summary>Contenido de <code>lista.txt</code></summary><pre><code>factura-001-signed.xml
+factura-002-signed.xml
+factura-003.xml
+roto.xml
+no-existe.xml
+factura-001-signed.xml</code></pre>
+</details>
+<details><summary>Contenido de <code>factura-002-signed.xml.log</code></summary><pre><code>===== 26/11/2026 23:27:21 - XMLVerifySignatures 1.6.0 =====
+Firma #1:
+  Algoritmo de Hash: SHA256
+  Valor de firma: Válido
+  Referencia #1 ():
+    Válida: No
+    Digest calculado: MSbsFLKVFfcRaehxu80AvhUllHwIYpgJF9yILb+90nQ=
+    Digest en XML: fIwUY2I7COG/X45EApB8l+eqFREJHe8TkLPQ9hIsYyY=
+  Validación principal: Inválida
+
+Detalles de la Firma #1:
+  Estado (integridad criptográfica, sin considerar revocación): INVÁLIDA
+  Método de Canonicalización: http://www.w3.org/TR/2001/REC-xml-c14n-20010315
+  Método de Firma: http://www.w3.org/2001/04/xmldsig-more#rsa-sha256
+  Valor de la Firma: SeE01l2jxuL06tCRVuVrX/oJlN9W8msmCHpGFvdKdZapKhcPxK27NbxHI+UQHgHkN+Z61c2QkYocHasu1WECSBIkZq33DqRcSPP7bfVgIZCTRria4Xf8fDxXc7F1bVo/MDHXXPog7sygG0uDm5RkbRmFd2pbFslORj6MsMx3dxOHACOC+znw+76q2qHZSKDMbTy1117aywPpQGMpdlOw+JRcT00LVgIxdXPNTO/HQusfN5PQESwFGd6jpJjmZvop3XVCx4oZPCE6rndSCralTozhVBnkACVSubG9DQGjefOnbQxMvsXkdip8siPT274/I5JWnXkIW1vMk2OK0mshww==
+
+Información del Certificado:
+  Sujeto: CN=Empresa de Ejemplo,O=Ejemplo,C=AR
+  Emisor: CN=Empresa de Ejemplo,O=Ejemplo,C=AR
+  Número de Serie: f4a25032250e2069
+  Válido desde: Thu Nov 26 23:27:17 GMT-03:00 2026
+  Válido hasta: Sat Nov 25 23:27:17 GMT-03:00 2028
+  Estado del Certificado: VÁLIDO
+  No se encontraron URLs de OCSP ni CRL en el certificado.
+  Estado final de la firma #1: INVÁLIDA
+
+========== RESULTADO FINAL ==========
+DOCUMENTO INVÁLIDO: Una o más firmas contienen errores graves.
+Resultado: NO_VALIDO (FIRMA_NO_VALIDA) Hay 1 firma que no es válida.</code></pre>
+</details>
+<p>Cada documento tiene su estado; el código de salida es <code>1</code>.</p>
+</div>
+<div class="module">
+<h4>3. Opción que no corresponde</h4>
+<div class="field-label">Comando</div><pre><code>java -jar XMLVerifySignatures.jar -lote lista.txt -revisar</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLVerifySignatures";"1.6.0";"0"
+LOTE_RESUMEN;"total=0";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=ARGUMENTOS"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: Argumento no reconocido, repetido o incompleto: -revisar</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>Los verificadores no admiten <code>-revisar</code>.</p>
+</div>
+<div class="module">
+<h4>4. La lista no existe</h4>
+<div class="field-label">Comando</div><pre><code>java -jar XMLVerifySignatures.jar -lote no-hay-lista.txt</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLVerifySignatures";"1.6.0";"0"
+LOTE_RESUMEN;"total=0";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=LISTA_ILEGIBLE"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: El archivo de lista no existe: no-hay-lista.txt</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+</div>
+</section>
+<section class="chapter" id="pdfv">
+<span class="chapter-num">11</span>
+<h2>PDFVerifySignatures</h2>
+<p>Verifica las firmas de cada PDF de la lista.</p>
+<div class="field-label">Sintaxis por lote</div>
+<pre><code>java -jar PDFVerifySignatures.jar -lote &lt;lista&gt; [-simple] [-informe &lt;archivo.csv&gt;] [-log]</code></pre>
+<div class="table-wrap"><table><tr><th>Argumento</th><th>Descripción</th></tr>
+<tr><td><code>&lt;lista&gt;</code></td><td>Archivo con un documento por línea</td></tr>
+<tr><td><code>-simple</code></td><td>Reduce el detalle guardado en los registros; sin <code>-log</code> no tiene efecto</td></tr>
+</table></div>
+<p><code>-lote</code> es el primer argumento. No admite <code>-revisar</code>. Además admiten <code>-informe</code> y <code>-log</code>.</p>
+<h4>Procesos sin errores</h4><div class="module">
+<h4>1. Verificar con informe y registros</h4>
+<p>Un documento firmado y otro firmado y cerrado.</p>
+<div class="field-label">Comando</div><pre><code>java -jar PDFVerifySignatures.jar -lote lista.txt -informe informe.csv -log</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFVerifySignatures";"1.6.0";"2"
+LOTE_DOC;"1";"2";"VALIDO_CON_OBSERVACIONES";"COMPROBACION_PENDIENTE";"C:\lotes\contrato-001-signed.pdf";"";"C:\lotes\contrato-001-signed.pdf.log";"Las firmas son válidas, pero algunas comprobaciones no pudieron completarse."
+LOTE_DOC;"2";"2";"VALIDO_CON_OBSERVACIONES";"COMPROBACION_PENDIENTE";"C:\lotes\contrato-002-signed.pdf";"";"C:\lotes\contrato-002-signed.pdf.log";"Las firmas son válidas, pero algunas comprobaciones no pudieron completarse."
+LOTE_RESUMEN;"total=2";"correctos=0";"con_avisos=2";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+<details><summary>Contenido de <code>informe.csv</code></summary><pre><code>"n";"total";"estado";"codigo";"entrada";"salida";"log";"mensaje"
+"1";"2";"VALIDO_CON_OBSERVACIONES";"COMPROBACION_PENDIENTE";"C:\lotes\contrato-001-signed.pdf";"";"C:\lotes\contrato-001-signed.pdf.log";"Las firmas son válidas, pero algunas comprobaciones no pudieron completarse."
+"2";"2";"VALIDO_CON_OBSERVACIONES";"COMPROBACION_PENDIENTE";"C:\lotes\contrato-002-signed.pdf";"";"C:\lotes\contrato-002-signed.pdf.log";"Las firmas son válidas, pero algunas comprobaciones no pudieron completarse."</code></pre>
+</details>
+<details><summary>Contenido de <code>contrato-002-signed.pdf.log</code></summary><pre><code>===== 26/11/2026 23:27:28 - PDFVerifySignatures 1.6.0 =====
+Verificando firma #1:
+Resultado: VÁLIDA, CON COMPROBACIONES PENDIENTES
+La firma de Empresa de Ejemplo está íntegra, pero no pudimos comprobar si su certificado estaba vigente cuando firmó (el certificado no indica dónde consultar su estado).
+Integridad de firma: Válida
+Fecha de firma: 26/11/2026 23:27:27
+Estado de revocación: No se pudo comprobar (el certificado no indica dónde consultar su estado)
+
+Información adicional de la firma:
+Firmante: Empresa de Ejemplo
+Organización: Ejemplo
+Número de serie del certificado: 473ec0f35d22e420
+Válido desde: Thu Nov 26 23:27:22 GMT-03:00 2026
+Válido hasta: Sat Nov 25 23:27:22 GMT-03:00 2028
+Emisor: Empresa de Ejemplo
+Fecha y hora de firma: 26/11/2026 23:27:27
+Tipo de firma: /adbe.pkcs7.detached
+Algoritmo de firma: SHA256withRSA
+
+=== RESULTADO FINAL ===
+DOCUMENTO VÁLIDO: Todas las firmas son válidas.
+Algunas comprobaciones no pudieron completarse (vea el detalle de cada firma). Eso no invalida el documento.
+
+Estado del documento:
+- Documento bloqueado: Sí
+  El documento fue bloqueado por Empresa de Ejemplo y no admite más firmas.
+- Documento encriptado: Sí
+Resultado: VALIDO_CON_OBSERVACIONES (COMPROBACION_PENDIENTE) Las firmas son válidas, pero algunas comprobaciones no pudieron completarse.</code></pre>
+</details>
+<p>El registro de cada documento dice además si está bloqueado o cifrado.</p>
+</div>
+<h4>Procesos con errores</h4><div class="module">
+<h4>2. Firmas no válidas, cambios posteriores y documentos con problemas</h4>
+<p>Un documento con su firma dañada, uno con una página modificada después de firmar, uno sin firmas, uno que no es un PDF y uno inexistente.</p>
+<div class="field-label">Comando</div><pre><code>java -jar PDFVerifySignatures.jar -lote lista.txt -log</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFVerifySignatures";"1.6.0";"5"
+LOTE_DOC;"1";"5";"NO_VALIDO";"FIRMA_NO_VALIDA";"C:\lotes\contrato-001-signed.pdf";"";"C:\lotes\contrato-001-signed.pdf.log";"La firma de Empresa de Ejemplo NO es válida: el documento fue modificado después de que Empresa de Ejemplo lo firmara."
+LOTE_DOC;"2";"5";"NO_VALIDO";"MODIFICADO_DESPUES_DE_FIRMAR";"C:\lotes\modificado.pdf";"";"C:\lotes\modificado.pdf.log";"El documento fue modificado después de la última firma."
+LOTE_DOC;"3";"5";"SIN_FIRMAS";"SIN_FIRMAS";"C:\lotes\contrato-003.pdf";"";"C:\lotes\contrato-003.pdf.log";"El documento no contiene firmas digitales."
+LOTE_DOC;"4";"5";"ERROR";"DOCUMENTO_MAL_FORMADO";"C:\lotes\roto.pdf";"";"C:\lotes\roto.pdf.log";"No se pudo leer el documento PDF. Verifique que el archivo no esté dañado."
+LOTE_DOC;"5";"5";"ERROR";"ARCHIVO_NO_ENCONTRADO";"C:\lotes\no-existe.pdf";"";"";"El archivo no existe."
+LOTE_RESUMEN;"total=5";"correctos=0";"con_avisos=0";"no_validos=2";"sin_firmas=1";"con_error=2";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>C:\lotes\contrato-001-signed.pdf: La firma de Empresa de Ejemplo NO es válida: el documento fue modificado después de que Empresa de Ejemplo lo firmara.
+C:\lotes\modificado.pdf: El documento fue modificado después de la última firma.
+C:\lotes\contrato-003.pdf: El documento no contiene firmas digitales.
+C:\lotes\roto.pdf: No se pudo leer el documento PDF. Verifique que el archivo no esté dañado.
+C:\lotes\no-existe.pdf: El archivo no existe.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<details><summary>Contenido de <code>lista.txt</code></summary><pre><code>contrato-001-signed.pdf
+modificado.pdf
+contrato-003.pdf
+roto.pdf
+no-existe.pdf</code></pre>
+</details>
+<details><summary>Contenido de <code>modificado.pdf.log</code></summary><pre><code>===== 26/11/2026 23:27:35 - PDFVerifySignatures 1.6.0 =====
+Verificando firma #1:
+Resultado: VÁLIDA, CON COMPROBACIONES PENDIENTES
+La firma de Empresa de Ejemplo está íntegra, pero no pudimos comprobar si su certificado estaba vigente cuando firmó (el certificado no indica dónde consultar su estado).
+Integridad de firma: Válida
+Fecha de firma: 26/11/2026 23:27:34
+Estado de revocación: No se pudo comprobar (el certificado no indica dónde consultar su estado)
+
+Información adicional de la firma:
+Firmante: Empresa de Ejemplo
+Organización: Ejemplo
+Número de serie del certificado: d0b0e861490791c5
+Válido desde: Thu Nov 26 23:27:29 GMT-03:00 2026
+Válido hasta: Sat Nov 25 23:27:29 GMT-03:00 2028
+Emisor: Empresa de Ejemplo
+Fecha y hora de firma: 26/11/2026 23:27:34
+Tipo de firma: /adbe.pkcs7.detached
+Algoritmo de firma: SHA256withRSA
+
+=== RESULTADO FINAL ===
+Aviso: El documento tiene cambios en su contenido posteriores a la última firma (Empresa de Ejemplo). Esos cambios no están respaldados por ninguna firma.
+DOCUMENTO INVÁLIDO: El documento fue modificado después de la última firma.
+
+Estado del documento:
+- Documento bloqueado: No
+- Documento encriptado: No
+Resultado: NO_VALIDO (MODIFICADO_DESPUES_DE_FIRMAR) El documento fue modificado después de la última firma.</code></pre>
+</details>
+</div>
+<div class="module">
+<h4>3. Informe que no se puede crear</h4>
+<div class="field-label">Comando</div><pre><code>java -jar PDFVerifySignatures.jar -lote lista.txt -informe no-existe\informe.csv</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"PDFVerifySignatures";"1.6.0";"5"
+LOTE_DOC;"1";"5";"NO_PROCESADO";"INFORME_NO_CREADO";"C:\lotes\contrato-001-signed.pdf";"";"";"No se pudo crear el informe: no-existe\informe.csv"
+LOTE_DOC;"2";"5";"NO_PROCESADO";"INFORME_NO_CREADO";"C:\lotes\modificado.pdf";"";"";"No se pudo crear el informe: no-existe\informe.csv"
+LOTE_DOC;"3";"5";"NO_PROCESADO";"INFORME_NO_CREADO";"C:\lotes\contrato-003.pdf";"";"";"No se pudo crear el informe: no-existe\informe.csv"
+LOTE_DOC;"4";"5";"NO_PROCESADO";"INFORME_NO_CREADO";"C:\lotes\roto.pdf";"";"";"No se pudo crear el informe: no-existe\informe.csv"
+LOTE_DOC;"5";"5";"ERROR";"ARCHIVO_NO_ENCONTRADO";"C:\lotes\no-existe.pdf";"";"";"El archivo no existe."
+LOTE_RESUMEN;"total=5";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=1";"omitidos=0";"no_procesados=4";"corte=INFORME_NO_CREADO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: No se pudo crear el informe: no-existe\informe.csv
+C:\lotes\no-existe.pdf: El archivo no existe.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>El lote se detiene antes de verificar. El documento que ya tenía un error evidente conserva su código.</p>
+</div>
+</section>
+<section class="chapter" id="xsd">
+<span class="chapter-num">12</span>
+<h2>XMLVerifyXSDStructure</h2>
+<p>Valida cada XML contra un esquema XSD y verifica sus firmas. No comprueba la revocación.</p>
+<div class="field-label">Sintaxis por lote</div>
+<pre><code>java -jar XMLVerifyXSDStructure.jar -lote &lt;lista&gt; [&lt;archivo.xsd&gt;] [-informe &lt;archivo.csv&gt;] [-log]</code></pre>
+<div class="table-wrap"><table><tr><th>Argumento</th><th>Descripción</th></tr>
+<tr><td><code>&lt;lista&gt;</code></td><td>Archivo con un documento por línea</td></tr>
+<tr><td><code>&lt;archivo.xsd&gt;</code></td><td>Opcional; va <strong>inmediatamente después de la lista</strong> y vale para todos. Sin él, cada documento usa el esquema que declara (se descarga una vez por lote)</td></tr>
+</table></div>
+<p><code>-lote</code> es el primer argumento. No admite <code>-revisar</code> ni <code>-simple</code>. Además admiten <code>-informe</code> y <code>-log</code>.</p>
+<h4>Procesos sin errores</h4><div class="module">
+<h4>1. Validar contra un esquema local</h4>
+<div class="field-label">Comando</div><pre><code>java -jar XMLVerifyXSDStructure.jar -lote lista.txt factura.xsd -informe informe.csv -log</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLVerifyXSDStructure";"1.6.0";"2"
+LOTE_DOC;"1";"2";"VALIDO";"OK";"C:\lotes\factura-001-signed.xml";"";"C:\lotes\factura-001-signed.xml.log";"Estructura y firmas correctas. No se comprueba la revocación de los certificados."
+LOTE_DOC;"2";"2";"VALIDO";"OK";"C:\lotes\factura-002-signed.xml";"";"C:\lotes\factura-002-signed.xml.log";"Estructura y firmas correctas. No se comprueba la revocación de los certificados."
+LOTE_RESUMEN;"total=2";"correctos=2";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+<details><summary>Contenido de <code>factura.xsd</code></summary><pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"&gt;
+  &lt;xs:element name="factura"&gt;
+    &lt;xs:complexType&gt;&lt;xs:sequence&gt;
+      &lt;xs:element name="numero" type="xs:string"/&gt;
+      &lt;xs:element name="total" type="xs:decimal"/&gt;
+      &lt;xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded"/&gt;
+    &lt;/xs:sequence&gt;&lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</code></pre>
+</details>
+<details><summary>Contenido de <code>informe.csv</code></summary><pre><code>"n";"total";"estado";"codigo";"entrada";"salida";"log";"mensaje"
+"1";"2";"VALIDO";"OK";"C:\lotes\factura-001-signed.xml";"";"C:\lotes\factura-001-signed.xml.log";"Estructura y firmas correctas. No se comprueba la revocación de los certificados."
+"2";"2";"VALIDO";"OK";"C:\lotes\factura-002-signed.xml";"";"C:\lotes\factura-002-signed.xml.log";"Estructura y firmas correctas. No se comprueba la revocación de los certificados."</code></pre>
+</details>
+<details><summary>Contenido de <code>factura-001-signed.xml.log</code></summary><pre><code>===== 26/11/2026 23:27:40 - XMLVerifyXSDStructure 1.6.0 =====
+
+Validando estructura XML contra XSD...
+
+Verificando firmas digitales...
+Firma #1:
+├─ Método de firma: RSA-SHA256
+└─ Estado: Válida
+   ├─ URI: 
+   └─ Algoritmo de digest: SHA256
+
+Resultado final:
+El documento XML es válido y todas las firmas parecen correctas. Este proceso no realiza validación de revocación de las firmas digitales aplicadas.
+Resultado: VALIDO (OK) Estructura y firmas correctas. No se comprueba la revocación de los certificados.</code></pre>
+</details>
+</div>
+<div class="module">
+<h4>2. Usar el esquema que declara el documento</h4>
+<p>Un Certificado de Origen firmado en sus dos partes; el esquema se descarga de la dirección indicada en el propio documento (necesita Internet).</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLVerifyXSDStructure.jar -lote lista-co.txt -log</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLVerifyXSDStructure";"1.6.0";"1"
+LOTE_DOC;"1";"1";"VALIDO";"OK";"C:\lotes\co-signed-signed.xml";"";"C:\lotes\co-signed-signed.xml.log";"Estructura y firmas correctas. No se comprueba la revocación de los certificados."
+LOTE_RESUMEN;"total=1";"correctos=1";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<p class="salida-codigo bien">Código de salida: <strong>0</strong></p>
+<details><summary>Contenido de <code>co-signed-signed.xml.log</code></summary><pre><code>===== 26/11/2026 23:27:46 - XMLVerifyXSDStructure 1.6.0 =====
+Descargando XSD desde: http://cod.certificadoorigen.com.ar/cod_ver_1.8.2.xsd
+
+Validando estructura XML contra XSD...
+
+Verificando firmas digitales...
+Firma #1:
+├─ Método de firma: RSA-SHA256
+└─ Estado: Válida
+   ├─ URI: #COD
+   └─ Algoritmo de digest: SHA256
+Firma #2:
+├─ Método de firma: RSA-SHA256
+└─ Estado: Válida
+   ├─ URI: #CODEH
+   └─ Algoritmo de digest: SHA256
+
+Resultado final:
+El documento XML es válido y todas las firmas parecen correctas. Este proceso no realiza validación de revocación de las firmas digitales aplicadas.
+Resultado: VALIDO (OK) Estructura y firmas correctas. No se comprueba la revocación de los certificados.</code></pre>
+</details>
+</div>
+<h4>Procesos con errores</h4><div class="module">
+<h4>3. Estructura, firmas y formato</h4>
+<p>Un documento correcto, uno modificado después de firmar, uno sin firmas, uno con otra estructura y uno mal formado.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLVerifyXSDStructure.jar -lote lista.txt factura.xsd -log</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLVerifyXSDStructure";"1.6.0";"5"
+LOTE_DOC;"1";"5";"VALIDO";"OK";"C:\lotes\factura-001-signed.xml";"";"C:\lotes\factura-001-signed.xml.log";"Estructura y firmas correctas. No se comprueba la revocación de los certificados."
+LOTE_DOC;"2";"5";"NO_VALIDO";"FIRMA_NO_VALIDA";"C:\lotes\factura-002-signed.xml";"";"C:\lotes\factura-002-signed.xml.log";"Una o más firmas no son válidas."
+LOTE_DOC;"3";"5";"SIN_FIRMAS";"SIN_FIRMAS";"C:\lotes\factura-003.xml";"";"C:\lotes\factura-003.xml.log";"El documento XML no contiene firmas digitales."
+LOTE_DOC;"4";"5";"NO_VALIDO";"ESTRUCTURA_NO_VALIDA";"C:\lotes\otra-forma.xml";"";"C:\lotes\otra-forma.xml.log";"El documento no cumple con la estructura del esquema XSD."
+LOTE_DOC;"5";"5";"ERROR";"DOCUMENTO_MAL_FORMADO";"C:\lotes\roto.xml";"";"C:\lotes\roto.xml.log";"No se pudo leer el documento XML. Verifique que sea un XML válido en UTF-8."
+LOTE_RESUMEN;"total=5";"correctos=1";"con_avisos=0";"no_validos=2";"sin_firmas=1";"con_error=1";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>C:\lotes\factura-002-signed.xml: Una o más firmas no son válidas.
+C:\lotes\factura-003.xml: El documento XML no contiene firmas digitales.
+C:\lotes\otra-forma.xml: El documento no cumple con la estructura del esquema XSD.
+C:\lotes\roto.xml: No se pudo leer el documento XML. Verifique que sea un XML válido en UTF-8.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<details><summary>Contenido de <code>otra-forma.xml.log</code></summary><pre><code>===== 26/11/2026 23:27:51 - XMLVerifyXSDStructure 1.6.0 =====
+
+Validando estructura XML contra XSD...
+Error: cvc-elt.1.a: Cannot find the declaration of element 'pedido'.
+
+Se encontraron 1 errores:
+Línea 1, Columna 9: cvc-elt.1.a: Cannot find the declaration of element 'pedido'.
+
+Verificando firmas digitales...
+El documento XML no contiene firmas digitales.
+
+Resultado final:
+Se encontraron errores en la validación del documento XML.
+Resultado: NO_VALIDO (ESTRUCTURA_NO_VALIDA) El documento no cumple con la estructura del esquema XSD.</code></pre>
+</details>
+<p>Una estructura que no cumple el esquema es <code>NO_VALIDO</code> aunque el documento no tenga firmas.</p>
+</div>
+<div class="module">
+<h4>4. No hay esquema o no se puede descargar</h4>
+<p>Sin indicar un archivo XSD.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLVerifyXSDStructure.jar -lote lista2.txt</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLVerifyXSDStructure";"1.6.0";"2"
+LOTE_DOC;"1";"2";"ERROR";"XSD_NO_REFERENCIADO";"C:\lotes\sin-esquema.xml";"";"";"El documento no declara un esquema XSD y no se indicó un archivo XSD."
+LOTE_DOC;"2";"2";"ERROR";"XSD_NO_DESCARGADO";"C:\lotes\esquema-caido.xml";"";"";"No se pudo descargar el esquema http://esquemas.invalid/pedido.xsd."
+LOTE_RESUMEN;"total=2";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=2";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>C:\lotes\sin-esquema.xml: El documento no declara un esquema XSD y no se indicó un archivo XSD.
+C:\lotes\esquema-caido.xml: No se pudo descargar el esquema http://esquemas.invalid/pedido.xsd.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+</div>
+<div class="module">
+<h4>5. El esquema indicado no es válido</h4>
+<div class="field-label">Comando</div><pre><code>java -jar XMLVerifyXSDStructure.jar -lote lista3.txt roto.xsd</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLVerifyXSDStructure";"1.6.0";"1"
+LOTE_DOC;"1";"1";"ERROR";"XSD_NO_VALIDO";"C:\lotes\factura-001-signed.xml";"";"";"No se pudo usar el archivo XSD: no es un esquema válido."
+LOTE_RESUMEN;"total=1";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=1";"omitidos=0";"no_procesados=0";"corte=NINGUNO"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>C:\lotes\factura-001-signed.xml: No se pudo usar el archivo XSD: no es un esquema válido.</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+</div>
+<div class="module">
+<h4>6. El esquema indicado no existe</h4>
+<div class="field-label">Comando</div><pre><code>java -jar XMLVerifyXSDStructure.jar -lote lista3.txt no-existe.xsd</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLVerifyXSDStructure";"1.6.0";"1"
+LOTE_DOC;"1";"1";"NO_PROCESADO";"XSD";"C:\lotes\factura-001-signed.xml";"";"";"El archivo XSD no existe: no-existe.xsd"
+LOTE_RESUMEN;"total=1";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=1";"corte=XSD"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: El archivo XSD no existe: no-existe.xsd</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+<p>Detiene todo el lote.</p>
+</div>
+<div class="module">
+<h4>7. El esquema en un lugar equivocado</h4>
+<p>Se escribió después de <code>-log</code>.</p>
+<div class="field-label">Comando</div><pre><code>java -jar XMLVerifyXSDStructure.jar -lote lista3.txt -log factura.xsd</code></pre>
+<div class="field-label">Salida estándar</div><pre><code>LOTE_INICIO;"1";"XMLVerifyXSDStructure";"1.6.0";"0"
+LOTE_RESUMEN;"total=0";"correctos=0";"con_avisos=0";"no_validos=0";"sin_firmas=0";"con_error=0";"omitidos=0";"no_procesados=0";"corte=ARGUMENTOS"</code></pre>
+<div class="field-label">Salida de error</div><pre><code>Error: Argumento no reconocido, repetido o incompleto: factura.xsd</code></pre>
+<p class="salida-codigo mal">Código de salida: <strong>1</strong></p>
+</div>
+</section>
+<section class="chapter" id="errores">
+<span class="chapter-num">13</span>
+<h2>Referencia de códigos</h2>
+<h4>Códigos de <code>ERROR</code> (un documento)</h4>
+<div class="table-wrap"><table>
+  <tr><th>Código</th><th>Qué significa</th><th>Qué hacer</th></tr>
+  <tr><td><code>ARCHIVO_NO_ENCONTRADO</code></td><td>La ruta no existe</td><td>Revisar la lista</td></tr>
+  <tr><td><code>ARCHIVO_ILEGIBLE</code></td><td>No se puede leer</td><td>Permisos o archivo en uso</td></tr>
+  <tr><td><code>EXTENSION_NO_CORRESPONDE</code></td><td>No es <code>.xml</code> / <code>.pdf</code></td><td>Sacarlo de la lista</td></tr>
+  <tr><td><code>LINEA_NO_VALIDA</code></td><td>La línea no es una ruta válida (por ejemplo, tiene un tabulador)</td><td>Corregir la lista</td></tr>
+  <tr><td><code>DOCUMENTO_MAL_FORMADO</code></td><td>XML o PDF dañado, o XML en UTF-16</td><td>Revisar el documento</td></tr>
+  <tr><td><code>TIPO_NO_CORRESPONDE</code></td><td>Rompe la regla de no mezclar</td><td>Separar por tipo</td></tr>
+  <tr><td><code>ELEMENTO_NO_ENCONTRADO</code></td><td>No existe el elemento pedido</td><td>Revisar el elemento (distingue mayúsculas)</td></tr>
+  <tr><td><code>ELEMENTO_YA_FIRMADO</code></td><td>Ya tiene esa firma</td><td>No volver a firmar</td></tr>
+  <tr><td><code>FALTA_FIRMA_PREVIA</code></td><td><code>CODEH</code>/<code>DJOEH</code> sin la firma anterior</td><td>Firmar primero <code>COD</code>/<code>DJO</code></td></tr>
+  <tr><td><code>DOCUMENTO_CERRADO</code></td><td>El PDF no admite más firmas</td><td>Pedir una versión sin cerrar</td></tr>
+  <tr><td><code>DOCUMENTO_RESTRINGIDO</code></td><td>PDF cifrado con restricciones</td><td>Pedir el documento sin restricciones</td></tr>
+  <tr><td><code>PAGINA_INEXISTENTE</code> / <code>FIRMA_NO_ENTRA</code></td><td>Ubicación incompatible con ese documento</td><td>Otra ubicación, o firmarlo aparte</td></tr>
+  <tr><td><code>PROTECCION_NO_APLICABLE</code></td><td>Se pidió proteger un documento ya firmado</td><td>Quitar la opción</td></tr>
+  <tr><td><code>SALIDA_NO_ESCRIBIBLE</code></td><td>No se pudo guardar el firmado</td><td>Permisos o espacio</td></tr>
+  <tr><td><code>ERROR_AL_FIRMAR</code></td><td>Falló el acceso a la clave</td><td>Revisar token o certificado</td></tr>
+  <tr><td><code>XSD_NO_REFERENCIADO</code> / <code>XSD_NO_DESCARGADO</code> / <code>XSD_NO_VALIDO</code></td><td>Problemas con el esquema</td><td>Indicar un XSD local válido</td></tr>
+  <tr><td><code>ERROR_INESPERADO</code></td><td>Otra falla</td><td>Revisar el registro</td></tr>
+</table></div>
+<h4>Otros códigos de documento</h4>
+<div class="table-wrap"><table>
+  <tr><th>Estado</th><th>Códigos</th></tr>
+  <tr><td><code>LISTO</code>, <code>FIRMADO</code>, <code>VALIDO</code></td><td><code>OK</code></td></tr>
+  <tr><td><code>FIRMADO_CON_AVISOS</code></td><td><code>FIRMA_PREVIA_INVALIDA</code>, <code>MODIFICADO_DESPUES_DE_FIRMAR</code></td></tr>
+  <tr><td><code>VALIDO_CON_OBSERVACIONES</code></td><td><code>COMPROBACION_PENDIENTE</code></td></tr>
+  <tr><td><code>NO_VALIDO</code></td><td><code>FIRMA_NO_VALIDA</code>, <code>MODIFICADO_DESPUES_DE_FIRMAR</code>, <code>ESTRUCTURA_NO_VALIDA</code></td></tr>
+  <tr><td><code>SIN_FIRMAS</code></td><td><code>SIN_FIRMAS</code></td></tr>
+  <tr><td><code>OMITIDO</code></td><td><code>SALIDA_YA_EXISTE</code>, <code>DUPLICADO</code></td></tr>
+  <tr><td><code>NO_PROCESADO</code></td><td>La causa del corte</td></tr>
+</table></div>
+<h4>Causas de corte (<code>corte=</code>)</h4>
+<div class="table-wrap"><table>
+  <tr><th>Causa</th><th>Cuándo</th></tr>
+  <tr><td><code>ARGUMENTOS</code></td><td>Argumento faltante, desconocido, repetido o no admitido; archivo de certificado inexistente</td></tr>
+  <tr><td><code>LISTA_ILEGIBLE</code> / <code>LISTA_VACIA</code></td><td>La lista no existe, no está en UTF-8 o no tiene documentos</td></tr>
+  <tr><td><code>INFORME_NO_CREADO</code></td><td>No se puede crear el informe</td></tr>
+  <tr><td><code>LOTE_MEZCLADO</code></td><td>Documentos de distinto tipo</td></tr>
+  <tr><td><code>BIBLIOTECA</code></td><td>La biblioteca no existe o no sirve</td></tr>
+  <tr><td><code>CONTRASENA</code> / <code>TOKEN_BLOQUEADO</code> / <code>TOKEN_NO_DISPONIBLE</code></td><td>Problemas de acceso al certificado o al token</td></tr>
+  <tr><td><code>CERTIFICADO_NO_APTO</code> / <code>CERTIFICADO_REVOCADO</code></td><td>El certificado no puede firmar</td></tr>
+  <tr><td><code>FALLAS_CONSECUTIVAS</code></td><td>3 documentos seguidos sin poder firmar</td></tr>
+  <tr><td><code>XSD</code></td><td>El archivo XSD indicado no existe</td></tr>
+  <tr><td><code>ERROR_INESPERADO</code></td><td>Otra falla que impide continuar</td></tr>
+</table></div>
+<p>Los códigos son estables entre versiones; los mensajes pueden mejorar. Un programa integrador debe decidir por el <strong>código de salida</strong>, el <strong>estado</strong> y el <strong>código</strong>, nunca por el texto del mensaje.</p>
+<p>Referencia complementaria: <a href="manual-tecnico-integracion.html#s7-11">Manual Técnico de Integración, sección 7.11</a>.</p>
+</section>
+    <footer class="doc-footer">S-FiDE es software libre bajo licencia GNU GPL v2 o posterior. Grupo Sauken S.A.</footer>
+  </main>
+</div>
+</body>
+</html>

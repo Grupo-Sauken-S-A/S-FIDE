@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía visual del trabajo por lote — S-FiDE GUI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #eef1f6;
+    --surface: #ffffff;
+    --surface-2: #e4e9f1;
+    --ink: #16233a;
+    --muted: #52607a;
+    --faint: #8493ac;
+    --line: #d6dce6;
+    --accent: #24487d;
+    --accent-strong: #14335e;
+    --accent-soft: #dde6f3;
+    --ok: #2f7a4f;
+    --ok-soft: #e2f1e7;
+    --warn: #9a5518;
+    --warn-soft: #f5e9dc;
+    --code-bg: #0f1c30;
+    --code-fg: #dbe6f5;
+    --code-accent: #8fb4e8;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1524;
+      --surface: #151f34;
+      --surface-2: #1c2a45;
+      --ink: #e7ecf6;
+      --muted: #a6b1c9;
+      --faint: #67728c;
+      --line: #283552;
+      --accent: #7fa3dd;
+      --accent-strong: #b0cbf3;
+      --accent-soft: #1f2d4a;
+      --ok: #74c491;
+      --ok-soft: #16281d;
+      --warn: #e0aa71;
+      --warn-soft: #33230f;
+      --code-bg: #0a1220;
+      --code-fg: #d7e2f2;
+      --code-accent: #9dc0ef;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0e1524;
+    --surface: #151f34;
+    --surface-2: #1c2a45;
+    --ink: #e7ecf6;
+    --muted: #a6b1c9;
+    --faint: #67728c;
+    --line: #283552;
+    --accent: #7fa3dd;
+    --accent-strong: #b0cbf3;
+    --accent-soft: #1f2d4a;
+    --ok: #74c491;
+    --ok-soft: #16281d;
+    --warn: #e0aa71;
+    --warn-soft: #33230f;
+    --code-bg: #0a1220;
+    --code-fg: #d7e2f2;
+    --code-accent: #9dc0ef;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  code, kbd, .mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  code {
+    background: var(--surface-2);
+    color: var(--accent-strong);
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+    font-size: 0.85em;
+  }
+
+  a { color: var(--accent-strong); }
+  ::selection { background: var(--accent-soft); }
+
+  /* ---------- Shell layout ---------- */
+
+  .shell {
+    display: grid;
+    grid-template-columns: 272px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 940px) {
+    .shell { grid-template-columns: 1fr; }
+  }
+
+  aside.nav {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 2rem 1.4rem 2rem 1.75rem;
+    border-right: 1px solid var(--line);
+    scrollbar-width: thin;
+  }
+
+  @media (max-width: 940px) {
+    aside.nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); padding: 1.25rem 1.25rem; }
+  }
+
+  .brand { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.6rem; }
+  .brand .mark {
+    width: 34px; height: 34px; border-radius: 50%; border: 1.4px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 0.82rem; color: var(--accent); flex: none;
+  }
+  .brand .name { font-weight: 700; font-size: 0.95rem; letter-spacing: -0.01em; }
+  .brand .tag { display: block; font-size: 0.68rem; color: var(--faint); font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.03em; }
+
+  nav.toc { font-size: 0.86rem; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: sec; }
+  nav.toc > ol > li { counter-increment: sec; margin-bottom: 0.05rem; }
+  nav.toc a { display: block; padding: 0.32rem 0.5rem; border-radius: 6px; color: var(--muted); text-decoration: none; font-weight: 500; }
+  nav.toc > ol > li > a::before { content: counter(sec) ". "; color: var(--faint); font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; }
+  nav.toc a:hover { background: var(--surface-2); color: var(--ink); }
+  nav.toc ol ol { margin: 0.1rem 0 0.4rem 1.1rem; counter-reset: sub; }
+  nav.toc ol ol li { counter-increment: sub; }
+  nav.toc ol ol a { font-size: 0.8rem; padding: 0.2rem 0.5rem; }
+  nav.toc ol ol a::before { content: counter(sec) "." counter(sub) " "; }
+
+  main { padding: 3.5rem 3rem 8rem; min-width: 0; }
+  @media (max-width: 940px) { main { padding: 2.25rem 1.25rem 5rem; } }
+
+  .doc-header { max-width: 700px; margin-bottom: 3.5rem; }
+  .eyebrow { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+  h1 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: clamp(2rem, 4vw, 2.7rem); line-height: 1.1; letter-spacing: -0.01em; margin: 0 0 0.9rem; text-wrap: balance; }
+  .doc-header .meta { color: var(--muted); font-size: 0.95rem; display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; }
+  .doc-header .meta strong { color: var(--ink); font-weight: 600; }
+
+  section.chapter { max-width: 900px; padding-top: 3rem; margin-top: 3rem; border-top: 1px solid var(--line); scroll-margin-top: 1.5rem; }
+  section.chapter:first-of-type { border-top: none; margin-top: 0; }
+  .chapter-num { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--accent); letter-spacing: 0.06em; display: block; margin-bottom: 0.5rem; }
+  h2 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 1.65rem; margin: 0 0 1.1rem; text-wrap: balance; }
+  h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 1.3rem; margin: 0 0 0.9rem; }
+  h4 { font-size: 0.95rem; font-weight: 700; margin: 1.4rem 0 0.5rem; color: var(--ink); }
+  p { margin: 0 0 1rem; max-width: 68ch; }
+  ul, ol { padding-left: 1.3rem; margin: 0 0 1.1rem; }
+  li { margin-bottom: 0.4rem; max-width: 66ch; }
+  strong { font-weight: 700; }
+
+  .table-wrap { overflow-x: auto; margin: 1.2rem 0 1.6rem; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.87rem; background: var(--surface); }
+  th, td { text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+
+  .callout { border-radius: 10px; padding: 1rem 1.2rem; margin: 1.2rem 0 1.6rem; font-size: 0.92rem; max-width: 66ch; }
+  .callout.note { background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
+  .callout.warn { background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); }
+  .callout.ok { background: var(--ok-soft); border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent); }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .label { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 0.4rem; }
+  .callout.note .label { color: var(--accent-strong); }
+  .callout.warn .label { color: var(--warn); }
+  .callout.ok .label { color: var(--ok); }
+
+  /* ---------- Module blocks ---------- */
+
+  .module {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.8rem 2rem 2rem;
+    margin-bottom: 2.2rem;
+    background: var(--surface);
+  }
+  .module-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.3rem; }
+  .module-head h3 { margin: 0; }
+  .module-num { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--faint); }
+  .module .windows-only {
+    display: inline-flex; align-items: center; gap: 0.3rem; font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--warn);
+    background: var(--warn-soft); padding: 0.15rem 0.5rem; border-radius: 999px; margin-left: 0.5rem;
+  }
+  .module .desc { color: var(--muted); margin-bottom: 1.3rem; }
+
+  figure.shot { margin: 0 0 1.5rem; }
+  figure.shot img {
+    display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line);
+    box-shadow: 0 8px 24px -12px rgba(20, 40, 80, 0.35);
+  }
+  figure.shot figcaption { font-size: 0.8rem; color: var(--faint); margin-top: 0.5rem; text-align: center; }
+
+  .field-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); margin: 1.3rem 0 0.5rem; }
+  .field-label:first-of-type { margin-top: 0.4rem; }
+
+  .errlist { font-size: 0.87rem; color: var(--muted); }
+  .errlist code { color: var(--warn); background: var(--warn-soft); }
+  .oklist { font-size: 0.87rem; color: var(--muted); }
+  .oklist code { color: var(--ok); background: var(--ok-soft); }
+
+  footer.doc-footer { max-width: 900px; margin-top: 4rem; padding-top: 1.6rem; border-top: 1px solid var(--line); color: var(--faint); font-size: 0.85rem; }
+
+  details.mobile-toc { display: none; }
+  @media (max-width: 940px) {
+    details.mobile-toc { display: block; }
+    aside.nav > nav.toc { display: none; }
+    details.mobile-toc[open] + aside.nav > nav.toc, aside.nav.open nav.toc { display: block; }
+  }
+</style>
+
+<style>
+  figure.shot a { display: block; cursor: zoom-in; }
+  figure.shot.chico img { width: auto; max-width: 100%; margin: 0 auto; }
+  figure.shot.chico figcaption { max-width: 520px; margin-left: auto; margin-right: auto; }
+  ol.leyenda { list-style: none; padding-left: 0; counter-reset: marca; }
+  ol.leyenda li { counter-increment: marca; position: relative; padding-left: 2.4rem; min-height: 1.7rem; }
+  ol.leyenda li::before {
+    content: counter(marca); position: absolute; left: 0; top: 0.05rem; width: 1.6rem; height: 1.6rem;
+    border-radius: 50%; background: #c2410c; color: #fff; font-weight: 700; font-size: 0.82rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .estado { white-space: nowrap; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="nav">
+    <div class="brand">
+      <div class="mark">SF</div>
+      <div>
+        <span class="name">S-FiDE</span>
+        <span class="tag">Guía visual — Por lote</span>
+      </div>
+    </div>
+    <nav class="toc">
+      <ol>
+        <li><a href="#objetivo">Para qué sirve</a></li>
+        <li><a href="#reglas">Reglas y restricciones</a></li>
+        <li><a href="#pantalla">La pestaña «Por lote»</a></li>
+        <li><a href="#firmar-xml">Firmar XML con archivo de certificado</a>
+          <ol>
+            <li><a href="#fx-datos">Completar los datos</a></li>
+            <li><a href="#fx-revisar">Revisar sin firmar</a></li>
+            <li><a href="#fx-firmar">Firmar y ver el resultado</a></li>
+            <li><a href="#fx-segunda">Agregar una segunda firma</a></li>
+          </ol>
+        </li>
+        <li><a href="#token">Firmar con token</a></li>
+        <li><a href="#firmar-pdf">Firmar PDF</a></li>
+        <li><a href="#verificar-xml">Verificar firmas en XML</a></li>
+        <li><a href="#verificar-pdf">Verificar firmas en PDF</a></li>
+        <li><a href="#validar-xsd">Validar XML con XSD</a></li>
+        <li><a href="#curso">Mientras se ejecuta y cancelar</a></li>
+        <li><a href="#estados">Estados: qué significan</a></li>
+        <li><a href="#problemas">Cuando algo sale mal</a></li>
+        <li><a href="#informe">Informe y registros</a></li>
+      </ol>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="doc-header">
+      <span class="eyebrow">Grupo Sauken S.A. — Guía visual</span>
+      <h1>Trabajar por lote con S-FiDE GUI</h1>
+      <div class="meta">
+        <span><strong>Versión:</strong> 1.6.0</span>
+        <span><strong>Para:</strong> quien firma o verifica muchos documentos</span>
+      </div>
+    </div>
+
+    <section class="chapter" id="objetivo">
+      <span class="chapter-num">01</span>
+      <h2>Para qué sirve el trabajo por lote</h2>
+      <p>Trabajar <strong>por lote</strong> es aplicar <strong>una misma operación a todos los documentos de una carpeta</strong>, de una sola vez. Sus objetivos son:</p>
+      <ul>
+        <li><strong>Ahorrar tiempo:</strong> elige la carpeta una sola vez en lugar de un archivo por vez.</li>
+        <li><strong>Usar su certificado una sola vez:</strong> la contraseña o PIN se ingresa una vez para todo el lote.</li>
+        <li><strong>No equivocarse:</strong> antes de firmar puede revisar qué se va a firmar y qué no, y por qué.</li>
+        <li><strong>Saber qué pasó con cada documento:</strong> una tabla muestra el resultado de cada uno y queda un informe guardado.</li>
+      </ul>
+      <p>Hay siete pantallas con la pestaña <em>Por lote</em>:</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Pantalla</th><th>Qué hace con toda la carpeta</th><th>Documentos</th></tr>
+          <tr><td>Firmar XML con Token</td><td>Los firma con su token</td><td><code>.xml</code></td></tr>
+          <tr><td>Firmar XML con PKCS#12</td><td>Los firma con su archivo de certificado</td><td><code>.xml</code></td></tr>
+          <tr><td>Verificar Firmas en XML</td><td>Comprueba sus firmas</td><td><code>.xml</code></td></tr>
+          <tr><td>Verificar XML con XSD</td><td>Comprueba su estructura y sus firmas</td><td><code>.xml</code></td></tr>
+          <tr><td>Firmar PDF con Token</td><td>Los firma con su token</td><td><code>.pdf</code></td></tr>
+          <tr><td>Firmar PDF con PKCS#12</td><td>Los firma con su archivo de certificado</td><td><code>.pdf</code></td></tr>
+          <tr><td>Verificar Firmas en PDF</td><td>Comprueba sus firmas</td><td><code>.pdf</code></td></tr>
+        </table>
+      </div>
+      <div class="callout note">
+        <span class="label">Pantallas sin trabajo por lote</span>
+        <p>Las pantallas para ver slots y certificados y las de firma con el <strong>almacén de Windows (CSP/KSP)</strong> trabajan de a un documento.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="reglas">
+      <span class="chapter-num">02</span>
+      <h2>Reglas y restricciones</h2>
+      <p>Léalas antes de usar el lote: explican casi todo lo que puede sorprenderle.</p>
+
+      <h4>Qué documentos entran</h4>
+      <ul>
+        <li>Los de <strong>una sola carpeta</strong>. <strong>No se incluyen las subcarpetas.</strong></li>
+        <li>Solo los del tipo de la pantalla (<code>.xml</code> o <code>.pdf</code>), en orden alfabético.</li>
+        <li><strong>Al firmar</strong>, los archivos cuyo nombre termina en <code>-signed</code> <strong>quedan afuera</strong>.</li>
+        <li>Si marca <em>«Incluir solo los archivos que terminan en -signed»</em>, entran <strong>solo esos</strong>: es la forma de agregar otra firma. Si en la carpeta están a la vez <code>factura-signed</code> y <code>factura-signed-signed</code>, el segundo aparece desmarcado para no agregar una firma de más sin querer.</li>
+        <li>Se mira solamente el <strong>nombre</strong>: un documento firmado por otro sistema sin ese final cuenta como no firmado.</li>
+        <li><strong>Al verificar o validar</strong> entran todos, terminen como terminen.</li>
+      </ul>
+
+      <h4>Una sola operación para todos</h4>
+      <ul>
+        <li>Todos los documentos reciben <strong>exactamente la misma operación</strong>, con las mismas opciones.</li>
+        <li>En XML <strong>no se mezclan tipos de documento</strong>. Si uno no corresponde, <strong>no se firma ninguno</strong>:</li>
+      </ul>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Elemento que indica</th><th>Todos los documentos deben ser</th></tr>
+          <tr><td><code>COD</code> o <code>CODEH</code></td><td>Certificados de Origen Digital</td></tr>
+          <tr><td><code>DJO</code> o <code>DJOEH</code></td><td>Declaraciones Juradas de Origen</td></tr>
+          <tr><td>Vacío (documento completo)</td><td>XML que no sean de comercio exterior</td></tr>
+          <tr><td>Otro identificador</td><td>Del mismo tipo que el primer documento que se puede leer</td></tr>
+        </table>
+      </div>
+      <ul>
+        <li>En PDF, todos llevan la <strong>misma ubicación</strong>, el mismo texto y las mismas opciones. Por lote no se firma dentro de un campo de firma ya preparado en el documento.</li>
+      </ul>
+
+      <h4>Qué pasa con sus archivos</h4>
+      <ul>
+        <li>Cada documento firmado se guarda <strong>en la misma carpeta</strong>, con <code>-signed</code> agregado al nombre. El original no se modifica.</li>
+        <li>Por lote <strong>nunca se reemplaza un archivo existente</strong>: si el firmado ya está, el documento queda como <em>Omitido</em>.</li>
+        <li>Verificar y validar no modifican los documentos.</li>
+      </ul>
+
+      <h4>Su certificado</h4>
+      <ul>
+        <li>Se usa <strong>una sola vez</strong> para todo el lote.</li>
+        <li>Un certificado vencido, que todavía no vale o que no sirve para firmar <strong>no firma nada</strong>.</li>
+        <li>Un certificado revocado no firma. Con archivo de certificado, si no se puede comprobar la revocación, S-FiDE le pregunta antes de seguir.</li>
+        <li>Si la contraseña o PIN es incorrecto, el lote <strong>se detiene y no la vuelve a probar</strong>, para no gastar intentos del token. Lo mismo si el token está bloqueado o se retira, o si falla tres veces seguidas el acceso a la clave.</li>
+      </ul>
+
+      <h4>Cerrar documentos PDF</h4>
+      <div class="callout warn">
+        <span class="label">No se puede deshacer</span>
+        <p>Si marca <em>«Cerrar el documento con esta firma»</em>, <strong>todos</strong> los documentos del lote quedan cerrados: no admiten más firmas. S-FiDE le pide confirmación antes. Los documentos que ya estaban cerrados, o que tienen restricciones, no se firman. La opción <em>«Proteger el contenido»</em> solo sirve para documentos que todavía no tienen firmas.</p>
+      </div>
+
+      <h4>Mientras el lote está en curso</h4>
+      <ul>
+        <li>No puede cambiar de pantalla ni modificar los datos. Puede <em>Cancelar</em>.</li>
+        <li>Si pasan 10 minutos sin ninguna novedad, el lote se detiene.</li>
+      </ul>
+    </section>
+
+    <section class="chapter" id="pantalla">
+      <span class="chapter-num">03</span>
+      <h2>La pestaña «Por lote»</h2>
+      <p>Todas las pantallas de lote se parecen. En el ejemplo, <em>Firmar XML con PKCS#12</em>. Haga clic en cualquier imagen de esta guía para verla en tamaño completo.</p>
+      <figure class="shot">
+        <a href="img/guia-lotes/01-pantalla.png"><img src="img/guia-lotes/01-pantalla.png" alt="Pestaña Por lote de Firmar XML con PKCS#12, con sus partes numeradas"></a>
+        <figcaption>Las partes de la pestaña «Por lote»</figcaption>
+      </figure>
+      <ol class="leyenda">
+        <li><strong>Menú de pantallas.</strong> Elija la operación.</li>
+        <li><strong>Pestañas.</strong> <em>Un documento</em> es la pantalla de siempre; <em>Por lote</em> procesa una carpeta. Lo que escribe en una (certificado, contraseña, elemento, opciones) aparece en la otra.</li>
+        <li><strong>Sus datos de firma</strong> (certificado, contraseña, elemento).</li>
+        <li><strong>Carpeta</strong> con los documentos. Puede escribirla o usar <em>Examinar…</em></li>
+        <li><strong>Opciones del lote:</strong> incluir solo los <code>-signed</code> y guardar un registro por documento.</li>
+        <li><strong>Revisar</strong> (solo al firmar): muestra qué se puede firmar, sin firmar nada.</li>
+        <li><strong>Firmar</strong> o <strong>Verificar:</strong> ejecuta el lote. Cuando elige la carpeta, el botón indica cuántos documentos hay.</li>
+        <li><strong>Cancelar:</strong> se habilita mientras el lote está en curso.</li>
+        <li><strong>Tabla:</strong> un documento por fila, con su estado y el detalle.</li>
+        <li><strong>Después de ejecutar:</strong> filtrar los que tuvieron problemas, ver el detalle, reintentar, abrir el informe o la carpeta.</li>
+      </ol>
+    </section>
+
+    <section class="chapter" id="firmar-xml">
+      <span class="chapter-num">04</span>
+      <h2>Firmar XML con archivo de certificado</h2>
+      <p>El ejemplo firma con el elemento <code>COD</code> una carpeta de certificados de origen.</p>
+
+      <h3 id="fx-datos">1. Complete los datos</h3>
+      <figure class="shot">
+        <a href="img/guia-lotes/02-datos.png"><img src="img/guia-lotes/02-datos.png" alt="Datos completos para firmar un lote de XML"></a>
+        <figcaption>Datos completos: el botón ya indica cuántos documentos hay</figcaption>
+      </figure>
+      <ol class="leyenda">
+        <li>Su archivo de certificado (<code>.p12</code> o <code>.pfx</code>).</li>
+        <li>Su contraseña. No se muestra nunca.</li>
+        <li>El elemento a firmar. Déjelo vacío para firmar el documento completo.</li>
+        <li>La carpeta. Debajo de los botones aparece cuántos documentos entran y cuántos quedan afuera por su nombre.</li>
+        <li>El botón <em>Firmar</em>.</li>
+      </ol>
+
+      <h3 id="fx-revisar">2. Revise sin firmar (opcional y recomendado)</h3>
+      <p>Pulse <em>Revisar</em>. No se firma nada ni se usa la contraseña. Se abre la lista completa: los documentos <em>Listos</em> vienen marcados y los que no se pueden firmar aparecen bloqueados, con el motivo. Pase el puntero sobre un detalle para leerlo entero.</p>
+      <figure class="shot">
+        <a href="img/guia-lotes/03-revisar.png"><img src="img/guia-lotes/03-revisar.png" alt="Revisión: tres documentos listos, dos con error y uno omitido"></a>
+        <figcaption>Tres listos; uno ya firmado en ese elemento, uno dañado y uno cuyo archivo firmado ya existe</figcaption>
+      </figure>
+      <p>Si no quiere firmar alguno de los listos, quítele la marca y pulse <em>Usar esta selección</em>.</p>
+      <figure class="shot">
+        <a href="img/guia-lotes/04-desmarcar.png"><img src="img/guia-lotes/04-desmarcar.png" alt="Revisión con el tercer documento desmarcado"></a>
+        <figcaption>El tercer documento se desmarcó a mano</figcaption>
+      </figure>
+      <figure class="shot">
+        <a href="img/guia-lotes/05-seleccion.png"><img src="img/guia-lotes/05-seleccion.png" alt="Pantalla con la selección aceptada: dos documentos para firmar"></a>
+        <figcaption>La selección queda aceptada: dos para firmar y cuatro fuera del lote. Todavía no se firmó nada</figcaption>
+      </figure>
+      <div class="callout note">
+        <span class="label">Si no usa «Revisar»</span>
+        <p>Al pulsar <em>Firmar</em>, S-FiDE revisa igual y le muestra esta ventana <strong>solo si algo va a quedar afuera</strong> o si el lote está mezclado. Si cambia la carpeta o los datos después de revisar, vuelve a revisar y se lo avisa.</p>
+      </div>
+
+      <h3 id="fx-firmar">3. Firme y mire el resultado</h3>
+      <p>Pulse <em>Firmar</em>. Con archivo de certificado, S-FiDE consulta primero si está revocado; si no puede saberlo, le pregunta:</p>
+      <figure class="shot chico">
+        <a href="img/guia-lotes/06-revocacion.png"><img src="img/guia-lotes/06-revocacion.png" width="419" alt="Pregunta: no se pudo confirmar que el certificado no esté revocado"></a>
+        <figcaption>«Aceptar» firma de todas formas; «Cancelar» no firma nada. El certificado de este ejemplo es de prueba, por eso no se puede comprobar</figcaption>
+      </figure>
+      <figure class="shot chico">
+        <a href="img/guia-lotes/07-estado.png"><img src="img/guia-lotes/07-estado.png" width="362" alt="Aviso: el lote terminó correctamente"></a>
+        <figcaption>Al terminar, un aviso resume el lote</figcaption>
+      </figure>
+      <figure class="shot">
+        <a href="img/guia-lotes/08-resultado.png"><img src="img/guia-lotes/08-resultado.png" alt="Resultado del lote con sus controles numerados"></a>
+        <figcaption>El resultado queda en la pantalla</figcaption>
+      </figure>
+      <ol class="leyenda">
+        <li><strong>Resumen:</strong> cuántos se firmaron y cuántos quedaron fuera del lote.</li>
+        <li><strong>Tabla:</strong> cómo terminó cada documento.</li>
+        <li><strong>Mostrar solo con problemas:</strong> oculta los que salieron bien.</li>
+        <li><strong>Ver detalle:</strong> seleccione una fila. Al firmar abre su registro, si pidió guardarlo.</li>
+        <li><strong>Reintentar los que fallaron:</strong> se habilita si hubo errores o documentos sin procesar.</li>
+        <li><strong>Abrir informe:</strong> la planilla con el resultado del lote.</li>
+        <li><strong>Abrir carpeta:</strong> donde quedaron los documentos firmados.</li>
+      </ol>
+
+      <h3 id="fx-segunda">4. Agregue una segunda firma</h3>
+      <p>Por ejemplo, la del Funcionario Habilitado (<code>CODEH</code>) sobre los certificados que ya firmó el Exportador:</p>
+      <figure class="shot">
+        <a href="img/guia-lotes/09-segunda-firma.png"><img src="img/guia-lotes/09-segunda-firma.png" alt="Opciones para agregar una segunda firma por lote"></a>
+        <figcaption>Segunda firma sobre los documentos ya firmados</figcaption>
+      </figure>
+      <ol class="leyenda">
+        <li>Marque <em>«Incluir solo los archivos que terminan en -signed»</em>.</li>
+        <li>Si quiere conservar el detalle de cada documento, marque <em>«Guardar un registro por documento»</em>.</li>
+        <li>Indique el nuevo elemento: <code>CODEH</code>.</li>
+        <li>Pulse <em>Firmar</em>.</li>
+      </ol>
+      <figure class="shot">
+        <a href="img/guia-lotes/10-segunda-resultado.png"><img src="img/guia-lotes/10-segunda-resultado.png" alt="Resultado de la segunda firma: tres documentos firmados"></a>
+        <figcaption>Resultado: cada archivo nuevo suma otro <code>-signed</code> al nombre, y los anteriores se conservan</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="token">
+      <span class="chapter-num">05</span>
+      <h2>Firmar con token</h2>
+      <p>El trabajo es igual que con archivo de certificado; cambian los datos del token. Conecte el token antes de empezar.</p>
+      <figure class="shot">
+        <a href="img/guia-lotes/16-token.png"><img src="img/guia-lotes/16-token.png" alt="Pestaña Por lote de Firmar XML con Token, con sus datos numerados"></a>
+        <figcaption>Firmar XML con Token, por lote</figcaption>
+      </figure>
+      <ol class="leyenda">
+        <li>La biblioteca de su token. Puede usar la lista de marcas o <em>Detectar automáticamente</em>.</li>
+        <li>La contraseña o PIN del token.</li>
+        <li>El número de slot.</li>
+        <li>La carpeta.</li>
+        <li><strong>Revisar:</strong> no usa el PIN, así que no gasta intentos. Tampoco comprueba que el token esté conectado.</li>
+        <li><strong>Firmar:</strong> ingresa al token una sola vez y firma todos.</li>
+      </ol>
+      <p>Si el token no está conectado, el lote no firma nada y lo explica:</p>
+      <figure class="shot chico">
+        <a href="img/guia-lotes/17-sin-token.png"><img src="img/guia-lotes/17-sin-token.png" width="364" alt="Aviso: el lote terminó con problemas porque no se detectó ningún token"></a>
+        <figcaption>La causa aparece junto a «Lote detenido»</figcaption>
+      </figure>
+      <figure class="shot">
+        <a href="img/guia-lotes/18-sin-token-resultado.png"><img src="img/guia-lotes/18-sin-token-resultado.png" alt="Tabla con tres documentos no procesados por falta de token"></a>
+        <figcaption>Los documentos quedan como «No procesado». Conecte el token y pulse «Reintentar los que fallaron»</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="firmar-pdf">
+      <span class="chapter-num">06</span>
+      <h2>Firmar PDF</h2>
+      <p><strong>Elija primero la carpeta:</strong> la ubicación de la firma se marca sobre su primer documento.</p>
+      <figure class="shot">
+        <a href="img/guia-lotes/19-pdf-opciones.png"><img src="img/guia-lotes/19-pdf-opciones.png" alt="Opciones de firma de PDF por lote, numeradas"></a>
+        <figcaption>Firmar PDF con PKCS#12, por lote</figcaption>
+      </figure>
+      <ol class="leyenda">
+        <li><strong>Elegir en el documento…:</strong> marca dónde quedará la firma en todos.</li>
+        <li><strong>Firma invisible:</strong> firma sin dibujar nada en la página.</li>
+        <li><strong>Texto personalizado</strong> que acompaña la firma visible.</li>
+        <li><strong>Cerrar el documento:</strong> es la firma final; no admite más firmas.</li>
+        <li><strong>Proteger el contenido:</strong> permite que otras personas sigan firmando. Solo para documentos sin firmas.</li>
+        <li><strong>Carpeta</strong> con los PDF.</li>
+      </ol>
+
+      <h4>Ubicar la firma</h4>
+      <p>Arrastre el recuadro o cámbiele el tamaño, y confirme con <em>Usar esta ubicación</em>.</p>
+      <figure class="shot">
+        <a href="img/guia-lotes/20-pdf-ubicacion.png"><img src="img/guia-lotes/20-pdf-ubicacion.png" alt="Ventana para ubicar la firma sobre el primer documento de la carpeta"></a>
+        <figcaption>La ubicación elegida en este documento se aplica a todos los de la carpeta</figcaption>
+      </figure>
+      <div class="callout warn">
+        <span class="label">Documentos distintos entre sí</span>
+        <p>En páginas de otro tamaño o rotadas, el recuadro puede tapar contenido. Si los documentos no tienen el mismo formato, sepárelos en carpetas.</p>
+      </div>
+
+      <h4>Revisar, cerrar y firmar</h4>
+      <figure class="shot">
+        <a href="img/guia-lotes/21-pdf-revisar.png"><img src="img/guia-lotes/21-pdf-revisar.png" alt="Revisión de un lote de PDF con un documento bloqueado"></a>
+        <figcaption>Un documento ya estaba bloqueado: queda fuera, con el motivo</figcaption>
+      </figure>
+      <p>Si pidió cerrar los documentos, confirme. Por seguridad, la tecla Enter equivale a <em>Cancelar</em>.</p>
+      <figure class="shot chico">
+        <a href="img/guia-lotes/22-pdf-cierre.png"><img src="img/guia-lotes/22-pdf-cierre.png" width="774" alt="Confirmación: se van a cerrar cuatro documentos"></a>
+        <figcaption>Para cerrar, pulse «Firmar y cerrar»</figcaption>
+      </figure>
+      <figure class="shot">
+        <a href="img/guia-lotes/23-pdf-resultado.png"><img src="img/guia-lotes/23-pdf-resultado.png" alt="Resultado de un lote de PDF: tres firmados y uno firmado con avisos"></a>
+        <figcaption>«Firmado con avisos»: se firmó, pero una firma anterior no es válida. Revíselo antes de enviarlo. Después de firmar, las opciones de cerrar y proteger vuelven a quedar sin marcar</figcaption>
+      </figure>
+      <p>Con <strong>token</strong> la pantalla suma la biblioteca, el PIN y el slot; el resto es igual. Revisar tampoco usa el PIN.</p>
+      <figure class="shot">
+        <a href="img/guia-lotes/24-pdf-token.png"><img src="img/guia-lotes/24-pdf-token.png" alt="Pestaña Por lote de Firmar PDF con Token"></a>
+        <figcaption>Firmar PDF con Token, por lote</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="verificar-xml">
+      <span class="chapter-num">07</span>
+      <h2>Verificar firmas en XML</h2>
+      <p>No necesita certificado: elija la carpeta y pulse <em>Verificar</em>. Con <em>Salida simple</em> el detalle de cada documento es más corto.</p>
+      <figure class="shot">
+        <a href="img/guia-lotes/25-verificar-xml.png"><img src="img/guia-lotes/25-verificar-xml.png" alt="Resultado de verificar cinco XML con distintos estados"></a>
+        <figcaption>Cinco documentos y cuatro resultados distintos: válido con observaciones, no válido, sin firmas y error</figcaption>
+      </figure>
+      <figure class="shot chico">
+        <a href="img/guia-lotes/26-verificar-estado.png"><img src="img/guia-lotes/26-verificar-estado.png" width="364" alt="Aviso: el lote terminó con problemas, con las cantidades por estado"></a>
+        <figcaption>«Con problemas» significa que algún documento no es válido, no tiene firmas o no se pudo procesar</figcaption>
+      </figure>
+      <h4>Ver el detalle de un documento</h4>
+      <p>Seleccione la fila y pulse <em>Ver detalle</em>: ese documento se vuelve a verificar y el informe completo aparece en <em>Salida del Proceso</em>, abajo.</p>
+      <figure class="shot">
+        <a href="img/guia-lotes/27-ver-detalle.png"><img src="img/guia-lotes/27-ver-detalle.png" alt="Detalle de un documento no válido en la salida del proceso"></a>
+        <figcaption>Detalle de un documento modificado después de firmarse</figcaption>
+      </figure>
+      <h4>Reintentar</h4>
+      <p><em>Reintentar los que fallaron</em> vuelve a procesar solo los que quedaron como <em>Error</em>, <em>No válido</em>, <em>Sin firmas</em> o <em>No procesado</em>. Úselo después de corregir o reemplazar esos archivos.</p>
+      <figure class="shot">
+        <a href="img/guia-lotes/28-reintentar.png"><img src="img/guia-lotes/28-reintentar.png" alt="Tabla con solo los tres documentos reintentados"></a>
+        <figcaption>La tabla muestra solo los documentos reintentados</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="verificar-pdf">
+      <span class="chapter-num">08</span>
+      <h2>Verificar firmas en PDF</h2>
+      <figure class="shot">
+        <a href="img/guia-lotes/29-verificar-pdf.png"><img src="img/guia-lotes/29-verificar-pdf.png" alt="Resultado de verificar cuatro PDF"></a>
+        <figcaption>Una firma dañada, un documento correcto con una comprobación pendiente, uno modificado y uno sin firmas</figcaption>
+      </figure>
+      <p><em>Ver detalle</em>, <em>Reintentar</em> y el informe funcionan igual que en XML.</p>
+    </section>
+
+    <section class="chapter" id="validar-xsd">
+      <span class="chapter-num">09</span>
+      <h2>Validar XML con XSD</h2>
+      <p>Comprueba que cada documento cumpla la estructura de un esquema y que sus firmas sean correctas. En <em>Archivo XSD</em> indique el esquema para toda la carpeta, o déjelo vacío para usar el que declara cada documento.</p>
+      <figure class="shot">
+        <a href="img/guia-lotes/30-validar-xsd.png"><img src="img/guia-lotes/30-validar-xsd.png" alt="Resultado de validar cuatro XML contra un esquema"></a>
+        <figcaption>Un documento válido, uno con una firma incorrecta, uno sin firmas y uno con otra estructura</figcaption>
+      </figure>
+      <div class="callout note">
+        <span class="label">Qué no comprueba</span>
+        <p>Esta pantalla <strong>no consulta la revocación</strong> de los certificados. Para eso use <em>Verificar Firmas en XML</em>.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="curso">
+      <span class="chapter-num">10</span>
+      <h2>Mientras se ejecuta y cancelar</h2>
+      <figure class="shot">
+        <a href="img/guia-lotes/31-en-curso.png"><img src="img/guia-lotes/31-en-curso.png" alt="Lote en curso: menú deshabilitado, avance y botón Cancelar"></a>
+        <figcaption>En curso: se ve el avance, los resultados llegan fila por fila y el resto de la pantalla queda bloqueado</figcaption>
+      </figure>
+      <p>Si pulsa <em>Cancelar</em>, lo que ya se procesó queda hecho y lo que faltaba queda como <em>No procesado</em>. Los documentos firmados antes de cancelar siguen firmados, y no queda ningún archivo <code>-signed</code> escrito a medias.</p>
+      <figure class="shot chico">
+        <a href="img/guia-lotes/32-cancelado-estado.png"><img src="img/guia-lotes/32-cancelado-estado.png" width="364" alt="Aviso: el lote se canceló"></a>
+        <figcaption>Aviso al cancelar</figcaption>
+      </figure>
+      <figure class="shot">
+        <a href="img/guia-lotes/33-cancelado.png"><img src="img/guia-lotes/33-cancelado.png" alt="Pantalla después de cancelar un lote"></a>
+        <figcaption>Después de cancelar puede reintentar lo que quedó sin procesar</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="estados">
+      <span class="chapter-num">11</span>
+      <h2>Estados: qué significan y qué hacer</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Estado</th><th>Qué significa</th><th>Qué hacer</th><th>¿Se reintenta?</th></tr>
+          <tr><td class="estado">● Listo</td><td>Solo en la revisión: se puede firmar.</td><td>Firmar, o desmarcarlo.</td><td>—</td></tr>
+          <tr><td class="estado">✔ Firmado</td><td>Se creó el archivo <code>-signed</code>.</td><td>Nada.</td><td>No</td></tr>
+          <tr><td class="estado">⚠ Firmado con avisos</td><td>Se firmó, pero una firma anterior no es válida o el documento cambió después de firmarse.</td><td>Revisarlo antes de enviarlo.</td><td>No</td></tr>
+          <tr><td class="estado">✔ Válido</td><td>Pasó todas las comprobaciones de la pantalla.</td><td>Nada.</td><td>No</td></tr>
+          <tr><td class="estado">⚠ Válido con observaciones</td><td>Las firmas son válidas, pero algo no se pudo comprobar (por ejemplo, la revocación).</td><td>Leer el detalle; repetir más tarde si fue por falta de Internet.</td><td>No</td></tr>
+          <tr><td class="estado">✖ No válido</td><td>Una firma no es válida, el documento fue modificado o no cumple el esquema.</td><td>No darlo por bueno sin revisarlo.</td><td>Sí</td></tr>
+          <tr><td class="estado">✖ Sin firmas</td><td>El documento no tiene firmas.</td><td>Comprobar que sea el archivo correcto.</td><td>Sí</td></tr>
+          <tr><td class="estado">↷ Omitido</td><td>No se procesó a propósito: su archivo firmado ya existe.</td><td>Si de verdad quiere firmarlo de nuevo, mueva o cambie de nombre el archivo existente.</td><td>No</td></tr>
+          <tr><td class="estado">✖ Error</td><td>No se pudo procesar.</td><td>Leer el detalle y corregir.</td><td>Sí</td></tr>
+          <tr><td class="estado">— No procesado</td><td>El lote se detuvo antes de llegar a él.</td><td>Resolver la causa y reintentar.</td><td>Sí</td></tr>
+        </table>
+      </div>
+      <p><em>Mostrar solo con problemas</em> deja a la vista todo lo que no sea <em>Listo</em>, <em>Firmado</em> o <em>Válido</em>.</p>
+    </section>
+
+    <section class="chapter" id="problemas">
+      <span class="chapter-num">12</span>
+      <h2>Cuando algo sale mal</h2>
+
+      <h4>La carpeta mezcla tipos de documento</h4>
+      <figure class="shot">
+        <a href="img/guia-lotes/11-mezcla.png"><img src="img/guia-lotes/11-mezcla.png" alt="Lote mezclado: no se puede firmar ningún documento"></a>
+        <figcaption>Se pidió firmar <code>COD</code> y hay una Declaración Jurada: solo se puede cerrar la ventana</figcaption>
+      </figure>
+      <p>Separe en otra carpeta los documentos que no corresponden, o indique el elemento correcto.</p>
+
+      <h4>Falta un dato</h4>
+      <figure class="shot chico">
+        <a href="img/guia-lotes/12-falta-dato.png"><img src="img/guia-lotes/12-falta-dato.png" width="419" alt="Aviso: complete el campo Contraseña"></a>
+        <figcaption>El aviso nombra el campo que falta</figcaption>
+      </figure>
+
+      <h4>No hay documentos para procesar</h4>
+      <figure class="shot chico">
+        <a href="img/guia-lotes/13-sin-documentos.png"><img src="img/guia-lotes/13-sin-documentos.png" width="419" alt="Aviso: no hay documentos XML para procesar en la carpeta"></a>
+        <figcaption>La carpeta está vacía, tiene otro tipo de archivos o todos quedaron afuera por su nombre</figcaption>
+      </figure>
+
+      <h4>Contraseña incorrecta</h4>
+      <figure class="shot chico">
+        <a href="img/guia-lotes/14-clave-incorrecta.png"><img src="img/guia-lotes/14-clave-incorrecta.png" width="419" alt="Aviso: el proceso finalizó con errores"></a>
+        <figcaption>El aviso es general: la causa está en «Salida del Proceso»</figcaption>
+      </figure>
+      <figure class="shot">
+        <a href="img/guia-lotes/15-clave-incorrecta-salida.png"><img src="img/guia-lotes/15-clave-incorrecta-salida.png" alt="Salida del proceso: el archivo no es un PKCS#12 válido o la contraseña es incorrecta"></a>
+        <figcaption>La causa, en «Salida del Proceso»</figcaption>
+      </figure>
+      <p>Corrija la contraseña y vuelva a pulsar <em>Firmar</em>. En este caso no se firmó nada; si la tabla todavía muestra filas, son del lote anterior.</p>
+
+      <h4>Otros avisos</h4>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Aviso</th><th>Qué hacer</th></tr>
+          <tr><td>«Elija una carpeta que exista.»</td><td>Use <em>Examinar…</em> para elegirla.</td></tr>
+          <tr><td>«No queda ningún documento marcado para procesar.»</td><td>Marque al menos uno en la revisión.</td></tr>
+          <tr><td>«La carpeta o los datos cambiaron desde la última revisión: se vuelve a revisar.»</td><td>Acepte y revise la lista nueva.</td></tr>
+          <tr><td>«Los documentos que fallaron ya no están en la carpeta.»</td><td>Devuélvalos a la carpeta o ejecute un lote nuevo.</td></tr>
+          <tr><td>«Para guardar el detalle de cada documento, marque “Guardar un registro por documento” antes de ejecutar.»</td><td>Márquelo en el próximo lote.</td></tr>
+          <tr><td>«El lote se detuvo: el programa dejó de responder.»</td><td>Revise el token y la conexión a Internet, y reintente.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="chapter" id="informe">
+      <span class="chapter-num">13</span>
+      <h2>Informe y registros</h2>
+      <h4>El informe del lote</h4>
+      <p>Cada lote ejecutado guarda una planilla (<code>.csv</code>) con una fila por documento, en la carpeta <code>S-FiDE/lotes</code> de su carpeta personal. Ábrala con <em>Abrir informe</em>. Si en una planilla de cálculo los acentos se ven mal, importe el archivo indicando la codificación <strong>UTF-8</strong> y el separador <strong>punto y coma</strong>.</p>
+      <h4>El registro por documento</h4>
+      <p>Si marca <em>«Guardar un registro por documento»</em>, junto a cada documento procesado queda un archivo <code>.log</code> (por ejemplo, <code>contrato.pdf.log</code>) con:</p>
+      <ul>
+        <li>la fecha y la versión;</li>
+        <li>los avisos generales del lote;</li>
+        <li>lo mismo que vería en <em>Salida del Proceso</em> al trabajar con ese documento solo, incluido el error si lo hubo;</li>
+        <li>el resultado.</li>
+      </ul>
+      <p>Si el archivo ya existe, el registro nuevo se agrega al final. No se crea para los documentos <em>No procesado</em> ni al usar <em>Revisar</em>, y nunca incluye la contraseña.</p>
+      <p>Durante un lote, <em>Salida del Proceso</em> muestra los avisos generales y los problemas, no el detalle completo de cada documento.</p>
+      <div class="callout note">
+        <span class="label">Sobre las capturas</span>
+        <p>Se hicieron con un certificado de prueba en archivo y documentos ficticios. Las de token muestran el formulario y el aviso sin un token conectado.</p>
+      </div>
+    </section>
+
+    <footer class="doc-footer">
+      S-FiDE es software libre bajo licencia GNU GPL v2 o posterior. Grupo Sauken S.A. — <a href="https://www.sauken.com.ar/">www.sauken.com.ar</a>
+    </footer>
+  </main>
+</div>
+</body>
+</html>
+</html>
